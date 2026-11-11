@@ -7,6 +7,8 @@ use std::path::{Path, PathBuf};
 pub struct Settings {
     /// Reopen at the last window size instead of the phone-shaped default.
     pub remember_window_size: bool,
+    /// Show a waveform strip instead of the plain seek bar.
+    pub show_waveform: bool,
 }
 
 fn path() -> Option<PathBuf> {
@@ -21,8 +23,11 @@ pub fn load() -> Settings {
 fn parse(text: &str) -> Settings {
     let mut s = Settings::default();
     for (key, value) in text.lines().filter_map(|l| l.split_once('=')) {
-        if key.trim() == "remember_window_size" {
-            s.remember_window_size = value.trim() == "true";
+        let on = value.trim() == "true";
+        match key.trim() {
+            "remember_window_size" => s.remember_window_size = on,
+            "show_waveform" => s.show_waveform = on,
+            _ => {}
         }
     }
     s
@@ -40,7 +45,7 @@ impl Settings {
             std::fs::create_dir_all(dir)?;
         }
         let tmp = path.with_extension("txt.tmp");
-        std::fs::write(&tmp, format!("remember_window_size={}\n", self.remember_window_size))?;
+        std::fs::write(&tmp, format!("remember_window_size={}\nshow_waveform={}\n", self.remember_window_size, self.show_waveform))?;
         std::fs::rename(&tmp, path)
     }
 }
@@ -53,7 +58,7 @@ mod tests {
     fn round_trip_and_defaults() {
         let dir = std::env::temp_dir().join(format!("soundglass-settings-{}", std::process::id()));
         let path = dir.join("settings.txt");
-        let s = Settings { remember_window_size: true };
+        let s = Settings { remember_window_size: true, show_waveform: true };
         s.write_to(&path).unwrap();
         let back = parse(&std::fs::read_to_string(&path).unwrap());
         std::fs::remove_dir_all(&dir).unwrap();

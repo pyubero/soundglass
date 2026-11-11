@@ -204,6 +204,11 @@ impl eframe::App for App {
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
                 });
+                ui.menu_button("View", |ui| {
+                    if ui.checkbox(&mut self.settings.show_waveform, "Waveform").changed() {
+                        self.settings_error = self.settings.save().err();
+                    }
+                });
                 ui.menu_button("Playback", |ui| {
                     ui.menu_button("Change speed", |ui| {
                         for speed in SPEEDS {
@@ -244,7 +249,8 @@ impl eframe::App for App {
                     ui.colored_label(ui.visuals().error_fg_color, e);
                 }
                 ui.add_space(12.0);
-                if let Some(frame) = seek_bar(ui, pos, len, rate) {
+                let wave = self.settings.show_waveform.then_some(&*self.track);
+                if let Some(frame) = seek_bar(ui, pos, len, rate, wave) {
                     actions.push(Action::Seek(frame));
                 }
                 ui.add_space(8.0);
@@ -469,26 +475,54 @@ fn marquee(text_w: f32, avail_w: f32, time: f64) -> f32 {
     shift.clamp(0.0, overflow) as f32
 }
 
-/// A slim bar with the times at its ends; returns the frame to seek to when clicked or dragged.
-fn seek_bar(ui: &mut egui::Ui, pos: u64, len: u64, rate: u64) -> Option<u64> {
-    let (rect, response) = ui.allocate_exact_size(egui::vec2(ui.available_width(), 18.0), egui::Sense::click_and_drag());
+/// A slim bar, or `wave`'s waveform, with the times at its ends; returns the frame to seek to
+/// when clicked or dragged.
+fn seek_bar(ui: &mut egui::Ui, pos: u64, len: u64, rate: u64, wave: Option<&Track>) -> Option<u64> {
+    let height = if wave.is_some() { 48.0 } else { 18.0 };
+    let (rect, response) = ui.allocate_exact_size(egui::vec2(ui.available_width(), height), egui::Sense::click_and_drag());
     let seconds = pos.checked_div(rate).unwrap_or(0) as f64;
     response.widget_info(|| egui::WidgetInfo::slider(true, seconds, "Position, seconds"));
     let visuals = ui.visuals();
     let fraction = (pos as f32 / len.max(1) as f32).min(1.0);
     let bar = egui::Rect::from_center_size(rect.center(), egui::vec2(rect.width(), 4.0));
     let x = bar.left() + bar.width() * fraction;
-    let painter = ui.painter();
-    painter.rect_filled(bar, 2.0, visuals.widgets.inactive.bg_fill);
-    painter.rect_filled(egui::Rect::from_min_max(bar.min, egui::pos2(x, bar.max.y)), 2.0, visuals.selection.bg_fill);
-    let knob = if response.hovered() || response.dragged() { 7.0 } else { 5.0 };
-    painter.circle_filled(egui::pos2(x, bar.center().y), knob, visuals.strong_text_color());
+    let painter = ui.painter_at(rect);
+    if let Some(track) = wave {
+        draw_waveform(&painter, visuals, rect, track, x);
+    } else {
+        painter.rect_filled(bar, 2.0, visuals.widgets.inactive.bg_fill);
+        painter.rect_filled(egui::Rect::from_min_max(bar.min, egui::pos2(x, bar.max.y)), 2.0, visuals.selection.bg_fill);
+        let knob = if response.hovered() || response.dragged() { 7.0 } else { 5.0 };
+        // Not clipped to the bar's rect, so the knob can overhang its ends.
+        ui.painter().circle_filled(egui::pos2(x, bar.center().y), knob, visuals.strong_text_color());
+    }
     ui.horizontal(|ui| {
         ui.label(clock(pos, rate));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| ui.label(clock(len, rate)));
     });
     let p = response.interact_pointer_pos().filter(|_| response.clicked() || response.dragged())?;
     Some((((p.x - bar.left()) / bar.width()).clamp(0.0, 1.0) as f64 * len as f64) as u64)
+}
+
+/// The whole track across `rect`, played part (left of `played`) highlighted, with the playhead.
+/// Fills in as decoding goes. From the first waveform view (a61e538).
+fn draw_waveform(painter: &egui::Painter, visuals: &egui::Visuals, rect: egui::Rect, track: &Track, played: f32) {
+    let len = track.len().max(1);
+    let (mid, half) = (rect.center().y, rect.height() / 2.0);
+    let columns = rect.width() as u64;
+    let peaks = track.peaks.lock().unwrap();
+    for c in 0..columns {
+        let a = (c * len / columns) as usize / track::PEAK;
+        let b = ((c + 1) * len / columns) as usize / track::PEAK;
+        let Some(slice) = peaks.get(a..(b.max(a + 1)).min(peaks.len())).filter(|s| !s.is_empty()) else { break };
+        let (lo, hi) = slice.iter().fold((0f32, 0f32), |(l, h), &(a, b)| (l.min(a), h.max(b)));
+        let x = rect.left() + c as f32 + 0.5;
+        let color = if x < played { visuals.selection.bg_fill } else { visuals.text_color() };
+        // At least one point tall, so silence still shows as a line.
+        let (top, bottom) = ((mid - hi * half).min(mid - 0.5), (mid - lo * half).max(mid + 0.5));
+        painter.line_segment([egui::pos2(x, top), egui::pos2(x, bottom)], egui::Stroke::new(1.0, color));
+    }
+    painter.vline(played, rect.y_range(), egui::Stroke::new(1.5, visuals.strong_text_color()));
 }
 
 #[derive(Clone, Copy)]
