@@ -1331,6 +1331,9 @@ impl App {
                         self.settings.spectrum_notes = !self.settings.spectrum_notes;
                         self.settings_error = self.settings.save().err();
                     }
+                    if let Some(hop) = self.spectrum.hop().filter(|h| *h != self.settings.spectrum.hop as u64) {
+                        ui.weak(format!("hop {hop} for this length")).on_hover_text("A long track: the hop is raised so the spectrogram fits in memory");
+                    }
                     if ui.button("Fit").on_hover_text("Show the whole track and all frequencies").clicked() {
                         (self.spectrum_view.start, self.spectrum_view.frames, self.spectrum.band) = (0, 0, [0.0, 1.0]);
                     }
@@ -1929,9 +1932,17 @@ fn spectrum_settings(ui: &mut egui::Ui, s: &mut settings::Settings, rate: u64) -
         });
         ui.end_row();
         ui.label("Hop");
-        ui.horizontal(|ui| {
-            ui.add(egui::DragValue::new(&mut p.hop).range(32..=8192).speed(4.0));
-            ui.weak(format!("{:.1} ms", p.hop as f64 * 1000.0 / rate.max(1) as f64));
+        egui::ComboBox::from_id_salt("hop").selected_text(ms(p.hop)).show_ui(ui, |ui| {
+            for n in spectrum::HOPS {
+                ui.selectable_value(&mut p.hop, n, ms(n));
+            }
+        });
+        ui.end_row();
+        ui.label("Rows");
+        egui::ComboBox::from_id_salt("rows").selected_text(p.rows.to_string()).show_ui(ui, |ui| {
+            for n in spectrum::ROWS {
+                ui.selectable_value(&mut p.rows, n, n.to_string());
+            }
         });
         ui.end_row();
         ui.label("Window function");
@@ -2014,21 +2025,20 @@ fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, selection: &mut Option
     let frames = if view.frames == 0 { len } else { view.frames }.max(1);
     let painter = ui.painter_at(rect);
     let x_of = |f: u64| rect.left() + ((f as f64 - view.start as f64) / frames as f64 * rect.width() as f64) as f32;
-    // One texel per pixel, so it stays sharp on high-density screens.
-    let ppp = ui.pixels_per_point();
-    let (w, h) = ((rect.width() * ppp) as usize, (rect.height() * ppp) as usize);
     let (band, low, nyquist) = (spectrogram.band, s.spectrum.low, rate as f32 / 2.0);
     let y_of = |freq: f32| rect.top() + spectrum::height_of(freq, rate as f32, band, low) * rect.height();
-    let (shown, progress) = spectrogram.update(ui.ctx(), track, edit, view.start, frames, w, h, s.spectrum);
-    if let Some(p) = shown {
-        // Made for an older view while a new one is worked out: drawn where that view lies now.
-        let (top, bottom) = (spectrum::freq_at(p.band[1], rate as f32, p.low), spectrum::freq_at(p.band[0], rate as f32, p.low));
-        let at = egui::Rect::from_x_y_ranges(x_of(p.start)..=x_of(p.start + p.frames), y_of(top)..=y_of(bottom));
-        let uv = egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0));
-        painter.image(p.texture.id(), at, uv, egui::Color32::WHITE);
+    spectrogram.update(ui.ctx(), track, edit, s.spectrum);
+    // Worked out once for the whole track; zooming and panning only move and stretch the tiles.
+    let x_at = |f: f64| rect.left() + ((f - view.start as f64) / frames as f64 * rect.width() as f64) as f32;
+    let uv = egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0));
+    for (from, to, texture) in spectrogram.tiles() {
+        let at = egui::Rect::from_x_y_ranges(x_at(from)..=x_at(to), y_of(nyquist)..=y_of(low));
+        if at.x_range().intersects(rect.x_range()) {
+            painter.image(texture.id(), at, uv, egui::Color32::WHITE);
+        }
     }
-    if let Some(done) = progress {
-        let text = format!("Computing… {:.0} %", done * 100.0);
+    let status = if !track.done() { Some("Decoding…".to_string()) } else { spectrogram.progress().map(|done| format!("Computing… {:.0} %", done * 100.0)) };
+    if let Some(text) = status {
         painter.text(rect.right_top() + egui::vec2(-6.0, 4.0), egui::Align2::RIGHT_TOP, text, egui::FontId::proportional(12.0), egui::Color32::from_white_alpha(220));
     }
     if let Some((a, b)) = *selection {

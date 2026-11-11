@@ -116,7 +116,13 @@
 - 2026-11-11 — in the Spectrogram, Ctrl+wheel (or a pinch) zooms the frequencies around the pointer, right-drag pans both ways, Fit resets both axes; the zoom isn't remembered (user's choice)
 - 2026-11-11 — the note lines take a colour for C and one for the others, opacity included, replacing the opacity setting (user's choice)
 - 2026-11-11 — the Spectrogram's settings are a window, not a menu, so a colour picker opened in it doesn't close it
-- 2026-11-11 — the spectrogram is an exact STFT: a window every hop, each pixel column the loudest of the hops inside it (the nearest one when zoomed in past the hop) (user's choice)
-- 2026-11-11 — it is made on a worker thread, cancelled when the view or settings change and not when only more audio decoded; the last picture is drawn where its view lies now until the new one is ready, with "Computing… n %"
-- 2026-11-11 — only the visible part is analysed, no whole-track STFT cache — that would take hundreds of MB at small hops
-- 2026-11-11 — editable analysis: FFT size 512–32768, window 256 up to the FFT size (zero-padded), hop 32–8192, in samples with ms shown; window function, level range, lowest frequency (10–200 Hz) and colour map; kept in settings.txt with Reset to defaults (user's choice)
+- 2026-11-11 — the spectrogram is an exact STFT: a window every hop, each pixel column the loudest of the hops inside it (the nearest one when zoomed in past the hop) (user's choice) — changed 2026-11-11: analysed once for the whole track, then scaled (see below)
+- 2026-11-11 — it is made on a worker thread, cancelled when the view or settings change and not when only more audio decoded; the last picture is drawn where its view lies now until the new one is ready, with "Computing… n %" — changed 2026-11-11: no longer redone per view
+- 2026-11-11 — only the visible part is analysed, no whole-track STFT cache — that would take hundreds of MB at small hops — changed 2026-11-11: the whole track is kept as u8 levels within a budget
+- 2026-11-11 — editable analysis: FFT size 512–32768, window 256 up to the FFT size (zero-padded), hop 32–8192 (changed 2026-11-11: 256, 512 or 1024), in samples with ms shown; window function, level range, lowest frequency (10–200 Hz) and colour map; kept in settings.txt with Reset to defaults (user's choice)
+- 2026-11-11 — the spectrogram is analysed once per track, edit and analysis setting, then zooming and panning only scale and move its tiles (user's choice)
+- 2026-11-11 — zoomed out, the graphics card scales the tiles with mipmaps (averaging), so short clicks can fade (user's choice)
+- 2026-11-11 — the hop is 256, 512 or 1024 (user's choice); for a long track it doubles until columns × rows fit 48 M levels (about 300 MB with textures), with a note in the toolbar (user's choice)
+- 2026-11-11 — Rows (512, 1024 or 2048 over the whole frequency axis) is a setting (user's choice)
+- 2026-11-11 — levels are kept as u8 dB (−160 to +6, about 0.65 dB steps) in tiles 2048 columns wide, so changing the colours or level range only recolours through a 256-entry palette
+- 2026-11-11 — the analysis starts once the track is fully decoded (its length is exact only then, and would restart it); any edit redoes the whole analysis (accepted)

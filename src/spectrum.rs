@@ -1,6 +1,7 @@
-//! The spectrogram: a short-time Fourier transform of the edited audio, mixed to mono, every
-//! `hop` frames, each pixel column the loudest of the frames inside it, drawn on a logarithmic
-//! frequency axis from `Params::low` to half the sample rate. Made on a worker thread.
+//! The spectrogram: a short-time Fourier transform of the whole edited track, mixed to mono,
+//! one column every `hop` frames on a logarithmic frequency axis from `Params::low` to half the
+//! sample rate. Worked out once on a worker thread, kept as levels in tiles of textures, then
+//! only scaled to zoom and pan.
 
 use crate::edit::{self, Edit};
 use crate::track::Track;
@@ -84,6 +85,10 @@ impl ColourMap {
     }
 }
 
+/// The hop and rows choices.
+pub const HOPS: [usize; 3] = [256, 512, 1024];
+pub const ROWS: [usize; 3] = [512, 1024, 2048];
+
 /// How the spectrogram is analysed and coloured; kept in settings.txt.
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Params {
@@ -91,6 +96,8 @@ pub struct Params {
     pub fft: usize,
     pub window: usize,
     pub hop: usize,
+    /// Levels per column over the whole frequency axis.
+    pub rows: usize,
     pub shape: Shape,
     /// The quietest and loudest levels shown, in dBFS.
     pub floor: f32,
@@ -102,7 +109,7 @@ pub struct Params {
 
 impl Default for Params {
     fn default() -> Self {
-        Params { fft: 4096, window: 4096, hop: 512, shape: Shape::Hann, floor: -100.0, ceiling: 0.0, low: 20.0, map: ColourMap::Magma }
+        Params { fft: 4096, window: 4096, hop: 512, rows: 1024, shape: Shape::Hann, floor: -100.0, ceiling: 0.0, low: 20.0, map: ColourMap::Magma }
     }
 }
 
@@ -115,7 +122,8 @@ impl Params {
         let floor = if self.floor.is_finite() { self.floor.clamp(-160.0, -20.0) } else { -100.0 };
         let ceiling = if self.ceiling.is_finite() { self.ceiling.clamp(-60.0, 6.0).max(floor + 10.0) } else { 0.0 };
         let low = if self.low.is_finite() { self.low.clamp(10.0, 200.0) } else { 20.0 };
-        Params { fft, window, hop: self.hop.clamp(32, 8192), floor, ceiling, low, ..self }
+        let nearest = |v: usize, choices: [usize; 3]| choices.into_iter().min_by_key(|c| c.abs_diff(v)).unwrap();
+        Params { fft, window, hop: nearest(self.hop, HOPS), rows: nearest(self.rows, ROWS), floor, ceiling, low, ..self }
     }
 }
 
@@ -174,143 +182,189 @@ impl Analyser {
     }
 }
 
-/// What a picture is made from: its size in pixels, the edited frames and band it shows, the
-/// analysis, how much was decoded, and the edits.
-#[derive(Clone, PartialEq)]
-struct Key {
-    width: usize,
-    height: usize,
-    start: u64,
-    frames: u64,
-    band: [f32; 2],
-    params: Params,
-    decoded: u64,
-    edit: Arc<Edit>,
+/// Columns per tile: textures wider than this may not fit the graphics card.
+const TILE: usize = 2048;
+/// At most this many levels (columns × rows) are kept: about 300 MB with their textures.
+const BUDGET: u64 = 48_000_000;
+/// The levels kept: `u8` steps of about 0.65 dB from `LEVEL_LOW` to `LEVEL_HIGH` dBFS.
+const LEVEL_LOW: f32 = -160.0;
+const LEVEL_HIGH: f32 = 6.0;
+
+fn level(db: f32) -> u8 {
+    ((db.clamp(LEVEL_LOW, LEVEL_HIGH) - LEVEL_LOW) / (LEVEL_HIGH - LEVEL_LOW) * 255.0).round() as u8
 }
 
-/// The picture for `key`: column by column, the loudest of the hops inside each (the nearest
-/// hop when none is). `None` once `cancel` is set; columns from the first undecoded one on stay
-/// transparent. Counts finished columns in `done`.
-fn render(track: &Track, key: &Key, cancel: &AtomicBool, done: &AtomicUsize) -> Option<egui::ColorImage> {
-    let (w, h, hop) = (key.width, key.height, key.params.hop as u64);
-    let mut analyser = Analyser::new(key.params);
-    let mut pixels = vec![egui::Color32::TRANSPARENT; w * h];
-    // The last hop computed, reused while zoomed in past the hop.
-    let mut last: Option<(u64, Vec<f32>)> = None;
-    'columns: for c in 0..w {
-        if cancel.load(Relaxed) {
-            return None;
-        }
-        let edge = |c: usize| key.start + (c as f64 * key.frames as f64 / w as f64) as u64;
-        let (a, b) = (edge(c), edge(c + 1).max(edge(c) + 1));
-        let (first, end) = (a.div_ceil(hop), b.div_ceil(hop));
-        let hops = if first < end { first..end } else { let k = ((a + b) / 2 + hop / 2) / hop; k..k + 1 };
-        let mut loudest: Option<Vec<f32>> = None;
-        for k in hops {
-            let rows = match &last {
-                Some((at, rows)) if *at == k => rows.clone(),
-                _ => {
-                    let Some(rows) = analyser.rows(track, &key.edit, k * hop, h, key.band) else { break 'columns };
-                    last = Some((k, rows.clone()));
-                    rows
-                }
-            };
-            match &mut loudest {
-                Some(l) => l.iter_mut().zip(&rows).for_each(|(l, r)| *l = l.max(*r)),
-                None => loudest = Some(rows),
-            }
-        }
-        for (y, db) in loudest.unwrap_or_default().into_iter().enumerate() {
-            pixels[y * w + c] = colour(db, &key.params);
-        }
-        done.store(c + 1, Relaxed);
+fn db(level: u8) -> f32 {
+    LEVEL_LOW + level as f32 / 255.0 * (LEVEL_HIGH - LEVEL_LOW)
+}
+
+/// The hop for a track of `len` frames: the chosen one, doubled until the levels fit `BUDGET`.
+fn hop_for(len: u64, params: &Params) -> u64 {
+    let mut hop = params.hop as u64;
+    while len.div_ceil(hop) * params.rows as u64 > BUDGET {
+        hop *= 2;
     }
-    Some(egui::ColorImage::new([w, h], pixels))
+    hop
 }
 
-/// A picture being made on the worker thread.
+/// The whole edited track's columns, centred on frames 0, `hop`, 2·`hop`…, each `params.rows`
+/// levels (top first), handed to `send` a tile at a time as (tile, levels column by column,
+/// columns). Stops when `cancel` is set; counts finished columns in `done`.
+fn analyse(track: &Track, edit: &Edit, params: Params, hop: u64, cancel: &AtomicBool, done: &AtomicUsize, mut send: impl FnMut(usize, Vec<u8>, usize)) {
+    let (rows, columns) = (params.rows, edit.len().div_ceil(hop) as usize);
+    let mut analyser = Analyser::new(params);
+    for tile in 0..columns.div_ceil(TILE) {
+        let width = TILE.min(columns - tile * TILE);
+        let mut levels = Vec::with_capacity(width * rows);
+        for c in tile * TILE..tile * TILE + width {
+            if cancel.load(Relaxed) {
+                return;
+            }
+            // The decoded chunks are only locked for a moment; a column that still can't be read stays at the floor.
+            let column = (0..100).find_map(|_| analyser.rows(track, edit, c as u64 * hop, rows, [0.0, 1.0]).or_else(|| {
+                std::thread::sleep(std::time::Duration::from_millis(1));
+                None
+            }));
+            match column {
+                Some(column) => levels.extend(column.into_iter().map(level)),
+                None => levels.resize(levels.len() + rows, 0),
+            }
+            done.store(c + 1, Relaxed);
+        }
+        send(tile, levels, width);
+    }
+}
+
+/// The colour of each of the 256 levels.
+fn palette(params: &Params) -> Vec<egui::Color32> {
+    (0..=255).map(|l| colour(db(l), params)).collect()
+}
+
+/// A tile's picture: levels column by column (top first) as rows of pixels.
+fn tile_image(levels: &[u8], columns: usize, rows: usize, palette: &[egui::Color32]) -> egui::ColorImage {
+    let mut pixels = vec![egui::Color32::TRANSPARENT; columns * rows];
+    for (c, column) in levels.chunks_exact(rows).enumerate() {
+        for (y, &l) in column.iter().enumerate() {
+            pixels[y * columns + c] = palette[l as usize];
+        }
+    }
+    egui::ColorImage::new([columns, rows], pixels)
+}
+
+/// Mipmapped, so a zoomed-out picture is averaged rather than shimmering.
+const TEXTURE: egui::TextureOptions = egui::TextureOptions { mipmap_mode: Some(egui::TextureFilter::Linear), ..egui::TextureOptions::LINEAR };
+
+struct Tile {
+    levels: Vec<u8>,
+    columns: usize,
+    texture: egui::TextureHandle,
+}
+
+/// The analysis running on the worker thread.
 struct Job {
-    key: Key,
     cancel: Arc<AtomicBool>,
     done: Arc<AtomicUsize>,
-    rx: Receiver<Option<egui::ColorImage>>,
-}
-
-/// A picture ready to draw, and what it shows (which may be an older view than asked for).
-pub struct Shown<'a> {
-    pub texture: &'a egui::TextureHandle,
-    pub start: u64,
-    pub frames: u64,
-    pub band: [f32; 2],
-    pub low: f32,
-}
-
-pub struct Spectrogram {
-    /// The part of the frequency axis shown, bottom and top, on the log scale where 0 is
-    /// `Params::low` and 1 half the sample rate.
-    pub band: [f32; 2],
-    shown: Option<Key>,
-    texture: Option<egui::TextureHandle>,
-    job: Option<Job>,
-}
-
-impl Spectrogram {
-    pub fn new() -> Spectrogram {
-        Spectrogram { band: [0.0, 1.0], shown: None, texture: None, job: None }
-    }
-
-    /// The picture of edited frames `start..start + frames` at `width` × `height` pixels: the
-    /// latest one finished, while a worker makes the one asked for if that differs. Also the
-    /// worker's progress (0 to 1) while it runs.
-    #[allow(clippy::too_many_arguments)]
-    pub fn update(&mut self, ctx: &egui::Context, track: &Arc<Track>, edit: &Arc<Edit>, start: u64, frames: u64, width: usize, height: usize, params: Params) -> (Option<Shown<'_>>, Option<f32>) {
-        let want = Key { width: width.max(1), height: height.max(1), start, frames: frames.max(1), band: self.band, params, decoded: track.decoded(), edit: edit.clone() };
-        if let Some(job) = &self.job {
-            match job.rx.try_recv() {
-                Ok(image) => {
-                    if let Some(image) = image {
-                        match &mut self.texture {
-                            Some(t) => t.set(image, egui::TextureOptions::LINEAR),
-                            None => self.texture = Some(ctx.load_texture("spectrogram", image, egui::TextureOptions::LINEAR)),
-                        }
-                    }
-                    self.shown = Some(job.key.clone());
-                    self.job = None;
-                }
-                // The worker died: keep the old picture and don't try that view again.
-                Err(TryRecvError::Disconnected) => self.shown = self.job.take().map(|j| j.key.clone()),
-                Err(TryRecvError::Empty) => {
-                    // Only more decoded audio: let it finish, the next one picks that up.
-                    if (Key { decoded: want.decoded, ..job.key.clone() }) != want {
-                        self.job = None;
-                    }
-                }
-            }
-        }
-        if self.job.is_none() && self.shown.as_ref() != Some(&want) && track.format.get().is_some() {
-            let (tx, rx) = std::sync::mpsc::channel();
-            let (cancel, done) = (Arc::new(AtomicBool::new(false)), Arc::new(AtomicUsize::new(0)));
-            let (track, key, ctx) = (track.clone(), want.clone(), ctx.clone());
-            let (c, d) = (cancel.clone(), done.clone());
-            std::thread::spawn(move || {
-                let image = render(&track, &key, &c, &d);
-                if !c.load(Relaxed) {
-                    let _ = tx.send(image);
-                    ctx.request_repaint();
-                }
-            });
-            self.job = Some(Job { key: want, cancel, done, rx });
-        }
-        let progress = self.job.as_ref().map(|j| j.done.load(Relaxed) as f32 / j.key.width as f32);
-        let shown = self.texture.as_ref().zip(self.shown.as_ref()).map(|(texture, k)| Shown { texture, start: k.start, frames: k.frames, band: k.band, low: k.params.low });
-        (shown, progress)
-    }
+    columns: usize,
+    rx: Receiver<(usize, Vec<u8>, usize)>,
 }
 
 /// A job dropped (no longer wanted, or the window gone) stops at its next column.
 impl Drop for Job {
     fn drop(&mut self) {
         self.cancel.store(true, Relaxed);
+    }
+}
+
+/// What the analysis depends on: the track (by address), the edits, and the parameters with
+/// the colours left out (those only recolour).
+type Key = (usize, Arc<Edit>, Params);
+
+pub struct Spectrogram {
+    /// The part of the frequency axis shown, bottom and top, on the log scale where 0 is
+    /// `Params::low` and 1 half the sample rate.
+    pub band: [f32; 2],
+    key: Option<Key>,
+    /// The hop used: the chosen one, or more for a long track.
+    hop: u64,
+    rows: usize,
+    tiles: Vec<Tile>,
+    /// The floor, ceiling and colour map the tiles are coloured with.
+    colours: Option<(f32, f32, ColourMap)>,
+    job: Option<Job>,
+}
+
+impl Spectrogram {
+    pub fn new() -> Spectrogram {
+        Spectrogram { band: [0.0, 1.0], key: None, hop: 0, rows: 0, tiles: Vec::new(), colours: None, job: None }
+    }
+
+    /// Starts the analysis of `track` with `edit` once it's fully decoded (its length is exact
+    /// then), again when the edits or the analysis change; picks up finished tiles; recolours
+    /// when only the colours change.
+    pub fn update(&mut self, ctx: &egui::Context, track: &Arc<Track>, edit: &Arc<Edit>, params: Params) {
+        if !track.done() || track.format.get().is_none() {
+            return;
+        }
+        let key = (Arc::as_ptr(track) as usize, edit.clone(), Params { floor: 0.0, ceiling: 0.0, map: ColourMap::Magma, ..params });
+        if self.key.as_ref() != Some(&key) {
+            (self.hop, self.rows, self.tiles, self.job) = (hop_for(edit.len(), &params), params.rows, Vec::new(), None);
+            let (tx, rx) = std::sync::mpsc::channel();
+            let (cancel, done) = (Arc::new(AtomicBool::new(false)), Arc::new(AtomicUsize::new(0)));
+            let columns = edit.len().div_ceil(self.hop) as usize;
+            let (track, edit, ctx, hop) = (track.clone(), edit.clone(), ctx.clone(), self.hop);
+            let (c, d) = (cancel.clone(), done.clone());
+            std::thread::spawn(move || {
+                analyse(&track, &edit, params, hop, &c, &d, |tile, levels, columns| {
+                    let _ = tx.send((tile, levels, columns));
+                    ctx.request_repaint();
+                })
+            });
+            self.job = Some(Job { cancel, done, columns, rx });
+            self.key = Some(key);
+        }
+        let colours = Some((params.floor, params.ceiling, params.map));
+        let palette = palette(&params);
+        if self.colours != colours {
+            for t in &mut self.tiles {
+                t.texture.set(tile_image(&t.levels, t.columns, self.rows, &palette), TEXTURE);
+            }
+            self.colours = colours;
+        }
+        if let Some(job) = &self.job {
+            loop {
+                match job.rx.try_recv() {
+                    Ok((tile, levels, columns)) => {
+                        let texture = ctx.load_texture(format!("spectrogram-{tile}"), tile_image(&levels, columns, self.rows, &palette), TEXTURE);
+                        self.tiles.push(Tile { levels, columns, texture });
+                    }
+                    Err(TryRecvError::Empty) => break,
+                    // Finished (or the worker died): keep what came.
+                    Err(TryRecvError::Disconnected) => {
+                        self.job = None;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    /// The tiles so far, each as the edited frames it spans (from, to) and its texture.
+    pub fn tiles(&self) -> impl Iterator<Item = (f64, f64, &egui::TextureHandle)> {
+        let hop = self.hop as f64;
+        self.tiles.iter().enumerate().map(move |(i, t)| {
+            let first = (i * TILE) as f64 * hop - hop / 2.0;
+            (first, first + t.columns as f64 * hop, &t.texture)
+        })
+    }
+
+    /// The hop used, once the analysis started.
+    pub fn hop(&self) -> Option<u64> {
+        self.key.is_some().then_some(self.hop)
+    }
+
+    /// How far the analysis is (0 to 1) while it runs.
+    pub fn progress(&self) -> Option<f32> {
+        self.job.as_ref().map(|j| j.done.load(Relaxed) as f32 / j.columns.max(1) as f32)
     }
 }
 
@@ -442,25 +496,44 @@ mod tests {
     }
 
     #[test]
-    fn each_column_is_the_loudest_of_its_hops() {
-        // One second of silence with a click in the third quarter: only that column lights up.
+    fn the_track_is_analysed_once_into_columns_every_hop() {
+        // One second of silence with a click: only the column centred nearest it lights up.
         let rate = 8000;
         let mut samples = vec![0.0; rate];
         samples[5100] = 1.0;
         let track = Track::from_samples(rate as u32, 1, samples);
-        let params = Params { fft: 512, window: 256, hop: 64, ..Params::default() };
-        let key = Key { width: 4, height: 16, start: 0, frames: rate as u64, band: [0.0, 1.0], params, decoded: track.decoded(), edit: Arc::new(Edit::whole(rate as u64)) };
-        let image = render(&track, &key, &AtomicBool::new(false), &AtomicUsize::new(0)).unwrap();
-        let dark = colour(params.floor, &params);
-        let lit: Vec<bool> = (0..4).map(|c| (0..16).any(|y| image.pixels[y * 4 + c] != dark)).collect();
-        assert_eq!(lit, [false, false, true, false]);
-        assert!(render(&track, &key, &AtomicBool::new(true), &AtomicUsize::new(0)).is_none());
+        let params = Params { fft: 512, window: 256, hop: 256, rows: 16, ..Params::default() };
+        let mut got = Vec::new();
+        analyse(&track, &Edit::whole(rate as u64), params, 256, &AtomicBool::new(false), &AtomicUsize::new(0), |tile, levels, columns| got.push((tile, levels, columns)));
+        assert_eq!(got.len(), 1);
+        let (tile, levels, columns) = &got[0];
+        assert_eq!((*tile, *columns, levels.len()), (0, 32, 32 * 16));
+        let lit: Vec<usize> = (0..32).filter(|c| levels[c * 16..(c + 1) * 16].iter().any(|&l| db(l) > params.floor)).collect();
+        assert_eq!(lit, [20]);
+        let mut none = 0;
+        analyse(&track, &Edit::whole(rate as u64), params, 256, &AtomicBool::new(true), &AtomicUsize::new(0), |_, _, _| none += 1);
+        assert_eq!(none, 0);
+    }
+
+    #[test]
+    fn levels_round_trip_and_long_tracks_get_a_longer_hop() {
+        for d in [-150.0, -100.0, -6.0, 0.0, 5.9] {
+            assert!((db(level(d)) - d).abs() < 0.4, "{d}");
+        }
+        let p = Params::default();
+        let minutes = |m: u64| m * 60 * 44100;
+        assert_eq!(hop_for(minutes(3), &p), 512);
+        assert_eq!(hop_for(minutes(3), &Params { hop: 256, ..p }), 256);
+        assert!(hop_for(minutes(60), &p) > 512);
+        assert!(minutes(60).div_ceil(hop_for(minutes(60), &p)) * p.rows as u64 <= BUDGET);
     }
 
     #[test]
     fn params_are_made_valid() {
         let p = Params { fft: 3000, window: 100_000, hop: 1, floor: -10.0, ceiling: -40.0, low: f32::NAN, ..Params::default() }.checked();
-        assert_eq!((p.fft, p.window, p.hop, p.floor, p.ceiling, p.low), (4096, 4096, 32, -20.0, -10.0, 20.0));
+        assert_eq!((p.fft, p.window, p.hop, p.floor, p.ceiling, p.low), (4096, 4096, 256, -20.0, -10.0, 20.0));
+        let q = Params { hop: 300, rows: 700, ..Params::default() }.checked();
+        assert_eq!((q.hop, q.rows), (256, 512));
         assert_eq!(Params::default().checked(), Params::default());
         assert_eq!(Params { window: 300, ..Params::default() }.checked().window, 512);
     }
