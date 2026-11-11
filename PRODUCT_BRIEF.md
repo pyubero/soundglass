@@ -61,7 +61,7 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 - **Change sample rate.** For example 48 kHz to 44.1 kHz, chosen in Save As.
 
 ### 5. Speed and pitch
-- **Study time-stretching first.** Compare writing our own (WSOLA, phase vocoder) with existing crates: licence, quality on music, and whether it runs in real time for the slow-down loop in milestone 7. Pick one before building.
+- **Study time-stretching first.** Compare writing our own (WSOLA, phase vocoder) with existing crates: licence, quality on music, and whether it runs in real time for the slow-down loop in milestone 7. Pick one before building. The findings are in [docs/TIME_STRETCH.md](docs/TIME_STRETCH.md).
 - **Change speed or pitch.** Separately: slower without lower pitch, or a semitone up without faster.
 
 ### 6. Files and tags
