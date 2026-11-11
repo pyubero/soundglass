@@ -139,7 +139,7 @@ fn same_file(a: &Path, b: &Path) -> bool {
 
 fn encode(track: &Track, edit: &Edit, choice: Choice, path: &Path) -> Result<(), String> {
     let format = track.format.get().ok_or("the track has no audio")?;
-    let (channels, rate) = (format.channels, format.rate);
+    let (channels, rate) = (edit.channels(format.channels), format.rate);
     let err = |e: hound::Error| e.to_string();
     let mut ok = true;
     match choice.kind {
@@ -278,7 +278,7 @@ fn copy_tags(from: &Path, to: &Path, kind: Kind) -> bool {
     tag.save_to_path(to, lofty::config::WriteOptions::default()).is_ok()
 }
 
-/// Decodes the written file: it must have the track's rate and channels and the edit's length,
+/// Decodes the written file: it must have the track's rate, the edit's channels and its length,
 /// give or take 0.1 s (lossy encoders pad the end).
 fn verify(path: &Path, track: &Track, edit: &Edit) -> Result<(), String> {
     let want = track.format.get().copied().ok_or("the track has no audio")?;
@@ -289,7 +289,7 @@ fn verify(path: &Path, track: &Track, edit: &Edit) -> Result<(), String> {
         Ok(())
     })
     .map_err(|e| format!("the saved file doesn't read back ({e})"))?;
-    if got.is_some_and(|(r, c)| r != want.rate || c != want.channels) || frames.abs_diff(edit.len()) > want.rate as u64 / 10 {
+    if got.is_some_and(|(r, c)| r != want.rate || c != edit.channels(want.channels)) || frames.abs_diff(edit.len()) > want.rate as u64 / 10 {
         return Err(format!("the saved file reads back wrong ({frames} frames, expected {})", edit.len()));
     }
     Ok(())
@@ -369,6 +369,22 @@ mod tests {
                 assert!((frames - edit.len() as i64).abs() <= 2, "{} {channels} ch: {frames} frames, want {}", kind.name(), edit.len());
             }
         }
+    }
+
+    #[test]
+    fn saves_the_channel_mix() {
+        let dir = scratch("mix");
+        let track = sine(44100, 2, 10_000);
+        let edit = Edit::whole(10_000).mono(2);
+        let mut want = Vec::new();
+        edit::read(&track, &edit, 0, edit.len(), |b| want.extend_from_slice(b));
+        let path = dir.join("mono.flac");
+        save(&track, &edit, Choice { flac_bits: 24, ..Choice::default() }, &path).unwrap();
+        let (got, c, _) = read_back(&path);
+        assert_eq!((c, got.len()), (1, want.len()));
+        let path = dir.join("mono.mp3");
+        save(&track, &edit, Choice { kind: Kind::Mp3, ..Choice::default() }, &path).unwrap();
+        assert_eq!(read_back(&path).1, 1);
     }
 
     #[test]

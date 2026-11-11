@@ -1113,14 +1113,14 @@ fn seek_bar(ui: &mut egui::Ui, pos: u64, len: u64, rate: u64, wave: Option<Wave>
 #[derive(Default)]
 struct WaveCache {
     /// Width in columns, first frame, frames shown, decoded frames, and the edit list.
-    key: Option<(u64, u64, u64, u64, Vec<edit::Seg>)>,
+    key: Option<(u64, u64, u64, u64, Edit)>,
     cols: Vec<(f32, f32)>,
 }
 
 impl WaveCache {
     fn columns(&mut self, track: &Track, edit: &Edit, start: u64, frames: u64, columns: u64) -> &[(f32, f32)] {
         let (frames, decoded) = (frames.max(1), track.decoded());
-        let same = self.key.as_ref().is_some_and(|k| (k.0, k.1, k.2, k.3) == (columns, start, frames, decoded) && k.4 == edit.segs);
+        let same = self.key.as_ref().is_some_and(|k| (k.0, k.1, k.2, k.3) == (columns, start, frames, decoded) && k.4 == *edit);
         if !same {
             let peaks = track.peaks.lock().unwrap();
             // Stops where nothing is decoded yet.
@@ -1130,7 +1130,7 @@ impl WaveCache {
                     edit::min_max(track, &peaks, edit, a, (start + (c + 1) * frames / columns).max(a + 1))
                 })
                 .collect();
-            self.key = Some((columns, start, frames, decoded, edit.segs.clone()));
+            self.key = Some((columns, start, frames, decoded, edit.clone()));
         }
         &self.cols
     }

@@ -4,7 +4,7 @@
 //! back the position from `Shared`. The callback never blocks, allocates or frees a track: tracks
 //! it is done with go back to the UI on `retired`.
 
-use crate::edit::Edit;
+use crate::edit::{self, Edit};
 use crate::track::Track;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use rubato::audioadapter_buffers::direct::InterleavedSlice;
@@ -281,28 +281,28 @@ impl Engine {
             if let Some((_, b)) = region {
                 want = want.min(b - self.pos);
             }
-            let (src, left) = match &self.edit {
-                Some(e) => match e.locate(self.pos) {
-                    Some(at) => at,
-                    None => break,
-                },
-                None => (Some(self.pos), u64::MAX),
-            };
-            let want = want.min(left) as usize;
-            let n = match src {
-                None => {
-                    self.input[i * 2..(i + want) * 2].fill(0.0);
-                    want
+            let want = want as usize;
+            let channels = track.format.get().map_or(1, |f| f.channels);
+            let n = match &self.edit {
+                Some(e) => {
+                    let (out_ch, end) = (e.channels(channels), (self.pos + want as u64).min(e.len()));
+                    let (input, mut k) = (&mut self.input[i * 2..], 0);
+                    edit::read(track, e, self.pos, end, |s| {
+                        for frame in s.chunks_exact(out_ch) {
+                            (input[k * 2], input[k * 2 + 1]) = stereo(frame);
+                            k += 1;
+                        }
+                    });
+                    if k == 0 {
+                        break;
+                    }
+                    k
                 }
-                Some(src) => {
-                    let Some((chunk, offset)) = track.chunk_at(src) else { break };
-                    let channels = track.format.get().map_or(1, |f| f.channels);
+                None => {
+                    let Some((chunk, offset)) = track.chunk_at(self.pos) else { break };
                     let n = want.min(chunk.len() / channels - offset);
                     for (k, frame) in chunk[offset * channels..(offset + n) * channels].chunks_exact(channels).enumerate() {
-                        let (l, r) = if channels == 1 { (frame[0], frame[0]) } else { (frame[0], frame[1]) };
-                        // shortcut: files with more than 2 channels play their first two; mix down properly if surround files show up.
-                        self.input[(i + k) * 2] = l;
-                        self.input[(i + k) * 2 + 1] = r;
+                        (self.input[(i + k) * 2], self.input[(i + k) * 2 + 1]) = stereo(frame);
                     }
                     n
                 }
@@ -324,6 +324,12 @@ impl Engine {
         self.input[i * 2..frames * 2].fill(0.0);
         true
     }
+}
+
+/// A frame as left and right.
+fn stereo(frame: &[f32]) -> (f32, f32) {
+    // shortcut: files with more than 2 channels play their first two; mix down properly if surround files show up.
+    if frame.len() == 1 { (frame[0], frame[0]) } else { (frame[0], frame[1]) }
 }
 
 #[cfg(test)]
@@ -385,6 +391,20 @@ mod tests {
         assert!(e.pull(10));
         assert_eq!(left(&e, 10), [1., 2., 5., 0., 0., 8., 9., 10., 0., 0.]);
         assert_eq!(e.pos, 8);
+    }
+
+    #[test]
+    fn plays_reversed_gained_and_mixed_edits() {
+        let mut e = engine();
+        e.handle(Cmd::Load(Track::from_samples(48000, 2, (0..10).flat_map(|i| [i as f32, -(i as f32)]).collect())));
+        let edit = Edit::whole(5).reverse(0, 5).gain(0, 1, edit::FLOOR_DB, edit::FLOOR_DB);
+        e.handle(Cmd::Edit(Some(Arc::new(edit.swap(2)))));
+        assert!(e.pull(5));
+        assert_eq!(e.input[..10], [0., 0., -3., 3., -2., 2., -1., 1., 0., 0.]);
+        e.handle(Cmd::Edit(Some(Arc::new(edit.mono(2)))));
+        e.handle(Cmd::Seek(1));
+        assert!(e.pull(2));
+        assert_eq!(e.input[..4], [0.; 4]);
     }
 
     #[test]
