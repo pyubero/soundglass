@@ -126,3 +126,7 @@
 - 2026-11-11 — Rows (512, 1024 or 2048 over the whole frequency axis) is a setting (user's choice)
 - 2026-11-11 — levels are kept as u8 dB (−160 to +6, about 0.65 dB steps) in tiles 2048 columns wide, so changing the colours or level range only recolours through a 256-entry palette
 - 2026-11-11 — the analysis starts once the track is fully decoded (its length is exact only then, and would restart it); any edit redoes the whole analysis (accepted)
+- 2026-11-11 — "Natural notes only" is replaced by Scale shown: All notes or one of the 12 major scales (relative minors share their notes); a saved "natural notes only" reads as C major (user's choice)
+- 2026-11-11 — a scale's notes are spelled as its key spells them (F major Bb, F# major E#), Sharps/Flats applies only to All notes (user's choice)
+- 2026-11-11 — Instrument range limits the note lines to concert pitch: B♭ trumpet E3–Bb5, B♭ tenor sax Ab2–Eb5; it only hides lines, the view doesn't zoom (user's choice)
+- 2026-11-11 — short of room for every name, one per octave is named: C for All notes, the tonic for a scale; the thicker line stays on every C

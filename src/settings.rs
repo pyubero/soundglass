@@ -32,8 +32,10 @@ pub struct Settings {
     pub note_solfege: bool,
     pub note_flats: bool,
     pub note_octaves: bool,
-    /// Only the natural notes (the white keys).
-    pub note_naturals: bool,
+    /// Only the notes of this major scale (an index into `spectrum::KEYS`); `None` for all notes.
+    pub note_scale: Option<usize>,
+    /// Only the notes in this instrument's range.
+    pub note_instrument: crate::spectrum::Instrument,
     /// The colours of the C lines and of the others, opacity included.
     pub note_c_color: Color32,
     pub note_color: Color32,
@@ -52,7 +54,8 @@ impl Default for Settings {
             note_solfege: false,
             note_flats: false,
             note_octaves: true,
-            note_naturals: false,
+            note_scale: None,
+            note_instrument: crate::spectrum::Instrument::None,
             note_c_color: NOTE_C_COLOR,
             note_color: NOTE_COLOR,
             note_c_width: 2.0,
@@ -88,8 +91,10 @@ pub fn load() -> Settings {
 }
 
 fn parse(text: &str) -> Settings {
-    use crate::spectrum::{ColourMap, Shape};
+    use crate::spectrum::{ColourMap, Instrument, Shape, KEYS};
     let mut s = Settings::default();
+    // "Natural notes only", before Scale shown replaced it, is C major.
+    let (mut naturals, mut scale) = (false, None);
     let float = |v: &str| v.trim().parse::<f32>().ok().filter(|n| n.is_finite());
     let count = |v: &str| v.trim().parse::<usize>().ok();
     for (key, value) in text.lines().filter_map(|l| l.split_once('=')) {
@@ -109,7 +114,9 @@ fn parse(text: &str) -> Settings {
             "note_solfege" => s.note_solfege = on,
             "note_flats" => s.note_flats = on,
             "note_octaves" => s.note_octaves = on,
-            "note_naturals" => s.note_naturals = on,
+            "note_naturals" => naturals = on,
+            "note_scale" => scale = Some(KEYS.iter().position(|k| k.0 == value)),
+            "note_instrument" => s.note_instrument = Instrument::from_name(value).unwrap_or(Instrument::None),
             "note_c_color" => s.note_c_color = hex(value).unwrap_or(NOTE_C_COLOR),
             "note_color" => s.note_color = hex(value).unwrap_or(NOTE_COLOR),
             "note_c_width" => s.note_c_width = number(value).map_or(2.0, |n| n.min(6.0)),
@@ -127,6 +134,7 @@ fn parse(text: &str) -> Settings {
         }
     }
     s.spectrum = s.spectrum.checked();
+    s.note_scale = scale.unwrap_or(naturals.then_some(0));
     s
 }
 
@@ -144,8 +152,8 @@ impl Settings {
         // One line: a pattern can't hold a line break, the dialog's field is single-line.
         text += &format!("rename_pattern={}\n", self.rename_pattern.replace(['\n', '\r'], " "));
         text += &format!(
-            "spectrum_notes={}\nnote_a4={}\nnote_solfege={}\nnote_flats={}\nnote_octaves={}\nnote_naturals={}\nnote_c_color={}\nnote_color={}\nnote_c_width={}\nnote_label_size={}\n",
-            self.spectrum_notes, self.note_a4, self.note_solfege, self.note_flats, self.note_octaves, self.note_naturals, to_hex(self.note_c_color), to_hex(self.note_color), self.note_c_width, self.note_label_size
+            "spectrum_notes={}\nnote_a4={}\nnote_solfege={}\nnote_flats={}\nnote_octaves={}\nnote_scale={}\nnote_instrument={}\nnote_c_color={}\nnote_color={}\nnote_c_width={}\nnote_label_size={}\n",
+            self.spectrum_notes, self.note_a4, self.note_solfege, self.note_flats, self.note_octaves, self.note_scale.map_or("all", |k| crate::spectrum::KEYS[k % 12].0), self.note_instrument.name(), to_hex(self.note_c_color), to_hex(self.note_color), self.note_c_width, self.note_label_size
         );
         let p = self.spectrum;
         text += &format!(
@@ -184,7 +192,8 @@ mod tests {
             note_solfege: true,
             note_flats: true,
             note_octaves: false,
-            note_naturals: true,
+            note_scale: Some(10),
+            note_instrument: crate::spectrum::Instrument::TenorSax,
             note_c_color: Color32::from_rgba_unmultiplied(10, 200, 30, 255),
             note_color: Color32::from_rgba_unmultiplied(0, 0, 255, 255),
             note_c_width: 3.0,
@@ -211,6 +220,9 @@ mod tests {
         assert_eq!((defaults.edit_panel, defaults.edit_height), (false, EDIT_HEIGHT));
         assert_eq!((defaults.spectrum_notes, defaults.note_a4, defaults.note_octaves), (false, 440.0, true));
         assert_eq!(parse("note_a4=1000\nnote_opacity=-1").note_a4, 480.0);
+        assert_eq!(parse("note_naturals=true").note_scale, Some(0));
+        assert_eq!(parse("note_naturals=true\nnote_scale=all").note_scale, None);
+        assert_eq!((parse("note_scale=D").note_scale, parse("note_scale=H").note_scale), (Some(2), None));
         assert_eq!(parse("note_color=zz00ff80\nnote_c_color=fff").note_color, NOTE_COLOR);
         assert_eq!(parse("spec_fft=3000\nspec_window=99999\nspec_shape=Kaiser").spectrum, crate::spectrum::Params::default().checked());
     }

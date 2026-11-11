@@ -409,25 +409,96 @@ pub fn pan_band([lo, hi]: [f32; 2], delta: f32) -> [f32; 2] {
     [lo, lo + width]
 }
 
-/// The notes of equal temperament tuned to `a4` from `low` Hz up to `nyquist`, lowest first,
-/// as (frequency, pitch class with C = 0, octave); `naturals` keeps only the white keys.
-pub fn notes(a4: f32, low: f32, nyquist: f32, naturals: bool) -> Vec<(f32, u8, i32)> {
-    (0..=135)
-        .map(|midi: i32| (a4 * 2f32.powf((midi - 69) as f32 / 12.0), midi.rem_euclid(12) as u8, midi / 12 - 1))
-        .filter(|&(f, pc, _)| (low..=nyquist).contains(&f) && !(naturals && [1, 3, 6, 8, 10].contains(&pc)))
+/// The major scales the notes can be limited to, as (name, tonic's pitch class with C = 0,
+/// tonic's letter with C = 0): the usual spellings, F# rather than Gb and B rather than Cb.
+pub const KEYS: [(&str, u8, usize); 12] =
+    [("C", 0, 0), ("Db", 1, 1), ("D", 2, 1), ("Eb", 3, 2), ("E", 4, 2), ("F", 5, 3), ("F#", 6, 3), ("G", 7, 4), ("Ab", 8, 5), ("A", 9, 5), ("Bb", 10, 6), ("B", 11, 6)];
+
+/// The pitch class of each natural note, C to B.
+const NATURALS: [u8; 7] = [0, 2, 4, 5, 7, 9, 11];
+
+/// How pitch class `pc` is written, as (letter with C = 0, accidental): in major scale `key`
+/// (an index into `KEYS`) as that key spells it, `None` when it isn't in the scale; with no
+/// key, with sharps or `flats`.
+fn spell(pc: u8, flats: bool, key: Option<usize>) -> Option<(usize, &'static str)> {
+    let Some(key) = key else {
+        let natural = NATURALS.iter().position(|&n| n == pc);
+        return Some(match natural {
+            Some(letter) => (letter, ""),
+            None if flats => (NATURALS.iter().position(|&n| n == pc + 1)?, "b"),
+            None => (NATURALS.iter().position(|&n| n + 1 == pc)?, "#"),
+        });
+    };
+    let (_, tonic, letter) = KEYS[key % 12];
+    (0..7).find_map(|degree| {
+        let note = (tonic + NATURALS[degree]) % 12;
+        let letter = (letter + degree) % 7;
+        (note == pc).then(|| (letter, match (note + 12 - NATURALS[letter]) % 12 { 1 => "#", 11 => "b", _ => "" }))
+    })
+}
+
+/// An instrument whose usual range (in concert pitch) the note lines can be limited to.
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum Instrument {
+    None,
+    Trumpet,
+    TenorSax,
+}
+
+impl Instrument {
+    pub const ALL: [Instrument; 3] = [Instrument::None, Instrument::Trumpet, Instrument::TenorSax];
+
+    pub fn name(self) -> &'static str {
+        match self {
+            Instrument::None => "None",
+            Instrument::Trumpet => "Trumpet",
+            Instrument::TenorSax => "Tenor sax",
+        }
+    }
+
+    pub fn from_name(name: &str) -> Option<Instrument> {
+        Instrument::ALL.into_iter().find(|i| i.name() == name)
+    }
+
+    /// The lowest and highest sounding notes as MIDI numbers: B♭ trumpet written F#3–C6 sounds
+    /// a tone lower, B♭ tenor sax written Bb3–F6 a major ninth lower.
+    pub fn range(self) -> Option<(i32, i32)> {
+        match self {
+            Instrument::None => None,
+            Instrument::Trumpet => Some((52, 82)),
+            Instrument::TenorSax => Some((44, 75)),
+        }
+    }
+}
+
+/// A note line: its frequency, pitch class (C = 0), how it's written, and its octave.
+pub struct Note {
+    pub freq: f32,
+    pub pc: u8,
+    pub letter: usize,
+    pub mark: &'static str,
+    pub octave: i32,
+}
+
+/// The notes of equal temperament tuned to `a4` from `low` Hz up to `nyquist`, lowest first:
+/// only those of major scale `key` when there is one, and within `instrument`'s range.
+pub fn notes(a4: f32, low: f32, nyquist: f32, key: Option<usize>, flats: bool, instrument: Instrument) -> Vec<Note> {
+    let (lowest, highest) = instrument.range().unwrap_or((0, 135));
+    (lowest..=highest)
+        .filter_map(|midi: i32| {
+            let (freq, pc) = (a4 * 2f32.powf((midi - 69) as f32 / 12.0), midi.rem_euclid(12) as u8);
+            let (letter, mark) = spell(pc, flats, key)?;
+            (low..=nyquist).contains(&freq).then_some(Note { freq, pc, letter, mark, octave: midi / 12 - 1 })
+        })
         .collect()
 }
 
 /// A note's name: "C#4", "Db4", "Do#4", "Réb4"… with `#` and `b`, as the bundled font has no ♯ or ♭.
-pub fn note_name(pc: u8, octave: i32, solfege: bool, flats: bool, octaves: bool) -> String {
+pub fn note_name(note: &Note, solfege: bool, octaves: bool) -> String {
     const LETTERS: [&str; 7] = ["C", "D", "E", "F", "G", "A", "B"];
     const SOLFEGE: [&str; 7] = ["Do", "Ré", "Mi", "Fa", "Sol", "La", "Si"];
-    // The natural note below (sharps) or above (flats) each pitch class, and its accidental.
-    const SHARP: [(usize, &str); 12] = [(0, ""), (0, "#"), (1, ""), (1, "#"), (2, ""), (3, ""), (3, "#"), (4, ""), (4, "#"), (5, ""), (5, "#"), (6, "")];
-    const FLAT: [(usize, &str); 12] = [(0, ""), (1, "b"), (1, ""), (2, "b"), (2, ""), (3, ""), (4, "b"), (4, ""), (5, "b"), (5, ""), (6, "b"), (6, "")];
-    let (natural, mark) = if flats { FLAT } else { SHARP }[pc as usize % 12];
-    let base = if solfege { SOLFEGE } else { LETTERS }[natural];
-    if octaves { format!("{base}{mark}{octave}") } else { format!("{base}{mark}") }
+    let base = if solfege { SOLFEGE } else { LETTERS }[note.letter];
+    if octaves { format!("{base}{}{}", note.mark, note.octave) } else { format!("{base}{}", note.mark) }
 }
 
 #[cfg(test)]
@@ -451,20 +522,42 @@ mod tests {
 
     #[test]
     fn notes_follow_the_tuning_and_are_named() {
-        let all = notes(440.0, 20.0, 22050.0, false);
-        let find = |n: &[(f32, u8, i32)], pc, oct| n.iter().find(|x| x.1 == pc && x.2 == oct).unwrap().0;
+        let all = notes(440.0, 20.0, 22050.0, None, false, Instrument::None);
+        let find = |n: &[Note], pc, oct| n.iter().find(|x| x.pc == pc && x.octave == oct).unwrap().freq;
         assert!((find(&all, 9, 4) - 440.0).abs() < 1e-3);
         assert!((find(&all, 0, 4) - 261.626).abs() < 0.01);
-        assert!((find(&notes(432.0, 20.0, 22050.0, false), 0, 4) - 256.87).abs() < 0.01);
-        assert!(all.first().unwrap().0 >= 20.0 && all.last().unwrap().0 <= 22050.0);
-        assert!(notes(440.0, 100.0, 22050.0, false).first().unwrap().0 >= 100.0);
-        let octave4 = |n: Vec<(f32, u8, i32)>| n.iter().filter(|x| x.2 == 4).count();
-        assert_eq!((octave4(all.clone()), octave4(notes(440.0, 20.0, 22050.0, true))), (12, 7));
-        assert_eq!(note_name(1, 4, false, false, true), "C#4");
-        assert_eq!(note_name(1, 4, false, true, true), "Db4");
-        assert_eq!(note_name(1, 4, true, false, false), "Do#");
-        assert_eq!(note_name(3, 2, true, true, true), "Mib2");
-        assert_eq!(note_name(11, 0, true, false, true), "Si0");
+        assert!((find(&notes(432.0, 20.0, 22050.0, None, false, Instrument::None), 0, 4) - 256.87).abs() < 0.01);
+        assert!(all.first().unwrap().freq >= 20.0 && all.last().unwrap().freq <= 22050.0);
+        assert!(notes(440.0, 100.0, 22050.0, None, false, Instrument::None).first().unwrap().freq >= 100.0);
+        let names = |key: Option<usize>, flats: bool, oct: i32| -> Vec<String> {
+            notes(440.0, 20.0, 22050.0, key, flats, Instrument::None).iter().filter(|n| n.octave == oct).map(|n| note_name(n, false, false)).collect()
+        };
+        assert_eq!(names(None, false, 4).len(), 12);
+        // C major is the natural notes.
+        assert_eq!(names(Some(0), false, 4), ["C", "D", "E", "F", "G", "A", "B"]);
+        assert_eq!(names(Some(5), false, 4), ["C", "D", "E", "F", "G", "A", "Bb"]);
+        assert_eq!(names(Some(2), true, 4), ["C#", "D", "E", "F#", "G", "A", "B"]);
+        assert_eq!(names(Some(6), false, 4), ["C#", "D#", "E#", "F#", "G#", "A#", "B"]);
+        assert_eq!(names(Some(1), false, 4), ["C", "Db", "Eb", "F", "Gb", "Ab", "Bb"]);
+        let c_sharp = notes(440.0, 20.0, 22050.0, None, false, Instrument::None).into_iter().find(|n| n.pc == 1 && n.octave == 4).unwrap();
+        assert_eq!(note_name(&c_sharp, false, true), "C#4");
+        assert_eq!(note_name(&c_sharp, true, false), "Do#");
+        let d_flat = notes(440.0, 20.0, 22050.0, None, true, Instrument::None).into_iter().find(|n| n.pc == 1 && n.octave == 4).unwrap();
+        assert_eq!(note_name(&d_flat, true, true), "Réb4");
+    }
+
+    #[test]
+    fn instruments_limit_the_notes_to_their_range() {
+        let ends = |i: Instrument| {
+            let n = notes(440.0, 20.0, 22050.0, None, true, i);
+            (note_name(n.first().unwrap(), false, true), n.first().unwrap().freq, note_name(n.last().unwrap(), false, true), n.last().unwrap().freq)
+        };
+        let (lo, f_lo, hi, f_hi) = ends(Instrument::Trumpet);
+        assert_eq!((lo.as_str(), hi.as_str()), ("E3", "Bb5"));
+        assert!((f_lo - 164.81).abs() < 0.01 && (f_hi - 932.33).abs() < 0.01);
+        let (lo, f_lo, hi, f_hi) = ends(Instrument::TenorSax);
+        assert_eq!((lo.as_str(), hi.as_str()), ("Ab2", "Eb5"));
+        assert!((f_lo - 103.83).abs() < 0.01 && (f_hi - 622.25).abs() < 0.01);
     }
 
     fn sine(rate: u32, freq: f32, amp: f32) -> Arc<Track> {

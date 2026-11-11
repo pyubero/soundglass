@@ -1984,12 +1984,40 @@ fn spectrum_settings(ui: &mut egui::Ui, s: &mut settings::Settings, rate: u64) -
         ui.radio_value(&mut s.note_solfege, false, "C D E");
         ui.radio_value(&mut s.note_solfege, true, "Do Ré Mi");
     });
-    ui.horizontal(|ui| {
-        ui.radio_value(&mut s.note_flats, false, "Sharps (C#)");
-        ui.radio_value(&mut s.note_flats, true, "Flats (Db)");
+    egui::Grid::new("notes").num_columns(2).show(ui, |ui| {
+        ui.label("Scale shown");
+        let scale = |k: Option<usize>| k.map_or("All notes".to_string(), |k| format!("{} major", spectrum::KEYS[k].0));
+        egui::ComboBox::from_id_salt("scale").selected_text(scale(s.note_scale)).show_ui(ui, |ui| {
+            for k in std::iter::once(None).chain((0..12).map(Some)) {
+                ui.selectable_value(&mut s.note_scale, k, scale(k));
+            }
+        });
+        ui.end_row();
+        ui.label("Instrument range");
+        let range = |i: spectrum::Instrument| match i.range() {
+            None => "None (whole range)".to_string(),
+            Some(_) => {
+                let n = spectrum::notes(440.0, 1.0, f32::MAX, None, true, i);
+                let name = |n: Option<&spectrum::Note>| n.map_or(String::new(), |n| spectrum::note_name(n, false, true));
+                format!("{} ({}–{})", i.name(), name(n.first()), name(n.last()))
+            }
+        };
+        egui::ComboBox::from_id_salt("instrument").selected_text(range(s.note_instrument)).show_ui(ui, |ui| {
+            for i in spectrum::Instrument::ALL {
+                ui.selectable_value(&mut s.note_instrument, i, range(i));
+            }
+        });
+        ui.end_row();
+    });
+    ui.add_enabled_ui(s.note_scale.is_none(), |ui| {
+        ui.horizontal(|ui| {
+            ui.radio_value(&mut s.note_flats, false, "Sharps (C#)");
+            ui.radio_value(&mut s.note_flats, true, "Flats (Db)");
+        })
+        .response
+        .on_disabled_hover_text("The key spells its notes");
     });
     ui.checkbox(&mut s.note_octaves, "Octave numbers");
-    ui.checkbox(&mut s.note_naturals, "Natural notes only");
     ui.separator();
     for (colour, label) in [(&mut s.note_c_color, "C lines"), (&mut s.note_color, "Other lines")] {
         ui.horizontal(|ui| {
@@ -2048,19 +2076,23 @@ fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, selection: &mut Option
         painter.vline(shade.right(), rect.y_range(), egui::Stroke::new(1.0, egui::Color32::from_white_alpha(120)));
     }
     if s.spectrum_notes && nyquist > low {
-        // Points between neighbouring lines: a semitone, or about two with natural notes only.
-        let step = rect.height() * 2f32.ln() / 12.0 / ((nyquist / low).ln() * (band[1] - band[0])) * if s.note_naturals { 12.0 / 7.0 } else { 1.0 };
-        let (every, only_c) = (step >= s.note_label_size, step * if s.note_naturals { 7.0 } else { 12.0 } >= s.note_label_size);
+        // Points between neighbouring lines: a semitone, or about two in a scale (7 notes an octave).
+        let per_octave = if s.note_scale.is_some() { 7.0 } else { 12.0 };
+        let step = rect.height() * 2f32.ln() / per_octave / ((nyquist / low).ln() * (band[1] - band[0]));
+        let (every, one_an_octave) = (step >= s.note_label_size, step * per_octave >= s.note_label_size);
+        // Short of room, one name an octave: on C, or on the tonic in a scale (D major has no C).
+        let named = s.note_scale.map_or(0, |k| spectrum::KEYS[k].1);
         let font = egui::FontId::proportional(s.note_label_size);
-        for (freq, pc, octave) in spectrum::notes(s.note_a4, low, nyquist, s.note_naturals) {
+        for note in spectrum::notes(s.note_a4, low, nyquist, s.note_scale, s.note_flats, s.note_instrument) {
+            let (freq, pc) = (note.freq, note.pc);
             let y = y_of(freq);
             if !rect.y_range().contains(y) {
                 continue;
             }
             let stroke = if pc == 0 { egui::Stroke::new(s.note_c_width, s.note_c_color) } else { egui::Stroke::new(1.0, s.note_color) };
             painter.hline(rect.x_range(), y, stroke);
-            if every || (only_c && pc == 0) {
-                let name = spectrum::note_name(pc, octave, s.note_solfege, s.note_flats, s.note_octaves);
+            if every || (one_an_octave && pc == named) {
+                let name = spectrum::note_name(&note, s.note_solfege, s.note_octaves);
                 let galley = painter.layout_no_wrap(name, font.clone(), egui::Color32::WHITE);
                 let at = egui::pos2(rect.left() + 4.0, y - galley.size().y / 2.0);
                 painter.rect_filled(egui::Rect::from_min_size(at, galley.size()).expand(1.0), 2.0, egui::Color32::from_black_alpha(160));
