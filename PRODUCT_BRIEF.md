@@ -62,7 +62,7 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 
 ### 5. Speed and pitch
 - **Study time-stretching first.** Compare writing our own (WSOLA, phase vocoder) with existing crates: licence, quality on music, and whether it runs in real time for the slow-down loop in milestone 7. Pick one before building. The findings are in [docs/TIME_STRETCH.md](docs/TIME_STRETCH.md).
-- **Change speed or pitch.** Separately: slower without lower pitch, or a semitone up without faster.
+- **Change speed or pitch.** Separately: slower without lower pitch, or a semitone up without faster. Done with our own WSOLA, live while playing, as three Playback items: Change speed and pitch (tape style), Pitch-preserved speed change, and Time-preserved pitch change. Save As can apply them to the file.
 
 ### 6. Files and tags
 - **Edit tags.** Title, artist, album, year, track number, genre and cover art, saved to a copy or, with confirmation, in place (tags only, never the audio).
@@ -89,6 +89,9 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 - **Remove noise.** Clean background noise and hum from voice recordings.
 - **Transcribe speech.** Turn a talk or voice memo into text you can copy.
 - **Melody to MIDI.** Turn a sung or played melody into a MIDI file.
+
+### 10. Our own engine: the Griffin–Lim modulator in Rust
+- **Build on the audio-tools Griffin–Lim modulator** to make a better, improved, faster version in pure Rust. Ideally it has two settings: Fast, for real time (frame by frame with a small look-ahead, like RTISI-LA), and Quality, slower and offline (more iterations, started from phase-vocoder phases). It replaces WSOLA where it sounds better. The ideas to start from are in [docs/TIME_STRETCH.md](docs/TIME_STRETCH.md), section 3.
 
 ## Open questions
 - Name.

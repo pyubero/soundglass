@@ -253,6 +253,8 @@ How the candidates compare on those needs:
 
 The two needs might be met by one engine or two (for example, the best offline engine for edits and a lighter one for the live loop). One engine is simpler and makes edits sound the same as the loop.
 
+**Decision (2026-11-11):** our own WSOLA now, for both, as the simplest true time-stretch; speed and pitch are live playback settings that Save As can apply, not edits. The audio-tools modulator comes back in milestone 10, ported to Rust and improved, with a Fast (real-time) and a Quality (offline) setting.
+
 ## 5. Unverified
 
 - Which algorithm timestretch 0.16 runs (its design document isn't in the published crate).

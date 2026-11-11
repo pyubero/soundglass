@@ -12,7 +12,7 @@
 - 2026-11-11 — sound is held (device outputs silence) until the window's second frame, i.e. after eframe makes it visible; it keeps playing when minimized (user's choice) — changed 2026-11-11: now done by sending Cmd::Play on that frame instead of an atomic flag
 - 2026-11-11 — new dependencies rubato, rfd, image (jpeg, png only) and eframe's persistence feature for milestone 2 — all MIT or MIT/Apache-2.0 (user's choice)
 - 2026-11-11 — loudness (LUFS) is measured by our own BS.1770 code, no ebur128 crate (user's choice)
-- 2026-11-11 — playback speed changes pitch for now (tape style); the user's own pitch-preserving algorithm replaces it later, in the resampler stage (user's choice)
+- 2026-11-11 — playback speed changes pitch for now (tape style); the user's own pitch-preserving algorithm replaces it later, in the resampler stage (user's choice) — changed 2026-11-11: our own WSOLA now, the user's Griffin–Lim algorithm later in milestone 10
 - 2026-11-11 — whole track decoded into memory; later a RAM limit in Settings decodes only a segment of very long files, with a warning that has "Don't show again" (user's choice)
 - 2026-11-11 — tracks are stored as fixed 65 536-frame chunks of Arc<[f32]> behind a Mutex the callback only try_locks — the callback never blocks or copies the list, and seeks are instant
 - 2026-11-11 — the audio callback owns all playback state (Engine); the UI sends Cmds over mpsc and reads atomics; retired tracks are freed on the UI thread
@@ -85,3 +85,9 @@
 - 2026-11-11 — effect messages (silent, too short to measure, nothing to trim) show in the notice line for 4 s and change nothing; trim clears the selection, other effects keep it
 - 2026-11-11 — fades change loudness evenly to the ear: amplitude follows t^(5/3) (loudness goes with amplitude^0.6), built as 32 linear-dB steps on the edit list so it still stacks (user's choice)
 - 2026-11-11 — level presets have short plain names with the number in brackets, e.g. "As streaming (−14 LUFS)"; Gain stays in plain dB (user's choice)
+- 2026-11-11 — time-stretching uses our own WSOLA for now, the simplest true time-stretch, accepting echo or stutter on dense mixes (user's choice)
+- 2026-11-11 — speed and pitch are live playback settings, not edits (the edit list can't hold stretched audio); Save As can apply them (user's choice)
+- 2026-11-11 — Playback has three items: Change speed and pitch (tape style, the resampler), Pitch-preserved speed change and Time-preserved pitch change (WSOLA, then the resampler for pitch); they combine (user's choice)
+- 2026-11-11 — pitch presets are −2, −1, 0, +1, +2 semitones, Custom… from −12 to +12 in 0.1 steps (user's choice)
+- 2026-11-11 — Save As's "Apply speed and pitch" is off by default, so saving keeps the audio unless asked
+- 2026-11-11 — a last milestone 10 builds on the audio-tools Griffin–Lim modulator: better, faster, pure Rust, with a Fast (real-time) and a Quality (offline) setting (user's choice)
