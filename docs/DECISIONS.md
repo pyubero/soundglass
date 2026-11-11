@@ -5,8 +5,17 @@
 - 2026-11-11 — eframe 0.37 (glow, wayland, x11, accesskit) for the UI — carried over from lightview (user's choice)
 - 2026-11-11 — symphonia with all codecs for decoding — pure Rust, MPL-2.0 (user's choice)
 - 2026-11-11 — cpal with default features (ALSA on Linux) for sound output — Apache-2.0 (user's choice)
-- 2026-11-11 — no resampling in the spike; the device must accept the file's rate — PipeWire and PulseAudio accept any rate; rubato comes in milestone 2, before Windows (user's choice)
-- 2026-11-11 — std mpsc sync_channel of Vec<f32> between decoder and audio callback, no ring-buffer crate — no new dependency; accepted limit: memory is freed inside the audio callback
+- 2026-11-11 — no resampling in the spike; the device must accept the file's rate — PipeWire and PulseAudio accept any rate; rubato comes in milestone 2, before Windows (user's choice) — changed 2026-11-11: the device now opens at its own rate and rubato converts
+- 2026-11-11 — std mpsc sync_channel of Vec<f32> between decoder and audio callback, no ring-buffer crate — no new dependency; accepted limit: memory is freed inside the audio callback — changed 2026-11-11: replaced by in-memory tracks the callback reads by chunk
 - 2026-11-11 — audio starts before the window opens — decoding and device setup overlap OpenGL setup, as lightview does for images
 - 2026-11-11 — "first sound" is timed when the first real samples reach the cpal callback — the device's own output latency is not included
-- 2026-11-11 — sound is held (device outputs silence) until the window's second frame, i.e. after eframe makes it visible; it keeps playing when minimized (user's choice)
+- 2026-11-11 — sound is held (device outputs silence) until the window's second frame, i.e. after eframe makes it visible; it keeps playing when minimized (user's choice) — changed 2026-11-11: now done by sending Cmd::Play on that frame instead of an atomic flag
+- 2026-11-11 — new dependencies rubato, rfd, image (jpeg, png only) and eframe's persistence feature for milestone 2 — all MIT or MIT/Apache-2.0 (user's choice)
+- 2026-11-11 — loudness (LUFS) is measured by our own BS.1770 code, no ebur128 crate (user's choice)
+- 2026-11-11 — playback speed changes pitch for now (tape style); the user's own pitch-preserving algorithm replaces it later, in the resampler stage (user's choice)
+- 2026-11-11 — whole track decoded into memory; later a RAM limit in Settings decodes only a segment of very long files, with a warning that has "Don't show again" (user's choice)
+- 2026-11-11 — tracks are stored as fixed 65 536-frame chunks of Arc<[f32]> behind a Mutex the callback only try_locks — the callback never blocks or copies the list, and seeks are instant
+- 2026-11-11 — the audio callback owns all playback state (Engine); the UI sends Cmds over mpsc and reads atomics; retired tracks are freed on the UI thread
+- 2026-11-11 — the device opens once at its default rate and channels; one rubato sinc resampler (128 taps, ratio 1/10 to 10) does rate conversion and speed together
+- 2026-11-11 — no gapless code of our own — symphonia 0.6's decoders already trim encoder delay and padding
+- 2026-11-11 — a decode thread stops when only it still holds the track — moving on to another file must not keep decoding the old one
