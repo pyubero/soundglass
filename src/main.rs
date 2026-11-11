@@ -1,6 +1,7 @@
 // No console window behind the app on Windows (debug builds keep it, for --timings output).
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
+mod edit;
 mod folder;
 mod loudness;
 mod player;

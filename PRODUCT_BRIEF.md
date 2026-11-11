@@ -44,15 +44,15 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 - **Title bar.** File name, length and format.
 - **Open and Open Recent, default app.** The system file dialog, the last ten files, and a .desktop file so it can be the default for audio files.
 
-### 3. Cut and save
+### 3. Looping and Edits
 - **Select a region.** Drag on the waveform; zoom in for precise edges.
 - **Play or loop the selection.** Hear exactly what you selected, over and over.
 - **Cut, crop, silence.** Remove the selection, keep only the selection, or replace it with silence.
-- **Fade in / fade out.** A smooth start or end over the selection.
 - **Undo and redo.** For every edit.
-- **Save As.** WAV, FLAC, MP3 and Ogg/Opus, with the quality chosen in the dialog. Tags are kept. Never overwrites the original.
+- **Save As.** WAV, FLAC, MP3 and Ogg Vorbis, with the quality chosen in the dialog. Tags are kept. Never overwrites the original.
 
-### 4. Quick fixes
+### 4. Quick fixes for the entire track (by default) or to the entire selection
+- **Fade in / fade out.** A smooth start or end.
 - **Gain.** Make the track louder or quieter by a set number of dB.
 - **Normalize.** Bring the peak to a level, or the loudness to a target LUFS so several files sound equally loud.
 - **Trim silence.** Remove the quiet bits at the start and end.

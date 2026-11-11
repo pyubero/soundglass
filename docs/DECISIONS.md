@@ -48,3 +48,9 @@
 - 2026-11-11 — maximized or fullscreen frames are not recorded as the window size, and Track Info does not resize a maximized window
 - 2026-11-11 — the window size is read from ctx.viewport_rect(), not viewport().inner_rect — egui-winit builds inner_rect from the window position, which Wayland never reports, so it is always None there
 - 2026-11-11 — the cover is sized from the controls' height measured on the previous frame, not a fixed guess — a fixed 190 pt pushed the buttons out of wide windows; it settles in one extra frame
+- 2026-11-11 — milestone 3 is done whole, with an Edit panel that widens the window; click seeks, drag selects; Play stops at the selection's end, with a Loop toggle (user's choice)
+- 2026-11-11 — edits are a list of pieces of the original track (frames or silence), not copies of the audio — an edit costs nothing, undo keeps old lists, the decoded audio never changes
+- 2026-11-11 — cut, crop and silence only once the track is fully decoded — the edit list never points at audio that isn't there yet
+- 2026-11-11 — an edited track does not move on gaplessly into the next file; playback stops at its end — the edits must not be left behind unsaved without a word
+- 2026-11-11 — Save As writes WAV, FLAC, MP3 and Ogg Vorbis, not Opus — symphonia can't play Opus back; new dependencies hound, flacenc, mp3lame-encoder, vorbis_rs and lofty approved (user's choice)
+- 2026-11-11 — leaving a file or quitting with unsaved edits asks Save As / Discard / Cancel (user's choice)

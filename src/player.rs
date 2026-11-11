@@ -4,6 +4,7 @@
 //! back the position from `Shared`. The callback never blocks, allocates or frees a track: tracks
 //! it is done with go back to the UI on `retired`.
 
+use crate::edit::Edit;
 use crate::track::Track;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use rubato::audioadapter_buffers::direct::InterleavedSlice;
@@ -24,6 +25,17 @@ pub enum Cmd {
     /// Linear gain.
     Volume(f32),
     Speed(f64),
+    /// The current track's edits; `None` plays it as it is. `Load` clears them.
+    Edit(Option<Arc<Edit>>),
+    /// Frames to stop at the end of (or loop, when true), once playing inside them.
+    Region(Option<(u64, u64)>, bool),
+}
+
+/// What the audio callback is done with, sent back so it is freed on the UI thread.
+#[allow(dead_code)] // held only to be dropped
+pub enum Retired {
+    Track(Arc<Track>),
+    Edit(Arc<Edit>),
 }
 
 #[derive(Default)]
@@ -38,7 +50,7 @@ pub struct Shared {
 pub struct Player {
     tx: Sender<Cmd>,
     pub shared: Arc<Shared>,
-    pub retired: Receiver<Arc<Track>>,
+    pub retired: Receiver<Retired>,
     _stream: cpal::Stream,
 }
 
@@ -97,6 +109,9 @@ const MAX_RATIO: f64 = 10.0;
 struct Engine {
     cur: Option<Arc<Track>>,
     next: Option<Arc<Track>>,
+    edit: Option<Arc<Edit>>,
+    region: Option<(u64, u64)>,
+    looping: bool,
     pos: u64,
     advanced: u64,
     playing: bool,
@@ -113,11 +128,11 @@ struct Engine {
     output: Vec<f32>,
     out_pos: usize,
     out_len: usize,
-    retire: Sender<Arc<Track>>,
+    retire: Sender<Retired>,
 }
 
 impl Engine {
-    fn new(dev_rate: u32, retire: Sender<Arc<Track>>) -> Engine {
+    fn new(dev_rate: u32, retire: Sender<Retired>) -> Engine {
         let params = SincInterpolationParameters::new(128, WindowFunction::Blackman2)
             .oversampling_factor(128)
             .interpolation(SincInterpolationType::Linear);
@@ -125,7 +140,7 @@ impl Engine {
         let input = vec![0.0; resampler.input_frames_max() * 2];
         let output = vec![0.0; resampler.output_frames_max() * 2];
         Engine {
-            cur: None, next: None, pos: 0, advanced: 0, playing: false, heard: false, volume: 1.0, speed: 1.0,
+            cur: None, next: None, edit: None, region: None, looping: false, pos: 0, advanced: 0, playing: false, heard: false, volume: 1.0, speed: 1.0,
             dev_rate, rate: dev_rate, resampler, input, output, out_pos: 0, out_len: 0, retire,
         }
     }
@@ -137,6 +152,9 @@ impl Engine {
                 self.retire(next);
                 let old = self.cur.replace(track);
                 self.retire(old);
+                let edit = self.edit.take();
+                self.retire_edit(edit);
+                self.region = None;
                 self.seek(0);
             }
             Cmd::Queue(track) => {
@@ -151,12 +169,23 @@ impl Engine {
                 self.speed = s;
                 self.set_ratio();
             }
+            Cmd::Edit(edit) => {
+                let old = std::mem::replace(&mut self.edit, edit);
+                self.retire_edit(old);
+            }
+            Cmd::Region(region, looping) => (self.region, self.looping) = (region, looping),
         }
     }
 
     fn retire(&self, track: Option<Arc<Track>>) {
         if let Some(t) = track {
-            let _ = self.retire.send(t);
+            let _ = self.retire.send(Retired::Track(t));
+        }
+    }
+
+    fn retire_edit(&self, edit: Option<Arc<Edit>>) {
+        if let Some(e) = edit {
+            let _ = self.retire.send(Retired::Edit(e));
         }
     }
 
@@ -216,10 +245,12 @@ impl Engine {
         let mut i = 0;
         while i < frames {
             let Some(track) = &self.cur else { break };
-            if track.done() && self.pos >= track.decoded() {
+            let end = self.edit.as_ref().map_or(track.decoded(), |e| e.len());
+            if track.done() && self.pos >= end {
                 // The end of the track: move on to the queued one, in the same block, so there is no gap.
+                // Not while edited: the edits would be left behind unsaved without a word.
                 match self.next.take() {
-                    Some(next) if next.format.get().is_some() => {
+                    Some(next) if self.edit.is_none() && next.format.get().is_some() => {
                         let old = self.cur.replace(next);
                         self.retire(old);
                         (self.pos, self.advanced) = (0, self.advanced + 1);
@@ -235,17 +266,50 @@ impl Engine {
                     }
                 }
             }
-            let Some((chunk, offset)) = track.chunk_at(self.pos) else { break };
-            let channels = track.format.get().map_or(1, |f| f.channels);
-            let n = (frames - i).min(chunk.len() / channels - offset);
-            for (k, frame) in chunk[offset * channels..(offset + n) * channels].chunks_exact(channels).enumerate() {
-                let (l, r) = if channels == 1 { (frame[0], frame[0]) } else { (frame[0], frame[1]) };
-                // shortcut: files with more than 2 channels play their first two; mix down properly if surround files show up.
-                self.input[(i + k) * 2] = l;
-                self.input[(i + k) * 2 + 1] = r;
+            let mut want = (frames - i) as u64;
+            let region = self.region.filter(|&(_, b)| self.pos < b);
+            if let Some((_, b)) = region {
+                want = want.min(b - self.pos);
             }
+            let (src, left) = match &self.edit {
+                Some(e) => match e.locate(self.pos) {
+                    Some(at) => at,
+                    None => break,
+                },
+                None => (Some(self.pos), u64::MAX),
+            };
+            let want = want.min(left) as usize;
+            let n = match src {
+                None => {
+                    self.input[i * 2..(i + want) * 2].fill(0.0);
+                    want
+                }
+                Some(src) => {
+                    let Some((chunk, offset)) = track.chunk_at(src) else { break };
+                    let channels = track.format.get().map_or(1, |f| f.channels);
+                    let n = want.min(chunk.len() / channels - offset);
+                    for (k, frame) in chunk[offset * channels..(offset + n) * channels].chunks_exact(channels).enumerate() {
+                        let (l, r) = if channels == 1 { (frame[0], frame[0]) } else { (frame[0], frame[1]) };
+                        // shortcut: files with more than 2 channels play their first two; mix down properly if surround files show up.
+                        self.input[(i + k) * 2] = l;
+                        self.input[(i + k) * 2 + 1] = r;
+                    }
+                    n
+                }
+            };
             (i, self.pos) = (i + n, self.pos + n as u64);
             self.heard = true;
+            if let Some((a, b)) = region
+                && self.pos == b
+            {
+                // Back to the start within the block, so the loop has no gap.
+                if self.looping {
+                    self.pos = a;
+                } else {
+                    self.playing = false;
+                    break;
+                }
+            }
         }
         self.input[i * 2..frames * 2].fill(0.0);
         true
@@ -297,6 +361,54 @@ mod tests {
         assert_eq!(e.input[20..40], [0.0; 20]);
         assert!(!e.pull(20));
         assert!(!e.playing);
+    }
+
+    fn left(e: &Engine, frames: usize) -> Vec<f32> {
+        e.input[..frames * 2].iter().step_by(2).copied().collect()
+    }
+
+    #[test]
+    fn plays_through_cuts_and_silence() {
+        let mut e = engine();
+        e.handle(Cmd::Load(Track::from_samples(48000, 1, (0..10).map(|i| i as f32 + 1.0).collect())));
+        e.handle(Cmd::Edit(Some(Arc::new(Edit::whole(10).cut(2, 4).silence(3, 5)))));
+        assert!(e.pull(10));
+        assert_eq!(left(&e, 10), [1., 2., 5., 0., 0., 8., 9., 10., 0., 0.]);
+        assert_eq!(e.pos, 8);
+    }
+
+    #[test]
+    fn loops_a_region_without_a_gap_and_stops_without_loop() {
+        let mut e = engine();
+        e.handle(Cmd::Load(Track::from_samples(48000, 1, (0..10).map(|i| i as f32).collect())));
+        e.handle(Cmd::Region(Some((2, 5)), true));
+        e.handle(Cmd::Seek(3));
+        e.handle(Cmd::Play);
+        assert!(e.pull(6));
+        assert_eq!(left(&e, 6), [3., 4., 2., 3., 4., 2.]);
+        e.handle(Cmd::Region(Some((2, 5)), false));
+        e.handle(Cmd::Seek(3));
+        assert!(e.pull(6));
+        assert_eq!(left(&e, 6), [3., 4., 0., 0., 0., 0.]);
+        assert!(!e.playing);
+        // Past the region's end it plays on.
+        e.handle(Cmd::Seek(6));
+        e.handle(Cmd::Play);
+        assert!(e.pull(2));
+        assert_eq!(left(&e, 2), [6., 7.]);
+    }
+
+    #[test]
+    fn does_not_move_on_while_edited() {
+        let mut e = engine();
+        e.handle(Cmd::Load(Track::from_samples(48000, 1, vec![1.0; 10])));
+        e.handle(Cmd::Queue(Track::from_samples(48000, 1, vec![2.0; 10])));
+        e.handle(Cmd::Edit(Some(Arc::new(Edit::whole(10).cut(0, 5)))));
+        e.handle(Cmd::Play);
+        assert!(e.pull(10));
+        assert_eq!(left(&e, 10), [1., 1., 1., 1., 1., 0., 0., 0., 0., 0.]);
+        assert!(!e.pull(10));
+        assert_eq!(e.advanced, 0);
     }
 
     #[test]
