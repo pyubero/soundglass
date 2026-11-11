@@ -31,6 +31,23 @@ pub struct Tags {
     pub album: Option<String>,
 }
 
+/// What Track Info shows besides the tags.
+#[derive(Clone, Debug, Default)]
+pub struct Info {
+    pub container: String,
+    pub codec: String,
+    pub bits: Option<u32>,
+    /// Every tag as the file has it, key and value.
+    pub raw: Vec<(String, String)>,
+}
+
+/// Integrated loudness (LUFS) and sample peak (dBFS), measured once decoding is done.
+#[derive(Clone, Copy, Debug)]
+pub struct Loudness {
+    pub lufs: f64,
+    pub peak_db: f64,
+}
+
 /// Largest cover side kept, in pixels; bigger embedded pictures are shrunk on load.
 const COVER_MAX: u32 = 512;
 
@@ -41,6 +58,8 @@ pub struct Track {
     /// Length the container reports, before decoding finishes.
     pub expected: OnceLock<u64>,
     pub tags: OnceLock<Tags>,
+    pub info: OnceLock<Info>,
+    pub loudness: OnceLock<Loudness>,
     /// The embedded front cover (or first picture), decoded off the UI thread.
     pub cover: OnceLock<eframe::egui::ColorImage>,
     /// Interleaved samples, `CHUNK` frames each except the last.
@@ -62,8 +81,9 @@ impl Track {
         std::thread::spawn(move || {
             let mut cur: Vec<f32> = Vec::new();
             let (mut peak, mut peak_frames) = ((f32::MAX, f32::MIN), 0);
-            let on_meta = |tags, picture: Option<Box<[u8]>>| {
+            let on_meta = |tags, info, picture: Option<Box<[u8]>>| {
                 let _ = t.tags.set(tags);
+                let _ = t.info.set(info);
                 // On its own thread: a large JPEG must not hold up the first sound.
                 if let Some(data) = picture {
                     let (t, notify) = (t.clone(), notify.clone());
@@ -122,6 +142,16 @@ impl Track {
             }
             t.done.store(true, Relaxed);
             notify();
+            if let Some(format) = t.format.get() {
+                let mut meter = crate::loudness::Meter::new(format.rate, format.channels);
+                let chunks = t.chunks.lock().unwrap().clone();
+                for chunk in chunks {
+                    meter.push(&chunk);
+                }
+                let peak = t.peaks.lock().unwrap().iter().fold(0f32, |m, &(lo, hi)| m.max(-lo).max(hi));
+                let _ = t.loudness.set(Loudness { lufs: meter.integrated(), peak_db: 20.0 * (peak as f64).log10() });
+                notify();
+            }
         });
         track
     }
@@ -132,6 +162,8 @@ impl Track {
             format: OnceLock::new(),
             expected: OnceLock::new(),
             tags: OnceLock::new(),
+            info: OnceLock::new(),
+            loudness: OnceLock::new(),
             cover: OnceLock::new(),
             chunks: Mutex::new(Vec::new()),
             decoded: AtomicU64::new(0),
@@ -186,10 +218,10 @@ impl Track {
 /// Decodes the default audio track packet by packet, handing interleaved f32 samples, the channel
 /// count, the sample rate and the container's length to `sink`. Stops at the first error `sink`
 /// returns. symphonia's decoders already trim encoder delay and padding, so albums are gapless.
-/// `on_meta` gets the tags and the cover's encoded bytes once, before the first samples.
+/// `on_meta` gets the tags, the info and the cover's encoded bytes once, before the first samples.
 pub fn decode(
     path: &Path,
-    on_meta: impl FnOnce(Tags, Option<Box<[u8]>>),
+    on_meta: impl FnOnce(Tags, Info, Option<Box<[u8]>>),
     mut sink: impl FnMut(&[f32], usize, u32, Option<u64>) -> Result<(), String>,
 ) -> Result<(), String> {
     let file = std::fs::File::open(path).map_err(|e| e.to_string())?;
@@ -202,8 +234,10 @@ pub fn decode(
         .probe(&hint, mss, FormatOptions::default(), MetadataOptions::default())
         .map_err(|e| format!("not a supported audio file ({e})"))?;
     let (mut tags, mut picture) = (Tags::default(), None);
+    let mut info = Info { container: format.format_info().long_name.to_string(), ..Info::default() };
     if let Some(rev) = format.metadata().skip_to_latest() {
         for tag in &rev.media.tags {
+            info.raw.push((tag.raw.key.clone(), tag.raw.value.to_string()));
             // ID3v1 pads its fixed-width fields with spaces or NULs.
             let text = |v: &str| Some(v.trim_matches(|c: char| c.is_whitespace() || c == '\0').to_string()).filter(|t| !t.is_empty());
             match &tag.std {
@@ -217,13 +251,15 @@ pub fn decode(
         let front = visuals.iter().find(|v| v.usage == Some(StandardVisualKey::FrontCover)).or(visuals.first());
         picture = front.map(|v| v.data.clone());
     }
-    on_meta(tags, picture);
     let track = format.default_track(TrackType::Audio).ok_or("no audio track")?;
     let (track_id, expected) = (track.id, track.num_frames);
     let params = track.codec_params.as_ref().and_then(|p| p.audio()).ok_or("no audio track")?;
     let mut decoder = symphonia::default::get_codecs()
         .make_audio_decoder(params, &AudioDecoderOptions::default())
         .map_err(|e| e.to_string())?;
+    info.codec = symphonia::default::get_codecs().get_audio_decoder(params.codec).map_or_else(String::new, |d| d.codec.info.long_name.to_string());
+    info.bits = params.bits_per_sample;
+    on_meta(tags, info, picture);
     let mut samples = Vec::new();
     while let Some(packet) = format.next_packet().map_err(|e| e.to_string())? {
         if packet.track_id != track_id {
@@ -301,9 +337,9 @@ pub mod tests {
     #[test]
     fn reads_tags() {
         let mut got = None;
-        decode(&temp_file("tagged.wav", &tagged_wav()), |tags, _| got = Some(tags), |_, _, _, _| Ok(())).unwrap();
+        decode(&temp_file("tagged.wav", &tagged_wav()), |tags, info, _| got = Some((tags, info.raw.len())), |_, _, _, _| Ok(())).unwrap();
         let want = Tags { title: Some("Long Gone".into()), artist: Some("Some Artist".into()), album: Some("An Album".into()) };
-        assert_eq!(got, Some(want));
+        assert_eq!(got, Some((want, 3)));
     }
 
     fn wait(track: &Track) {
@@ -315,7 +351,11 @@ pub mod tests {
     #[test]
     fn decodes_a_wav() {
         let mut total = 0;
-        decode(&temp_file("tone.wav", &wav(1000, 22050)), |tags, cover| assert_eq!((tags, cover), (Tags::default(), None)), |samples, channels, rate, _| {
+        decode(&temp_file("tone.wav", &wav(1000, 22050)), |tags, info, cover| {
+            assert_eq!((tags, cover), (Tags::default(), None));
+            assert_eq!((info.bits, info.raw.len()), (Some(16), 0));
+            assert!(!info.codec.is_empty() && !info.container.is_empty(), "{info:?}");
+        }, |samples, channels, rate, _| {
             assert_eq!((channels, rate), (2, 22050));
             total += samples.len();
             Ok(())
@@ -347,7 +387,7 @@ pub mod tests {
     #[test]
     fn junk_is_an_error_not_a_panic() {
         let path = temp_file("junk.mp3", &[0x5a; 4096]);
-        assert!(decode(&path, |_, _| {}, |_, _, _, _| Ok(())).is_err());
+        assert!(decode(&path, |_, _, _| {}, |_, _, _, _| Ok(())).is_err());
         let track = Track::load(path, || {});
         wait(&track);
         assert!(track.error.lock().unwrap().is_some());

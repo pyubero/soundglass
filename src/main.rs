@@ -2,6 +2,7 @@
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
 mod folder;
+mod loudness;
 mod player;
 mod settings;
 mod track;
@@ -62,7 +63,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, show_info: false, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -113,6 +114,7 @@ struct App {
     /// The Custom speed dialog's value while it is open.
     custom_speed: Option<f64>,
     show_settings: bool,
+    show_info: bool,
     settings_error: Option<String>,
     player: Result<Player, String>,
     t0: Instant,
@@ -200,6 +202,10 @@ impl eframe::App for App {
         let open_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::O);
         let mut open_file = ctx.input_mut(|i| i.consume_shortcut(&open_key));
         let mut open_recent = None;
+        let info_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::I);
+        if ctx.input_mut(|i| i.consume_shortcut(&info_key)) {
+            self.show_info = !self.show_info;
+        }
         if ctx.input_mut(|i| i.consume_shortcut(&egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Q))) {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
@@ -232,6 +238,10 @@ impl eframe::App for App {
                     }
                 });
                 ui.menu_button("View", |ui| {
+                    if ui.add(egui::Button::new("Track Info…").shortcut_text(ctx.format_shortcut(&info_key))).clicked() {
+                        self.show_info = true;
+                        ui.close();
+                    }
                     if ui.checkbox(&mut self.settings.show_waveform, "Waveform").changed() {
                         self.settings_error = self.settings.save().err();
                     }
@@ -286,6 +296,7 @@ impl eframe::App for App {
         });
 
         self.settings_window(&ctx);
+        self.info_window(&ctx);
         if let Some(speed) = self.speed_window(&ctx) {
             actions.push(Action::Speed(speed));
         }
@@ -304,6 +315,44 @@ impl eframe::App for App {
 /// `name — 3:12 — MP3`, leaving out what isn't known.
 fn title(name: &str, length: Option<&str>, format: &str) -> String {
     [Some(name), length, (!format.is_empty()).then_some(format)].into_iter().flatten().collect::<Vec<_>>().join(" — ")
+}
+
+/// Track Info's rows; "—" for what isn't known, "measuring…" while loudness is computed.
+fn info_rows(track: &Track, file_size: Option<u64>) -> Vec<(&'static str, String)> {
+    let unknown = || "—".to_string();
+    let tags = track.tags.get().cloned().unwrap_or_default();
+    let info = track.info.get().cloned().unwrap_or_default();
+    let format = track.format.get();
+    let rate = format.map_or(0, |f| f.rate as u64);
+    let seconds = (track.done() && rate > 0).then(|| track.len() as f64 / rate as f64);
+    let or = |v: String| if v.is_empty() { unknown() } else { v };
+    let channels = format.map_or_else(unknown, |f| match f.channels {
+        1 => "1 (mono)".into(),
+        2 => "2 (stereo)".into(),
+        n => n.to_string(),
+    });
+    let bitrate = seconds.zip(file_size).filter(|(s, _)| *s > 0.0).map_or_else(unknown, |(s, b)| format!("{:.0} kb/s", b as f64 * 8.0 / s / 1000.0));
+    let loudness = match (track.loudness.get(), track.done()) {
+        (Some(l), _) if l.lufs.is_finite() => (format!("{:.1} LUFS", l.lufs), format!("{:.1} dBFS", l.peak_db)),
+        (Some(_), _) => ("silent".into(), "silent".into()),
+        (None, true) => ("measuring…".into(), "measuring…".into()),
+        (None, false) => ("after loading".into(), "after loading".into()),
+    };
+    vec![
+        ("Title", tags.title.unwrap_or_else(unknown)),
+        ("Artist", tags.artist.unwrap_or_else(unknown)),
+        ("Album", tags.album.unwrap_or_else(unknown)),
+        ("Length", seconds.map_or_else(unknown, |_| clock(track.len(), rate))),
+        ("Format", or(info.container)),
+        ("Codec", or(info.codec)),
+        ("Bitrate", bitrate),
+        ("Sample rate", if rate > 0 { format!("{:.1} kHz", rate as f64 / 1000.0) } else { unknown() }),
+        ("Channels", channels),
+        ("Bit depth", info.bits.map_or_else(unknown, |b| format!("{b}-bit"))),
+        ("File size", file_size.map_or_else(unknown, |b| format!("{:.1} MB", b as f64 / 1e6))),
+        ("Loudness", loudness.0),
+        ("Peak", loudness.1),
+    ]
 }
 
 /// How many files Open Recent lists.
@@ -360,6 +409,40 @@ impl App {
                 p.send(Cmd::Play);
             }
         }
+    }
+
+    fn info_window(&mut self, ctx: &egui::Context) {
+        if !self.show_info {
+            return;
+        }
+        let (mut open, cover, track) = (true, self.cover_texture(ctx), self.track.clone());
+        let size = std::fs::metadata(&track.path).map(|m| m.len()).ok();
+        egui::Window::new("Track Info").open(&mut open).default_width(340.0).show(ctx, |ui| {
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                if cover.is_some() {
+                    cover_art(ui, cover.as_ref(), 120.0);
+                }
+                egui::Grid::new("info").num_columns(2).striped(true).show(ui, |ui| {
+                    for (name, value) in info_rows(&track, size) {
+                        ui.label(name);
+                        ui.label(value);
+                        ui.end_row();
+                    }
+                });
+                if let Some(info) = track.info.get().filter(|i| !i.raw.is_empty()) {
+                    ui.collapsing("All tags", |ui| {
+                        egui::Grid::new("tags").num_columns(2).show(ui, |ui| {
+                            for (key, value) in &info.raw {
+                                ui.label(key);
+                                ui.label(value);
+                                ui.end_row();
+                            }
+                        });
+                    });
+                }
+            });
+        });
+        self.show_info = open;
     }
 
     /// The Custom speed dialog; returns the speed when OK is pressed.
@@ -701,8 +784,23 @@ pub fn ms(t: Instant) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{marquee, push_recent, snap_speed, title, volume_gain};
+    use super::{info_rows, marquee, push_recent, snap_speed, title, volume_gain};
     use std::path::PathBuf;
+
+    #[test]
+    fn track_info_rows() {
+        // 2 s of stereo at 44.1 kHz in a 352 800-byte file: 1411 kb/s, like a CD.
+        let track = crate::track::Track::from_samples(44100, 2, vec![0.0; 2 * 88200]);
+        let rows = info_rows(&track, Some(352_800));
+        let row = |name| rows.iter().find(|(n, _)| *n == name).unwrap().1.clone();
+        assert_eq!(row("Length"), "0:02");
+        assert_eq!(row("Sample rate"), "44.1 kHz");
+        assert_eq!(row("Channels"), "2 (stereo)");
+        assert_eq!(row("Bitrate"), "1411 kb/s");
+        assert_eq!(row("File size"), "0.4 MB");
+        assert_eq!(row("Title"), "—");
+        assert_eq!(row("Loudness"), "measuring…");
+    }
 
     #[test]
     fn title_parts() {

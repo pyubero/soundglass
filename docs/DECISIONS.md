@@ -38,3 +38,7 @@
 - 2026-11-11 — volume is a small speaker button left of Previous that pops up a slider (user's choice); gain is the slider position cubed, not saved between runs
 - 2026-11-11 — speed lives in Playback → Change speed ▸ with presets and Custom… in steps of 0.05 (user's choice)
 - 2026-11-11 — waveform comes back as a View → Waveform toggle in place of the seek bar line, off by default and remembered in settings.txt (user's choice)
+- 2026-11-11 — loudness is measured on the decode thread after decoding, from the in-memory chunks; peak is the sample peak taken from the waveform peaks (no true-peak oversampling)
+- 2026-11-11 — K-weighting coefficients come from the BS.1770 analogue prototypes for any rate (as libebur128 does); tests check the standard's −3.01 LUFS reference at 44.1 and 48 kHz
+- 2026-11-11 — Track Info's bitrate is the average (file size × 8 ÷ length), tags included — simple and right for VBR files too
+- 2026-11-11 — Open Recent lists files opened at startup or through Open…, not each Next; stored in eframe storage as lines, as lightview does
