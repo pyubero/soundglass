@@ -79,7 +79,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, spectrum_view: EditView::default(), spectrum: Default::default(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: Default::default(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -139,6 +139,7 @@ struct App {
     edit_view: EditView,
     /// The Spectrogram window: whether it's open, its own zoom, and its picture.
     show_spectrum: bool,
+    show_spectrum_settings: bool,
     spectrum_view: EditView,
     spectrum: spectrum::Spectrogram,
     /// Edits since the track was opened; `None` until the first one.
@@ -405,23 +406,6 @@ impl eframe::App for App {
         }
 
         let mut actions = Vec::new();
-        let key = |k| ctx.input(|i| i.key_pressed(k));
-        // A focused button already takes Space as its own click; toggling here too would undo it.
-        if key(egui::Key::Space) && ctx.memory(|m| m.focused().is_none()) {
-            actions.push(Action::Toggle);
-        }
-        for (k, action) in [(egui::Key::PageUp, Action::Previous), (egui::Key::PageDown, Action::Next)] {
-            if key(k) {
-                actions.push(action);
-            }
-        }
-        let step = STEP_SECONDS * rate;
-        if key(egui::Key::ArrowLeft) {
-            actions.push(Action::Seek(pos.saturating_sub(step)));
-        }
-        if key(egui::Key::ArrowRight) {
-            actions.push(Action::Seek((pos + step).min(len)));
-        }
         let shortcut = |m, k| egui::KeyboardShortcut::new(m, k);
         let (undo_key, redo_key, redo_key2) = (shortcut(egui::Modifiers::COMMAND, egui::Key::Z), shortcut(egui::Modifiers::COMMAND | egui::Modifiers::SHIFT, egui::Key::Z), shortcut(egui::Modifiers::COMMAND, egui::Key::Y));
         let (cut_key, crop_key, silence_key) = (shortcut(egui::Modifiers::NONE, egui::Key::Delete), shortcut(egui::Modifiers::COMMAND, egui::Key::T), shortcut(egui::Modifiers::COMMAND, egui::Key::L));
@@ -431,17 +415,9 @@ impl eframe::App for App {
                 actions.push(action);
             }
         }
-        if ctx.memory(|m| m.focused().is_none()) && self.custom_speed.is_none() && self.custom_fx.is_none() && self.pending.is_none() {
-            let plain = |k| ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, k));
-            if plain(egui::Key::Escape) {
-                self.edit_view.selection = None;
-            }
-            if plain(egui::Key::L) {
-                self.looping = !self.looping;
-            }
-            if plain(egui::Key::Delete) {
-                actions.push(Action::Cut);
-            }
+        self.player_keys(&ctx, pos, len, rate, &mut actions);
+        if self.no_dialog(&ctx) && ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Delete)) {
+            actions.push(Action::Cut);
         }
         let save_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND | egui::Modifiers::SHIFT, egui::Key::S);
         let copy_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::S);
@@ -680,9 +656,7 @@ impl eframe::App for App {
         self.tags_confirm(&ctx);
         self.follow_tags(&ctx);
         self.rename_window(&ctx);
-        if let Some(frame) = self.spectrum_window(&ctx, &edit, pos, len, rate, playing) {
-            actions.push(Action::Seek(frame));
-        }
+        actions.extend(self.spectrum_window(&ctx, &edit, pos, len, rate, playing));
         if let Some(path) = open_recent {
             self.open(path);
         }
@@ -1300,10 +1274,47 @@ impl App {
         }
     }
 
-    /// View → Spectrogram: its own window, closed with its ✕ or the menu.
-    fn spectrum_window(&mut self, ctx: &egui::Context, edit: &Edit, pos: u64, len: u64, rate: u64, playing: bool) -> Option<u64> {
+    /// No text field has focus and no dialog waits for an answer, so plain keys are shortcuts.
+    fn no_dialog(&self, ctx: &egui::Context) -> bool {
+        ctx.memory(|m| m.focused().is_none()) && self.custom_speed.is_none() && self.custom_fx.is_none() && self.pending.is_none()
+    }
+
+    /// The player's keys in the window `ctx` is drawing (the main one or the Spectrogram):
+    /// Space, PageUp/PageDown, ←/→, and Esc and L.
+    fn player_keys(&mut self, ctx: &egui::Context, pos: u64, len: u64, rate: u64, actions: &mut Vec<Action>) {
+        let key = |k| ctx.input(|i| i.key_pressed(k));
+        // A focused button already takes Space as its own click; toggling here too would undo it.
+        if key(egui::Key::Space) && ctx.memory(|m| m.focused().is_none()) {
+            actions.push(Action::Toggle);
+        }
+        for (k, action) in [(egui::Key::PageUp, Action::Previous), (egui::Key::PageDown, Action::Next)] {
+            if key(k) {
+                actions.push(action);
+            }
+        }
+        let step = STEP_SECONDS * rate;
+        if key(egui::Key::ArrowLeft) {
+            actions.push(Action::Seek(pos.saturating_sub(step)));
+        }
+        if key(egui::Key::ArrowRight) {
+            actions.push(Action::Seek((pos + step).min(len)));
+        }
+        if self.no_dialog(ctx) {
+            let plain = |k| ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, k));
+            if plain(egui::Key::Escape) {
+                self.edit_view.selection = None;
+            }
+            if plain(egui::Key::L) {
+                self.looping = !self.looping;
+            }
+        }
+    }
+
+    /// View → Spectrogram: its own window, closed with its ✕ or the menu. Returns what its keys
+    /// and clicks asked for.
+    fn spectrum_window(&mut self, ctx: &egui::Context, edit: &Edit, pos: u64, len: u64, rate: u64, playing: bool) -> Vec<Action> {
         if !self.show_spectrum {
-            return None;
+            return Vec::new();
         }
         let name = self.track.path.file_name().unwrap_or_default().to_string_lossy();
         let builder = egui::ViewportBuilder::default().with_title(format!("Spectrogram — {name}")).with_inner_size([900.0, 400.0]);
@@ -1311,13 +1322,35 @@ impl App {
             if ui.input(|i| i.viewport().close_requested()) {
                 self.show_spectrum = false;
             }
-            let changed = egui::Panel::top("spectrum-bar").show(ui, |ui| ui.horizontal(spectrum_bar(&mut self.settings)).inner).inner;
-            if changed {
+            let mut actions = Vec::new();
+            let ctx = ui.ctx().clone();
+            egui::Panel::top("spectrum-bar").show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    let notes = ui.selectable_label(self.settings.spectrum_notes, "Notes").on_hover_text("Show or hide the note lines");
+                    if notes.clicked() {
+                        self.settings.spectrum_notes = !self.settings.spectrum_notes;
+                        self.settings_error = self.settings.save().err();
+                    }
+                    if ui.button("Fit").on_hover_text("Show the whole track and all frequencies").clicked() {
+                        (self.spectrum_view.start, self.spectrum_view.frames, self.spectrum.band) = (0, 0, [0.0, 1.0]);
+                    }
+                    if ui.selectable_label(self.show_spectrum_settings, "Settings").clicked() {
+                        self.show_spectrum_settings = !self.show_spectrum_settings;
+                    }
+                });
+            });
+            let mut open = self.show_spectrum_settings;
+            let changed = egui::Window::new("Spectrogram settings").open(&mut open).collapsible(false).resizable(false).show(&ctx, |ui| spectrum_settings(ui, &mut self.settings));
+            self.show_spectrum_settings = open;
+            if changed.and_then(|r| r.inner).unwrap_or(false) {
                 self.settings_error = self.settings.save().err();
             }
-            egui::CentralPanel::default()
-                .show(ui, |ui| spectrum_panel(ui, &mut self.spectrum_view, &mut self.spectrum, &self.settings, &self.track, edit, pos, len, rate, playing))
-                .inner
+            let seek = egui::CentralPanel::default()
+                .show(ui, |ui| spectrum_panel(ui, &mut self.spectrum_view, &mut self.edit_view.selection, &mut self.spectrum, &self.settings, &self.track, edit, pos, len, rate, playing))
+                .inner;
+            actions.extend(seek.map(Action::Seek));
+            self.player_keys(&ctx, pos, len, rate, &mut actions);
+            actions
         })
     }
 
@@ -1800,32 +1833,8 @@ fn edit_panel(ui: &mut egui::Ui, view: &mut EditView, cache: &mut WaveCache, tra
     let size = egui::vec2(ui.available_width(), ui.available_height().max(40.0));
     let (rect, response) = ui.allocate_exact_size(size, egui::Sense::click_and_drag());
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Slider, true, "Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along"));
-    let frame_at = |x: f32| view.start + (((x - rect.left()) / rect.width()).clamp(0.0, 1.0) as f64 * frames as f64) as u64;
-    let shift = ui.input(|i| i.modifiers.shift);
-    let mut seek = None;
-    if response.drag_started_by(egui::PointerButton::Primary) {
-        let from = ui.input(|i| i.pointer.press_origin()).map_or(0, |p| frame_at(p.x));
-        // Shift+drag moves the nearer end of the selection.
-        view.anchor = Some(match view.selection {
-            Some((a, b)) if shift => if from.abs_diff(a) < from.abs_diff(b) { b } else { a },
-            _ => from,
-        });
-    }
-    if response.dragged_by(egui::PointerButton::Primary) && let (Some(anchor), Some(p)) = (view.anchor, response.interact_pointer_pos()) {
-        let f = frame_at(p.x);
-        view.selection = (f != anchor).then(|| (anchor.min(f), anchor.max(f)));
-    }
-    if response.drag_stopped() {
-        view.anchor = None;
-    }
-    if response.clicked() && let Some(p) = response.interact_pointer_pos() {
-        let f = frame_at(p.x);
-        match view.selection {
-            Some((a, b)) if shift => view.selection = Some((a.min(f), b.max(f))),
-            _ => (view.selection, seek) = (None, Some(f)),
-        }
-    }
-    zoom_pan(ui, &response, rect, view, len, frames);
+    let seek = select(ui, &response, rect, (view.start, frames), &mut view.selection, &mut view.anchor);
+    zoom_pan(ui, &response, rect, view, len, frames, true);
     let frames = if view.frames == 0 { len } else { view.frames };
     let cols = cache.columns(track, edit, view.start, frames, rect.width() as u64);
     draw_waveform(&ui.painter_at(rect), ui.visuals(), rect, cols, (view.start, frames), pos, view.selection);
@@ -1845,15 +1854,47 @@ fn follow(view: &mut EditView, len: u64, pos: u64, playing: bool) -> u64 {
     frames
 }
 
-/// The wheel zooms `view` (showing `frames` across `rect`) around the pointer; right-drag and
-/// sideways scrolling (touchpads, Shift+wheel) move along.
-fn zoom_pan(ui: &egui::Ui, response: &egui::Response, rect: egui::Rect, view: &mut EditView, len: u64, frames: u64) {
+/// Drag to select frames of `(start, frames)` shown across `rect` (Shift moves the nearer end),
+/// click to play from there (Shift+click extends the selection); returns the frame to seek to.
+/// `anchor` is the selection's fixed end while dragging.
+fn select(ui: &egui::Ui, response: &egui::Response, rect: egui::Rect, (start, frames): (u64, u64), selection: &mut Option<(u64, u64)>, anchor: &mut Option<u64>) -> Option<u64> {
+    let frame_at = |x: f32| start + (((x - rect.left()) / rect.width()).clamp(0.0, 1.0) as f64 * frames as f64) as u64;
+    let shift = ui.input(|i| i.modifiers.shift);
+    let mut seek = None;
+    if response.drag_started_by(egui::PointerButton::Primary) {
+        let from = ui.input(|i| i.pointer.press_origin()).map_or(0, |p| frame_at(p.x));
+        // Shift+drag moves the nearer end of the selection.
+        *anchor = Some(match *selection {
+            Some((a, b)) if shift => if from.abs_diff(a) < from.abs_diff(b) { b } else { a },
+            _ => from,
+        });
+    }
+    if response.dragged_by(egui::PointerButton::Primary) && let (Some(anchor), Some(p)) = (*anchor, response.interact_pointer_pos()) {
+        let f = frame_at(p.x);
+        *selection = (f != anchor).then(|| (anchor.min(f), anchor.max(f)));
+    }
+    if response.drag_stopped() {
+        *anchor = None;
+    }
+    if response.clicked() && let Some(p) = response.interact_pointer_pos() {
+        let f = frame_at(p.x);
+        match *selection {
+            Some((a, b)) if shift => *selection = Some((a.min(f), b.max(f))),
+            _ => (*selection, seek) = (None, Some(f)),
+        }
+    }
+    seek
+}
+
+/// The wheel zooms `view` (showing `frames` across `rect`) around the pointer, and Ctrl+wheel or
+/// a pinch too when `zoom_delta`; right-drag and sideways scrolling (touchpads, Shift+wheel) move along.
+fn zoom_pan(ui: &egui::Ui, response: &egui::Response, rect: egui::Rect, view: &mut EditView, len: u64, frames: u64, zoom_delta: bool) {
     let frame_at = |x: f32| view.start + (((x - rect.left()) / rect.width()).clamp(0.0, 1.0) as f64 * frames as f64) as u64;
     let mut pan = if response.dragged_by(egui::PointerButton::Secondary) { response.drag_delta().x } else { 0.0 };
     if response.hovered() {
         // egui turns Ctrl+scroll into zoom_delta; plain vertical scrolling zooms too.
         let (zoom, scroll, pointer) = ui.input(|i| (i.zoom_delta(), i.smooth_scroll_delta, i.pointer.hover_pos()));
-        let zoom = zoom * (scroll.y / 200.0).exp();
+        let zoom = if zoom_delta { zoom } else { 1.0 } * (scroll.y / 200.0).exp();
         if zoom != 1.0 {
             let at = pointer.map_or(view.start + frames / 2, |p| frame_at(p.x));
             (view.start, view.frames) = zoom_view(view.start, frames, len, zoom, at);
@@ -1866,50 +1907,58 @@ fn zoom_pan(ui: &egui::Ui, response: &egui::Response, rect: egui::Rect, view: &m
     }
 }
 
-/// The Spectrogram's toolbar: the Notes toggle and the notes' settings; true when one changed.
-fn spectrum_bar(s: &mut settings::Settings) -> impl FnOnce(&mut egui::Ui) -> bool + '_ {
-    move |ui| {
-        let before = s.clone();
-        if ui.selectable_label(s.spectrum_notes, "Notes").on_hover_text("Show or hide the note lines").clicked() {
-            s.spectrum_notes = !s.spectrum_notes;
-        }
-        ui.menu_button("Settings", |ui| {
-            ui.horizontal(|ui| {
-                ui.label("Tuning A4");
-                ui.add(egui::DragValue::new(&mut s.note_a4).range(400.0..=480.0).speed(0.1).suffix(" Hz"));
-            });
-            ui.horizontal(|ui| {
-                ui.radio_value(&mut s.note_solfege, false, "C D E");
-                ui.radio_value(&mut s.note_solfege, true, "Do Ré Mi");
-            });
-            ui.horizontal(|ui| {
-                ui.radio_value(&mut s.note_flats, false, "Sharps (C#)");
-                ui.radio_value(&mut s.note_flats, true, "Flats (Db)");
-            });
-            ui.checkbox(&mut s.note_octaves, "Octave numbers");
-            ui.checkbox(&mut s.note_naturals, "Natural notes only");
-            ui.separator();
-            ui.add(egui::Slider::new(&mut s.note_opacity, 0.05..=1.0).text("Line opacity"));
-            ui.add(egui::Slider::new(&mut s.note_c_width, 1.0..=6.0).text("C line width"));
-            ui.add(egui::Slider::new(&mut s.note_label_size, 6.0..=24.0).text("Label size"));
+/// The Spectrogram settings window: the notes' tuning, names and look; true when one changed.
+fn spectrum_settings(ui: &mut egui::Ui, s: &mut settings::Settings) -> bool {
+    let before = s.clone();
+    ui.horizontal(|ui| {
+        ui.label("Tuning A4");
+        ui.add(egui::DragValue::new(&mut s.note_a4).range(400.0..=480.0).speed(0.1).suffix(" Hz"));
+    });
+    ui.horizontal(|ui| {
+        ui.radio_value(&mut s.note_solfege, false, "C D E");
+        ui.radio_value(&mut s.note_solfege, true, "Do Ré Mi");
+    });
+    ui.horizontal(|ui| {
+        ui.radio_value(&mut s.note_flats, false, "Sharps (C#)");
+        ui.radio_value(&mut s.note_flats, true, "Flats (Db)");
+    });
+    ui.checkbox(&mut s.note_octaves, "Octave numbers");
+    ui.checkbox(&mut s.note_naturals, "Natural notes only");
+    ui.separator();
+    for (colour, label) in [(&mut s.note_c_color, "C lines"), (&mut s.note_color, "Other lines")] {
+        ui.horizontal(|ui| {
+            egui::color_picker::color_edit_button_srgba(ui, colour, egui::color_picker::Alpha::OnlyBlend);
+            ui.label(label);
         });
-        *s != before
     }
+    ui.add(egui::Slider::new(&mut s.note_c_width, 1.0..=6.0).text("C line width"));
+    ui.add(egui::Slider::new(&mut s.note_label_size, 6.0..=24.0).text("Label size"));
+    *s != before
 }
 
 /// The spectrogram of edited frames shown in `view`, with note lines or frequency marks and the
 /// playhead; returns the frame to seek to on a click.
 #[allow(clippy::too_many_arguments)]
-fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, spectrogram: &mut spectrum::Spectrogram, s: &settings::Settings, track: &Track, edit: &Edit, pos: u64, len: u64, rate: u64, playing: bool) -> Option<u64> {
+fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, selection: &mut Option<(u64, u64)>, spectrogram: &mut spectrum::Spectrogram, s: &settings::Settings, track: &Track, edit: &Edit, pos: u64, len: u64, rate: u64, playing: bool) -> Option<u64> {
     let frames = follow(view, len, pos, playing);
     let (rect, response) = ui.allocate_exact_size(ui.available_size(), egui::Sense::click_and_drag());
-    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Slider, true, "Spectrogram: click to play from there, scroll to zoom, right-drag to move along"));
-    let seek = response.clicked().then(|| response.interact_pointer_pos()).flatten().map(|p| {
-        view.start + (((p.x - rect.left()) / rect.width()).clamp(0.0, 1.0) as f64 * frames as f64) as u64
-    });
-    zoom_pan(ui, &response, rect, view, len, frames);
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Slider, true, "Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around"));
+    let seek = select(ui, &response, rect, (view.start, frames), selection, &mut view.anchor);
+    zoom_pan(ui, &response, rect, view, len, frames, false);
+    // Frequencies: Ctrl+wheel (or a pinch) zooms around the pointer, right-drag up and down moves.
+    if response.hovered() {
+        let (zoom, pointer) = ui.input(|i| (i.zoom_delta(), i.pointer.hover_pos()));
+        if zoom != 1.0 {
+            let at = pointer.map_or(0.5, |p| 1.0 - ((p.y - rect.top()) / rect.height()).clamp(0.0, 1.0));
+            spectrogram.band = spectrum::zoom_band(spectrogram.band, zoom, at);
+        }
+    }
+    if response.dragged_by(egui::PointerButton::Secondary) {
+        spectrogram.band = spectrum::pan_band(spectrogram.band, response.drag_delta().y / rect.height());
+    }
     let frames = if view.frames == 0 { len } else { view.frames }.max(1);
     let painter = ui.painter_at(rect);
+    let x_of = |f: u64| rect.left() + ((f as f64 - view.start as f64) / frames as f64 * rect.width() as f64) as f32;
     // One texel per pixel, so it stays sharp on high-density screens.
     let ppp = ui.pixels_per_point();
     let (w, h) = ((rect.width() * ppp) as usize, (rect.height() * ppp) as usize);
@@ -1918,16 +1967,26 @@ fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, spectrogram: &mut spec
         painter.image(texture.id(), rect, uv, egui::Color32::WHITE);
     }
     let nyquist = rate as f32 / 2.0;
-    let y_of = |freq: f32| rect.top() + spectrum::height_of(freq, rate as f32) * rect.height();
+    if let Some((a, b)) = *selection {
+        let shade = egui::Rect::from_x_y_ranges(x_of(a).max(rect.left())..=x_of(b).min(rect.right()), rect.y_range());
+        painter.rect_filled(shade, 0.0, egui::Color32::from_white_alpha(40));
+        painter.vline(shade.left(), rect.y_range(), egui::Stroke::new(1.0, egui::Color32::from_white_alpha(120)));
+        painter.vline(shade.right(), rect.y_range(), egui::Stroke::new(1.0, egui::Color32::from_white_alpha(120)));
+    }
+    let band = spectrogram.band;
+    let y_of = |freq: f32| rect.top() + spectrum::height_of(freq, rate as f32, band) * rect.height();
     if s.spectrum_notes && nyquist > spectrum::LOW {
         // Points between neighbouring lines: a semitone, or about two with natural notes only.
-        let step = rect.height() * 2f32.ln() / 12.0 / (nyquist / spectrum::LOW).ln() * if s.note_naturals { 12.0 / 7.0 } else { 1.0 };
+        let step = rect.height() * 2f32.ln() / 12.0 / ((nyquist / spectrum::LOW).ln() * (band[1] - band[0])) * if s.note_naturals { 12.0 / 7.0 } else { 1.0 };
         let (every, only_c) = (step >= s.note_label_size, step * if s.note_naturals { 7.0 } else { 12.0 } >= s.note_label_size);
-        let line = egui::Color32::from_white_alpha((s.note_opacity * 255.0) as u8);
         let font = egui::FontId::proportional(s.note_label_size);
         for (freq, pc, octave) in spectrum::notes(s.note_a4, nyquist, s.note_naturals) {
             let y = y_of(freq);
-            painter.hline(rect.x_range(), y, egui::Stroke::new(if pc == 0 { s.note_c_width } else { 1.0 }, line));
+            if !rect.y_range().contains(y) {
+                continue;
+            }
+            let stroke = if pc == 0 { egui::Stroke::new(s.note_c_width, s.note_c_color) } else { egui::Stroke::new(1.0, s.note_color) };
+            painter.hline(rect.x_range(), y, stroke);
             if every || (only_c && pc == 0) {
                 let name = spectrum::note_name(pc, octave, s.note_solfege, s.note_flats, s.note_octaves);
                 let galley = painter.layout_no_wrap(name, font.clone(), egui::Color32::WHITE);
@@ -1944,7 +2003,7 @@ fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, spectrogram: &mut spec
             painter.text(egui::pos2(rect.left() + 4.0, y - 2.0), egui::Align2::LEFT_BOTTOM, label, egui::FontId::proportional(12.0), egui::Color32::from_white_alpha(200));
         }
     }
-    let x = rect.left() + ((pos as f64 - view.start as f64) / frames as f64 * rect.width() as f64) as f32;
+    let x = x_of(pos);
     if rect.x_range().contains(x) {
         painter.vline(x, rect.y_range(), egui::Stroke::new(1.5, egui::Color32::WHITE));
     }

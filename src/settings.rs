@@ -1,5 +1,6 @@
 //! Settings in `settings.txt` next to eframe's own storage, read before the window opens.
 
+use eframe::egui::Color32;
 use std::path::{Path, PathBuf};
 
 /// Track Info's width when nothing is saved.
@@ -33,7 +34,9 @@ pub struct Settings {
     pub note_octaves: bool,
     /// Only the natural notes (the white keys).
     pub note_naturals: bool,
-    pub note_opacity: f32,
+    /// The colours of the C lines and of the others, opacity included.
+    pub note_c_color: Color32,
+    pub note_color: Color32,
     pub note_c_width: f32,
     pub note_label_size: f32,
 }
@@ -48,11 +51,28 @@ impl Default for Settings {
             note_flats: false,
             note_octaves: true,
             note_naturals: false,
-            note_opacity: 0.3,
+            note_c_color: NOTE_C_COLOR,
+            note_color: NOTE_COLOR,
             note_c_width: 2.0,
             note_label_size: 11.0,
         }
     }
+}
+
+/// The note lines' colours when nothing is saved: C a warm amber at 60 %, the others white at 30 %.
+const NOTE_C_COLOR: Color32 = Color32::from_rgba_unmultiplied_const(255, 200, 90, 153);
+const NOTE_COLOR: Color32 = Color32::from_rgba_unmultiplied_const(255, 255, 255, 77);
+
+/// `rrggbbaa`, unmultiplied.
+fn to_hex(c: Color32) -> String {
+    let [r, g, b, a] = c.to_srgba_unmultiplied();
+    format!("{r:02x}{g:02x}{b:02x}{a:02x}")
+}
+
+fn hex(v: &str) -> Option<Color32> {
+    let byte = |i: usize| u8::from_str_radix(v.get(i..i + 2)?, 16).ok();
+    (v.len() == 8).then_some(())?;
+    Some(Color32::from_rgba_unmultiplied(byte(0)?, byte(2)?, byte(4)?, byte(6)?))
 }
 
 fn path() -> Option<PathBuf> {
@@ -84,7 +104,8 @@ fn parse(text: &str) -> Settings {
             "note_flats" => s.note_flats = on,
             "note_octaves" => s.note_octaves = on,
             "note_naturals" => s.note_naturals = on,
-            "note_opacity" => s.note_opacity = number(value).map_or(0.3, |n| n.min(1.0)),
+            "note_c_color" => s.note_c_color = hex(value).unwrap_or(NOTE_C_COLOR),
+            "note_color" => s.note_color = hex(value).unwrap_or(NOTE_COLOR),
             "note_c_width" => s.note_c_width = number(value).map_or(2.0, |n| n.min(6.0)),
             "note_label_size" => s.note_label_size = number(value).map_or(11.0, |n| n.clamp(6.0, 24.0)),
             _ => {}
@@ -107,8 +128,8 @@ impl Settings {
         // One line: a pattern can't hold a line break, the dialog's field is single-line.
         text += &format!("rename_pattern={}\n", self.rename_pattern.replace(['\n', '\r'], " "));
         text += &format!(
-            "spectrum_notes={}\nnote_a4={}\nnote_solfege={}\nnote_flats={}\nnote_octaves={}\nnote_naturals={}\nnote_opacity={}\nnote_c_width={}\nnote_label_size={}\n",
-            self.spectrum_notes, self.note_a4, self.note_solfege, self.note_flats, self.note_octaves, self.note_naturals, self.note_opacity, self.note_c_width, self.note_label_size
+            "spectrum_notes={}\nnote_a4={}\nnote_solfege={}\nnote_flats={}\nnote_octaves={}\nnote_naturals={}\nnote_c_color={}\nnote_color={}\nnote_c_width={}\nnote_label_size={}\n",
+            self.spectrum_notes, self.note_a4, self.note_solfege, self.note_flats, self.note_octaves, self.note_naturals, to_hex(self.note_c_color), to_hex(self.note_color), self.note_c_width, self.note_label_size
         );
         if let Some([w, h]) = self.window_size {
             text += &format!("window_size={w},{h}\n");
@@ -143,7 +164,8 @@ mod tests {
             note_flats: true,
             note_octaves: false,
             note_naturals: true,
-            note_opacity: 0.5,
+            note_c_color: Color32::from_rgba_unmultiplied(10, 200, 30, 255),
+            note_color: Color32::from_rgba_unmultiplied(0, 0, 255, 255),
             note_c_width: 3.0,
             note_label_size: 14.0,
         };
@@ -157,5 +179,6 @@ mod tests {
         assert_eq!((defaults.edit_panel, defaults.edit_height), (false, EDIT_HEIGHT));
         assert_eq!((defaults.spectrum_notes, defaults.note_a4, defaults.note_octaves), (false, 440.0, true));
         assert_eq!(parse("note_a4=1000\nnote_opacity=-1").note_a4, 480.0);
+        assert_eq!(parse("note_color=zz00ff80\nnote_c_color=fff").note_color, NOTE_COLOR);
     }
 }

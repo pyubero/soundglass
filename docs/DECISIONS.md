@@ -111,3 +111,8 @@
 - 2026-11-11 — note names show on every line where they fit, otherwise only on the C's, otherwise none; the Hz marks hide while notes are shown (user's choice)
 - 2026-11-11 — note names use # and b, not ♯ and ♭ — the bundled Roboto has no glyphs for them
 - 2026-11-11 — Notes on/off and the notes' settings are kept in settings.txt; the spectrogram window's open state and size are not (user's choice)
+- 2026-11-11 — the player keys (Space, L, Esc, ←/→, PageUp/Down) work in the Spectrogram window too; Delete and the Ctrl shortcuts only in the main one (user's choice)
+- 2026-11-11 — the Spectrogram and the Edit panel share one selection, so Loop, Cut and effects use whichever made it (user's choice)
+- 2026-11-11 — in the Spectrogram, Ctrl+wheel (or a pinch) zooms the frequencies around the pointer, right-drag pans both ways, Fit resets both axes; the zoom isn't remembered (user's choice)
+- 2026-11-11 — the note lines take a colour for C and one for the others, opacity included, replacing the opacity setting (user's choice)
+- 2026-11-11 — the Spectrogram's settings are a window, not a menu, so a colour picker opened in it doesn't close it

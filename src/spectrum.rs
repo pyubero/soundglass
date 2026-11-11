@@ -15,9 +15,14 @@ pub const LOW: f32 = 20.0;
 /// The quietest level shown, in dBFS; anything below is the darkest colour.
 const FLOOR: f32 = -100.0;
 
+/// Width and height in pixels, first frame, frames shown, decoded frames, band, and the edit list.
+type Key = (usize, usize, u64, u64, u64, [f32; 2], Edit);
+
 pub struct Spectrogram {
-    /// Width and height in pixels, first frame, frames shown, decoded frames, and the edit list.
-    key: Option<(usize, usize, u64, u64, u64, Edit)>,
+    /// The part of the frequency axis shown, bottom and top, on the log scale where 0 is `LOW`
+    /// and 1 half the sample rate.
+    pub band: [f32; 2],
+    key: Option<Key>,
     texture: Option<egui::TextureHandle>,
     fft: Arc<dyn RealToComplex<f32>>,
     window: Vec<f32>,
@@ -29,7 +34,7 @@ impl Default for Spectrogram {
     fn default() -> Self {
         let fft = realfft::RealFftPlanner::<f32>::new().plan_fft_forward(N);
         let window = (0..N).map(|i| 0.5 - 0.5 * (std::f32::consts::TAU * i as f32 / N as f32).cos()).collect();
-        Spectrogram { key: None, texture: None, input: fft.make_input_vec(), output: fft.make_output_vec(), fft, window }
+        Spectrogram { band: [0.0, 1.0], key: None, texture: None, input: fft.make_input_vec(), output: fft.make_output_vec(), fft, window }
     }
 }
 
@@ -40,7 +45,7 @@ impl Spectrogram {
     #[allow(clippy::too_many_arguments)]
     pub fn texture(&mut self, ctx: &egui::Context, track: &Track, edit: &Edit, start: u64, frames: u64, width: usize, height: usize) -> Option<&egui::TextureHandle> {
         let (width, height, frames, decoded) = (width.max(1), height.max(1), frames.max(1), track.decoded());
-        let same = self.key.as_ref().is_some_and(|k| (k.0, k.1, k.2, k.3, k.4) == (width, height, start, frames, decoded) && k.5 == *edit);
+        let same = self.key.as_ref().is_some_and(|k| (k.0, k.1, k.2, k.3, k.4, k.5) == (width, height, start, frames, decoded, self.band) && k.6 == *edit);
         if !same {
             let rate = track.format.get()?.rate as f32;
             // Undecoded columns stay transparent.
@@ -57,7 +62,7 @@ impl Spectrogram {
                 Some(t) => t.set(image, egui::TextureOptions::LINEAR),
                 None => self.texture = Some(ctx.load_texture("spectrogram", image, egui::TextureOptions::LINEAR)),
             }
-            self.key = Some((width, height, start, frames, decoded, edit.clone()));
+            self.key = Some((width, height, start, frames, decoded, self.band, edit.clone()));
         }
         self.texture.as_ref()
     }
@@ -88,7 +93,8 @@ impl Spectrogram {
         Some(
             (0..height)
                 .map(|y| {
-                    let freq = |y: f32| LOW * (nyquist / LOW).powf(1.0 - y / height as f32);
+                    let [lo, hi] = self.band;
+                    let freq = |y: f32| LOW * (nyquist / LOW).powf(lo + (hi - lo) * (1.0 - y / height as f32));
                     let (lo, hi) = (bin(freq(y as f32 + 1.0)).round() as usize, bin(freq(y as f32)).round() as usize);
                     let peak = self.output[lo.min(N / 2)..=hi.clamp(lo, N / 2)].iter().map(|c| c.norm()).fold(0.0, f32::max);
                     20.0 * (peak * scale).max(1e-10).log10()
@@ -108,9 +114,29 @@ fn colour(db: f32) -> egui::Color32 {
     egui::Color32::from_rgb(c(0), c(1), c(2))
 }
 
-/// Where frequency `freq` sits, from 0 at the top (half of `rate`) to 1 at the bottom (`LOW`).
-pub fn height_of(freq: f32, rate: f32) -> f32 {
-    1.0 - (freq / LOW).ln() / (rate / 2.0 / LOW).ln()
+/// Where frequency `freq` sits within `band`, from 0 at its top to 1 at its bottom (outside: beyond those).
+pub fn height_of(freq: f32, rate: f32, [lo, hi]: [f32; 2]) -> f32 {
+    let at = (freq / LOW).ln() / (rate / 2.0 / LOW).ln();
+    1.0 - (at - lo) / (hi - lo)
+}
+
+/// The narrowest band: about a third of an octave at 44.1 kHz.
+const MIN_BAND: f32 = 0.03;
+
+/// `band` zoomed in by `factor` (2 = twice as close) keeping point `at` (0 bottom, 1 top of the
+/// band, as on screen) in place, within the whole axis.
+pub fn zoom_band([lo, hi]: [f32; 2], factor: f32, at: f32) -> [f32; 2] {
+    let width = ((hi - lo) / factor).clamp(MIN_BAND, 1.0);
+    let fixed = lo + at * (hi - lo);
+    let lo = (fixed - at * width).clamp(0.0, 1.0 - width);
+    [lo, lo + width]
+}
+
+/// `band` moved up by `delta` of its own width, stopping at the ends of the axis.
+pub fn pan_band([lo, hi]: [f32; 2], delta: f32) -> [f32; 2] {
+    let width = hi - lo;
+    let lo = (lo + delta * width).clamp(0.0, 1.0 - width);
+    [lo, lo + width]
 }
 
 /// The notes of equal temperament tuned to `a4` from `LOW` Hz up to `nyquist`, lowest first,
@@ -139,6 +165,21 @@ mod tests {
     use super::*;
 
     #[test]
+    fn band_zooms_around_the_pointer_and_stays_on_the_axis() {
+        let close = |a: [f32; 2], b: [f32; 2]| (a[0] - b[0]).abs() < 1e-6 && (a[1] - b[1]).abs() < 1e-6;
+        assert!(close(zoom_band([0.0, 1.0], 2.0, 0.5), [0.25, 0.75]));
+        assert!(close(zoom_band([0.0, 1.0], 2.0, 0.0), [0.0, 0.5]));
+        // The point under the pointer stays: 0.6 of the way up [0.2, 0.7] is 0.5.
+        let z = zoom_band([0.2, 0.7], 4.0, 0.6);
+        assert!((z[0] + 0.6 * (z[1] - z[0]) - 0.5).abs() < 1e-6);
+        assert!(close(zoom_band([0.25, 0.75], 0.1, 0.5), [0.0, 1.0]));
+        assert!((zoom_band([0.0, 1.0], 1000.0, 0.5)[1] - zoom_band([0.0, 1.0], 1000.0, 0.5)[0] - MIN_BAND).abs() < 1e-6);
+        assert!(close(pan_band([0.5, 0.75], 10.0), [0.75, 1.0]));
+        assert!(close(pan_band([0.5, 0.75], -10.0), [0.0, 0.25]));
+        assert!(close(pan_band([0.0, 1.0], 0.3), [0.0, 1.0]));
+    }
+
+    #[test]
     fn notes_follow_the_tuning_and_are_named() {
         let all = notes(440.0, 22050.0, false);
         let find = |n: &[(f32, u8, i32)], pc, oct| n.iter().find(|x| x.1 == pc && x.2 == oct).unwrap().0;
@@ -164,10 +205,17 @@ mod tests {
         let mut s = Spectrogram::default();
         let rows = s.rows(&track, &edit, 22050, height, rate as f32).unwrap();
         let loudest = (0..height).max_by(|&a, &b| rows[a].total_cmp(&rows[b])).unwrap();
-        let want = (height_of(1000.0, rate as f32) * height as f32) as usize;
+        let want = (height_of(1000.0, rate as f32, s.band) * height as f32) as usize;
         assert!(loudest.abs_diff(want) <= 1, "loudest row {loudest}, 1 kHz is row {want}");
         // Half scale is −6 dBFS.
         assert!((rows[loudest] + 6.0).abs() < 1.0, "{} dB", rows[loudest]);
+        // Zoomed to the upper half of the axis, 1 kHz still lands on its row.
+        s.band = [0.5, 1.0];
+        let zoomed = s.rows(&track, &edit, 22050, height, rate as f32).unwrap();
+        let loudest = (0..height).max_by(|&a, &b| zoomed[a].total_cmp(&zoomed[b])).unwrap();
+        let want = (height_of(1000.0, rate as f32, s.band) * height as f32) as usize;
+        assert!(loudest.abs_diff(want) <= 1, "zoomed: loudest row {loudest}, 1 kHz is row {want}");
+        s.band = [0.0, 1.0];
 
         let silent = Track::from_samples(rate, 2, vec![0.0; 2 * 44100]);
         let rows = s.rows(&silent, &edit, 0, height, rate as f32).unwrap();
