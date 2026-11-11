@@ -27,3 +27,6 @@
 - 2026-11-11 — no .opus in the folder list or the default-app types — symphonia 0.6 has no Opus decoder
 - 2026-11-11 — WAV INFO tags are not shown — symphonia 0.6.1 reads the INFO chunk but drops it (wave/mod.rs builds WavReader from opts.external_data.metadata); ID3, Vorbis comments and MP4 tags work
 - 2026-11-11 — the cover is decoded on its own thread and shrunk to at most 512 px — a large embedded JPEG must not delay the first sound or the UI
+- 2026-11-11 — the waveform leaves the main view; its drawing code stays in git (a61e538) and track peaks are kept for the later editing view
+- 2026-11-11 — transport icons and the placeholder note are drawn with egui shapes, not font glyphs — they render the same whatever fonts are installed
+- 2026-11-11 — Space toggles playback only when no widget has focus — a focused button already takes Space as its own click

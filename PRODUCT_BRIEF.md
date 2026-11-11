@@ -28,6 +28,12 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 ### 1. Spike
 - **Play from the command line.** `app song.mp3` opens a window and plays. We measure the time to first sound.
 
+### 1.5. Usable player
+- **Phone-shaped window.** Opens at 380 × 780 points; Settings can remember the last size instead.
+- **Minimal view.** Menu bar on top for future tools; album cover (or a placeholder); title, artist and album, each scrolling when too long to fit; a thin seek bar with times; previous, play/pause and next buttons.
+- **Previous/next in folder.** The next file is decoded ahead and follows the current one without a gap.
+- **Default app.** `install.sh` installs it and makes it the default for every audio format it plays.
+
 ### 2. Player
 - **Play, pause, seek.** Space to play/pause, click or arrow keys to jump.
 - **Waveform overview.** The whole track drawn across the window; click anywhere to play from there.
