@@ -106,7 +106,7 @@
 - 2026-11-11 — A–B loop with slow-down is no new feature: selecting, Loop selection and Pitch-preserved speed change already do it (user's choice)
 - 2026-11-11 — the spectrogram is its own OS window (an immediate egui viewport, redrawn with the main one) with a log frequency axis from 20 Hz (user's choice)
 - 2026-11-11 — realfft as a direct dependency, the version rubato already pulls in (user's choice)
-- 2026-11-11 — the spectrogram shows the edited audio mixed to mono, one 4096-point Hann FFT per pixel column (zoomed out it samples the audio, not averages it), −100 to 0 dBFS; it has its own zoom and no selection
+- 2026-11-11 — the spectrogram shows the edited audio mixed to mono, one 4096-point Hann FFT per pixel column (zoomed out it samples the audio, not averages it), −100 to 0 dBFS; it has its own zoom and no selection — changed 2026-11-11: an exact STFT with editable parameters, and it shares Edit's selection (see below)
 - 2026-11-11 — the spectrogram's note lines are equal temperament from a set A4 (400–480 Hz, default 440), C lines thicker (user's choice)
 - 2026-11-11 — note names show on every line where they fit, otherwise only on the C's, otherwise none; the Hz marks hide while notes are shown (user's choice)
 - 2026-11-11 — note names use # and b, not ♯ and ♭ — the bundled Roboto has no glyphs for them
@@ -116,3 +116,7 @@
 - 2026-11-11 — in the Spectrogram, Ctrl+wheel (or a pinch) zooms the frequencies around the pointer, right-drag pans both ways, Fit resets both axes; the zoom isn't remembered (user's choice)
 - 2026-11-11 — the note lines take a colour for C and one for the others, opacity included, replacing the opacity setting (user's choice)
 - 2026-11-11 — the Spectrogram's settings are a window, not a menu, so a colour picker opened in it doesn't close it
+- 2026-11-11 — the spectrogram is an exact STFT: a window every hop, each pixel column the loudest of the hops inside it (the nearest one when zoomed in past the hop) (user's choice)
+- 2026-11-11 — it is made on a worker thread, cancelled when the view or settings change and not when only more audio decoded; the last picture is drawn where its view lies now until the new one is ready, with "Computing… n %"
+- 2026-11-11 — only the visible part is analysed, no whole-track STFT cache — that would take hundreds of MB at small hops
+- 2026-11-11 — editable analysis: FFT size 512–32768, window 256 up to the FFT size (zero-padded), hop 32–8192, in samples with ms shown; window function, level range, lowest frequency (10–200 Hz) and colour map; kept in settings.txt with Reset to defaults (user's choice)

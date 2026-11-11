@@ -79,7 +79,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: Default::default(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -1312,7 +1312,7 @@ impl App {
 
     /// View → Spectrogram: its own window, closed with its ✕ or the menu. Returns what its keys
     /// and clicks asked for.
-    fn spectrum_window(&mut self, ctx: &egui::Context, edit: &Edit, pos: u64, len: u64, rate: u64, playing: bool) -> Vec<Action> {
+    fn spectrum_window(&mut self, ctx: &egui::Context, edit: &Arc<Edit>, pos: u64, len: u64, rate: u64, playing: bool) -> Vec<Action> {
         if !self.show_spectrum {
             return Vec::new();
         }
@@ -1340,7 +1340,7 @@ impl App {
                 });
             });
             let mut open = self.show_spectrum_settings;
-            let changed = egui::Window::new("Spectrogram settings").open(&mut open).collapsible(false).resizable(false).show(&ctx, |ui| spectrum_settings(ui, &mut self.settings));
+            let changed = egui::Window::new("Spectrogram settings").open(&mut open).collapsible(false).resizable(false).show(&ctx, |ui| spectrum_settings(ui, &mut self.settings, rate));
             self.show_spectrum_settings = open;
             if changed.and_then(|r| r.inner).unwrap_or(false) {
                 self.settings_error = self.settings.save().err();
@@ -1908,8 +1908,63 @@ fn zoom_pan(ui: &egui::Ui, response: &egui::Response, rect: egui::Rect, view: &m
 }
 
 /// The Spectrogram settings window: the notes' tuning, names and look; true when one changed.
-fn spectrum_settings(ui: &mut egui::Ui, s: &mut settings::Settings) -> bool {
+fn spectrum_settings(ui: &mut egui::Ui, s: &mut settings::Settings, rate: u64) -> bool {
     let before = s.clone();
+    let ms = |frames: usize| format!("{frames} ({:.1} ms)", frames as f64 * 1000.0 / rate.max(1) as f64);
+    let p = &mut s.spectrum;
+    ui.strong("Analysis");
+    egui::Grid::new("analysis").num_columns(2).show(ui, |ui| {
+        ui.label("FFT size");
+        egui::ComboBox::from_id_salt("fft").selected_text(ms(p.fft)).show_ui(ui, |ui| {
+            for n in (9..=15).map(|b| 1usize << b) {
+                ui.selectable_value(&mut p.fft, n, ms(n));
+            }
+        });
+        ui.end_row();
+        ui.label("Window size");
+        egui::ComboBox::from_id_salt("window").selected_text(ms(p.window)).show_ui(ui, |ui| {
+            for n in (8..=15).map(|b| 1usize << b).filter(|n| *n <= p.fft) {
+                ui.selectable_value(&mut p.window, n, ms(n));
+            }
+        });
+        ui.end_row();
+        ui.label("Hop");
+        ui.horizontal(|ui| {
+            ui.add(egui::DragValue::new(&mut p.hop).range(32..=8192).speed(4.0));
+            ui.weak(format!("{:.1} ms", p.hop as f64 * 1000.0 / rate.max(1) as f64));
+        });
+        ui.end_row();
+        ui.label("Window function");
+        egui::ComboBox::from_id_salt("shape").selected_text(p.shape.name()).show_ui(ui, |ui| {
+            for shape in spectrum::Shape::ALL {
+                ui.selectable_value(&mut p.shape, shape, shape.name());
+            }
+        });
+        ui.end_row();
+        ui.label("Levels");
+        ui.horizontal(|ui| {
+            ui.add(egui::DragValue::new(&mut p.floor).range(-160.0..=-20.0).speed(0.5).suffix(" dB"));
+            ui.label("to");
+            ui.add(egui::DragValue::new(&mut p.ceiling).range(-60.0..=6.0).speed(0.5).suffix(" dBFS"));
+        });
+        ui.end_row();
+        ui.label("Lowest frequency");
+        ui.add(egui::DragValue::new(&mut p.low).range(10.0..=200.0).speed(0.5).suffix(" Hz"));
+        ui.end_row();
+        ui.label("Colours");
+        egui::ComboBox::from_id_salt("colours").selected_text(p.map.name()).show_ui(ui, |ui| {
+            for map in spectrum::ColourMap::ALL {
+                ui.selectable_value(&mut p.map, map, map.name());
+            }
+        });
+        ui.end_row();
+    });
+    if ui.add_enabled(*p != spectrum::Params::default(), egui::Button::new("Reset to defaults")).clicked() {
+        *p = spectrum::Params::default();
+    }
+    *p = p.checked();
+    ui.separator();
+    ui.strong("Notes");
     ui.horizontal(|ui| {
         ui.label("Tuning A4");
         ui.add(egui::DragValue::new(&mut s.note_a4).range(400.0..=480.0).speed(0.1).suffix(" Hz"));
@@ -1939,7 +1994,7 @@ fn spectrum_settings(ui: &mut egui::Ui, s: &mut settings::Settings) -> bool {
 /// The spectrogram of edited frames shown in `view`, with note lines or frequency marks and the
 /// playhead; returns the frame to seek to on a click.
 #[allow(clippy::too_many_arguments)]
-fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, selection: &mut Option<(u64, u64)>, spectrogram: &mut spectrum::Spectrogram, s: &settings::Settings, track: &Track, edit: &Edit, pos: u64, len: u64, rate: u64, playing: bool) -> Option<u64> {
+fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, selection: &mut Option<(u64, u64)>, spectrogram: &mut spectrum::Spectrogram, s: &settings::Settings, track: &Arc<Track>, edit: &Arc<Edit>, pos: u64, len: u64, rate: u64, playing: bool) -> Option<u64> {
     let frames = follow(view, len, pos, playing);
     let (rect, response) = ui.allocate_exact_size(ui.available_size(), egui::Sense::click_and_drag());
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Slider, true, "Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around"));
@@ -1962,25 +2017,32 @@ fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, selection: &mut Option
     // One texel per pixel, so it stays sharp on high-density screens.
     let ppp = ui.pixels_per_point();
     let (w, h) = ((rect.width() * ppp) as usize, (rect.height() * ppp) as usize);
-    if let Some(texture) = spectrogram.texture(ui.ctx(), track, edit, view.start, frames, w, h) {
+    let (band, low, nyquist) = (spectrogram.band, s.spectrum.low, rate as f32 / 2.0);
+    let y_of = |freq: f32| rect.top() + spectrum::height_of(freq, rate as f32, band, low) * rect.height();
+    let (shown, progress) = spectrogram.update(ui.ctx(), track, edit, view.start, frames, w, h, s.spectrum);
+    if let Some(p) = shown {
+        // Made for an older view while a new one is worked out: drawn where that view lies now.
+        let (top, bottom) = (spectrum::freq_at(p.band[1], rate as f32, p.low), spectrum::freq_at(p.band[0], rate as f32, p.low));
+        let at = egui::Rect::from_x_y_ranges(x_of(p.start)..=x_of(p.start + p.frames), y_of(top)..=y_of(bottom));
         let uv = egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0));
-        painter.image(texture.id(), rect, uv, egui::Color32::WHITE);
+        painter.image(p.texture.id(), at, uv, egui::Color32::WHITE);
     }
-    let nyquist = rate as f32 / 2.0;
+    if let Some(done) = progress {
+        let text = format!("Computing… {:.0} %", done * 100.0);
+        painter.text(rect.right_top() + egui::vec2(-6.0, 4.0), egui::Align2::RIGHT_TOP, text, egui::FontId::proportional(12.0), egui::Color32::from_white_alpha(220));
+    }
     if let Some((a, b)) = *selection {
         let shade = egui::Rect::from_x_y_ranges(x_of(a).max(rect.left())..=x_of(b).min(rect.right()), rect.y_range());
         painter.rect_filled(shade, 0.0, egui::Color32::from_white_alpha(40));
         painter.vline(shade.left(), rect.y_range(), egui::Stroke::new(1.0, egui::Color32::from_white_alpha(120)));
         painter.vline(shade.right(), rect.y_range(), egui::Stroke::new(1.0, egui::Color32::from_white_alpha(120)));
     }
-    let band = spectrogram.band;
-    let y_of = |freq: f32| rect.top() + spectrum::height_of(freq, rate as f32, band) * rect.height();
-    if s.spectrum_notes && nyquist > spectrum::LOW {
+    if s.spectrum_notes && nyquist > low {
         // Points between neighbouring lines: a semitone, or about two with natural notes only.
-        let step = rect.height() * 2f32.ln() / 12.0 / ((nyquist / spectrum::LOW).ln() * (band[1] - band[0])) * if s.note_naturals { 12.0 / 7.0 } else { 1.0 };
+        let step = rect.height() * 2f32.ln() / 12.0 / ((nyquist / low).ln() * (band[1] - band[0])) * if s.note_naturals { 12.0 / 7.0 } else { 1.0 };
         let (every, only_c) = (step >= s.note_label_size, step * if s.note_naturals { 7.0 } else { 12.0 } >= s.note_label_size);
         let font = egui::FontId::proportional(s.note_label_size);
-        for (freq, pc, octave) in spectrum::notes(s.note_a4, nyquist, s.note_naturals) {
+        for (freq, pc, octave) in spectrum::notes(s.note_a4, low, nyquist, s.note_naturals) {
             let y = y_of(freq);
             if !rect.y_range().contains(y) {
                 continue;

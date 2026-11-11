@@ -39,6 +39,8 @@ pub struct Settings {
     pub note_color: Color32,
     pub note_c_width: f32,
     pub note_label_size: f32,
+    /// How the Spectrogram is analysed and coloured.
+    pub spectrum: crate::spectrum::Params,
 }
 
 impl Default for Settings {
@@ -55,6 +57,7 @@ impl Default for Settings {
             note_color: NOTE_COLOR,
             note_c_width: 2.0,
             note_label_size: 11.0,
+            spectrum: Default::default(),
         }
     }
 }
@@ -85,7 +88,10 @@ pub fn load() -> Settings {
 }
 
 fn parse(text: &str) -> Settings {
+    use crate::spectrum::{ColourMap, Shape};
     let mut s = Settings::default();
+    let float = |v: &str| v.trim().parse::<f32>().ok().filter(|n| n.is_finite());
+    let count = |v: &str| v.trim().parse::<usize>().ok();
     for (key, value) in text.lines().filter_map(|l| l.split_once('=')) {
         let (value, on) = (value.trim(), value.trim() == "true");
         let number = |v: &str| v.trim().parse::<f32>().ok().filter(|n| n.is_finite() && *n > 0.0);
@@ -107,10 +113,19 @@ fn parse(text: &str) -> Settings {
             "note_c_color" => s.note_c_color = hex(value).unwrap_or(NOTE_C_COLOR),
             "note_color" => s.note_color = hex(value).unwrap_or(NOTE_COLOR),
             "note_c_width" => s.note_c_width = number(value).map_or(2.0, |n| n.min(6.0)),
+            "spec_fft" => s.spectrum.fft = count(value).unwrap_or(s.spectrum.fft),
+            "spec_window" => s.spectrum.window = count(value).unwrap_or(s.spectrum.window),
+            "spec_hop" => s.spectrum.hop = count(value).unwrap_or(s.spectrum.hop),
+            "spec_shape" => s.spectrum.shape = Shape::from_name(value).unwrap_or(s.spectrum.shape),
+            "spec_floor" => s.spectrum.floor = float(value).unwrap_or(s.spectrum.floor),
+            "spec_ceiling" => s.spectrum.ceiling = float(value).unwrap_or(s.spectrum.ceiling),
+            "spec_low" => s.spectrum.low = float(value).unwrap_or(s.spectrum.low),
+            "spec_colours" => s.spectrum.map = ColourMap::from_name(value).unwrap_or(s.spectrum.map),
             "note_label_size" => s.note_label_size = number(value).map_or(11.0, |n| n.clamp(6.0, 24.0)),
             _ => {}
         }
     }
+    s.spectrum = s.spectrum.checked();
     s
 }
 
@@ -130,6 +145,11 @@ impl Settings {
         text += &format!(
             "spectrum_notes={}\nnote_a4={}\nnote_solfege={}\nnote_flats={}\nnote_octaves={}\nnote_naturals={}\nnote_c_color={}\nnote_color={}\nnote_c_width={}\nnote_label_size={}\n",
             self.spectrum_notes, self.note_a4, self.note_solfege, self.note_flats, self.note_octaves, self.note_naturals, to_hex(self.note_c_color), to_hex(self.note_color), self.note_c_width, self.note_label_size
+        );
+        let p = self.spectrum;
+        text += &format!(
+            "spec_fft={}\nspec_window={}\nspec_hop={}\nspec_shape={}\nspec_floor={}\nspec_ceiling={}\nspec_low={}\nspec_colours={}\n",
+            p.fft, p.window, p.hop, p.shape.name(), p.floor, p.ceiling, p.low, p.map.name()
         );
         if let Some([w, h]) = self.window_size {
             text += &format!("window_size={w},{h}\n");
@@ -168,6 +188,16 @@ mod tests {
             note_color: Color32::from_rgba_unmultiplied(0, 0, 255, 255),
             note_c_width: 3.0,
             note_label_size: 14.0,
+            spectrum: crate::spectrum::Params {
+                fft: 8192,
+                window: 2048,
+                hop: 256,
+                shape: crate::spectrum::Shape::BlackmanHarris,
+                floor: -120.0,
+                ceiling: -6.0,
+                low: 40.0,
+                map: crate::spectrum::ColourMap::BlueRed,
+            },
         };
         s.write_to(&path).unwrap();
         let back = parse(&std::fs::read_to_string(&path).unwrap());
@@ -180,5 +210,6 @@ mod tests {
         assert_eq!((defaults.spectrum_notes, defaults.note_a4, defaults.note_octaves), (false, 440.0, true));
         assert_eq!(parse("note_a4=1000\nnote_opacity=-1").note_a4, 480.0);
         assert_eq!(parse("note_color=zz00ff80\nnote_c_color=fff").note_color, NOTE_COLOR);
+        assert_eq!(parse("spec_fft=3000\nspec_window=99999\nspec_shape=Kaiser").spectrum, crate::spectrum::Params::default().checked());
     }
 }
