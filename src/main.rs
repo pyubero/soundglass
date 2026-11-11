@@ -1938,13 +1938,6 @@ fn spectrum_settings(ui: &mut egui::Ui, s: &mut settings::Settings, rate: u64) -
             }
         });
         ui.end_row();
-        ui.label("Rows");
-        egui::ComboBox::from_id_salt("rows").selected_text(p.rows.to_string()).show_ui(ui, |ui| {
-            for n in spectrum::ROWS {
-                ui.selectable_value(&mut p.rows, n, n.to_string());
-            }
-        });
-        ui.end_row();
         ui.label("Window function");
         egui::ComboBox::from_id_salt("shape").selected_text(p.shape.name()).show_ui(ui, |ui| {
             for shape in spectrum::Shape::ALL {
@@ -2058,11 +2051,12 @@ fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, selection: &mut Option
     spectrogram.update(ui.ctx(), track, edit, s.spectrum);
     // Worked out once for the whole track; zooming and panning only move and stretch the tiles.
     let x_at = |f: f64| rect.left() + ((f - view.start as f64) / frames as f64 * rect.width() as f64) as f32;
-    let uv = egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0));
-    for (from, to, texture) in spectrogram.tiles() {
-        let at = egui::Rect::from_x_y_ranges(x_at(from)..=x_at(to), y_of(nyquist)..=y_of(low));
-        if at.x_range().intersects(rect.x_range()) {
-            painter.image(texture.id(), at, uv, egui::Color32::WHITE);
+    // The bins are evenly spaced in Hz, the axis isn't: each bin is its own strip of a mesh.
+    let fft = spectrogram.fft();
+    for (from, to, slab, texture) in spectrogram.tiles() {
+        let x = [x_at(from), x_at(to)];
+        if x[1] >= rect.left() && x[0] <= rect.right() {
+            painter.add(spectrum::mesh(texture.id(), x, slab, fft, rate as f32, y_of));
         }
     }
     let status = if !track.done() { Some("Decoding…".to_string()) } else { spectrogram.progress().map(|done| format!("Computing… {:.0} %", done * 100.0)) };

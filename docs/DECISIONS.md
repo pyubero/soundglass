@@ -123,10 +123,13 @@
 - 2026-11-11 — the spectrogram is analysed once per track, edit and analysis setting, then zooming and panning only scale and move its tiles (user's choice)
 - 2026-11-11 — zoomed out, the graphics card scales the tiles with mipmaps (averaging), so short clicks can fade (user's choice)
 - 2026-11-11 — the hop is 256, 512 or 1024 (user's choice); for a long track it doubles until columns × rows fit 48 M levels (about 300 MB with textures), with a note in the toolbar (user's choice)
-- 2026-11-11 — Rows (512, 1024 or 2048 over the whole frequency axis) is a setting (user's choice)
+- 2026-11-11 — Rows (512, 1024 or 2048 over the whole frequency axis) is a setting (user's choice) — changed 2026-11-11: no Rows setting, see below
 - 2026-11-11 — levels are kept as u8 dB (−160 to +6, about 0.65 dB steps) in tiles 2048 columns wide, so changing the colours or level range only recolours through a 256-entry palette
 - 2026-11-11 — the analysis starts once the track is fully decoded (its length is exact only then, and would restart it); any edit redoes the whole analysis (accepted)
 - 2026-11-11 — "Natural notes only" is replaced by Scale shown: All notes or one of the 12 major scales (relative minors share their notes); a saved "natural notes only" reads as C major (user's choice)
 - 2026-11-11 — a scale's notes are spelled as its key spells them (F major Bb, F# major E#), Sharps/Flats applies only to All notes (user's choice)
 - 2026-11-11 — Instrument range limits the note lines to concert pitch: B♭ trumpet E3–Bb5, B♭ tenor sax Ab2–Eb5; it only hides lines, the view doesn't zoom (user's choice)
 - 2026-11-11 — short of room for every name, one per octave is named: C for All notes, the tonic for a scale; the thicker line stays on every C
+- 2026-11-11 — no Rows setting: each column keeps the FFT's own bins (FFT size ÷ 2 + 1, set by the FFT size alone; the window sets how sharp they are) (user's choice)
+- 2026-11-11 — the bins are evenly spaced in Hz, so each texture is drawn as a mesh with one strip per bin placed on the log axis; textures hold at most 4096 bins (FFT 32768 splits into 5) to fit the graphics card
+- 2026-11-11 — the lowest frequency is only drawn, not analysed, so changing it no longer recomputes; larger FFTs raise the hop on shorter tracks than before, since columns × bins must fit the same budget (accepted)

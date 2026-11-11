@@ -85,9 +85,8 @@ impl ColourMap {
     }
 }
 
-/// The hop and rows choices.
+/// The hop choices.
 pub const HOPS: [usize; 3] = [256, 512, 1024];
-pub const ROWS: [usize; 3] = [512, 1024, 2048];
 
 /// How the spectrogram is analysed and coloured; kept in settings.txt.
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -96,8 +95,6 @@ pub struct Params {
     pub fft: usize,
     pub window: usize,
     pub hop: usize,
-    /// Levels per column over the whole frequency axis.
-    pub rows: usize,
     pub shape: Shape,
     /// The quietest and loudest levels shown, in dBFS.
     pub floor: f32,
@@ -109,7 +106,7 @@ pub struct Params {
 
 impl Default for Params {
     fn default() -> Self {
-        Params { fft: 4096, window: 4096, hop: 512, rows: 1024, shape: Shape::Hann, floor: -100.0, ceiling: 0.0, low: 20.0, map: ColourMap::Magma }
+        Params { fft: 4096, window: 4096, hop: 512, shape: Shape::Hann, floor: -100.0, ceiling: 0.0, low: 20.0, map: ColourMap::Magma }
     }
 }
 
@@ -123,7 +120,7 @@ impl Params {
         let ceiling = if self.ceiling.is_finite() { self.ceiling.clamp(-60.0, 6.0).max(floor + 10.0) } else { 0.0 };
         let low = if self.low.is_finite() { self.low.clamp(10.0, 200.0) } else { 20.0 };
         let nearest = |v: usize, choices: [usize; 3]| choices.into_iter().min_by_key(|c| c.abs_diff(v)).unwrap();
-        Params { fft, window, hop: nearest(self.hop, HOPS), rows: nearest(self.rows, ROWS), floor, ceiling, low, ..self }
+        Params { fft, window, hop: nearest(self.hop, HOPS), floor, ceiling, low, ..self }
     }
 }
 
@@ -142,11 +139,11 @@ impl Analyser {
         Analyser { params, window: params.shape.table(params.window), input: fft.make_input_vec(), output: fft.make_output_vec(), fft }
     }
 
-    /// The level in dBFS of each of `height` rows (top first) of `band` around edited frame
-    /// `centre`, each the loudest FFT bin in its range; `None` where the audio isn't decoded yet.
-    fn rows(&mut self, track: &Track, edit: &Edit, centre: u64, height: usize, band: [f32; 2]) -> Option<Vec<f32>> {
+    /// The level in dBFS of each FFT bin (0 Hz up to half the sample rate, `fft / 2 + 1` of
+    /// them) around edited frame `centre`; `None` where the audio isn't decoded yet.
+    fn bins(&mut self, track: &Track, edit: &Edit, centre: u64) -> Option<Vec<f32>> {
         let format = track.format.get()?;
-        let (rate, channels) = (format.rate as f32, edit.channels(format.channels).max(1));
+        let channels = edit.channels(format.channels).max(1);
         let (n, half) = (self.params.window, self.params.window as u64 / 2);
         let (a, b) = (centre.saturating_sub(half), (centre + half).min(edit.len()));
         // Zeros where the window runs past the track's start or end, and after it up to the FFT's length.
@@ -166,25 +163,19 @@ impl Analyser {
         self.fft.process(&mut self.input, &mut self.output).ok()?;
         // A full-scale sine comes out at 0 dB.
         let scale = 2.0 / self.window.iter().sum::<f32>();
-        let (fft, low, top) = (self.params.fft, self.params.low, self.output.len() - 1);
-        let bin = |f: f32| (f / rate * fft as f32).round() as usize;
-        let [lo, hi] = band;
-        let freq = |y: f32| freq_at(lo + (hi - lo) * (1.0 - y / height as f32), rate, low);
-        Some(
-            (0..height)
-                .map(|y| {
-                    let (from, to) = (bin(freq(y as f32 + 1.0)).min(top), bin(freq(y as f32)).min(top));
-                    let peak = self.output[from..=to.max(from)].iter().map(|c| c.norm()).fold(0.0, f32::max);
-                    20.0 * (peak * scale).max(1e-10).log10()
-                })
-                .collect(),
-        )
+        Some(self.output.iter().map(|c| 20.0 * (c.norm() * scale).max(1e-10).log10()).collect())
     }
 }
 
-/// Columns per tile: textures wider than this may not fit the graphics card.
+/// The FFT bins of `params`: one row of the picture each.
+pub fn bins(params: &Params) -> usize {
+    params.fft / 2 + 1
+}
+
+/// Columns per tile, and bins per texture: textures larger than this may not fit the graphics card.
 const TILE: usize = 2048;
-/// At most this many levels (columns × rows) are kept: about 300 MB with their textures.
+const SLAB: usize = 4096;
+/// At most this many levels (columns × bins) are kept: about 300 MB with their textures.
 const BUDGET: u64 = 48_000_000;
 /// The levels kept: `u8` steps of about 0.65 dB from `LEVEL_LOW` to `LEVEL_HIGH` dBFS.
 const LEVEL_LOW: f32 = -160.0;
@@ -201,17 +192,17 @@ fn db(level: u8) -> f32 {
 /// The hop for a track of `len` frames: the chosen one, doubled until the levels fit `BUDGET`.
 fn hop_for(len: u64, params: &Params) -> u64 {
     let mut hop = params.hop as u64;
-    while len.div_ceil(hop) * params.rows as u64 > BUDGET {
+    while len.div_ceil(hop) * bins(params) as u64 > BUDGET {
         hop *= 2;
     }
     hop
 }
 
-/// The whole edited track's columns, centred on frames 0, `hop`, 2·`hop`…, each `params.rows`
-/// levels (top first), handed to `send` a tile at a time as (tile, levels column by column,
-/// columns). Stops when `cancel` is set; counts finished columns in `done`.
+/// The whole edited track's columns, centred on frames 0, `hop`, 2·`hop`…, each the levels of
+/// the FFT's bins (lowest first), handed to `send` a tile at a time as (tile, levels column by
+/// column, columns). Stops when `cancel` is set; counts finished columns in `done`.
 fn analyse(track: &Track, edit: &Edit, params: Params, hop: u64, cancel: &AtomicBool, done: &AtomicUsize, mut send: impl FnMut(usize, Vec<u8>, usize)) {
-    let (rows, columns) = (params.rows, edit.len().div_ceil(hop) as usize);
+    let (rows, columns) = (bins(&params), edit.len().div_ceil(hop) as usize);
     let mut analyser = Analyser::new(params);
     for tile in 0..columns.div_ceil(TILE) {
         let width = TILE.min(columns - tile * TILE);
@@ -221,7 +212,7 @@ fn analyse(track: &Track, edit: &Edit, params: Params, hop: u64, cancel: &Atomic
                 return;
             }
             // The decoded chunks are only locked for a moment; a column that still can't be read stays at the floor.
-            let column = (0..100).find_map(|_| analyser.rows(track, edit, c as u64 * hop, rows, [0.0, 1.0]).or_else(|| {
+            let column = (0..100).find_map(|_| analyser.bins(track, edit, c as u64 * hop).or_else(|| {
                 std::thread::sleep(std::time::Duration::from_millis(1));
                 None
             }));
@@ -240,15 +231,42 @@ fn palette(params: &Params) -> Vec<egui::Color32> {
     (0..=255).map(|l| colour(db(l), params)).collect()
 }
 
-/// A tile's picture: levels column by column (top first) as rows of pixels.
-fn tile_image(levels: &[u8], columns: usize, rows: usize, palette: &[egui::Color32]) -> egui::ColorImage {
-    let mut pixels = vec![egui::Color32::TRANSPARENT; columns * rows];
+/// The picture of bins `from..to` of a tile's levels (column by column, `rows` bins each,
+/// lowest first), highest bin at the top.
+fn tile_image(levels: &[u8], columns: usize, rows: usize, (from, to): (usize, usize), palette: &[egui::Color32]) -> egui::ColorImage {
+    let height = to - from;
+    let mut pixels = vec![egui::Color32::TRANSPARENT; columns * height];
     for (c, column) in levels.chunks_exact(rows).enumerate() {
-        for (y, &l) in column.iter().enumerate() {
-            pixels[y * columns + c] = palette[l as usize];
+        for (k, &l) in column[from..to].iter().enumerate() {
+            pixels[(height - 1 - k) * columns + c] = palette[l as usize];
         }
     }
-    egui::ColorImage::new([columns, rows], pixels)
+    egui::ColorImage::new([columns, height], pixels)
+}
+
+/// The bins of each texture: `SLAB` at a time.
+fn slabs(rows: usize) -> impl Iterator<Item = (usize, usize)> {
+    (0..rows.div_ceil(SLAB)).map(move |s| (s * SLAB, ((s + 1) * SLAB).min(rows)))
+}
+
+/// A slab of bins `from..to` drawn between `x` left and right, each bin a strip from half a bin
+/// below to half above its frequency, placed by `y_of` (for the log axis); `fft` and `rate` give
+/// the bins' frequencies.
+pub fn mesh(texture: egui::TextureId, [left, right]: [f32; 2], (from, to): (usize, usize), fft: usize, rate: f32, y_of: impl Fn(f32) -> f32) -> egui::Mesh {
+    let mut mesh = egui::Mesh::with_texture(texture);
+    let span = (to - from) as f32;
+    for (i, edge) in (from..=to).enumerate() {
+        // The 0 Hz bin's lower edge is below 0; any small frequency puts it off the bottom.
+        let freq = ((edge as f32 - 0.5) * rate / fft as f32).max(1e-3);
+        let (y, v) = (y_of(freq), 1.0 - i as f32 / span);
+        mesh.vertices.push(egui::epaint::Vertex { pos: egui::pos2(left, y), uv: egui::pos2(0.0, v), color: egui::Color32::WHITE });
+        mesh.vertices.push(egui::epaint::Vertex { pos: egui::pos2(right, y), uv: egui::pos2(1.0, v), color: egui::Color32::WHITE });
+        if i > 0 {
+            let k = 2 * i as u32;
+            mesh.indices.extend_from_slice(&[k - 2, k - 1, k, k - 1, k + 1, k]);
+        }
+    }
+    mesh
 }
 
 /// Mipmapped, so a zoomed-out picture is averaged rather than shimmering.
@@ -257,7 +275,8 @@ const TEXTURE: egui::TextureOptions = egui::TextureOptions { mipmap_mode: Some(e
 struct Tile {
     levels: Vec<u8>,
     columns: usize,
-    texture: egui::TextureHandle,
+    /// One per `SLAB` bins, lowest first.
+    textures: Vec<egui::TextureHandle>,
 }
 
 /// The analysis running on the worker thread.
@@ -276,7 +295,7 @@ impl Drop for Job {
 }
 
 /// What the analysis depends on: the track (by address), the edits, and the parameters with
-/// the colours left out (those only recolour).
+/// the colours (those only recolour) and the lowest frequency (only drawn) left out.
 type Key = (usize, Arc<Edit>, Params);
 
 pub struct Spectrogram {
@@ -286,7 +305,9 @@ pub struct Spectrogram {
     key: Option<Key>,
     /// The hop used: the chosen one, or more for a long track.
     hop: u64,
+    /// Bins per column, and the FFT length they come from.
     rows: usize,
+    fft: usize,
     tiles: Vec<Tile>,
     /// The floor, ceiling and colour map the tiles are coloured with.
     colours: Option<(f32, f32, ColourMap)>,
@@ -295,7 +316,7 @@ pub struct Spectrogram {
 
 impl Spectrogram {
     pub fn new() -> Spectrogram {
-        Spectrogram { band: [0.0, 1.0], key: None, hop: 0, rows: 0, tiles: Vec::new(), colours: None, job: None }
+        Spectrogram { band: [0.0, 1.0], key: None, hop: 0, rows: 0, fft: 0, tiles: Vec::new(), colours: None, job: None }
     }
 
     /// Starts the analysis of `track` with `edit` once it's fully decoded (its length is exact
@@ -305,9 +326,9 @@ impl Spectrogram {
         if !track.done() || track.format.get().is_none() {
             return;
         }
-        let key = (Arc::as_ptr(track) as usize, edit.clone(), Params { floor: 0.0, ceiling: 0.0, map: ColourMap::Magma, ..params });
+        let key = (Arc::as_ptr(track) as usize, edit.clone(), Params { floor: 0.0, ceiling: 0.0, map: ColourMap::Magma, low: 0.0, ..params });
         if self.key.as_ref() != Some(&key) {
-            (self.hop, self.rows, self.tiles, self.job) = (hop_for(edit.len(), &params), params.rows, Vec::new(), None);
+            (self.hop, self.rows, self.fft, self.tiles, self.job) = (hop_for(edit.len(), &params), bins(&params), params.fft, Vec::new(), None);
             let (tx, rx) = std::sync::mpsc::channel();
             let (cancel, done) = (Arc::new(AtomicBool::new(false)), Arc::new(AtomicUsize::new(0)));
             let columns = edit.len().div_ceil(self.hop) as usize;
@@ -326,7 +347,9 @@ impl Spectrogram {
         let palette = palette(&params);
         if self.colours != colours {
             for t in &mut self.tiles {
-                t.texture.set(tile_image(&t.levels, t.columns, self.rows, &palette), TEXTURE);
+                for (texture, slab) in t.textures.iter_mut().zip(slabs(self.rows)) {
+                    texture.set(tile_image(&t.levels, t.columns, self.rows, slab, &palette), TEXTURE);
+                }
             }
             self.colours = colours;
         }
@@ -334,8 +357,10 @@ impl Spectrogram {
             loop {
                 match job.rx.try_recv() {
                     Ok((tile, levels, columns)) => {
-                        let texture = ctx.load_texture(format!("spectrogram-{tile}"), tile_image(&levels, columns, self.rows, &palette), TEXTURE);
-                        self.tiles.push(Tile { levels, columns, texture });
+                        let textures = slabs(self.rows)
+                            .map(|slab| ctx.load_texture(format!("spectrogram-{tile}-{}", slab.0), tile_image(&levels, columns, self.rows, slab, &palette), TEXTURE))
+                            .collect();
+                        self.tiles.push(Tile { levels, columns, textures });
                     }
                     Err(TryRecvError::Empty) => break,
                     // Finished (or the worker died): keep what came.
@@ -348,13 +373,19 @@ impl Spectrogram {
         }
     }
 
-    /// The tiles so far, each as the edited frames it spans (from, to) and its texture.
-    pub fn tiles(&self) -> impl Iterator<Item = (f64, f64, &egui::TextureHandle)> {
+    /// The textures so far, each as the edited frames it spans (from, to), its bins (from, to)
+    /// and the texture.
+    pub fn tiles(&self) -> impl Iterator<Item = (f64, f64, (usize, usize), &egui::TextureHandle)> {
         let hop = self.hop as f64;
-        self.tiles.iter().enumerate().map(move |(i, t)| {
+        self.tiles.iter().enumerate().flat_map(move |(i, t)| {
             let first = (i * TILE) as f64 * hop - hop / 2.0;
-            (first, first + t.columns as f64 * hop, &t.texture)
+            t.textures.iter().zip(slabs(self.rows)).map(move |(texture, slab)| (first, first + t.columns as f64 * hop, slab, texture))
         })
+    }
+
+    /// The FFT length the tiles were made with.
+    pub fn fft(&self) -> usize {
+        self.fft
     }
 
     /// The hop used, once the analysis started.
@@ -376,11 +407,6 @@ fn colour(db: f32, params: &Params) -> egui::Color32 {
     let k = t - i as f32;
     let c = |j: usize| (stops[i][j] + (stops[i + 1][j] - stops[i][j]) * k) as u8;
     egui::Color32::from_rgb(c(0), c(1), c(2))
-}
-
-/// The frequency at `at` on the whole axis (0 is `low`, 1 half of `rate`).
-pub fn freq_at(at: f32, rate: f32, low: f32) -> f32 {
-    low * (rate / 2.0 / low).powf(at)
 }
 
 /// Where frequency `freq` sits within `band` of an axis from `low`, from 0 at its top to 1 at
@@ -566,26 +592,35 @@ mod tests {
 
     #[test]
     fn a_sine_is_brightest_at_its_frequency_and_silence_is_the_floor() {
-        let (rate, height) = (44100, 200);
+        let rate = 44100;
         let (track, edit) = (sine(rate, 1000.0, 0.5), Edit::whole(rate as u64));
-        let loudest = |rows: &[f32]| (0..rows.len()).max_by(|&a, &b| rows[a].total_cmp(&rows[b])).unwrap();
         for shape in Shape::ALL {
             for (fft, window) in [(4096, 4096), (8192, 2048)] {
                 let params = Params { fft, window, shape, ..Params::default() };
-                let mut a = Analyser::new(params);
-                for band in [[0.0, 1.0], [0.5, 1.0]] {
-                    let rows = a.rows(&track, &edit, 22050, height, band).unwrap();
-                    let (got, want) = (loudest(&rows), (height_of(1000.0, rate as f32, band, params.low) * height as f32) as usize);
-                    assert!(got.abs_diff(want) <= 1, "{shape:?} {fft}/{window} {band:?}: loudest row {got}, 1 kHz is row {want}");
-                    // Half scale is −6 dBFS.
-                    assert!((rows[got] + 6.0).abs() < 1.5, "{shape:?} {fft}/{window}: {} dB", rows[got]);
-                }
+                let levels = Analyser::new(params).bins(&track, &edit, 22050).unwrap();
+                assert_eq!(levels.len(), bins(&params));
+                let loudest = (0..levels.len()).max_by(|&a, &b| levels[a].total_cmp(&levels[b])).unwrap();
+                let want = (1000.0 * fft as f32 / rate as f32).round() as usize;
+                assert!(loudest.abs_diff(want) <= 1, "{shape:?} {fft}/{window}: loudest bin {loudest}, 1 kHz is bin {want}");
+                // Half scale is −6 dBFS.
+                assert!((levels[loudest] + 6.0).abs() < 1.5, "{shape:?} {fft}/{window}: {} dB", levels[loudest]);
             }
         }
         let silent = Track::from_samples(rate, 2, vec![0.0; 2 * rate as usize]);
         let p = Params::default();
-        let rows = Analyser::new(p).rows(&silent, &edit, 0, height, [0.0, 1.0]).unwrap();
-        assert!(rows.iter().all(|&db| colour(db, &p) == colour(p.floor, &p)));
+        let levels = Analyser::new(p).bins(&silent, &edit, 0).unwrap();
+        assert!(levels.iter().all(|&db| colour(db, &p) == colour(p.floor, &p)));
+    }
+
+    #[test]
+    fn big_ffts_are_split_into_textures_and_drawn_by_frequency() {
+        assert_eq!(slabs(2049).collect::<Vec<_>>(), [(0, 2049)]);
+        assert_eq!(slabs(16385).collect::<Vec<_>>(), [(0, 4096), (4096, 8192), (8192, 12288), (12288, 16384), (16384, 16385)]);
+        // Bins of an 8-point FFT at 8 kHz are 1 kHz apart: bin 2's strip spans 1.5–2.5 kHz.
+        let m = mesh(egui::TextureId::default(), [0.0, 10.0], (0, 5), 8, 8000.0, |f| -f);
+        assert_eq!((m.vertices.len(), m.indices.len()), (12, 30));
+        assert_eq!((m.vertices[4].pos.y, m.vertices[6].pos.y), (-1500.0, -2500.0));
+        assert_eq!((m.vertices[0].uv.y, m.vertices[10].uv.y), (1.0, 0.0));
     }
 
     #[test]
@@ -595,13 +630,13 @@ mod tests {
         let mut samples = vec![0.0; rate];
         samples[5100] = 1.0;
         let track = Track::from_samples(rate as u32, 1, samples);
-        let params = Params { fft: 512, window: 256, hop: 256, rows: 16, ..Params::default() };
+        let params = Params { fft: 512, window: 256, hop: 256, ..Params::default() };
         let mut got = Vec::new();
         analyse(&track, &Edit::whole(rate as u64), params, 256, &AtomicBool::new(false), &AtomicUsize::new(0), |tile, levels, columns| got.push((tile, levels, columns)));
         assert_eq!(got.len(), 1);
         let (tile, levels, columns) = &got[0];
-        assert_eq!((*tile, *columns, levels.len()), (0, 32, 32 * 16));
-        let lit: Vec<usize> = (0..32).filter(|c| levels[c * 16..(c + 1) * 16].iter().any(|&l| db(l) > params.floor)).collect();
+        assert_eq!((*tile, *columns, levels.len()), (0, 32, 32 * 257));
+        let lit: Vec<usize> = (0..32).filter(|c| levels[c * 257..(c + 1) * 257].iter().any(|&l| db(l) > params.floor)).collect();
         assert_eq!(lit, [20]);
         let mut none = 0;
         analyse(&track, &Edit::whole(rate as u64), params, 256, &AtomicBool::new(true), &AtomicUsize::new(0), |_, _, _| none += 1);
@@ -616,17 +651,18 @@ mod tests {
         let p = Params::default();
         let minutes = |m: u64| m * 60 * 44100;
         assert_eq!(hop_for(minutes(3), &p), 512);
-        assert_eq!(hop_for(minutes(3), &Params { hop: 256, ..p }), 256);
+        assert_eq!(hop_for(minutes(3), &Params { fft: 2048, hop: 256, ..p }), 256);
+        assert_eq!(hop_for(minutes(3), &Params { hop: 256, ..p }), 512);
         assert!(hop_for(minutes(60), &p) > 512);
-        assert!(minutes(60).div_ceil(hop_for(minutes(60), &p)) * p.rows as u64 <= BUDGET);
+        assert!(minutes(60).div_ceil(hop_for(minutes(60), &p)) * bins(&p) as u64 <= BUDGET);
     }
 
     #[test]
     fn params_are_made_valid() {
         let p = Params { fft: 3000, window: 100_000, hop: 1, floor: -10.0, ceiling: -40.0, low: f32::NAN, ..Params::default() }.checked();
         assert_eq!((p.fft, p.window, p.hop, p.floor, p.ceiling, p.low), (4096, 4096, 256, -20.0, -10.0, 20.0));
-        let q = Params { hop: 300, rows: 700, ..Params::default() }.checked();
-        assert_eq!((q.hop, q.rows), (256, 512));
+        assert_eq!(Params { hop: 300, ..Params::default() }.checked().hop, 256);
+        assert_eq!(Params { hop: 100, ..Params::default() }.checked().hop, 256);
         assert_eq!(Params::default().checked(), Params::default());
         assert_eq!(Params { window: 300, ..Params::default() }.checked().window, 512);
     }

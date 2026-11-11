@@ -123,7 +123,6 @@ fn parse(text: &str) -> Settings {
             "spec_fft" => s.spectrum.fft = count(value).unwrap_or(s.spectrum.fft),
             "spec_window" => s.spectrum.window = count(value).unwrap_or(s.spectrum.window),
             "spec_hop" => s.spectrum.hop = count(value).unwrap_or(s.spectrum.hop),
-            "spec_rows" => s.spectrum.rows = count(value).unwrap_or(s.spectrum.rows),
             "spec_shape" => s.spectrum.shape = Shape::from_name(value).unwrap_or(s.spectrum.shape),
             "spec_floor" => s.spectrum.floor = float(value).unwrap_or(s.spectrum.floor),
             "spec_ceiling" => s.spectrum.ceiling = float(value).unwrap_or(s.spectrum.ceiling),
@@ -157,8 +156,8 @@ impl Settings {
         );
         let p = self.spectrum;
         text += &format!(
-            "spec_fft={}\nspec_window={}\nspec_hop={}\nspec_rows={}\nspec_shape={}\nspec_floor={}\nspec_ceiling={}\nspec_low={}\nspec_colours={}\n",
-            p.fft, p.window, p.hop, p.rows, p.shape.name(), p.floor, p.ceiling, p.low, p.map.name()
+            "spec_fft={}\nspec_window={}\nspec_hop={}\nspec_shape={}\nspec_floor={}\nspec_ceiling={}\nspec_low={}\nspec_colours={}\n",
+            p.fft, p.window, p.hop, p.shape.name(), p.floor, p.ceiling, p.low, p.map.name()
         );
         if let Some([w, h]) = self.window_size {
             text += &format!("window_size={w},{h}\n");
@@ -202,7 +201,6 @@ mod tests {
                 fft: 8192,
                 window: 2048,
                 hop: 1024,
-                rows: 2048,
                 shape: crate::spectrum::Shape::BlackmanHarris,
                 floor: -120.0,
                 ceiling: -6.0,
