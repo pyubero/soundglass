@@ -4,24 +4,29 @@ use std::path::{Path, PathBuf};
 
 /// Track Info's width when nothing is saved.
 pub const INFO_WIDTH: f32 = 320.0;
+/// The Edit panel's height when nothing is saved.
+pub const EDIT_HEIGHT: f32 = 160.0;
 
 // shortcut: hand-written key=value lines; move to serde + ron (new dependencies, ask first) when settings grow.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Settings {
-    /// Reopen with the window and Track Info as they were at exit, instead of the phone-shaped default.
+    /// Reopen with the window, Track Info and the Edit panel as they were at exit, instead of the phone-shaped default.
     pub remember_window_size: bool,
     /// Show a waveform strip instead of the plain seek bar.
     pub show_waveform: bool,
-    /// The whole window at exit in points, Track Info included when it was open.
+    /// The whole window at exit in points, Track Info and the Edit panel included when they were open.
     pub window_size: Option<[f32; 2]>,
     /// Whether Track Info was open, and its width.
     pub info_panel: bool,
     pub info_width: f32,
+    /// Whether the Edit panel was open, and its height.
+    pub edit_panel: bool,
+    pub edit_height: f32,
 }
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { remember_window_size: false, show_waveform: false, window_size: None, info_panel: false, info_width: INFO_WIDTH }
+        Settings { remember_window_size: false, show_waveform: false, window_size: None, info_panel: false, info_width: INFO_WIDTH, edit_panel: false, edit_height: EDIT_HEIGHT }
     }
 }
 
@@ -45,6 +50,8 @@ fn parse(text: &str) -> Settings {
             "window_size" => s.window_size = value.split_once(',').and_then(|(w, h)| Some([number(w)?, number(h)?])),
             "info_panel" => s.info_panel = on,
             "info_width" => s.info_width = number(value).unwrap_or(INFO_WIDTH),
+            "edit_panel" => s.edit_panel = on,
+            "edit_height" => s.edit_height = number(value).unwrap_or(EDIT_HEIGHT),
             _ => {}
         }
     }
@@ -59,8 +66,8 @@ impl Settings {
 
     fn text(&self) -> String {
         let mut text = format!(
-            "remember_window_size={}\nshow_waveform={}\ninfo_panel={}\ninfo_width={}\n",
-            self.remember_window_size, self.show_waveform, self.info_panel, self.info_width
+            "remember_window_size={}\nshow_waveform={}\ninfo_panel={}\ninfo_width={}\nedit_panel={}\nedit_height={}\n",
+            self.remember_window_size, self.show_waveform, self.info_panel, self.info_width, self.edit_panel, self.edit_height
         );
         if let Some([w, h]) = self.window_size {
             text += &format!("window_size={w},{h}\n");
@@ -87,7 +94,7 @@ mod tests {
     fn round_trip_and_defaults() {
         let dir = std::env::temp_dir().join(format!("soundglass-settings-{}", std::process::id()));
         let path = dir.join("settings.txt");
-        let s = Settings { remember_window_size: true, show_waveform: true, window_size: Some([700.0, 680.0]), info_panel: true, info_width: 300.0 };
+        let s = Settings { remember_window_size: true, show_waveform: true, window_size: Some([700.0, 680.0]), info_panel: true, info_width: 300.0, edit_panel: true, edit_height: 200.0 };
         s.write_to(&path).unwrap();
         let back = parse(&std::fs::read_to_string(&path).unwrap());
         std::fs::remove_dir_all(&dir).unwrap();
@@ -95,5 +102,6 @@ mod tests {
         assert_eq!(parse("garbage\n=\nremember_window_size=maybe\nwindow_size=wide,-3\ninfo_width=nan"), Settings::default());
         let defaults = parse("");
         assert_eq!((defaults.window_size, defaults.info_panel, defaults.info_width), (None, false, INFO_WIDTH));
+        assert_eq!((defaults.edit_panel, defaults.edit_height), (false, EDIT_HEIGHT));
     }
 }

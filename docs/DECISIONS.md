@@ -74,3 +74,4 @@
 - 2026-11-11 — Save Copy keeps the original's format when soundglass writes it (WAV, FLAC, MP3, Ogg Vorbis; FLAC otherwise) and its bit depth; MP3 and Vorbis use Save As's last quality; Save As now suggests name-edited too
 - 2026-11-11 — the save job lives in App, shared by Save Copy and Save As; "Saved …" shows in the player view for 4 s, errors until the next save
 - 2026-11-11 — while playing with a waveform shown, the window redraws every 33 ms (about 30 fps; 50 ms was tried first), not at the screen's rate — a little less smooth, less CPU (user's choice)
+- 2026-11-11 — "Remember window size" also stores whether the Edit panel is open and its height — the saved size included the panel, so a restart without it came back too tall

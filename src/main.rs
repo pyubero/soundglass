@@ -64,8 +64,8 @@ fn main() -> eframe::Result {
     let viewport = egui::ViewportBuilder::default().with_title(&name).with_inner_size(remembered.unwrap_or(DEFAULT_SIZE)).with_min_inner_size([260.0, 420.0]);
     // soundglass keeps the window size itself (see `App::save`): eframe's own saving can't follow Track Info.
     let options = eframe::NativeOptions { viewport, persist_window: false, ..Default::default() };
-    let show_info = remembered.is_some() && settings.info_panel;
-    let (window_size, info_width) = (remembered, settings.info_width);
+    let (show_info, show_edit) = (remembered.is_some() && settings.info_panel, remembered.is_some() && settings.edit_panel);
+    let (window_size, info_width, edit_height) = (remembered, settings.info_width, settings.edit_height);
     eframe::run_native("soundglass", options, Box::new(move |cc| {
         let _ = ctx.set(cc.egui_ctx.clone());
         let mut recent: Vec<PathBuf> = cc.storage.and_then(|s| s.get_string("recent")).unwrap_or_default().lines().map(PathBuf::from).collect();
@@ -75,7 +75,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, show_info, show_edit: false, edit_height: 160.0, edit_view: EditView::default(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -211,6 +211,7 @@ impl eframe::App for App {
         storage.set_string("window", String::new());
         if self.settings.remember_window_size {
             (self.settings.window_size, self.settings.info_panel, self.settings.info_width) = (self.window_size, self.show_info, self.info_width);
+            (self.settings.edit_panel, self.settings.edit_height) = (self.show_edit, self.edit_height);
             self.settings_error = self.settings.save().err();
         }
     }
@@ -685,7 +686,7 @@ impl App {
             if ui.checkbox(&mut self.settings.remember_window_size, "Remember window size").changed() {
                 self.settings_error = self.settings.save().err();
             }
-            ui.weak("Applies the next time soundglass opens; the window and Track Info as you quit are kept.");
+            ui.weak("Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.");
             if let Some(e) = &self.settings_error {
                 ui.colored_label(ui.visuals().error_fg_color, e);
             }
