@@ -66,10 +66,11 @@
 - 2026-11-11 — the MP3 encoder is flushed with padding (FlushGap) and its LAME tag frame overwrites LAME's empty first frame — that tag holds the delay and padding, so the saved file decodes to the exact length; FlushNoGap drops the last ~2000 frames
 - 2026-11-11 — flacenc's STREAMINFO is patched so its minimum block size leaves out the shorter last block, as the FLAC spec says — otherwise symphonia 0.6 can't open the file (ffmpeg can)
 - 2026-11-11 — Save As defaults to FLAC 16-bit; Ogg Vorbis quality is 0–10 as oggenc counts (default 6)
-- 2026-11-11 — the playhead is drawn where playback is now: the callback stores when it last set the position, and the UI moves it on by the time since (wrapping in a looped region), repainting every frame while playing with a waveform shown — a 250 ms repaint and 10–20 ms position steps made it jump when zoomed in
+- 2026-11-11 — the playhead is drawn where playback is now: the callback stores when it last set the position, and the UI moves it on by the time since (wrapping in a looped region), repainting every frame while playing with a waveform shown — changed 2026-11-11: every 50 ms instead (see below) — a 250 ms repaint and 10–20 ms position steps made it jump when zoomed in
 - 2026-11-11 — waveform columns are cached per waveform and worked out again only when the width, view, edits or decoded length change; min_max reads samples only below 1024 frames per column — the waveform lagged when every frame re-read up to millions of samples
 - 2026-11-11 — in the Edit panel the wheel zooms around the pointer and right-drag (or sideways scrolling) pans; Cut is named "Cut out" (user's choice)
 - 2026-11-11 — zoomed in, the view turns the page only when the playhead crosses its right edge, so a view panned away from the playhead stays put
 - 2026-11-11 — Save Copy (Ctrl+S), as in lightview: only with unsaved edits, no dialog, next to the original as name-edited.ext then name-edited-2.ext…, the name claimed with create_new so nothing is overwritten (user's choice)
 - 2026-11-11 — Save Copy keeps the original's format when soundglass writes it (WAV, FLAC, MP3, Ogg Vorbis; FLAC otherwise) and its bit depth; MP3 and Vorbis use Save As's last quality; Save As now suggests name-edited too
 - 2026-11-11 — the save job lives in App, shared by Save Copy and Save As; "Saved …" shows in the player view for 4 s, errors until the next save
+- 2026-11-11 — while playing with a waveform shown, the window redraws every 50 ms (20 fps), not at the screen's rate — a little less smooth, less CPU (user's choice)

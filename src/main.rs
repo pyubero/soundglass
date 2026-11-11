@@ -21,6 +21,9 @@ use track::Track;
 /// The window's size when nothing is remembered: a vertical phone's shape, about 9:16.
 const DEFAULT_SIZE: [f32; 2] = [380.0, 680.0];
 
+/// Milliseconds between redraws while playing with a waveform shown.
+const WAVE_REPAINT_MS: u64 = 50;
+
 /// How far Left and Right jump.
 const STEP_SECONDS: u64 = 5;
 /// Previous restarts the track after this much has played, as Spotify does.
@@ -245,7 +248,8 @@ impl eframe::App for App {
             if playing { display_pos(pos, ago, rate, self.speed, self.edit_view.selection, self.looping, len) } else { pos }
         });
         if playing && (self.show_edit || self.settings.show_waveform) {
-            ctx.request_repaint();
+            // 20 fps: smooth enough for the playhead, cheaper than redrawing at the screen's rate (user's choice).
+            ctx.request_repaint_after(Duration::from_millis(WAVE_REPAINT_MS));
         } else if playing {
             ctx.request_repaint_after(Duration::from_millis(250));
         }
