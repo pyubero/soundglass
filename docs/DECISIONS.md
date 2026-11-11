@@ -56,3 +56,5 @@
 - 2026-11-11 — leaving a file or quitting with unsaved edits asks Save As / Discard / Cancel (user's choice)
 - 2026-11-11 — the Edit panel is a bottom panel that grows the window by its height, like Track Info does by its width; zoom is Ctrl+scroll and −/+/Fit buttons, not Ctrl+0/+/− — egui already uses those keys for the UI's own zoom
 - 2026-11-11 — both waveforms draw through edit::min_max: peaks for long spans, the samples themselves for short ones — zoomed-in edges are exact and the strip and panel always agree
+- 2026-11-11 — undone back to the first step, the player gets no edit list, so the track moves on gaplessly again; Cut leaves the playhead at the cut, Crop at 0, Silence keeps the selection
+- 2026-11-11 — the unsaved-edits prompt is raised in go() and open() (every way of leaving a track goes through them) and on the window's close request

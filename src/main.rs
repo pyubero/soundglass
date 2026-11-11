@@ -71,7 +71,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, show_info, show_edit: false, edit_height: 160.0, edit_view: EditView::default(), history: None, looping: false, sent_region: None, controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, show_info, show_edit: false, edit_height: 160.0, edit_view: EditView::default(), history: None, looping: false, sent_region: None, pending: None, controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -116,8 +116,8 @@ struct App {
     /// The volume slider's position, 0 to 1; see `volume_gain`.
     volume: f32,
     speed: f64,
-    /// The track (by address) the title bar shows, and whether its length was exact then.
-    titled: Option<(usize, bool)>,
+    /// The track (by address) the title bar shows, whether its length was exact then, and whether it had unsaved edits.
+    titled: Option<(usize, bool, bool)>,
     recent: Vec<PathBuf>,
     /// The Custom speed dialog's value while it is open.
     custom_speed: Option<f64>,
@@ -132,6 +132,8 @@ struct App {
     looping: bool,
     /// The selection and Loop last sent to the player, to send them again only when they change.
     sent_region: Option<(Option<(u64, u64)>, bool)>,
+    /// Waits for Save As / Discard / Cancel while there are unsaved edits.
+    pending: Option<Pending>,
     /// Height of everything below the cover, as measured last frame.
     controls_height: f32,
     /// Track Info's width as last shown.
@@ -156,6 +158,20 @@ enum Action {
     /// Slider position, 0 to 1.
     Volume(f32),
     Speed(f64),
+    Undo,
+    Redo,
+    /// Removes the selection.
+    Cut,
+    /// Keeps only the selection.
+    Crop,
+    Silence,
+}
+
+/// Where to go once unsaved edits are saved or discarded.
+enum Pending {
+    Go(usize),
+    Open(PathBuf),
+    Quit,
 }
 
 /// The speeds Playback → Change speed offers directly.
@@ -199,7 +215,7 @@ impl eframe::App for App {
         }
         self.follow_player();
         // Re-set when the track changes and again once its exact length is known.
-        if self.titled != Some((Arc::as_ptr(&self.track) as usize, self.track.done())) {
+        if self.titled != Some((Arc::as_ptr(&self.track) as usize, self.track.done(), self.dirty())) {
             self.set_title(&ctx);
         }
 
@@ -230,13 +246,30 @@ impl eframe::App for App {
         if key(egui::Key::ArrowRight) {
             actions.push(Action::Seek((pos + step).min(len)));
         }
-        if ctx.memory(|m| m.focused().is_none()) && self.custom_speed.is_none() {
-            if key(egui::Key::Escape) {
+        let shortcut = |m, k| egui::KeyboardShortcut::new(m, k);
+        let (undo_key, redo_key, redo_key2) = (shortcut(egui::Modifiers::COMMAND, egui::Key::Z), shortcut(egui::Modifiers::COMMAND | egui::Modifiers::SHIFT, egui::Key::Z), shortcut(egui::Modifiers::COMMAND, egui::Key::Y));
+        let (cut_key, crop_key, silence_key) = (shortcut(egui::Modifiers::NONE, egui::Key::Delete), shortcut(egui::Modifiers::COMMAND, egui::Key::T), shortcut(egui::Modifiers::COMMAND, egui::Key::L));
+        // Ctrl+Shift+Z first: Ctrl+Z would match it too, since a shortcut without Shift ignores Shift.
+        for (keys, action) in [(&[redo_key, redo_key2][..], Action::Redo), (&[undo_key], Action::Undo), (&[crop_key], Action::Crop), (&[silence_key], Action::Silence)] {
+            if keys.iter().any(|k| ctx.input_mut(|i| i.consume_shortcut(k))) {
+                actions.push(action);
+            }
+        }
+        if ctx.memory(|m| m.focused().is_none()) && self.custom_speed.is_none() && self.pending.is_none() {
+            let plain = |k| ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, k));
+            if plain(egui::Key::Escape) {
                 self.edit_view.selection = None;
             }
-            if key(egui::Key::L) {
+            if plain(egui::Key::L) {
                 self.looping = !self.looping;
             }
+            if plain(egui::Key::Delete) {
+                actions.push(Action::Cut);
+            }
+        }
+        if ctx.input(|i| i.viewport().close_requested()) && self.dirty() {
+            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+            self.pending = Some(Pending::Quit);
         }
         let edit_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::E);
         let mut toggle_edit = ctx.input_mut(|i| i.consume_shortcut(&edit_key));
@@ -282,6 +315,25 @@ impl eframe::App for App {
                     ui.separator();
                     if ui.add(egui::Button::new("Quit").shortcut_text(ctx.format_shortcut(&egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Q)))).clicked() {
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                    }
+                });
+                ui.menu_button("Edit", |ui| {
+                    let (history, selected) = (self.history.as_ref(), self.edit_view.selection.is_some() && self.track.done());
+                    let items = [
+                        ("Undo", &undo_key, history.is_some_and(|h| h.can_undo()), Action::Undo),
+                        ("Redo", &redo_key, history.is_some_and(|h| h.can_redo()), Action::Redo),
+                        ("Cut", &cut_key, selected, Action::Cut),
+                        ("Crop", &crop_key, selected, Action::Crop),
+                        ("Silence", &silence_key, selected, Action::Silence),
+                    ];
+                    for (i, (label, key, enabled, action)) in items.into_iter().enumerate() {
+                        if i == 2 {
+                            ui.separator();
+                        }
+                        if ui.add_enabled(enabled, egui::Button::new(label).shortcut_text(ctx.format_shortcut(key))).clicked() {
+                            actions.push(action);
+                            ui.close();
+                        }
                     }
                 });
                 ui.menu_button("View", |ui| {
@@ -392,6 +444,7 @@ impl eframe::App for App {
         if let Some(speed) = self.speed_window(&ctx) {
             actions.push(Action::Speed(speed));
         }
+        self.unsaved_window(&ctx);
         if let Some(path) = open_recent {
             self.open(path);
         }
@@ -525,6 +578,7 @@ impl App {
     fn apply(&mut self, action: Action, pos: u64, len: u64) {
         let Ok(p) = &self.player else { return };
         match action {
+            Action::Undo | Action::Redo | Action::Cut | Action::Crop | Action::Silence => self.change(action, pos),
             Action::Previous => self.previous(),
             Action::Next => self.go(self.index + 1),
             Action::Seek(frame) => p.send(Cmd::Seek(frame)),
@@ -604,6 +658,10 @@ impl App {
 
     /// Plays `path` and makes its folder the one Previous and Next move through.
     fn open(&mut self, path: PathBuf) {
+        if self.dirty() {
+            self.pending = Some(Pending::Open(path));
+            return;
+        }
         let path = std::fs::canonicalize(&path).unwrap_or(path);
         self.remember(&path);
         self.files = folder::list_folder(&path);
@@ -614,6 +672,10 @@ impl App {
 
     /// Plays file `index` of the folder, using the track decoded ahead when it is that one.
     fn go(&mut self, index: usize) {
+        if self.dirty() {
+            self.pending = Some(Pending::Go(index));
+            return;
+        }
         let (Some(path), Ok(p)) = (self.files.get(index), &self.player) else { return };
         let track = match self.next.take() {
             Some(next) if next.path == *path => next,
@@ -630,6 +692,80 @@ impl App {
     /// Starts afresh on a new track: no edits, no selection, the whole track in view.
     fn forget_edits(&mut self) {
         (self.history, self.edit_view, self.sent_region) = (None, EditView::default(), None);
+    }
+
+    fn dirty(&self) -> bool {
+        self.history.as_ref().is_some_and(|h| h.dirty())
+    }
+
+    /// Edits the track, or undoes or redoes an edit, and tells the player.
+    fn change(&mut self, action: Action, pos: u64) {
+        let Ok(p) = &self.player else { return };
+        // Edits only once decoded, so they never point past the audio there is.
+        if !self.track.done() {
+            return;
+        }
+        let history = self.history.get_or_insert_with(|| edit::History::new(Edit::whole(self.track.len())));
+        let sel = self.edit_view.selection;
+        let (cur, view) = (history.current().clone(), &mut self.edit_view);
+        let seek = match (action, sel) {
+            (Action::Undo, _) => {
+                history.undo();
+                view.selection = None;
+                pos.min(history.current().len())
+            }
+            (Action::Redo, _) => {
+                history.redo();
+                view.selection = None;
+                pos.min(history.current().len())
+            }
+            (Action::Cut, Some((a, b))) => {
+                history.push(cur.cut(a, b));
+                view.selection = None;
+                a
+            }
+            (Action::Crop, Some((a, b))) => {
+                history.push(cur.crop(a, b));
+                view.selection = None;
+                0
+            }
+            (Action::Silence, Some((a, b))) => {
+                history.push(cur.silence(a, b));
+                pos
+            }
+            _ => return,
+        };
+        // Back at the first step the track plays as it is, and moves on gaplessly again.
+        p.send(Cmd::Edit(history.can_undo().then(|| history.current().clone())));
+        p.send(Cmd::Seek(seek));
+    }
+
+    /// Asks what to do with unsaved edits before leaving the track.
+    fn unsaved_window(&mut self, ctx: &egui::Context) {
+        if self.pending.is_none() {
+            return;
+        }
+        let (mut discard, mut cancel) = (false, false);
+        let modal = egui::Modal::new(egui::Id::unique("unsaved")).show(ctx, |ui| {
+            ui.heading("Unsaved edits");
+            ui.label("This track has edits that aren't saved. The original file is never changed.");
+            ui.add_space(8.0);
+            ui.horizontal(|ui| {
+                discard = ui.button("Discard edits").clicked();
+                cancel = ui.button("Cancel").clicked();
+            });
+        });
+        if cancel || modal.should_close() {
+            self.pending = None;
+        } else if discard {
+            self.history = None;
+            match self.pending.take() {
+                Some(Pending::Go(index)) => self.go(index),
+                Some(Pending::Open(path)) => self.open(path),
+                Some(Pending::Quit) => ctx.send_viewport_cmd(egui::ViewportCommand::Close),
+                None => {}
+            }
+        }
     }
 
     /// The current edits, or the whole track when there are none.
@@ -654,8 +790,9 @@ impl App {
         let format = path.extension().unwrap_or_default().to_string_lossy().to_uppercase();
         let rate = self.track.format.get().map_or(0, |f| f.rate as u64);
         let length = (self.track.done() && rate > 0).then(|| clock(self.track.len(), rate));
-        ctx.send_viewport_cmd(egui::ViewportCommand::Title(title(&name, length.as_deref(), &format)));
-        self.titled = Some((Arc::as_ptr(&self.track) as usize, self.track.done()));
+        let mark = if self.dirty() { "• " } else { "" };
+        ctx.send_viewport_cmd(egui::ViewportCommand::Title(format!("{mark}{}", title(&name, length.as_deref(), &format))));
+        self.titled = Some((Arc::as_ptr(&self.track) as usize, self.track.done(), self.dirty()));
     }
 
     /// Puts `path` first in Open Recent.

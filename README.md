@@ -20,6 +20,8 @@ Without a file it asks for one. `--timings` prints the time to the window and to
 - Ctrl+E: show or hide the Edit panel
 - In the Edit panel: click to play from there, drag to select, Shift+click or Shift+drag to change the selection, scroll to move along, Ctrl+scroll to zoom
 - Esc: clear the selection
+- Delete: cut the selection; Ctrl+T: crop to it; Ctrl+L: replace it with silence
+- Ctrl+Z: undo; Ctrl+Shift+Z or Ctrl+Y: redo
 - L: loop the selection on or off (otherwise playback stops at its end)
 - Ctrl+O: open a file
 - Ctrl+Q: quit
