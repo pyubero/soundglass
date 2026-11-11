@@ -79,7 +79,9 @@
 - 2026-11-11 — change sample rate is a Save As option, not an edit — playback is resampled to the device anyway, and rubato is already in the tree (user's choice)
 - 2026-11-11 — effects pick their amount from preset menu items, each menu with a Custom… value (user's choice)
 - 2026-11-11 — effects are fields on the edit list's pieces (a gain ramp in dB, a reversed flag) plus a channel matrix on the edit, not rendered audio — they cost nothing and undo stays an older list
-- 2026-11-11 — gain is a ramp linear in dB, so stacked gains and fades add up to one ramp per piece; at or below −60 dB is silence, and a fade runs from −60 to 0 dB
+- 2026-11-11 — gain is a ramp linear in dB, so stacked gains and fades add up to one ramp per piece; at or below −60 dB is silence, and a fade runs from −60 to 0 dB — changed 2026-11-11: fades follow the ear (see below)
 - 2026-11-11 — effects apply to the selection, or the whole track without one; mono, stereo and swap always to the whole track — a file has one channel count
 - 2026-11-11 — Save As resamples the whole edited track in memory with rubato's Fft resampler (process_all, delay trimmed) into a temporary track, then encodes and verifies that unchanged; Save Copy always keeps the rate
 - 2026-11-11 — effect messages (silent, too short to measure, nothing to trim) show in the notice line for 4 s and change nothing; trim clears the selection, other effects keep it
+- 2026-11-11 — fades change loudness evenly to the ear: amplitude follows t^(5/3) (loudness goes with amplitude^0.6), built as 32 linear-dB steps on the edit list so it still stacks (user's choice)
+- 2026-11-11 — level presets have short plain names with the number in brackets, e.g. "As streaming (−14 LUFS)"; Gain stays in plain dB (user's choice)

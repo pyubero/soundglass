@@ -117,6 +117,20 @@ impl Edit {
         self.with(segs)
     }
 
+    /// Frames `a..b` faded in from silence (or out to it, with `out`) so loudness changes evenly
+    /// to the ear: loudness goes with amplitude^0.6, so the amplitude follows t^(5/3). Built from
+    /// steps of linear-dB ramps, so it stacks with other gains like any of them.
+    pub fn fade(&self, a: u64, b: u64, out: bool) -> Edit {
+        const STEPS: u64 = 32;
+        let b = b.min(self.len());
+        let db = |i: u64| {
+            let t = if out { STEPS - i } else { i } as f32 / STEPS as f32;
+            if t == 0.0 { FLOOR_DB } else { (20.0 * 5.0 / 3.0 * t.log10()).max(FLOOR_DB) }
+        };
+        let at = |i: u64| a + (b.saturating_sub(a)) * i / STEPS;
+        (0..STEPS).fold(self.clone(), |e, i| e.gain(at(i), at(i + 1), db(i), db(i + 1)))
+    }
+
     /// Frames `a..b` played backwards.
     pub fn reverse(&self, a: u64, b: u64) -> Edit {
         let mut segs = self.slice(0, a);
@@ -416,6 +430,23 @@ mod tests {
         // A fade in starts silent and rises.
         let got = all(&track, &Edit::whole(10).gain(0, 10, FLOOR_DB, 0.0));
         assert!(got[0] == 0.0 && got.windows(2).all(|w| w[0] <= w[1]) && got[9] > 0.2, "{got:?}");
+    }
+
+    #[test]
+    fn fades_change_loudness_evenly() {
+        let track = Track::from_samples(48000, 1, vec![1.0; 48000]);
+        let fade_in = all(&track, &Edit::whole(48000).fade(0, 48000, false));
+        let fade_out = all(&track, &Edit::whole(48000).fade(0, 48000, true));
+        assert!(fade_in[0] == 0.0 && fade_in.windows(2).all(|w| w[0] <= w[1]));
+        for q in [0.25, 0.5, 0.75] {
+            let i = (q * 48000.0) as usize;
+            // amplitude^0.6 is the loudness heard.
+            assert!((fade_in[i].powf(0.6) - q as f32).abs() < 0.03, "in at {q}: {}", fade_in[i]);
+            assert!((fade_out[i].powf(0.6) - (1.0 - q) as f32).abs() < 0.03, "out at {q}: {}", fade_out[i]);
+        }
+        assert!(fade_out[47_999] < 0.01 && fade_out.windows(2).all(|w| w[0] >= w[1]));
+        // A fade shorter than its steps still works.
+        assert_eq!(Edit::whole(10).fade(0, 10, false).len(), 10);
     }
 
     #[test]

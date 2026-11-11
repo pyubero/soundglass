@@ -207,15 +207,15 @@ enum Fx {
 }
 
 impl Fx {
-    /// The Custom… dialog's title, unit, range and first value.
-    fn custom(self) -> (&'static str, &'static str, std::ops::RangeInclusive<f64>, f64) {
+    /// The Custom… dialog's title, unit, range, first value and a hint ("" for none).
+    fn custom(self) -> (&'static str, &'static str, std::ops::RangeInclusive<f64>, f64, &'static str) {
         match self {
-            Fx::FadeIn(_) => ("Fade in", " s", 0.1..=600.0, 3.0),
-            Fx::FadeOut(_) => ("Fade out", " s", 0.1..=600.0, 3.0),
-            Fx::Gain(_) => ("Gain", " dB", -40.0..=40.0, 2.0),
-            Fx::Peak(_) => ("Normalize peak", " dBFS", -40.0..=0.0, -1.0),
-            Fx::Loudness(_) => ("Normalize loudness", " LUFS", -40.0..=-5.0, -14.0),
-            _ => ("Trim silence below", " dB", -90.0..=-10.0, -60.0),
+            Fx::FadeIn(_) => ("Fade in", " s", 0.1..=600.0, 3.0, ""),
+            Fx::FadeOut(_) => ("Fade out", " s", 0.1..=600.0, 3.0, ""),
+            Fx::Gain(_) => ("Gain", " dB", -40.0..=40.0, 2.0, ""),
+            Fx::Peak(_) => ("Normalize peak", " dBFS", -40.0..=0.0, -1.0, "0 = max"),
+            Fx::Loudness(_) => ("Normalize loudness", " LUFS", -40.0..=-5.0, -14.0, "−14 streaming, −23 TV"),
+            _ => ("Trim silence below", " dB", -90.0..=-10.0, -60.0, "−60 silence, −40 hiss"),
         }
     }
 
@@ -235,9 +235,9 @@ impl Fx {
 /// The presets the Effects menu offers.
 const FADES: [f64; 3] = [1.0, 3.0, 5.0];
 const GAINS: [f64; 6] = [-6.0, -3.0, -1.0, 1.0, 3.0, 6.0];
-const PEAKS: [f64; 2] = [-1.0, 0.0];
-const LOUDNESS: [f64; 3] = [-14.0, -16.0, -23.0];
-const TRIMS: [f64; 3] = [-60.0, -50.0, -40.0];
+const PEAKS: [(f64, &str); 2] = [(-1.0, "Peak near max"), (0.0, "Peak at max")];
+const LOUDNESS: [(f64, &str); 3] = [(-14.0, "As streaming"), (-16.0, "As podcasts"), (-23.0, "As TV")];
+const TRIMS: [(f64, &str); 3] = [(-60.0, "Silence"), (-50.0, "Faint noise"), (-40.0, "Hiss")];
 
 /// `x` with a real minus sign.
 fn signed(x: f64) -> String {
@@ -785,13 +785,13 @@ impl App {
             }
         });
         ui.menu_button("Normalize", |ui| {
-            for db in PEAKS {
-                if pick(ui, &format!("Peak to {} dBFS", signed(db)), true) {
+            for (db, name) in PEAKS {
+                if pick(ui, &format!("{name} ({} dBFS)", signed(db)), true) {
                     chosen = Some(Fx::Peak(db));
                 }
             }
-            for lufs in LOUDNESS {
-                if pick(ui, &format!("Loudness to {} LUFS", signed(lufs)), true) {
+            for (lufs, name) in LOUDNESS {
+                if pick(ui, &format!("{name} ({} LUFS)", signed(lufs)), true) {
                     chosen = Some(Fx::Loudness(lufs));
                 }
             }
@@ -803,8 +803,8 @@ impl App {
             }
         });
         ui.menu_button("Trim silence", |ui| {
-            for db in TRIMS {
-                if pick(ui, &format!("Below {} dB", signed(db)), true) {
+            for (db, name) in TRIMS {
+                if pick(ui, &format!("{name} ({} dB)", signed(db)), true) {
                     chosen = Some(Fx::Trim(db));
                 }
             }
@@ -833,10 +833,13 @@ impl App {
     /// The Custom… effect dialog; returns the effect when OK is pressed.
     fn fx_window(&mut self, ctx: &egui::Context) -> Option<Fx> {
         let (fx, mut draft) = self.custom_fx?;
-        let (title, unit, range, _) = fx.custom();
+        let (title, unit, range, _, hint) = fx.custom();
         let (mut chosen, mut close) = (None, false);
         egui::Window::new(title).collapsible(false).resizable(false).show(ctx, |ui| {
             ui.add(egui::DragValue::new(&mut draft).range(range).speed(0.1).fixed_decimals(1).suffix(unit));
+            if !hint.is_empty() {
+                ui.weak(hint);
+            }
             ui.horizontal(|ui| {
                 if ui.button("OK").clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                     chosen = Some(fx.with(draft));
@@ -958,8 +961,8 @@ impl App {
                 let frames = |secs: f64| (secs * rate as f64) as u64;
                 // shortcut: peak, loudness and trim measure on the UI thread (~0.1 s per 5 min); move to a thread if long recordings stutter.
                 let edited = match fx {
-                    Fx::FadeIn(secs) => Ok(cur.gain(a, secs.map_or(b, |s| (a + frames(s)).min(b)), edit::FLOOR_DB, 0.0)),
-                    Fx::FadeOut(secs) => Ok(cur.gain(secs.map_or(a, |s| b.saturating_sub(frames(s)).max(a)), b, 0.0, edit::FLOOR_DB)),
+                    Fx::FadeIn(secs) => Ok(cur.fade(a, secs.map_or(b, |s| (a + frames(s)).min(b)), false)),
+                    Fx::FadeOut(secs) => Ok(cur.fade(secs.map_or(a, |s| b.saturating_sub(frames(s)).max(a)), b, true)),
                     Fx::Gain(db) => Ok(cur.gain(a, b, db as f32, db as f32)),
                     Fx::Peak(target) => match edit::peak(&self.track, &cur, a, b) {
                         0.0 => Err("Nothing to normalize: it's silent"),
