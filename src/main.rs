@@ -72,7 +72,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, show_info, show_edit: false, edit_height: 160.0, edit_view: EditView::default(), history: None, looping: false, sent_region: None, pending: None, save_dialog: None, save_choice: save::Choice::default(), controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, show_info, show_edit: false, edit_height: 160.0, edit_view: EditView::default(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, save_dialog: None, save_choice: save::Choice::default(), controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -131,6 +131,9 @@ struct App {
     /// Edits since the track was opened; `None` until the first one.
     history: Option<edit::History>,
     looping: bool,
+    /// The waveform columns of the strip and of the Edit panel, kept until their view changes.
+    strip_cache: WaveCache,
+    panel_cache: WaveCache,
     /// The selection and Loop last sent to the player, to send them again only when they change.
     sent_region: Option<(Option<(u64, u64)>, bool)>,
     /// Waits for Save As / Discard / Cancel while there are unsaved edits.
@@ -237,9 +240,16 @@ impl eframe::App for App {
         let player = self.player.as_ref().ok();
         let rate = self.track.format.get().map_or(0, |f| f.rate as u64);
         let edit = self.edit();
-        let (pos, len) = (player.map_or(0, |p| p.shared.pos.load(Relaxed)), edit.len());
         let playing = player.is_some_and(|p| p.shared.playing.load(Relaxed));
-        if playing {
+        let len = edit.len();
+        // Moved on by the time since the audio callback last said, so the playhead glides.
+        let pos = player.map_or(0, |p| {
+            let (pos, ago) = p.position();
+            if playing { display_pos(pos, ago, rate, self.speed, self.edit_view.selection, self.looping, len) } else { pos }
+        });
+        if playing && (self.show_edit || self.settings.show_waveform) {
+            ctx.request_repaint();
+        } else if playing {
             ctx.request_repaint_after(Duration::from_millis(250));
         }
 
@@ -418,7 +428,7 @@ impl eframe::App for App {
         // Before Track Info, so it spans the whole width.
         if self.show_edit {
             let panel = egui::Panel::bottom("edit").resizable(true).size_range(100.0..=400.0).default_size(self.edit_height).show(ui, |ui| {
-                edit_panel(ui, &mut self.edit_view, &self.track, &edit, pos, len, rate, playing)
+                edit_panel(ui, &mut self.edit_view, &mut self.panel_cache, &self.track, &edit, pos, len, rate, playing)
             });
             self.edit_height = panel.response.rect.height();
             if let Some(frame) = panel.inner {
@@ -448,7 +458,7 @@ impl eframe::App for App {
                         ui.colored_label(ui.visuals().error_fg_color, e);
                     }
                     ui.add_space(12.0);
-                    let wave = self.settings.show_waveform.then_some((&*self.track, &*edit, self.edit_view.selection));
+                    let wave = self.settings.show_waveform.then_some((&*self.track, &*edit, self.edit_view.selection, &mut self.strip_cache));
                     if let Some(frame) = seek_bar(ui, pos, len, rate, wave) {
                         actions.push(Action::Seek(frame));
                     }
@@ -1011,7 +1021,7 @@ fn marquee(text_w: f32, avail_w: f32, time: f64) -> f32 {
 
 /// A slim bar, or the waveform (`track` through `edit`, with the selection), with the times at
 /// its ends; returns the frame to seek to when clicked or dragged.
-type Wave<'a> = (&'a Track, &'a Edit, Option<(u64, u64)>);
+type Wave<'a> = (&'a Track, &'a Edit, Option<(u64, u64)>, &'a mut WaveCache);
 fn seek_bar(ui: &mut egui::Ui, pos: u64, len: u64, rate: u64, wave: Option<Wave>) -> Option<u64> {
     let height = if wave.is_some() { 48.0 } else { 18.0 };
     let (rect, response) = ui.allocate_exact_size(egui::vec2(ui.available_width(), height), egui::Sense::click_and_drag());
@@ -1022,8 +1032,8 @@ fn seek_bar(ui: &mut egui::Ui, pos: u64, len: u64, rate: u64, wave: Option<Wave>
     let bar = egui::Rect::from_center_size(rect.center(), egui::vec2(rect.width(), 4.0));
     let x = bar.left() + bar.width() * fraction;
     let painter = ui.painter_at(rect);
-    if let Some((track, edit, selection)) = wave {
-        draw_waveform(&painter, visuals, rect, track, edit, (0, len), pos, selection);
+    if let Some((track, edit, selection, cache)) = wave {
+        draw_waveform(&painter, visuals, rect, cache.columns(track, edit, 0, len, rect.width() as u64), (0, len), pos, selection);
     } else {
         painter.rect_filled(bar, 2.0, visuals.widgets.inactive.bg_fill);
         painter.rect_filled(egui::Rect::from_min_max(bar.min, egui::pos2(x, bar.max.y)), 2.0, visuals.selection.bg_fill);
@@ -1039,10 +1049,37 @@ fn seek_bar(ui: &mut egui::Ui, pos: u64, len: u64, rate: u64, wave: Option<Wave>
     Some((((p.x - bar.left()) / bar.width()).clamp(0.0, 1.0) as f64 * len as f64) as u64)
 }
 
-/// Edited frames `view` (start, count) of `track` across `rect`: the played part highlighted, the
-/// selection shaded, and the playhead at `pos`. Fills in as decoding goes.
-#[allow(clippy::too_many_arguments)]
-fn draw_waveform(painter: &egui::Painter, visuals: &egui::Visuals, rect: egui::Rect, track: &Track, edit: &Edit, (start, frames): (u64, u64), pos: u64, selection: Option<(u64, u64)>) {
+/// One waveform's columns (lowest and highest sample per pixel), worked out again only when the
+/// view, the width, the edits or the decoded audio change: the playhead moving costs nothing.
+#[derive(Default)]
+struct WaveCache {
+    /// Width in columns, first frame, frames shown, decoded frames, and the edit list.
+    key: Option<(u64, u64, u64, u64, Vec<edit::Seg>)>,
+    cols: Vec<(f32, f32)>,
+}
+
+impl WaveCache {
+    fn columns(&mut self, track: &Track, edit: &Edit, start: u64, frames: u64, columns: u64) -> &[(f32, f32)] {
+        let (frames, decoded) = (frames.max(1), track.decoded());
+        let same = self.key.as_ref().is_some_and(|k| (k.0, k.1, k.2, k.3) == (columns, start, frames, decoded) && k.4 == edit.segs);
+        if !same {
+            let peaks = track.peaks.lock().unwrap();
+            // Stops where nothing is decoded yet.
+            self.cols = (0..columns)
+                .map_while(|c| {
+                    let a = start + c * frames / columns;
+                    edit::min_max(track, &peaks, edit, a, (start + (c + 1) * frames / columns).max(a + 1))
+                })
+                .collect();
+            self.key = Some((columns, start, frames, decoded, edit.segs.clone()));
+        }
+        &self.cols
+    }
+}
+
+/// Waveform columns `cols` for edited frames `view` (start, count) across `rect`: the played part
+/// highlighted, the selection shaded, and the playhead at `pos`.
+fn draw_waveform(painter: &egui::Painter, visuals: &egui::Visuals, rect: egui::Rect, cols: &[(f32, f32)], (start, frames): (u64, u64), pos: u64, selection: Option<(u64, u64)>) {
     let frames = frames.max(1);
     let x_of = |f: u64| rect.left() + ((f as f64 - start as f64) / frames as f64 * rect.width() as f64) as f32;
     if let Some((a, b)) = selection {
@@ -1050,12 +1087,7 @@ fn draw_waveform(painter: &egui::Painter, visuals: &egui::Visuals, rect: egui::R
         painter.rect_filled(shade, 0.0, visuals.selection.bg_fill.gamma_multiply(0.35));
     }
     let (mid, half, played) = (rect.center().y, rect.height() / 2.0, x_of(pos));
-    let columns = rect.width() as u64;
-    let peaks = track.peaks.lock().unwrap();
-    for c in 0..columns {
-        let a = start + c * frames / columns;
-        let b = (start + (c + 1) * frames / columns).max(a + 1);
-        let Some((lo, hi)) = edit::min_max(track, &peaks, edit, a, b) else { break };
+    for (c, &(lo, hi)) in cols.iter().enumerate() {
         let x = rect.left() + c as f32 + 0.5;
         let color = if x < played { visuals.selection.bg_fill } else { visuals.text_color() };
         // At least one point tall, so silence still shows as a line.
@@ -1064,6 +1096,18 @@ fn draw_waveform(painter: &egui::Painter, visuals: &egui::Visuals, rect: egui::R
     }
     if rect.x_range().contains(played) {
         painter.vline(played, rect.y_range(), egui::Stroke::new(1.5, visuals.strong_text_color()));
+    }
+}
+
+/// Where playback is `ago` after the callback said `pos`: moved on at `rate` × `speed`, wrapping
+/// inside a looped region, stopping at an unlooped region's end and at the track's end `len`.
+fn display_pos(pos: u64, ago: Duration, rate: u64, speed: f64, region: Option<(u64, u64)>, looping: bool, len: u64) -> u64 {
+    // At most 0.1 s ahead, in case the callback stalls.
+    let p = pos + (ago.as_secs_f64().min(0.1) * rate as f64 * speed) as u64;
+    match region {
+        // As the player does: the region counts only once playing inside it, before its end.
+        Some((a, b)) if pos < b && p >= b => if looping && b > a { a + (p - a) % (b - a) } else { b },
+        _ => p.min(len),
     }
 }
 
@@ -1095,7 +1139,7 @@ fn zoom_view(start: u64, frames: u64, len: u64, factor: f32, at: u64) -> (u64, u
 
 /// Selection, zoom and the waveform of the visible part; returns the frame to seek to on a click.
 #[allow(clippy::too_many_arguments)]
-fn edit_panel(ui: &mut egui::Ui, view: &mut EditView, track: &Track, edit: &Edit, pos: u64, len: u64, rate: u64, playing: bool) -> Option<u64> {
+fn edit_panel(ui: &mut egui::Ui, view: &mut EditView, cache: &mut WaveCache, track: &Track, edit: &Edit, pos: u64, len: u64, rate: u64, playing: bool) -> Option<u64> {
     let frames = if view.frames == 0 { len } else { view.frames.min(len) }.max(1);
     view.start = view.start.min(len.saturating_sub(frames));
     // Zoomed in, the view turns the page to follow the playhead.
@@ -1160,7 +1204,8 @@ fn edit_panel(ui: &mut egui::Ui, view: &mut EditView, track: &Track, edit: &Edit
         }
     }
     let frames = if view.frames == 0 { len } else { view.frames };
-    draw_waveform(&ui.painter_at(rect), ui.visuals(), rect, track, edit, (view.start, frames), pos, view.selection);
+    let cols = cache.columns(track, edit, view.start, frames, rect.width() as u64);
+    draw_waveform(&ui.painter_at(rect), ui.visuals(), rect, cols, (view.start, frames), pos, view.selection);
     seek
 }
 
@@ -1293,7 +1338,7 @@ pub fn ms(t: Instant) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{clock_ms, cover_side, info_rows, marquee, push_recent, resize_for_panel, snap_speed, title, volume_gain, zoom_view};
+    use super::{clock_ms, cover_side, display_pos, info_rows, marquee, push_recent, resize_for_panel, snap_speed, title, volume_gain, zoom_view};
     use std::path::PathBuf;
 
     #[test]
@@ -1318,6 +1363,20 @@ mod tests {
         assert_eq!(resize_for_panel([380.0, 680.0], true, 320.0, 0), [700.0, 680.0]);
         assert_eq!(resize_for_panel([700.0, 680.0], false, 320.0, 0), [380.0, 680.0]);
         assert_eq!(resize_for_panel([380.0, 680.0], true, 160.0, 1), [380.0, 840.0]);
+    }
+
+    #[test]
+    fn playhead_glides_wraps_and_stops() {
+        let ms = |n| std::time::Duration::from_millis(n);
+        assert_eq!(display_pos(1000, ms(10), 48000, 1.0, None, false, 100_000), 1480);
+        assert_eq!(display_pos(1000, ms(10), 48000, 2.0, None, false, 100_000), 1960);
+        assert_eq!(display_pos(99_900, ms(10), 48000, 1.0, None, false, 100_000), 100_000, "not past the end");
+        // Region 1000..1200: looping wraps back in, without a loop it rests at the end.
+        assert_eq!(display_pos(1100, ms(10), 48000, 1.0, Some((1000, 1200)), true, 100_000), 1000 + (1580 - 1000) % 200);
+        assert_eq!(display_pos(1100, ms(10), 48000, 1.0, Some((1000, 1200)), false, 100_000), 1200);
+        // Past the region's end it doesn't count.
+        assert_eq!(display_pos(5000, ms(10), 48000, 1.0, Some((1000, 1200)), true, 100_000), 5480);
+        assert_eq!(display_pos(1000, ms(500), 48000, 1.0, None, false, 100_000), 5800, "capped at 0.1 s");
     }
 
     #[test]

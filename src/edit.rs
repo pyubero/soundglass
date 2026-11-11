@@ -171,8 +171,9 @@ pub fn read(track: &Track, edit: &Edit, a: u64, b: u64, mut sink: impl FnMut(&[f
     true
 }
 
-/// Lowest and highest sample of edited frames `a..b`, from `peaks` (the track's) for long pieces
-/// and from the samples themselves for short ones, so zoomed-in edges are exact. `None` where
+/// Lowest and highest sample of edited frames `a..b`, from `peaks` (the track's, one per `PEAK`
+/// frames) for pieces at least that long and from the samples themselves for shorter ones, so
+/// zoomed-in edges are exact. `None` where
 /// nothing is decoded yet.
 pub fn min_max(track: &Track, peaks: &[(f32, f32)], edit: &Edit, a: u64, b: u64) -> Option<(f32, f32)> {
     let mut range: Option<(f32, f32)> = None;
@@ -183,7 +184,7 @@ pub fn min_max(track: &Track, peaks: &[(f32, f32)], edit: &Edit, a: u64, b: u64)
     for seg in edit.slice(a, b) {
         if seg.silent {
             add(0.0, 0.0);
-        } else if seg.len >= 4 * PEAK as u64 {
+        } else if seg.len >= PEAK as u64 {
             let from = (seg.src / PEAK as u64) as usize;
             let to = (seg.src + seg.len).div_ceil(PEAK as u64) as usize;
             for &(lo, hi) in peaks.get(from..to.min(peaks.len())).unwrap_or(&[]) {

@@ -45,12 +45,15 @@ pub struct Shared {
     /// Goes up by one each time playback moves on to the queued track.
     pub advanced: AtomicU64,
     pub playing: AtomicBool,
+    /// When `pos` was stored: nanoseconds since `Player::epoch`.
+    pub stamp: AtomicU64,
 }
 
 pub struct Player {
     tx: Sender<Cmd>,
     pub shared: Arc<Shared>,
     pub retired: Receiver<Retired>,
+    epoch: Instant,
     _stream: cpal::Stream,
 }
 
@@ -65,7 +68,7 @@ impl Player {
         let (retire, retired) = channel();
         let shared = Arc::new(Shared::default());
         let mut engine = Engine::new(config.sample_rate, retire);
-        let (s, mut started) = (shared.clone(), false);
+        let (s, mut started, epoch) = (shared.clone(), false, Instant::now());
         let stream = device
             .build_output_stream(
                 config,
@@ -75,6 +78,7 @@ impl Player {
                     }
                     engine.render(out, channels);
                     s.pos.store(engine.pos, Relaxed);
+                    s.stamp.store(epoch.elapsed().as_nanos() as u64, Relaxed);
                     s.advanced.store(engine.advanced, Relaxed);
                     s.playing.store(engine.playing, Relaxed);
                     if engine.heard && !started {
@@ -93,7 +97,13 @@ impl Player {
             )
             .map_err(|e| format!("cannot open the sound device ({e})"))?;
         stream.play().map_err(|e| e.to_string())?;
-        Ok(Player { tx, shared, retired, _stream: stream })
+        Ok(Player { tx, shared, retired, epoch, _stream: stream })
+    }
+
+    /// The frame being played and how long ago the callback said so.
+    pub fn position(&self) -> (u64, std::time::Duration) {
+        let stamp = std::time::Duration::from_nanos(self.shared.stamp.load(Relaxed));
+        (self.shared.pos.load(Relaxed), self.epoch.elapsed().saturating_sub(stamp))
     }
 
     pub fn send(&self, cmd: Cmd) {

@@ -66,3 +66,5 @@
 - 2026-11-11 — the MP3 encoder is flushed with padding (FlushGap) and its LAME tag frame overwrites LAME's empty first frame — that tag holds the delay and padding, so the saved file decodes to the exact length; FlushNoGap drops the last ~2000 frames
 - 2026-11-11 — flacenc's STREAMINFO is patched so its minimum block size leaves out the shorter last block, as the FLAC spec says — otherwise symphonia 0.6 can't open the file (ffmpeg can)
 - 2026-11-11 — Save As defaults to FLAC 16-bit; Ogg Vorbis quality is 0–10 as oggenc counts (default 6)
+- 2026-11-11 — the playhead is drawn where playback is now: the callback stores when it last set the position, and the UI moves it on by the time since (wrapping in a looped region), repainting every frame while playing with a waveform shown — a 250 ms repaint and 10–20 ms position steps made it jump when zoomed in
+- 2026-11-11 — waveform columns are cached per waveform and worked out again only when the width, view, edits or decoded length change; min_max reads samples only below 1024 frames per column — the waveform lagged when every frame re-read up to millions of samples
