@@ -32,3 +32,4 @@
 - 2026-11-11 — Space toggles playback only when no widget has focus — a focused button already takes Space as its own click
 - 2026-11-11 — settings live in settings.txt (key=value) in eframe's storage folder, read before the window opens and written atomically; "Remember window size" (default off) switches eframe's persist_window — no serde/ron until settings grow
 - 2026-11-11 — started without a file (from the app menu), soundglass shows the Open dialog first and quits if it is cancelled; an empty start window can come later
+- 2026-11-11 — soundglass.desktop's MimeType line is the single list of claimed formats; install.sh reads it for xdg-mime, so the two cannot drift
