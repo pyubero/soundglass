@@ -118,16 +118,54 @@ impl eframe::App for App {
             }
         }
 
-        ui.heading(self.track.path.file_name().unwrap_or_default().to_string_lossy());
         let error = self.track.error.lock().unwrap().clone().or_else(|| self.player.as_ref().err().cloned());
         let status = match error {
             Some(e) => e,
             None if playing => "Playing".into(),
             None => "Paused".into(),
         };
-        ui.label(status);
-        ui.label(format!("{} / {}", clock(pos, rate), clock(len, rate)));
+        egui::Panel::bottom("controls").show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.label(format!("{} / {}", clock(pos, rate), clock(len, rate)));
+                ui.label(status);
+            });
+        });
+        egui::CentralPanel::default().show(ui, |ui| {
+            if let Some(frame) = waveform(ui, &self.track, pos)
+                && let Some(p) = player
+            {
+                p.send(Cmd::Seek(frame));
+            }
+        });
     }
+}
+
+/// Draws the whole track across `ui`, played part highlighted, with the playhead. Returns the
+/// frame to seek to when it is clicked or dragged.
+fn waveform(ui: &mut egui::Ui, track: &Track, pos: u64) -> Option<u64> {
+    let (rect, response) = ui.allocate_exact_size(ui.available_size(), egui::Sense::click_and_drag());
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Slider, true, "Position"));
+    let len = track.len().max(1);
+    let (painter, visuals) = (ui.painter_at(rect), ui.visuals());
+    let (mid, half) = (rect.center().y, rect.height() / 2.0);
+    let played = rect.left() + rect.width() * (pos as f32 / len as f32).min(1.0);
+    let columns = rect.width() as u64;
+    let peaks = track.peaks.lock().unwrap();
+    for c in 0..columns {
+        let a = (c * len / columns) as usize / track::PEAK;
+        let b = ((c + 1) * len / columns) as usize / track::PEAK;
+        // Fills in as decoding goes; columns past what is decoded stay empty.
+        let Some(slice) = peaks.get(a..(b.max(a + 1)).min(peaks.len())).filter(|s| !s.is_empty()) else { break };
+        let (lo, hi) = slice.iter().fold((0f32, 0f32), |(l, h), &(a, b)| (l.min(a), h.max(b)));
+        let x = rect.left() + c as f32 + 0.5;
+        let color = if x < played { visuals.selection.bg_fill } else { visuals.text_color() };
+        // At least one point tall, so silence still shows as a line.
+        let (top, bottom) = ((mid - hi * half).min(mid - 0.5), (mid - lo * half).max(mid + 0.5));
+        painter.line_segment([egui::pos2(x, top), egui::pos2(x, bottom)], egui::Stroke::new(1.0, color));
+    }
+    painter.vline(played, rect.y_range(), egui::Stroke::new(1.5, visuals.strong_text_color()));
+    let p = response.interact_pointer_pos().filter(|_| response.clicked() || response.dragged())?;
+    Some((((p.x - rect.left()) / rect.width()).clamp(0.0, 1.0) as f64 * len as f64) as u64)
 }
 
 /// `frames` at `rate` as m:ss.

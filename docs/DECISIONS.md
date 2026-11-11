@@ -19,3 +19,4 @@
 - 2026-11-11 — the device opens once at its default rate and channels; one rubato sinc resampler (128 taps, ratio 1/10 to 10) does rate conversion and speed together
 - 2026-11-11 — no gapless code of our own — symphonia 0.6's decoders already trim encoder delay and padding
 - 2026-11-11 — a decode thread stops when only it still holds the track — moving on to another file must not keep decoding the old one
+- 2026-11-11 — waveform from per-1024-frame min/max peaks collected while decoding, drawn as one line per pixel column — cheap to redraw every frame, and it fills in as the file decodes

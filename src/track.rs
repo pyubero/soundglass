@@ -13,6 +13,9 @@ use symphonia::core::meta::MetadataOptions;
 /// Frames per chunk: about 1.5 s at 44.1 kHz. The player reads whole chunks without copying the list.
 pub const CHUNK: usize = 65536;
 
+/// Frames per waveform peak: a 5-minute song gives ~13 000 peaks, more than a window is wide.
+pub const PEAK: usize = 1024;
+
 /// Sample rate and channel count, known once the first packet is decoded.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Format {
@@ -30,6 +33,8 @@ pub struct Track {
     chunks: Mutex<Vec<Arc<[f32]>>>,
     /// Frames in `chunks`.
     decoded: AtomicU64,
+    /// Lowest and highest sample of every `PEAK` frames, all channels together, for the waveform.
+    pub peaks: Mutex<Vec<(f32, f32)>>,
     done: AtomicBool,
     pub error: Mutex<Option<String>>,
 }
@@ -41,6 +46,7 @@ impl Track {
         let t = track.clone();
         std::thread::spawn(move || {
             let mut cur: Vec<f32> = Vec::new();
+            let (mut peak, mut peak_frames) = ((f32::MAX, f32::MIN), 0);
             let result = decode(&t.path.clone(), |samples, channels, rate, expected| {
                 if let Some(n) = expected {
                     let _ = t.expected.set(n);
@@ -56,6 +62,14 @@ impl Track {
                 }
                 for frame in samples.chunks_exact(channels) {
                     cur.extend_from_slice(frame);
+                    for &s in frame {
+                        peak = (peak.0.min(s), peak.1.max(s));
+                    }
+                    peak_frames += 1;
+                    if peak_frames == PEAK {
+                        t.peaks.lock().unwrap().push(std::mem::replace(&mut peak, (f32::MAX, f32::MIN)));
+                        peak_frames = 0;
+                    }
                     if cur.len() == CHUNK * channels {
                         t.push(std::mem::take(&mut cur), channels);
                         notify();
@@ -63,6 +77,9 @@ impl Track {
                 }
                 Ok(())
             });
+            if peak_frames > 0 {
+                t.peaks.lock().unwrap().push(peak);
+            }
             if !cur.is_empty() {
                 let channels = t.format.get().map_or(1, |f| f.channels);
                 t.push(cur, channels);
@@ -86,6 +103,7 @@ impl Track {
             expected: OnceLock::new(),
             chunks: Mutex::new(Vec::new()),
             decoded: AtomicU64::new(0),
+            peaks: Mutex::new(Vec::new()),
             done: AtomicBool::new(false),
             error: Mutex::new(None),
         }
@@ -233,6 +251,11 @@ pub mod tests {
         assert_eq!(offset, 10);
         assert_eq!(chunk[offset * 2], ((CHUNK as i32 + 10) * 2) as i16 as f32 / 32768.0);
         assert!(track.chunk_at(frames as u64).is_none());
+        // 65 536 + 500 frames: 64 full peaks and a partial one. Samples count up, so each peak
+        // runs from its block's first left sample to its last right sample.
+        let peaks = track.peaks.lock().unwrap();
+        assert_eq!(peaks.len(), CHUNK / PEAK + 1);
+        assert_eq!(peaks[1], (2048.0 / 32768.0, 4095.0 / 32768.0));
         assert!(track.error.lock().unwrap().is_none());
     }
 
