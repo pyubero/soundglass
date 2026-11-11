@@ -49,8 +49,8 @@ fn main() -> eframe::Result {
     let opening = std::thread::spawn(move || Player::open(t0, timings, bench));
 
     let name = track.path.file_name().unwrap_or_default().to_string_lossy().into_owned();
-    // A vertical phone's shape, about 9:19.5.
-    let viewport = egui::ViewportBuilder::default().with_title(&name).with_inner_size([380.0, 780.0]).with_min_inner_size([260.0, 420.0]);
+    // A vertical phone's shape, about 9:16.
+    let viewport = egui::ViewportBuilder::default().with_title(&name).with_inner_size([380.0, 680.0]).with_min_inner_size([260.0, 420.0]);
     let settings = settings::load();
     let options = eframe::NativeOptions { viewport, persist_window: settings.remember_window_size, ..Default::default() };
     eframe::run_native("soundglass", options, Box::new(move |cc| {
