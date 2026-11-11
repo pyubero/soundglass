@@ -68,9 +68,42 @@ impl Default for Choice {
     }
 }
 
-/// The name Save As suggests: `<stem> (edited).<ext>` next to the original.
+/// The name Save As suggests: `<stem>-edited.<ext>`, as Save Copy names its first copy.
 pub fn suggested_name(original: &Path, kind: Kind) -> String {
-    format!("{} (edited).{}", original.file_stem().unwrap_or_default().to_string_lossy(), kind.ext())
+    format!("{}-edited.{}", original.file_stem().unwrap_or_default().to_string_lossy(), kind.ext())
+}
+
+/// Claims the first free name for a copy next to `source` (`song-edited.ext`, then
+/// `song-edited-2.ext`…) by creating it empty, so nothing is overwritten and no two saves pick
+/// the same name. From lightview's `save::reserve_copy`.
+pub fn reserve_copy(source: &Path, ext: &str) -> Result<PathBuf, String> {
+    let stem = source.file_stem().unwrap_or_default().to_string_lossy();
+    for n in 1.. {
+        let suffix = if n == 1 { String::new() } else { format!("-{n}") };
+        let dest = source.with_file_name(format!("{stem}-edited{suffix}.{ext}"));
+        match std::fs::File::options().write(true).create_new(true).open(&dest) {
+            Ok(_) => return Ok(dest),
+            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
+            Err(e) => return Err(format!("can't save a copy next to the original ({e})")),
+        }
+    }
+    unreachable!()
+}
+
+/// What Save Copy writes: the original's format when soundglass can write it (FLAC otherwise),
+/// at its bit depth (`bits`); lossy formats at Save As's `last` quality.
+pub fn copy_choice(source: &Path, codec: &str, bits: Option<u32>, last: Choice) -> Choice {
+    let ext = source.extension().and_then(|e| e.to_str()).unwrap_or_default().to_ascii_lowercase();
+    let kind = match ext.as_str() {
+        "wav" => Kind::Wav,
+        "flac" => Kind::Flac,
+        "mp3" => Kind::Mp3,
+        // An .ogg can hold FLAC or Opus too.
+        "ogg" | "oga" if codec.to_ascii_lowercase().contains("vorbis") => Kind::Vorbis,
+        _ => Kind::Flac,
+    };
+    let deep = bits.is_some_and(|b| b > 16);
+    Choice { kind, wav_bits: if bits == Some(32) { 32 } else if deep { 24 } else { 16 }, flac_bits: if deep { 24 } else { 16 }, ..last }
 }
 
 /// Writes frames `edit` of `track` (fully decoded) to `target` as `choice` says. Ok(false) when
@@ -345,6 +378,31 @@ mod tests {
         let err = save(&track, &Edit::whole(1000), Choice { kind: Kind::Mp3, ..Choice::default() }, &dir.join("x.mp3")).unwrap_err();
         assert!(err.contains("96.0 kHz"), "{err}");
         assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 0, "no temp file left");
+    }
+
+    #[test]
+    fn copies_get_free_names_and_never_overwrite() {
+        let dir = scratch("names");
+        let song = dir.join("song.mp3");
+        std::fs::write(&song, b"original").unwrap();
+        std::fs::write(dir.join("song-edited-2.flac"), b"someone's file").unwrap();
+        assert_eq!(reserve_copy(&song, "flac").unwrap(), dir.join("song-edited.flac"));
+        assert_eq!(reserve_copy(&song, "flac").unwrap(), dir.join("song-edited-3.flac"));
+        assert_eq!(std::fs::read(dir.join("song-edited-2.flac")).unwrap(), b"someone's file");
+        assert_eq!(std::fs::read(&song).unwrap(), b"original");
+    }
+
+    #[test]
+    fn copy_keeps_the_format_when_it_can() {
+        let last = Choice { mp3_kbps: 320, ..Choice::default() };
+        let c = copy_choice(Path::new("a.mp3"), "MPEG Audio Layer 3", None, last);
+        assert_eq!((c.kind, c.mp3_kbps), (Kind::Mp3, 320));
+        assert_eq!(copy_choice(Path::new("a.M4A"), "AAC", Some(16), last).kind, Kind::Flac);
+        assert_eq!(copy_choice(Path::new("a.ogg"), "Opus", None, last).kind, Kind::Flac);
+        assert_eq!(copy_choice(Path::new("a.ogg"), "Vorbis", None, last).kind, Kind::Vorbis);
+        let c = copy_choice(Path::new("a.flac"), "FLAC", Some(24), last);
+        assert_eq!((c.kind, c.flac_bits), (Kind::Flac, 24));
+        assert_eq!(copy_choice(Path::new("a.wav"), "PCM", Some(32), last).wav_bits, 32);
     }
 
     #[test]

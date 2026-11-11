@@ -72,7 +72,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, show_info, show_edit: false, edit_height: 160.0, edit_view: EditView::default(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, save_dialog: None, save_choice: save::Choice::default(), controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, show_info, show_edit: false, edit_height: 160.0, edit_view: EditView::default(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -138,7 +138,12 @@ struct App {
     sent_region: Option<(Option<(u64, u64)>, bool)>,
     /// Waits for Save As / Discard / Cancel while there are unsaved edits.
     pending: Option<Pending>,
-    save_dialog: Option<SaveDialog>,
+    show_save: bool,
+    /// The running save: what it reports on, the edit it writes, the file's name, and whether
+    /// the name was claimed by Save Copy (removed again if the save fails).
+    save_job: Option<(SaveResult, Arc<Edit>, PathBuf, bool)>,
+    /// The last save's result and when it came, shown for a few seconds (errors until the next save).
+    save_notice: Option<(Result<String, String>, f64)>,
     /// Save As's last choice, kept while soundglass runs.
     save_choice: save::Choice,
     /// Height of everything below the cover, as measured last frame.
@@ -183,14 +188,6 @@ enum Pending {
 
 /// Ok(whether the tags were copied), or why the save failed.
 type SaveResult = std::sync::mpsc::Receiver<Result<bool, String>>;
-
-/// The Save As dialog: a save running on its own thread, or the last one's result.
-#[derive(Default)]
-struct SaveDialog {
-    /// What the running save reports on, the edit it writes, and the file's name.
-    job: Option<(SaveResult, Arc<Edit>, String)>,
-    message: Option<Result<String, String>>,
-}
 
 /// The speeds Playback → Change speed offers directly.
 const SPEEDS: [f64; 6] = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
@@ -293,9 +290,12 @@ impl eframe::App for App {
             }
         }
         let save_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND | egui::Modifiers::SHIFT, egui::Key::S);
-        if ctx.input_mut(|i| i.consume_shortcut(&save_key)) && self.track.done() && self.save_dialog.is_none() {
-            self.save_dialog = Some(SaveDialog::default());
+        let copy_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::S);
+        // Ctrl+Shift+S first: Ctrl+S would match it too.
+        if ctx.input_mut(|i| i.consume_shortcut(&save_key)) && self.track.done() {
+            self.show_save = true;
         }
+        let mut save_copy = ctx.input_mut(|i| i.consume_shortcut(&copy_key));
         if ctx.input(|i| i.viewport().close_requested()) && self.dirty() {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             self.pending = Some(Pending::Quit);
@@ -337,9 +337,12 @@ impl eframe::App for App {
                             }
                         });
                     });
-                    let save_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND | egui::Modifiers::SHIFT, egui::Key::S);
+                    if ui.add_enabled(self.can_save_copy(), egui::Button::new("Save Copy").shortcut_text(ctx.format_shortcut(&copy_key))).on_hover_text("Saves the edits next to the original, in its format, as name-edited").clicked() {
+                        save_copy = true;
+                        ui.close();
+                    }
                     if ui.add_enabled(self.track.done(), egui::Button::new("Save As…").shortcut_text(ctx.format_shortcut(&save_key))).clicked() {
-                        self.save_dialog = Some(SaveDialog::default());
+                        self.show_save = true;
                         ui.close();
                     }
                     if ui.button("Settings…").clicked() {
@@ -457,6 +460,7 @@ impl eframe::App for App {
                     if let Some(e) = &error {
                         ui.colored_label(ui.visuals().error_fg_color, e);
                     }
+                    notice(ui, self.save_notice.as_ref(), Some(time));
                     ui.add_space(12.0);
                     let wave = self.settings.show_waveform.then_some((&*self.track, &*edit, self.edit_view.selection, &mut self.strip_cache));
                     if let Some(frame) = seek_bar(ui, pos, len, rate, wave) {
@@ -478,6 +482,10 @@ impl eframe::App for App {
         if let Some(speed) = self.speed_window(&ctx) {
             actions.push(Action::Speed(speed));
         }
+        if save_copy {
+            self.save_copy();
+        }
+        self.follow_save(&ctx);
         self.unsaved_window(&ctx);
         self.save_window(&ctx);
         if let Some(path) = open_recent {
@@ -777,7 +785,7 @@ impl App {
 
     /// Asks what to do with unsaved edits before leaving the track.
     fn unsaved_window(&mut self, ctx: &egui::Context) {
-        if self.pending.is_none() || self.save_dialog.is_some() {
+        if self.pending.is_none() || self.show_save {
             return;
         }
         let (mut save, mut discard, mut cancel) = (false, false, false);
@@ -792,7 +800,7 @@ impl App {
             });
         });
         if save {
-            self.save_dialog = Some(SaveDialog::default());
+            self.show_save = true;
         } else if cancel || modal.should_close() {
             self.pending = None;
         } else if discard {
@@ -811,54 +819,90 @@ impl App {
         }
     }
 
+    /// Save Copy has something to write: unsaved edits on a fully decoded track.
+    fn can_save_copy(&self) -> bool {
+        self.dirty() && self.track.done() && self.save_job.is_none()
+    }
+
+    /// Saves the edits next to the original under a new name, with no questions (as lightview does).
+    fn save_copy(&mut self) {
+        if !self.can_save_copy() {
+            return;
+        }
+        let (codec, bits) = self.track.info.get().map_or((String::new(), None), |i| (i.codec.clone(), i.bits));
+        let choice = save::copy_choice(&self.track.path, &codec, bits, self.save_choice);
+        match save::reserve_copy(&self.track.path, choice.kind.ext()) {
+            Ok(target) => self.start_save(choice, target, true),
+            Err(e) => self.save_notice = Some((Err(e), self.ctx.get().map_or(0.0, |c| c.input(|i| i.time)))),
+        }
+    }
+
+    /// Saves the current edits to `target` on its own thread; `reserved` names a file Save Copy
+    /// claimed, removed again if the save fails.
+    fn start_save(&mut self, choice: save::Choice, target: PathBuf, reserved: bool) {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let (track, edit, notify) = (self.track.clone(), self.edit(), repaint(&self.ctx));
+        let (written, path) = (edit.clone(), target.clone());
+        std::thread::spawn(move || {
+            let result = save::save(&track, &written, choice, &path);
+            if result.is_err() && reserved {
+                let _ = std::fs::remove_file(&path);
+            }
+            let _ = tx.send(result);
+            notify();
+        });
+        self.save_job = Some((rx, edit, target, reserved));
+    }
+
+    /// Picks up the running save's result: marks the edits saved and, if the unsaved-edits
+    /// prompt was waiting, carries on where it was going.
+    fn follow_save(&mut self, ctx: &egui::Context) {
+        let Some((rx, edit, target, reserved)) = &self.save_job else { return };
+        let result = match rx.try_recv() {
+            Ok(r) => r,
+            Err(std::sync::mpsc::TryRecvError::Empty) => {
+                ctx.request_repaint_after(Duration::from_millis(100));
+                return;
+            }
+            // The save thread died (a panic) without a word.
+            Err(_) => {
+                if *reserved {
+                    let _ = std::fs::remove_file(target);
+                }
+                Err("Saving failed".into())
+            }
+        };
+        let name = target.file_name().unwrap_or_default().to_string_lossy().into_owned();
+        if result.is_ok() && let Some(h) = &mut self.history {
+            h.mark_saved(edit);
+        }
+        let ok = result.is_ok();
+        let message = result.map(|tags| if tags { format!("Saved {name}") } else { format!("Saved {name}, but the tags could not be copied") });
+        (self.save_job, self.save_notice) = (None, Some((message, ctx.input(|i| i.time))));
+        if ok && self.pending.is_some() {
+            self.show_save = false;
+            self.run_pending(ctx);
+        }
+    }
+
     /// Save As: the format and quality, then the system's save dialog; saves on its own thread.
     fn save_window(&mut self, ctx: &egui::Context) {
-        let Some(dialog) = &mut self.save_dialog else { return };
-        if let Some((rx, edit, name)) = &dialog.job {
-            let result = match rx.try_recv() {
-                Ok(r) => Some(r),
-                Err(std::sync::mpsc::TryRecvError::Empty) => None,
-                // The save thread died (a panic) without a word.
-                Err(_) => Some(Err("Saving failed".into())),
-            };
-            if let Some(result) = result {
-                let name = name.clone();
-                if result.is_ok() && let Some(h) = &mut self.history {
-                    h.mark_saved(edit);
-                }
-                dialog.job = None;
-                dialog.message = Some(result.map(|tags| if tags { format!("Saved {name}") } else { format!("Saved {name}, but the tags could not be copied") }));
-                // Saved from the unsaved-edits prompt: carry on where it was going.
-                if dialog.message.as_ref().is_some_and(|m| m.is_ok()) && self.pending.is_some() {
-                    self.save_dialog = None;
-                    self.run_pending(ctx);
-                    return;
-                }
-            } else {
-                ctx.request_repaint_after(Duration::from_millis(100));
-            }
+        if !self.show_save {
+            return;
         }
         let (mut open, mut pick) = (true, false);
-        let busy = dialog.job.is_some();
+        let busy = self.save_job.is_some();
         egui::Window::new("Save As").open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
             ui.add_enabled_ui(!busy, |ui| save_options(ui, &mut self.save_choice));
             ui.weak("The original file is never changed.");
             ui.add_space(4.0);
-            if let Some((_, _, name)) = &dialog.job {
+            if let Some((_, _, target, _)) = &self.save_job {
                 ui.horizontal(|ui| {
                     ui.spinner();
-                    ui.label(format!("Saving {name}…"));
+                    ui.label(format!("Saving {}…", target.file_name().unwrap_or_default().to_string_lossy()));
                 });
             } else {
-                match &dialog.message {
-                    Some(Ok(m)) => {
-                        ui.label(m);
-                    }
-                    Some(Err(e)) => {
-                        ui.colored_label(ui.visuals().error_fg_color, e);
-                    }
-                    None => {}
-                }
+                notice(ui, self.save_notice.as_ref(), None);
                 pick = ui.button("Save…").clicked();
             }
         });
@@ -868,23 +912,14 @@ impl App {
             if let Some(dir) = self.track.path.parent() {
                 picker = picker.set_directory(dir);
             }
+            // The system dialog asks before replacing an existing file.
             if let Some(target) = picker.save_file() {
-                let (tx, rx) = std::sync::mpsc::channel();
-                let (track, edit, choice, notify) = (self.track.clone(), self.edit(), self.save_choice, repaint(&self.ctx));
-                let name = target.file_name().unwrap_or_default().to_string_lossy().into_owned();
-                let written = edit.clone();
-                std::thread::spawn(move || {
-                    let _ = tx.send(save::save(&track, &written, choice, &target));
-                    notify();
-                });
-                if let Some(d) = &mut self.save_dialog {
-                    (d.job, d.message) = (Some((rx, edit, name)), None);
-                }
+                self.start_save(self.save_choice, target, false);
             }
         }
         // Closing it while saving only hides it; the save still finishes.
-        if !open && !busy {
-            self.save_dialog = None;
+        if !open {
+            self.show_save = false;
         }
     }
 
@@ -918,6 +953,25 @@ impl App {
     /// Puts `path` first in Open Recent.
     fn remember(&mut self, path: &std::path::Path) {
         push_recent(&mut self.recent, path);
+    }
+}
+
+/// How long a "Saved …" message stays in the player view.
+const NOTICE_SECONDS: f64 = 4.0;
+
+/// The last save's result: an error, or "Saved …" (only for `NOTICE_SECONDS` when `now` is given).
+fn notice(ui: &mut egui::Ui, notice: Option<&(Result<String, String>, f64)>, now: Option<f64>) {
+    match notice {
+        Some((Err(e), _)) => {
+            ui.colored_label(ui.visuals().error_fg_color, e);
+        }
+        Some((Ok(m), at)) if now.is_none_or(|now| now - at < NOTICE_SECONDS) => {
+            ui.label(m);
+            if let Some(now) = now {
+                ui.ctx().request_repaint_after(Duration::from_secs_f64(NOTICE_SECONDS - (now - at)));
+            }
+        }
+        _ => {}
     }
 }
 
