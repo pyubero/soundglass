@@ -58,3 +58,7 @@
 - 2026-11-11 — both waveforms draw through edit::min_max: peaks for long spans, the samples themselves for short ones — zoomed-in edges are exact and the strip and panel always agree
 - 2026-11-11 — undone back to the first step, the player gets no edit list, so the track moves on gaplessly again; Cut leaves the playhead at the cut, Crop at 0, Silence keeps the selection
 - 2026-11-11 — the unsaved-edits prompt is raised in go() and open() (every way of leaving a track goes through them) and on the window's close request
+- 2026-11-11 — Save As encodes on its own thread to a hidden temp file next to the target, copies the tags, decodes it back (rate, channels and length within 0.1 s), then renames it into place; a target that is the original (by canonical path) is refused; any failure or panic removes the temp file
+- 2026-11-11 — tags are copied with lofty from the original's primary tag, or its first one (the test album has only ID3v1), re-mapped to the target format's main tag type; a save whose tags can't be copied still succeeds and says so
+- 2026-11-11 — after Save As the view stays on the original with its edits, now counted as saved; the save runs on a copy of the edit list, so editing on while it saves is safe
+- 2026-11-11 — no dither when saving to 16 or 24 bits — simple, and inaudible for music at normal levels

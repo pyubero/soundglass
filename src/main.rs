@@ -5,6 +5,7 @@ mod edit;
 mod folder;
 mod loudness;
 mod player;
+mod save;
 mod settings;
 mod track;
 
@@ -71,7 +72,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, show_info, show_edit: false, edit_height: 160.0, edit_view: EditView::default(), history: None, looping: false, sent_region: None, pending: None, controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, show_info, show_edit: false, edit_height: 160.0, edit_view: EditView::default(), history: None, looping: false, sent_region: None, pending: None, save_dialog: None, save_choice: save::Choice::default(), controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -134,6 +135,9 @@ struct App {
     sent_region: Option<(Option<(u64, u64)>, bool)>,
     /// Waits for Save As / Discard / Cancel while there are unsaved edits.
     pending: Option<Pending>,
+    save_dialog: Option<SaveDialog>,
+    /// Save As's last choice, kept while soundglass runs.
+    save_choice: save::Choice,
     /// Height of everything below the cover, as measured last frame.
     controls_height: f32,
     /// Track Info's width as last shown.
@@ -172,6 +176,17 @@ enum Pending {
     Go(usize),
     Open(PathBuf),
     Quit,
+}
+
+/// Ok(whether the tags were copied), or why the save failed.
+type SaveResult = std::sync::mpsc::Receiver<Result<bool, String>>;
+
+/// The Save As dialog: a save running on its own thread, or the last one's result.
+#[derive(Default)]
+struct SaveDialog {
+    /// What the running save reports on, the edit it writes, and the file's name.
+    job: Option<(SaveResult, Arc<Edit>, String)>,
+    message: Option<Result<String, String>>,
 }
 
 /// The speeds Playback → Change speed offers directly.
@@ -267,6 +282,10 @@ impl eframe::App for App {
                 actions.push(Action::Cut);
             }
         }
+        let save_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND | egui::Modifiers::SHIFT, egui::Key::S);
+        if ctx.input_mut(|i| i.consume_shortcut(&save_key)) && self.track.done() && self.save_dialog.is_none() {
+            self.save_dialog = Some(SaveDialog::default());
+        }
         if ctx.input(|i| i.viewport().close_requested()) && self.dirty() {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             self.pending = Some(Pending::Quit);
@@ -308,6 +327,11 @@ impl eframe::App for App {
                             }
                         });
                     });
+                    let save_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND | egui::Modifiers::SHIFT, egui::Key::S);
+                    if ui.add_enabled(self.track.done(), egui::Button::new("Save As…").shortcut_text(ctx.format_shortcut(&save_key))).clicked() {
+                        self.save_dialog = Some(SaveDialog::default());
+                        ui.close();
+                    }
                     if ui.button("Settings…").clicked() {
                         self.show_settings = true;
                     }
@@ -445,6 +469,7 @@ impl eframe::App for App {
             actions.push(Action::Speed(speed));
         }
         self.unsaved_window(&ctx);
+        self.save_window(&ctx);
         if let Some(path) = open_recent {
             self.open(path);
         }
@@ -742,29 +767,114 @@ impl App {
 
     /// Asks what to do with unsaved edits before leaving the track.
     fn unsaved_window(&mut self, ctx: &egui::Context) {
-        if self.pending.is_none() {
+        if self.pending.is_none() || self.save_dialog.is_some() {
             return;
         }
-        let (mut discard, mut cancel) = (false, false);
+        let (mut save, mut discard, mut cancel) = (false, false, false);
         let modal = egui::Modal::new(egui::Id::unique("unsaved")).show(ctx, |ui| {
             ui.heading("Unsaved edits");
             ui.label("This track has edits that aren't saved. The original file is never changed.");
             ui.add_space(8.0);
             ui.horizontal(|ui| {
+                save = ui.button("Save As…").clicked();
                 discard = ui.button("Discard edits").clicked();
                 cancel = ui.button("Cancel").clicked();
             });
         });
-        if cancel || modal.should_close() {
+        if save {
+            self.save_dialog = Some(SaveDialog::default());
+        } else if cancel || modal.should_close() {
             self.pending = None;
         } else if discard {
             self.history = None;
-            match self.pending.take() {
-                Some(Pending::Go(index)) => self.go(index),
-                Some(Pending::Open(path)) => self.open(path),
-                Some(Pending::Quit) => ctx.send_viewport_cmd(egui::ViewportCommand::Close),
-                None => {}
+            self.run_pending(ctx);
+        }
+    }
+
+    /// Goes where the unsaved-edits prompt was holding up.
+    fn run_pending(&mut self, ctx: &egui::Context) {
+        match self.pending.take() {
+            Some(Pending::Go(index)) => self.go(index),
+            Some(Pending::Open(path)) => self.open(path),
+            Some(Pending::Quit) => ctx.send_viewport_cmd(egui::ViewportCommand::Close),
+            None => {}
+        }
+    }
+
+    /// Save As: the format and quality, then the system's save dialog; saves on its own thread.
+    fn save_window(&mut self, ctx: &egui::Context) {
+        let Some(dialog) = &mut self.save_dialog else { return };
+        if let Some((rx, edit, name)) = &dialog.job {
+            let result = match rx.try_recv() {
+                Ok(r) => Some(r),
+                Err(std::sync::mpsc::TryRecvError::Empty) => None,
+                // The save thread died (a panic) without a word.
+                Err(_) => Some(Err("Saving failed".into())),
+            };
+            if let Some(result) = result {
+                let name = name.clone();
+                if result.is_ok() && let Some(h) = &mut self.history {
+                    h.mark_saved(edit);
+                }
+                dialog.job = None;
+                dialog.message = Some(result.map(|tags| if tags { format!("Saved {name}") } else { format!("Saved {name}, but the tags could not be copied") }));
+                // Saved from the unsaved-edits prompt: carry on where it was going.
+                if dialog.message.as_ref().is_some_and(|m| m.is_ok()) && self.pending.is_some() {
+                    self.save_dialog = None;
+                    self.run_pending(ctx);
+                    return;
+                }
+            } else {
+                ctx.request_repaint_after(Duration::from_millis(100));
             }
+        }
+        let (mut open, mut pick) = (true, false);
+        let busy = dialog.job.is_some();
+        egui::Window::new("Save As").open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
+            ui.add_enabled_ui(!busy, |ui| save_options(ui, &mut self.save_choice));
+            ui.weak("The original file is never changed.");
+            ui.add_space(4.0);
+            if let Some((_, _, name)) = &dialog.job {
+                ui.horizontal(|ui| {
+                    ui.spinner();
+                    ui.label(format!("Saving {name}…"));
+                });
+            } else {
+                match &dialog.message {
+                    Some(Ok(m)) => {
+                        ui.label(m);
+                    }
+                    Some(Err(e)) => {
+                        ui.colored_label(ui.visuals().error_fg_color, e);
+                    }
+                    None => {}
+                }
+                pick = ui.button("Save…").clicked();
+            }
+        });
+        if pick {
+            let kind = self.save_choice.kind;
+            let mut picker = rfd::FileDialog::new().add_filter(kind.name(), &[kind.ext()]).set_file_name(save::suggested_name(&self.track.path, kind));
+            if let Some(dir) = self.track.path.parent() {
+                picker = picker.set_directory(dir);
+            }
+            if let Some(target) = picker.save_file() {
+                let (tx, rx) = std::sync::mpsc::channel();
+                let (track, edit, choice, notify) = (self.track.clone(), self.edit(), self.save_choice, repaint(&self.ctx));
+                let name = target.file_name().unwrap_or_default().to_string_lossy().into_owned();
+                let written = edit.clone();
+                std::thread::spawn(move || {
+                    let _ = tx.send(save::save(&track, &written, choice, &target));
+                    notify();
+                });
+                if let Some(d) = &mut self.save_dialog {
+                    (d.job, d.message) = (Some((rx, edit, name)), None);
+                }
+            }
+        }
+        // Closing it while saving only hides it; the save still finishes.
+        if !open && !busy {
+            self.save_dialog = None;
         }
     }
 
@@ -799,6 +909,22 @@ impl App {
     fn remember(&mut self, path: &std::path::Path) {
         push_recent(&mut self.recent, path);
     }
+}
+
+/// Save As's format and quality choices.
+fn save_options(ui: &mut egui::Ui, choice: &mut save::Choice) {
+    ui.horizontal(|ui| {
+        for kind in save::Kind::ALL {
+            ui.radio_value(&mut choice.kind, kind, kind.name());
+        }
+    });
+    ui.horizontal(|ui| match choice.kind {
+        save::Kind::Wav => {
+            for (bits, label) in [(16, "16-bit"), (24, "24-bit"), (32, "32-bit float")] {
+                ui.radio_value(&mut choice.wav_bits, bits, label);
+            }
+        }
+    });
 }
 
 /// The cover's side: the full width, unless the height left after the controls (`controls`

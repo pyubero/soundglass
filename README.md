@@ -23,6 +23,7 @@ Without a file it asks for one. `--timings` prints the time to the window and to
 - Delete: cut the selection; Ctrl+T: crop to it; Ctrl+L: replace it with silence
 - Ctrl+Z: undo; Ctrl+Shift+Z or Ctrl+Y: redo
 - L: loop the selection on or off (otherwise playback stops at its end)
+- Ctrl+Shift+S: Save As (the original file is never changed)
 - Ctrl+O: open a file
 - Ctrl+Q: quit
 

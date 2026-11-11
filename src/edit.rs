@@ -138,8 +138,11 @@ impl History {
         self.at != self.saved
     }
 
-    pub fn mark_saved(&mut self) {
-        self.saved = self.at;
+    /// Marks `edit`'s step as the one saved (it may not be the current one: edits can go on while saving).
+    pub fn mark_saved(&mut self, edit: &Arc<Edit>) {
+        if let Some(i) = self.steps.iter().position(|s| Arc::ptr_eq(s, edit)) {
+            self.saved = i;
+        }
     }
 }
 
@@ -239,7 +242,7 @@ mod tests {
         assert!(!h.dirty() && !h.can_undo());
         h.push(h.current().cut(0, 10));
         assert!(h.dirty());
-        h.mark_saved();
+        h.mark_saved(&h.current().clone());
         h.undo();
         assert!(h.dirty() && h.can_redo());
         h.redo();
