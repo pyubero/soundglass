@@ -24,9 +24,20 @@ Without a file it asks for one. `--timings` prints the time to the window and to
 - Ctrl+Z: undo; Ctrl+Shift+Z or Ctrl+Y: redo
 - L: loop the selection on or off (otherwise playback stops at its end)
 - Ctrl+S: Save Copy — the edits next to the original, in its format, as `name-edited` (then `name-edited-2`…)
-- Ctrl+Shift+S: Save As (the original file is never changed)
+- Ctrl+Shift+S: Save As (the original file is never changed), with the format, quality and sample rate
 - Ctrl+O: open a file
 - Ctrl+Q: quit
+
+## Effects
+
+The Effects menu works on the selection, or on the whole track when nothing is selected. Each item has presets and a Custom… value, and every effect can be undone:
+
+- Fade in, Fade out: over the whole selection, or 1, 3 or 5 s from its start or end
+- Gain: up or down by a number of dB
+- Normalize: the peak to a level in dBFS, or the loudness to a target in LUFS
+- Trim silence: removes what is quieter than a level at the start and end
+- Reverse: plays it backwards
+- Channels: mono, stereo or swap left and right (always the whole track)
 
 ## Install as the default audio player
 

@@ -203,7 +203,7 @@ impl Track {
         (offset < chunk.len() / channels).then_some((chunk, offset))
     }
 
-    #[cfg(test)]
+    /// A fully decoded track made from samples in memory (Save As's resampled audio, and tests).
     pub fn from_samples(rate: u32, channels: usize, samples: Vec<f32>) -> Arc<Track> {
         let t = Track::empty(PathBuf::new());
         t.format.set(Format { rate, channels }).unwrap();

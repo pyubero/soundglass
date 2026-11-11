@@ -1113,7 +1113,8 @@ impl App {
         let (mut open, mut pick) = (true, false);
         let busy = self.save_job.is_some();
         egui::Window::new("Save As").open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
-            ui.add_enabled_ui(!busy, |ui| save_options(ui, &mut self.save_choice));
+            let rate = self.track.format.get().map_or(0, |f| f.rate);
+            ui.add_enabled_ui(!busy, |ui| save_options(ui, &mut self.save_choice, rate));
             ui.weak("The original file is never changed.");
             ui.add_space(4.0);
             if let Some((_, _, target, _)) = &self.save_job {
@@ -1196,7 +1197,15 @@ fn notice(ui: &mut egui::Ui, notice: Option<&(Result<String, String>, f64)>, now
 }
 
 /// Save As's format and quality choices.
-fn save_options(ui: &mut egui::Ui, choice: &mut save::Choice) {
+/// The sample rates Save As offers besides the track's own.
+const RATES: [u32; 6] = [22050, 32000, 44100, 48000, 88200, 96000];
+
+fn khz(rate: u32) -> String {
+    format!("{} kHz", rate as f64 / 1000.0)
+}
+
+/// `rate` is the track's own sample rate.
+fn save_options(ui: &mut egui::Ui, choice: &mut save::Choice, rate: u32) {
     ui.horizontal(|ui| {
         for kind in save::Kind::ALL {
             ui.radio_value(&mut choice.kind, kind, kind.name());
@@ -1220,6 +1229,13 @@ fn save_options(ui: &mut egui::Ui, choice: &mut save::Choice) {
         }
         save::Kind::Vorbis => {
             ui.add(egui::Slider::new(&mut choice.vorbis_quality, 0..=10).text("quality"));
+        }
+    });
+    let same = format!("Same ({})", khz(rate));
+    egui::ComboBox::from_label("Sample rate").selected_text(choice.rate.map_or(same.clone(), khz)).show_ui(ui, |ui| {
+        ui.selectable_value(&mut choice.rate, None, same);
+        for r in RATES.into_iter().filter(|&r| r != rate) {
+            ui.selectable_value(&mut choice.rate, Some(r), khz(r));
         }
     });
 }

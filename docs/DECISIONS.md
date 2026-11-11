@@ -81,3 +81,5 @@
 - 2026-11-11 — effects are fields on the edit list's pieces (a gain ramp in dB, a reversed flag) plus a channel matrix on the edit, not rendered audio — they cost nothing and undo stays an older list
 - 2026-11-11 — gain is a ramp linear in dB, so stacked gains and fades add up to one ramp per piece; at or below −60 dB is silence, and a fade runs from −60 to 0 dB
 - 2026-11-11 — effects apply to the selection, or the whole track without one; mono, stereo and swap always to the whole track — a file has one channel count
+- 2026-11-11 — Save As resamples the whole edited track in memory with rubato's Fft resampler (process_all, delay trimmed) into a temporary track, then encodes and verifies that unchanged; Save Copy always keeps the rate
+- 2026-11-11 — effect messages (silent, too short to measure, nothing to trim) show in the notice line for 4 s and change nothing; trim clears the selection, other effects keep it

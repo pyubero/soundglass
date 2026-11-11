@@ -4,6 +4,7 @@
 use crate::edit::{self, Edit};
 use crate::track::Track;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Kind {
@@ -60,11 +61,13 @@ pub struct Choice {
     pub mp3_kbps: u32,
     /// 0 to 10, as oggenc counts.
     pub vorbis_quality: u8,
+    /// The sample rate to save at; `None` keeps the track's.
+    pub rate: Option<u32>,
 }
 
 impl Default for Choice {
     fn default() -> Choice {
-        Choice { kind: Kind::Flac, wav_bits: 16, flac_bits: 16, mp3_kbps: 256, vorbis_quality: 6 }
+        Choice { kind: Kind::Flac, wav_bits: 16, flac_bits: 16, mp3_kbps: 256, vorbis_quality: 6, rate: None }
     }
 }
 
@@ -91,7 +94,7 @@ pub fn reserve_copy(source: &Path, ext: &str) -> Result<PathBuf, String> {
 }
 
 /// What Save Copy writes: the original's format when soundglass can write it (FLAC otherwise),
-/// at its bit depth (`bits`); lossy formats at Save As's `last` quality.
+/// at its bit depth (`bits`) and sample rate; lossy formats at Save As's `last` quality.
 pub fn copy_choice(source: &Path, codec: &str, bits: Option<u32>, last: Choice) -> Choice {
     let ext = source.extension().and_then(|e| e.to_str()).unwrap_or_default().to_ascii_lowercase();
     let kind = match ext.as_str() {
@@ -103,7 +106,7 @@ pub fn copy_choice(source: &Path, codec: &str, bits: Option<u32>, last: Choice) 
         _ => Kind::Flac,
     };
     let deep = bits.is_some_and(|b| b > 16);
-    Choice { kind, wav_bits: if bits == Some(32) { 32 } else if deep { 24 } else { 16 }, flac_bits: if deep { 24 } else { 16 }, ..last }
+    Choice { kind, wav_bits: if bits == Some(32) { 32 } else if deep { 24 } else { 16 }, flac_bits: if deep { 24 } else { 16 }, rate: None, ..last }
 }
 
 /// Writes frames `edit` of `track` (fully decoded) to `target` as `choice` says. Ok(false) when
@@ -116,9 +119,14 @@ pub fn save(track: &Track, edit: &Edit, choice: Choice, target: &Path) -> Result
     // Hidden, next to the target so the rename stays on one disk, with the real extension so it decodes.
     let temp = target.with_file_name(format!(".{name}.soundglass-part.{}", choice.kind.ext()));
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        encode(track, edit, choice, &temp)?;
+        let resampled = match choice.rate {
+            Some(rate) if track.format.get().is_some_and(|f| f.rate != rate) => Some(resample(track, edit, rate)?),
+            _ => None,
+        };
+        let (audio, edit) = resampled.as_ref().map_or((track, edit), |(t, e)| (&**t, e));
+        encode(audio, edit, choice, &temp)?;
         let tags = std::panic::catch_unwind(|| copy_tags(&track.path, &temp, choice.kind)).unwrap_or(false);
-        verify(&temp, track, edit)?;
+        verify(&temp, audio, edit)?;
         std::fs::rename(&temp, target).map_err(|e| e.to_string())?;
         Ok(tags)
     }))
@@ -127,6 +135,23 @@ pub fn save(track: &Track, edit: &Edit, choice: Choice, target: &Path) -> Result
         let _ = std::fs::remove_file(&temp);
     }
     result
+}
+
+/// The edited track at another sample rate, as a track of its own with no edits.
+fn resample(track: &Track, edit: &Edit, rate: u32) -> Result<(Arc<Track>, Edit), String> {
+    use rubato::Resampler;
+    let format = track.format.get().ok_or("the track has no audio")?;
+    let channels = edit.channels(format.channels);
+    let mut samples = Vec::with_capacity(edit.len() as usize * channels);
+    edit::read(track, edit, 0, edit.len(), |b| samples.extend_from_slice(b));
+    let frames = samples.len() / channels;
+    let err = |e: &dyn std::fmt::Display| format!("resampling: {e}");
+    let mut resampler = rubato::Fft::<f32>::new(format.rate as usize, rate as usize, 1024, channels, rubato::FixedSync::Both).map_err(|e| err(&e))?;
+    let input = rubato::audioadapter_buffers::direct::InterleavedSlice::new(&samples, channels, frames).map_err(|e| err(&e))?;
+    // process_all trims the resampler's delay, so the length scales exactly.
+    let out = resampler.process_all(&input, frames, None).map_err(|e| err(&e))?.take_data();
+    let len = (out.len() / channels) as u64;
+    Ok((Track::from_samples(rate, channels, out), Edit::whole(len)))
 }
 
 /// Whether `a` (which may not exist yet) is the file at `b`.
@@ -298,7 +323,6 @@ fn verify(path: &Path, track: &Track, edit: &Edit) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Arc;
 
     /// A fresh, empty folder of its own for each test, outside the repo.
     fn scratch(name: &str) -> PathBuf {
@@ -385,6 +409,23 @@ mod tests {
         let path = dir.join("mono.mp3");
         save(&track, &edit, Choice { kind: Kind::Mp3, ..Choice::default() }, &path).unwrap();
         assert_eq!(read_back(&path).1, 1);
+    }
+
+    #[test]
+    fn saves_at_another_sample_rate() {
+        let dir = scratch("rate");
+        let track = sine(44100, 2, 44100);
+        let edit = Edit::whole(44100).cut(0, 4410).mono(2);
+        let path = dir.join("48k.wav");
+        save(&track, &edit, Choice { kind: Kind::Wav, rate: Some(48000), ..Choice::default() }, &path).unwrap();
+        let (got, c, r) = read_back(&path);
+        assert_eq!((c, r), (1, 48000));
+        assert!(got.len().abs_diff(43200) <= 2, "{} frames", got.len());
+        // The sine survives: the middle peaks near its 0.5 amplitude.
+        let peak = got[1000..40000].iter().fold(0f32, |p, x| p.max(x.abs()));
+        assert!((peak - 0.5).abs() < 0.01, "{peak}");
+        // Save Copy never changes the rate.
+        assert_eq!(copy_choice(&path, "", None, Choice { rate: Some(22050), ..Choice::default() }).rate, None);
     }
 
     #[test]
