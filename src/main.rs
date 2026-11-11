@@ -533,6 +533,11 @@ impl eframe::App for App {
                             }
                         });
                     }
+                    ui.separator();
+                    if ui.add_enabled(self.speed != wsola::Speed::NORMAL, egui::Button::new("Reset")).clicked() {
+                        actions.push(Action::Speed(wsola::Speed::NORMAL));
+                        ui.close();
+                    }
                 });
             });
         });

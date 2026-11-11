@@ -91,3 +91,4 @@
 - 2026-11-11 — pitch presets are −2, −1, 0, +1, +2 semitones, Custom… from −12 to +12 in 0.1 steps (user's choice)
 - 2026-11-11 — Save As's "Apply speed and pitch" is off by default, so saving keeps the audio unless asked
 - 2026-11-11 — a last milestone 10 builds on the audio-tools Griffin–Lim modulator: better, faster, pure Rust, with a Fast (real-time) and a Quality (offline) setting (user's choice)
+- 2026-11-11 — Playback → Reset puts speed, tempo and pitch back to normal at once, greyed out when they already are (user's choice)

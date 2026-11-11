@@ -47,7 +47,7 @@ The Playback menu changes how it plays, live, and the settings combine:
 - Pitch-preserved speed change: slower or faster at the same pitch (0.5× to 2×)
 - Time-preserved pitch change: up or down by semitones at the same speed (−2 to +2, Custom… up to ±12 in steps of 0.1)
 
-The last two use WSOLA, which can sound a little echoey or stuttery on dense mixes. Save As can apply them to the file.
+Reset puts all three back to normal. The last two use WSOLA, which can sound a little echoey or stuttery on dense mixes. Save As can apply them to the file.
 
 ## Install as the default audio player
 
