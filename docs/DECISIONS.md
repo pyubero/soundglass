@@ -107,3 +107,7 @@
 - 2026-11-11 — the spectrogram is its own OS window (an immediate egui viewport, redrawn with the main one) with a log frequency axis from 20 Hz (user's choice)
 - 2026-11-11 — realfft as a direct dependency, the version rubato already pulls in (user's choice)
 - 2026-11-11 — the spectrogram shows the edited audio mixed to mono, one 4096-point Hann FFT per pixel column (zoomed out it samples the audio, not averages it), −100 to 0 dBFS; it has its own zoom and no selection
+- 2026-11-11 — the spectrogram's note lines are equal temperament from a set A4 (400–480 Hz, default 440), C lines thicker (user's choice)
+- 2026-11-11 — note names show on every line where they fit, otherwise only on the C's, otherwise none; the Hz marks hide while notes are shown (user's choice)
+- 2026-11-11 — note names use # and b, not ♯ and ♭ — the bundled Roboto has no glyphs for them
+- 2026-11-11 — Notes on/off and the notes' settings are kept in settings.txt; the spectrogram window's open state and size are not (user's choice)

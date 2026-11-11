@@ -24,6 +24,7 @@ Without a file it asks for one. `--timings` prints the time to the window and to
 - Ctrl+E: show or hide the Edit panel
 - In the Edit panel: click to play from there, drag to select, Shift+click or Shift+drag to change the selection, scroll to zoom, right-drag (or scroll sideways) to move along
 - View → Spectrogram opens it in its own window (log frequency, 20 Hz up): click to play from there, scroll to zoom, right-drag (or scroll sideways) to move along
+- On the Spectrogram's toolbar, Notes shows lines at the notes' pitches (C thicker), named where they fit; Settings sets the tuning (A4), C D E or Do Ré Mi, sharps or flats, octave numbers, natural notes only, and the lines' look. All are remembered.
 - Esc: clear the selection
 - Delete: cut out the selection; Ctrl+T: crop to it; Ctrl+L: replace it with silence
 - Ctrl+Z: undo; Ctrl+Shift+Z or Ctrl+Y: redo

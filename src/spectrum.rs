@@ -113,9 +113,47 @@ pub fn height_of(freq: f32, rate: f32) -> f32 {
     1.0 - (freq / LOW).ln() / (rate / 2.0 / LOW).ln()
 }
 
+/// The notes of equal temperament tuned to `a4` from `LOW` Hz up to `nyquist`, lowest first,
+/// as (frequency, pitch class with C = 0, octave); `naturals` keeps only the white keys.
+pub fn notes(a4: f32, nyquist: f32, naturals: bool) -> Vec<(f32, u8, i32)> {
+    (0..=135)
+        .map(|midi: i32| (a4 * 2f32.powf((midi - 69) as f32 / 12.0), midi.rem_euclid(12) as u8, midi / 12 - 1))
+        .filter(|&(f, pc, _)| (LOW..=nyquist).contains(&f) && !(naturals && [1, 3, 6, 8, 10].contains(&pc)))
+        .collect()
+}
+
+/// A note's name: "C#4", "Db4", "Do#4", "Réb4"… with `#` and `b`, as the bundled font has no ♯ or ♭.
+pub fn note_name(pc: u8, octave: i32, solfege: bool, flats: bool, octaves: bool) -> String {
+    const LETTERS: [&str; 7] = ["C", "D", "E", "F", "G", "A", "B"];
+    const SOLFEGE: [&str; 7] = ["Do", "Ré", "Mi", "Fa", "Sol", "La", "Si"];
+    // The natural note below (sharps) or above (flats) each pitch class, and its accidental.
+    const SHARP: [(usize, &str); 12] = [(0, ""), (0, "#"), (1, ""), (1, "#"), (2, ""), (3, ""), (3, "#"), (4, ""), (4, "#"), (5, ""), (5, "#"), (6, "")];
+    const FLAT: [(usize, &str); 12] = [(0, ""), (1, "b"), (1, ""), (2, "b"), (2, ""), (3, ""), (4, "b"), (4, ""), (5, "b"), (5, ""), (6, "b"), (6, "")];
+    let (natural, mark) = if flats { FLAT } else { SHARP }[pc as usize % 12];
+    let base = if solfege { SOLFEGE } else { LETTERS }[natural];
+    if octaves { format!("{base}{mark}{octave}") } else { format!("{base}{mark}") }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn notes_follow_the_tuning_and_are_named() {
+        let all = notes(440.0, 22050.0, false);
+        let find = |n: &[(f32, u8, i32)], pc, oct| n.iter().find(|x| x.1 == pc && x.2 == oct).unwrap().0;
+        assert!((find(&all, 9, 4) - 440.0).abs() < 1e-3);
+        assert!((find(&all, 0, 4) - 261.626).abs() < 0.01);
+        assert!((find(&notes(432.0, 22050.0, false), 0, 4) - 256.87).abs() < 0.01);
+        assert!(all.first().unwrap().0 >= LOW && all.last().unwrap().0 <= 22050.0);
+        let octave4 = |n: Vec<(f32, u8, i32)>| n.iter().filter(|x| x.2 == 4).count();
+        assert_eq!((octave4(all.clone()), octave4(notes(440.0, 22050.0, true))), (12, 7));
+        assert_eq!(note_name(1, 4, false, false, true), "C#4");
+        assert_eq!(note_name(1, 4, false, true, true), "Db4");
+        assert_eq!(note_name(1, 4, true, false, false), "Do#");
+        assert_eq!(note_name(3, 2, true, true, true), "Mib2");
+        assert_eq!(note_name(11, 0, true, false, true), "Si0");
+    }
 
     #[test]
     fn a_sine_is_brightest_at_its_frequency_and_silence_is_the_floor() {

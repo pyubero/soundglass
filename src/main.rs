@@ -1311,8 +1311,12 @@ impl App {
             if ui.input(|i| i.viewport().close_requested()) {
                 self.show_spectrum = false;
             }
+            let changed = egui::Panel::top("spectrum-bar").show(ui, |ui| ui.horizontal(spectrum_bar(&mut self.settings)).inner).inner;
+            if changed {
+                self.settings_error = self.settings.save().err();
+            }
             egui::CentralPanel::default()
-                .show(ui, |ui| spectrum_panel(ui, &mut self.spectrum_view, &mut self.spectrum, &self.track, edit, pos, len, rate, playing))
+                .show(ui, |ui| spectrum_panel(ui, &mut self.spectrum_view, &mut self.spectrum, &self.settings, &self.track, edit, pos, len, rate, playing))
                 .inner
         })
     }
@@ -1862,10 +1866,41 @@ fn zoom_pan(ui: &egui::Ui, response: &egui::Response, rect: egui::Rect, view: &m
     }
 }
 
-/// The spectrogram of edited frames shown in `view`, with frequency marks and the playhead;
-/// returns the frame to seek to on a click.
+/// The Spectrogram's toolbar: the Notes toggle and the notes' settings; true when one changed.
+fn spectrum_bar(s: &mut settings::Settings) -> impl FnOnce(&mut egui::Ui) -> bool + '_ {
+    move |ui| {
+        let before = s.clone();
+        if ui.selectable_label(s.spectrum_notes, "Notes").on_hover_text("Show or hide the note lines").clicked() {
+            s.spectrum_notes = !s.spectrum_notes;
+        }
+        ui.menu_button("Settings", |ui| {
+            ui.horizontal(|ui| {
+                ui.label("Tuning A4");
+                ui.add(egui::DragValue::new(&mut s.note_a4).range(400.0..=480.0).speed(0.1).suffix(" Hz"));
+            });
+            ui.horizontal(|ui| {
+                ui.radio_value(&mut s.note_solfege, false, "C D E");
+                ui.radio_value(&mut s.note_solfege, true, "Do Ré Mi");
+            });
+            ui.horizontal(|ui| {
+                ui.radio_value(&mut s.note_flats, false, "Sharps (C#)");
+                ui.radio_value(&mut s.note_flats, true, "Flats (Db)");
+            });
+            ui.checkbox(&mut s.note_octaves, "Octave numbers");
+            ui.checkbox(&mut s.note_naturals, "Natural notes only");
+            ui.separator();
+            ui.add(egui::Slider::new(&mut s.note_opacity, 0.05..=1.0).text("Line opacity"));
+            ui.add(egui::Slider::new(&mut s.note_c_width, 1.0..=6.0).text("C line width"));
+            ui.add(egui::Slider::new(&mut s.note_label_size, 6.0..=24.0).text("Label size"));
+        });
+        *s != before
+    }
+}
+
+/// The spectrogram of edited frames shown in `view`, with note lines or frequency marks and the
+/// playhead; returns the frame to seek to on a click.
 #[allow(clippy::too_many_arguments)]
-fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, spectrogram: &mut spectrum::Spectrogram, track: &Track, edit: &Edit, pos: u64, len: u64, rate: u64, playing: bool) -> Option<u64> {
+fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, spectrogram: &mut spectrum::Spectrogram, s: &settings::Settings, track: &Track, edit: &Edit, pos: u64, len: u64, rate: u64, playing: bool) -> Option<u64> {
     let frames = follow(view, len, pos, playing);
     let (rect, response) = ui.allocate_exact_size(ui.available_size(), egui::Sense::click_and_drag());
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Slider, true, "Spectrogram: click to play from there, scroll to zoom, right-drag to move along"));
@@ -1883,9 +1918,28 @@ fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, spectrogram: &mut spec
         painter.image(texture.id(), rect, uv, egui::Color32::WHITE);
     }
     let nyquist = rate as f32 / 2.0;
+    let y_of = |freq: f32| rect.top() + spectrum::height_of(freq, rate as f32) * rect.height();
+    if s.spectrum_notes && nyquist > spectrum::LOW {
+        // Points between neighbouring lines: a semitone, or about two with natural notes only.
+        let step = rect.height() * 2f32.ln() / 12.0 / (nyquist / spectrum::LOW).ln() * if s.note_naturals { 12.0 / 7.0 } else { 1.0 };
+        let (every, only_c) = (step >= s.note_label_size, step * if s.note_naturals { 7.0 } else { 12.0 } >= s.note_label_size);
+        let line = egui::Color32::from_white_alpha((s.note_opacity * 255.0) as u8);
+        let font = egui::FontId::proportional(s.note_label_size);
+        for (freq, pc, octave) in spectrum::notes(s.note_a4, nyquist, s.note_naturals) {
+            let y = y_of(freq);
+            painter.hline(rect.x_range(), y, egui::Stroke::new(if pc == 0 { s.note_c_width } else { 1.0 }, line));
+            if every || (only_c && pc == 0) {
+                let name = spectrum::note_name(pc, octave, s.note_solfege, s.note_flats, s.note_octaves);
+                let galley = painter.layout_no_wrap(name, font.clone(), egui::Color32::WHITE);
+                let at = egui::pos2(rect.left() + 4.0, y - galley.size().y / 2.0);
+                painter.rect_filled(egui::Rect::from_min_size(at, galley.size()).expand(1.0), 2.0, egui::Color32::from_black_alpha(160));
+                painter.galley(at, galley, egui::Color32::WHITE);
+            }
+        }
+    }
     for (freq, label) in [(100.0, "100 Hz"), (1000.0, "1 kHz"), (10000.0, "10 kHz")] {
-        if freq < nyquist {
-            let y = rect.top() + spectrum::height_of(freq, rate as f32) * rect.height();
+        if !s.spectrum_notes && freq < nyquist {
+            let y = y_of(freq);
             painter.hline(rect.x_range(), y, egui::Stroke::new(1.0, egui::Color32::from_white_alpha(40)));
             painter.text(egui::pos2(rect.left() + 4.0, y - 2.0), egui::Align2::LEFT_BOTTOM, label, egui::FontId::proportional(12.0), egui::Color32::from_white_alpha(200));
         }

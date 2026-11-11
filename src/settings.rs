@@ -24,11 +24,34 @@ pub struct Settings {
     pub edit_height: f32,
     /// File → Rename from Tags…'s pattern, as last used.
     pub rename_pattern: String,
+    /// The Spectrogram's note lines: shown or not, the tuning, how they're named and drawn.
+    pub spectrum_notes: bool,
+    pub note_a4: f32,
+    /// Do Ré Mi instead of C D E.
+    pub note_solfege: bool,
+    pub note_flats: bool,
+    pub note_octaves: bool,
+    /// Only the natural notes (the white keys).
+    pub note_naturals: bool,
+    pub note_opacity: f32,
+    pub note_c_width: f32,
+    pub note_label_size: f32,
 }
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { remember_window_size: false, show_waveform: false, window_size: None, info_panel: false, info_width: INFO_WIDTH, edit_panel: false, edit_height: EDIT_HEIGHT, rename_pattern: crate::tags::DEFAULT_PATTERN.into() }
+        Settings {
+            remember_window_size: false, show_waveform: false, window_size: None, info_panel: false, info_width: INFO_WIDTH, edit_panel: false, edit_height: EDIT_HEIGHT, rename_pattern: crate::tags::DEFAULT_PATTERN.into(),
+            spectrum_notes: false,
+            note_a4: 440.0,
+            note_solfege: false,
+            note_flats: false,
+            note_octaves: true,
+            note_naturals: false,
+            note_opacity: 0.3,
+            note_c_width: 2.0,
+            note_label_size: 11.0,
+        }
     }
 }
 
@@ -55,6 +78,15 @@ fn parse(text: &str) -> Settings {
             "edit_panel" => s.edit_panel = on,
             "edit_height" => s.edit_height = number(value).unwrap_or(EDIT_HEIGHT),
             "rename_pattern" if !value.is_empty() => s.rename_pattern = value.into(),
+            "spectrum_notes" => s.spectrum_notes = on,
+            "note_a4" => s.note_a4 = number(value).map_or(440.0, |n| n.clamp(400.0, 480.0)),
+            "note_solfege" => s.note_solfege = on,
+            "note_flats" => s.note_flats = on,
+            "note_octaves" => s.note_octaves = on,
+            "note_naturals" => s.note_naturals = on,
+            "note_opacity" => s.note_opacity = number(value).map_or(0.3, |n| n.min(1.0)),
+            "note_c_width" => s.note_c_width = number(value).map_or(2.0, |n| n.min(6.0)),
+            "note_label_size" => s.note_label_size = number(value).map_or(11.0, |n| n.clamp(6.0, 24.0)),
             _ => {}
         }
     }
@@ -74,6 +106,10 @@ impl Settings {
         );
         // One line: a pattern can't hold a line break, the dialog's field is single-line.
         text += &format!("rename_pattern={}\n", self.rename_pattern.replace(['\n', '\r'], " "));
+        text += &format!(
+            "spectrum_notes={}\nnote_a4={}\nnote_solfege={}\nnote_flats={}\nnote_octaves={}\nnote_naturals={}\nnote_opacity={}\nnote_c_width={}\nnote_label_size={}\n",
+            self.spectrum_notes, self.note_a4, self.note_solfege, self.note_flats, self.note_octaves, self.note_naturals, self.note_opacity, self.note_c_width, self.note_label_size
+        );
         if let Some([w, h]) = self.window_size {
             text += &format!("window_size={w},{h}\n");
         }
@@ -99,7 +135,18 @@ mod tests {
     fn round_trip_and_defaults() {
         let dir = std::env::temp_dir().join(format!("soundglass-settings-{}", std::process::id()));
         let path = dir.join("settings.txt");
-        let s = Settings { remember_window_size: true, show_waveform: true, window_size: Some([700.0, 680.0]), info_panel: true, info_width: 300.0, edit_panel: true, edit_height: 200.0, rename_pattern: "{artist} - {title}".into() };
+        let s = Settings {
+            remember_window_size: true, show_waveform: true, window_size: Some([700.0, 680.0]), info_panel: true, info_width: 300.0, edit_panel: true, edit_height: 200.0, rename_pattern: "{artist} - {title}".into(),
+            spectrum_notes: true,
+            note_a4: 432.0,
+            note_solfege: true,
+            note_flats: true,
+            note_octaves: false,
+            note_naturals: true,
+            note_opacity: 0.5,
+            note_c_width: 3.0,
+            note_label_size: 14.0,
+        };
         s.write_to(&path).unwrap();
         let back = parse(&std::fs::read_to_string(&path).unwrap());
         std::fs::remove_dir_all(&dir).unwrap();
@@ -108,5 +155,7 @@ mod tests {
         let defaults = parse("");
         assert_eq!((defaults.window_size, defaults.info_panel, defaults.info_width), (None, false, INFO_WIDTH));
         assert_eq!((defaults.edit_panel, defaults.edit_height), (false, EDIT_HEIGHT));
+        assert_eq!((defaults.spectrum_notes, defaults.note_a4, defaults.note_octaves), (false, 440.0, true));
+        assert_eq!(parse("note_a4=1000\nnote_opacity=-1").note_a4, 480.0);
     }
 }
