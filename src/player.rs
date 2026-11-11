@@ -20,6 +20,8 @@ pub enum Cmd {
     Load(Arc<Track>),
     /// Play this track when the current one ends, without a gap.
     Queue(Arc<Track>),
+    /// The same audio as the current track under new tags or a new name: carries on where it is.
+    Swap(Arc<Track>),
     Play,
     Pause,
     Seek(u64),
@@ -176,6 +178,10 @@ impl Engine {
             }
             Cmd::Queue(track) => {
                 let old = self.next.replace(track);
+                self.retire(old);
+            }
+            Cmd::Swap(track) => {
+                let old = self.cur.replace(track);
                 self.retire(old);
             }
             Cmd::Play => self.playing = true,

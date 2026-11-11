@@ -22,11 +22,13 @@ pub struct Settings {
     /// Whether the Edit panel was open, and its height.
     pub edit_panel: bool,
     pub edit_height: f32,
+    /// File → Rename from Tags…'s pattern, as last used.
+    pub rename_pattern: String,
 }
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { remember_window_size: false, show_waveform: false, window_size: None, info_panel: false, info_width: INFO_WIDTH, edit_panel: false, edit_height: EDIT_HEIGHT }
+        Settings { remember_window_size: false, show_waveform: false, window_size: None, info_panel: false, info_width: INFO_WIDTH, edit_panel: false, edit_height: EDIT_HEIGHT, rename_pattern: crate::tags::DEFAULT_PATTERN.into() }
     }
 }
 
@@ -52,6 +54,7 @@ fn parse(text: &str) -> Settings {
             "info_width" => s.info_width = number(value).unwrap_or(INFO_WIDTH),
             "edit_panel" => s.edit_panel = on,
             "edit_height" => s.edit_height = number(value).unwrap_or(EDIT_HEIGHT),
+            "rename_pattern" if !value.is_empty() => s.rename_pattern = value.into(),
             _ => {}
         }
     }
@@ -69,6 +72,8 @@ impl Settings {
             "remember_window_size={}\nshow_waveform={}\ninfo_panel={}\ninfo_width={}\nedit_panel={}\nedit_height={}\n",
             self.remember_window_size, self.show_waveform, self.info_panel, self.info_width, self.edit_panel, self.edit_height
         );
+        // One line: a pattern can't hold a line break, the dialog's field is single-line.
+        text += &format!("rename_pattern={}\n", self.rename_pattern.replace(['\n', '\r'], " "));
         if let Some([w, h]) = self.window_size {
             text += &format!("window_size={w},{h}\n");
         }
@@ -94,7 +99,7 @@ mod tests {
     fn round_trip_and_defaults() {
         let dir = std::env::temp_dir().join(format!("soundglass-settings-{}", std::process::id()));
         let path = dir.join("settings.txt");
-        let s = Settings { remember_window_size: true, show_waveform: true, window_size: Some([700.0, 680.0]), info_panel: true, info_width: 300.0, edit_panel: true, edit_height: 200.0 };
+        let s = Settings { remember_window_size: true, show_waveform: true, window_size: Some([700.0, 680.0]), info_panel: true, info_width: 300.0, edit_panel: true, edit_height: 200.0, rename_pattern: "{artist} - {title}".into() };
         s.write_to(&path).unwrap();
         let back = parse(&std::fs::read_to_string(&path).unwrap());
         std::fs::remove_dir_all(&dir).unwrap();

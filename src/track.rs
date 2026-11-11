@@ -81,22 +81,7 @@ impl Track {
         std::thread::spawn(move || {
             let mut cur: Vec<f32> = Vec::new();
             let (mut peak, mut peak_frames) = ((f32::MAX, f32::MIN), 0);
-            let on_meta = |tags, info, picture: Option<Box<[u8]>>| {
-                let _ = t.tags.set(tags);
-                let _ = t.info.set(info);
-                // On its own thread: a large JPEG must not hold up the first sound.
-                if let Some(data) = picture {
-                    let (t, notify) = (t.clone(), notify.clone());
-                    std::thread::spawn(move || {
-                        if let Ok(img) = image::load_from_memory(&data) {
-                            let rgba = img.thumbnail(COVER_MAX, COVER_MAX).to_rgba8();
-                            let size = [rgba.width() as usize, rgba.height() as usize];
-                            let _ = t.cover.set(eframe::egui::ColorImage::from_rgba_unmultiplied(size, &rgba));
-                            notify();
-                        }
-                    });
-                }
-            };
+            let on_meta = |tags, info, picture| t.set_meta(tags, info, picture, notify.clone());
             let result = decode(&t.path.clone(), on_meta, |samples, channels, rate, expected| {
                 if let Some(n) = expected {
                     let _ = t.expected.set(n);
@@ -154,6 +139,48 @@ impl Track {
             }
         });
         track
+    }
+
+    fn set_meta(self: &Arc<Self>, tags: Tags, info: Info, picture: Option<Box<[u8]>>, notify: Arc<dyn Fn() + Send + Sync>) {
+        // Untagged to symphonia: maybe tagged where only lofty looks (a WAV's tags after its audio).
+        let tags = if tags == Tags::default() { crate::tags::basic(&self.path).unwrap_or(tags) } else { tags };
+        let _ = self.tags.set(tags);
+        let _ = self.info.set(info);
+        // On its own thread: a large JPEG must not hold up the first sound.
+        if let Some(data) = picture {
+            let t = self.clone();
+            std::thread::spawn(move || {
+                if let Ok(img) = image::load_from_memory(&data) {
+                    let rgba = img.thumbnail(COVER_MAX, COVER_MAX).to_rgba8();
+                    let size = [rgba.width() as usize, rgba.height() as usize];
+                    let _ = t.cover.set(eframe::egui::ColorImage::from_rgba_unmultiplied(size, &rgba));
+                    notify();
+                }
+            });
+        }
+    }
+
+    /// The same decoded audio under `path`, with the tags, info and cover read afresh from it:
+    /// after its tags are rewritten or it is renamed. The audio itself must be unchanged.
+    pub fn relabel(&self, path: PathBuf, notify: impl Fn() + Send + Sync + 'static) -> Result<Arc<Track>, String> {
+        let t = Arc::new(Track::empty(path));
+        if let Some(&f) = self.format.get() {
+            let _ = t.format.set(f);
+        }
+        if let Some(&l) = self.loudness.get() {
+            let _ = t.loudness.set(l);
+        }
+        *t.chunks.lock().unwrap() = self.chunks.lock().unwrap().clone();
+        *t.peaks.lock().unwrap() = self.peaks.lock().unwrap().clone();
+        t.decoded.store(self.decoded(), Relaxed);
+        t.done.store(self.done(), Relaxed);
+        let notify: Arc<dyn Fn() + Send + Sync> = Arc::new(notify);
+        let mut meta = None;
+        // Stops at the first packet: only the metadata is wanted.
+        let result = decode(&t.path, |tags, info, picture| meta = Some((tags, info, picture)), |_, _, _, _| Err(String::new()));
+        let (tags, info, picture) = meta.ok_or_else(|| result.err().unwrap_or_default())?;
+        t.set_meta(tags, info, picture, notify);
+        Ok(t)
     }
 
     fn empty(path: PathBuf) -> Track {
@@ -384,6 +411,18 @@ pub mod tests {
         assert_eq!(peaks.len(), CHUNK / PEAK + 1);
         assert_eq!(peaks[1], (2048.0 / 32768.0, 4095.0 / 32768.0));
         assert!(track.error.lock().unwrap().is_none());
+    }
+
+    #[test]
+    fn relabel_shares_the_audio_and_reads_new_tags() {
+        let path = temp_file("relabel.wav", &wav(1000, 44100));
+        let track = Track::load(path.clone(), || {});
+        wait(&track);
+        crate::tags::write_in_place(&path, &crate::tags::TagEdit { title: "New name".into(), ..Default::default() }).unwrap();
+        let fresh = track.relabel(path, || {}).unwrap();
+        assert!(Arc::ptr_eq(&track.chunk_at(0).unwrap().0, &fresh.chunk_at(0).unwrap().0));
+        assert_eq!((fresh.decoded(), fresh.done()), (1000, true));
+        assert_eq!(fresh.tags.get().and_then(|t| t.title.as_deref()), Some("New name"));
     }
 
     #[test]

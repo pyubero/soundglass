@@ -8,6 +8,7 @@ mod player;
 mod save;
 mod settings;
 mod track;
+mod tags;
 mod wsola;
 
 use eframe::egui;
@@ -76,7 +77,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -152,6 +153,12 @@ struct App {
     save_notice: Option<(Result<String, String>, f64)>,
     /// Save As's last choice, kept while soundglass runs.
     save_choice: save::Choice,
+    /// Track Info's tag editor while it is open.
+    tag_editor: Option<TagEditor>,
+    /// The running write of the tags into the file.
+    tag_job: Option<std::sync::mpsc::Receiver<Result<(), String>>>,
+    /// File → Rename from Tags… while open: the pattern being edited, and the file's tags.
+    rename: Option<(String, Result<tags::TagEdit, String>)>,
     /// Height of everything below the cover, as measured last frame.
     controls_height: f32,
     /// Track Info's width as last shown.
@@ -164,6 +171,22 @@ struct App {
     timings: bool,
     /// Whether the window is on screen; playback starts then.
     shown: bool,
+}
+
+/// Track Info's tag fields: the tags as the file has them, and as edited.
+struct TagEditor {
+    read: tags::TagEdit,
+    draft: tags::TagEdit,
+    /// Waiting for "Write the tags into …?" to be answered.
+    confirm: bool,
+    error: Option<String>,
+}
+
+impl TagEditor {
+    /// The edits, when there are any.
+    fn changes(&self) -> Option<&tags::TagEdit> {
+        (self.draft != self.read).then_some(&self.draft)
+    }
 }
 
 /// What the widgets asked for this frame, applied once drawing is done.
@@ -470,6 +493,12 @@ impl eframe::App for App {
                         self.show_save = true;
                         ui.close();
                     }
+                    let why = if !self.track.done() { Some("after loading") } else if self.tag_job.is_some() { Some("saving tags…") } else { None };
+                    let item = ui.add_enabled(why.is_none(), egui::Button::new("Rename from Tags…"));
+                    if item.on_disabled_hover_text(why.unwrap_or_default()).clicked() {
+                        self.rename = Some((self.settings.rename_pattern.clone(), tags::read(&self.track.path)));
+                        ui.close();
+                    }
                     if ui.button("Settings…").clicked() {
                         self.show_settings = true;
                     }
@@ -573,7 +602,22 @@ impl eframe::App for App {
         }
         if self.show_info {
             let size = std::fs::metadata(&self.track.path).map(|m| m.len()).ok();
-            let panel = egui::Panel::right("info").resizable(true).size_range(240.0..=360.0).default_size(self.info_width).show(ui, |ui| info_panel(ui, &self.track, size));
+            let panel = egui::Panel::right("info").resizable(true).size_range(240.0..=360.0).default_size(self.info_width).show(ui, |ui| {
+                let can_edit = if !self.track.done() { Err("after loading") } else if self.tag_job.is_some() { Err("saving tags…") } else { Ok(()) };
+                info_panel(ui, &self.track, size, &mut self.tag_editor, can_edit)
+            });
+            match panel.inner {
+                Some(TagClick::Edit) => match tags::read(&self.track.path) {
+                    Ok(t) => self.tag_editor = Some(TagEditor { read: t.clone(), draft: t, confirm: false, error: None }),
+                    Err(e) => self.save_notice = Some((Err(e), ui.input(|i| i.time))),
+                },
+                Some(TagClick::Save) => {
+                    if let Some(e) = &mut self.tag_editor {
+                        e.confirm = true;
+                    }
+                }
+                None => {}
+            }
             self.info_width = panel.response.rect.width();
         }
         egui::CentralPanel::default().show(ui, |ui| {
@@ -624,6 +668,9 @@ impl eframe::App for App {
         self.follow_save(&ctx);
         self.unsaved_window(&ctx);
         self.save_window(&ctx);
+        self.tags_confirm(&ctx);
+        self.follow_tags(&ctx);
+        self.rename_window(&ctx);
         if let Some(path) = open_recent {
             self.open(path);
         }
@@ -695,11 +742,76 @@ fn info_rows(track: &Track, file_size: Option<u64>) -> [(&'static str, Rows); 3]
 }
 
 /// Track Info's body, laid out like lightview's inspector: collapsing sections of two-column grids.
-fn info_panel(ui: &mut egui::Ui, track: &Track, file_size: Option<u64>) {
+#[derive(Clone, Copy)]
+enum TagClick {
+    Edit,
+    Save,
+}
+
+/// The tag fields of Track Info's editor, with Save and Cancel; Cancel closes it here.
+fn tag_fields(ui: &mut egui::Ui, editor: &mut Option<TagEditor>) -> Option<TagClick> {
+    let e = editor.as_mut()?;
+    let mut click = None;
+    egui::Grid::new("tag fields").num_columns(2).spacing([12.0, 6.0]).show(ui, |ui| {
+        let d = &mut e.draft;
+        for (name, field) in [("Title", &mut d.title), ("Artist", &mut d.artist), ("Album", &mut d.album), ("Year", &mut d.year), ("Track", &mut d.track), ("Genre", &mut d.genre)] {
+            ui.label(name);
+            ui.add(egui::TextEdit::singleline(field).desired_width(f32::INFINITY));
+            ui.end_row();
+        }
+        ui.label("Cover");
+        ui.horizontal(|ui| {
+            ui.label(match d.cover {
+                tags::Cover::Keep => "as it is",
+                tags::Cover::Remove => "removed",
+                tags::Cover::New(_) => "new image",
+            });
+            if ui.button("Replace…").clicked() && let Some(path) = rfd::FileDialog::new().add_filter("Image", &["jpg", "jpeg", "png"]).pick_file() {
+                match std::fs::read(&path).map_err(|e| e.to_string()).and_then(tags::cover) {
+                    Ok(c) => (d.cover, e.error) = (c, None),
+                    Err(err) => e.error = Some(err),
+                }
+            }
+            if ui.button("Remove").clicked() {
+                d.cover = tags::Cover::Remove;
+            }
+        });
+        ui.end_row();
+    });
+    if let Some(err) = &e.error {
+        ui.colored_label(ui.visuals().error_fg_color, err);
+    }
+    let (changed, mut cancel) = (e.changes().is_some(), false);
+    ui.horizontal(|ui| {
+        if ui.add_enabled(changed, egui::Button::new("Save…")).on_hover_text("Writes the tags into the file; the audio isn't changed").clicked() {
+            click = Some(TagClick::Save);
+        }
+        cancel = ui.button("Cancel").clicked();
+    });
+    if cancel {
+        *editor = None;
+    }
+    click
+}
+
+/// `can_edit` is why the tags can't be edited now, if they can't.
+fn info_panel(ui: &mut egui::Ui, track: &Track, file_size: Option<u64>, editor: &mut Option<TagEditor>, can_edit: Result<(), &str>) -> Option<TagClick> {
+    let mut click = None;
     // Fill the panel's width: shrinking to the content made it shrink with it (as in lightview).
     egui::ScrollArea::vertical().auto_shrink([false, true]).show(ui, |ui| {
         for (section, rows) in info_rows(track, file_size) {
             egui::CollapsingHeader::new(section).default_open(true).show(ui, |ui| {
+                if section == "Tags" {
+                    if editor.is_some() {
+                        click = tag_fields(ui, editor);
+                        return;
+                    }
+                    let edit = ui.add_enabled(can_edit.is_ok(), egui::Button::new("Edit"));
+                    let edit = if let Err(why) = can_edit { edit.on_disabled_hover_text(why) } else { edit };
+                    if edit.clicked() {
+                        click = Some(TagClick::Edit);
+                    }
+                }
                 egui::Grid::new(section).num_columns(2).spacing([12.0, 6.0]).show(ui, |ui| {
                     // Tags ends with every tag as the file has it.
                     let raw = if section == "Tags" { track.info.get().map(|i| i.raw.clone()).unwrap_or_default() } else { Vec::new() };
@@ -712,6 +824,7 @@ fn info_panel(ui: &mut egui::Ui, track: &Track, file_size: Option<u64>) {
             });
         }
     });
+    click
 }
 
 /// The window size after a panel opens (bigger by `extent` along `axis`, 0 = width) or closes.
@@ -1132,8 +1245,9 @@ impl App {
         let (tx, rx) = std::sync::mpsc::channel();
         let (track, edit, notify) = (self.track.clone(), self.edit(), repaint(&self.ctx));
         let (written, path) = (edit.clone(), target.clone());
+        let draft = self.tag_editor.as_ref().and_then(|e| e.changes()).cloned();
         std::thread::spawn(move || {
-            let result = save::save(&track, &written, choice, &path);
+            let result = save::save(&track, &written, choice, &path, draft.as_ref());
             if result.is_err() && reserved {
                 let _ = std::fs::remove_file(&path);
             }
@@ -1247,6 +1361,127 @@ impl App {
         let mark = if self.dirty() { "• " } else { "" };
         ctx.send_viewport_cmd(egui::ViewportCommand::Title(format!("{mark}{}", title(&name, length.as_deref(), &format))));
         self.titled = Some((Arc::as_ptr(&self.track) as usize, self.track.done(), self.dirty()));
+    }
+
+    /// "Write the tags into …?"; Write starts writing them on its own thread.
+    fn tags_confirm(&mut self, ctx: &egui::Context) {
+        let Some(editor) = self.tag_editor.as_mut().filter(|e| e.confirm) else { return };
+        let name = self.track.path.file_name().unwrap_or_default().to_string_lossy().into_owned();
+        let (mut write, mut cancel) = (false, false);
+        let modal = egui::Modal::new(egui::Id::unique("write tags")).show(ctx, |ui| {
+            ui.heading("Write tags");
+            ui.label(format!("Write the tags into {name}? The audio isn't changed."));
+            ui.add_space(8.0);
+            ui.horizontal(|ui| {
+                write = ui.button("Write").clicked();
+                cancel = ui.button("Cancel").clicked();
+            });
+        });
+        if write {
+            let (tx, rx) = std::sync::mpsc::channel();
+            let (path, draft, notify) = (self.track.path.clone(), editor.draft.clone(), repaint(&self.ctx));
+            std::thread::spawn(move || {
+                let _ = tx.send(tags::write_in_place(&path, &draft));
+                notify();
+            });
+            (editor.confirm, self.tag_job) = (false, Some(rx));
+        } else if cancel || modal.should_close() {
+            editor.confirm = false;
+        }
+    }
+
+    /// Picks up the tag write: on success the track is read afresh under its tags, playing on.
+    fn follow_tags(&mut self, ctx: &egui::Context) {
+        let Some(rx) = &self.tag_job else { return };
+        let result = match rx.try_recv() {
+            Ok(r) => r,
+            Err(std::sync::mpsc::TryRecvError::Empty) => {
+                ctx.request_repaint_after(Duration::from_millis(100));
+                return;
+            }
+            Err(_) => Err("Writing the tags failed".into()),
+        };
+        self.tag_job = None;
+        let result = result.and_then(|()| self.relabel(self.track.path.clone()));
+        match result {
+            Ok(()) => {
+                self.tag_editor = None;
+                self.save_notice = Some((Ok("Tags saved".into()), ctx.input(|i| i.time)));
+            }
+            Err(e) => {
+                if let Some(editor) = &mut self.tag_editor {
+                    editor.error = Some(e);
+                }
+            }
+        }
+    }
+
+    /// Plays on with the same audio under `path`'s tags and name.
+    fn relabel(&mut self, path: PathBuf) -> Result<(), String> {
+        let track = self.track.relabel(path, repaint(&self.ctx))?;
+        if let Ok(p) = &self.player {
+            p.send(Cmd::Swap(track.clone()));
+        }
+        self.track = track;
+        Ok(())
+    }
+
+    /// File → Rename from Tags…: the pattern, a preview of the name, Rename and Cancel.
+    fn rename_window(&mut self, ctx: &egui::Context) {
+        let Some((pattern, read)) = &mut self.rename else { return };
+        let path = self.track.path.clone();
+        let ext = path.extension().map(|e| e.to_string_lossy().into_owned()).unwrap_or_default();
+        let (mut go, mut close) = (None, false);
+        egui::Window::new("Rename from Tags").collapsible(false).resizable(false).show(ctx, |ui| {
+            ui.add(egui::TextEdit::singleline(pattern).desired_width(320.0));
+            ui.weak(tags::PLACEHOLDERS.map(|p| format!("{{{p}}}")).join(" "));
+            ui.add_space(4.0);
+            let name = read.as_ref().map(|t| tags::file_name(pattern, t, &ext));
+            let why: Option<String> = match &name {
+                Err(e) => Some(e.to_string()),
+                Ok(n) if n.is_empty() => Some("None of these tags is set.".into()),
+                Ok(n) if path.file_name().is_some_and(|f| f.to_string_lossy() == *n) => Some("It already has that name.".into()),
+                Ok(n) if path.with_file_name(n).exists() => Some("A file with that name already exists.".into()),
+                Ok(_) => None,
+            };
+            if let Ok(n) = &name && !n.is_empty() {
+                ui.label(format!("→ {n}"));
+            }
+            if let Some(why) = &why {
+                ui.colored_label(ui.visuals().warn_fg_color, why.as_str());
+            }
+            ui.horizontal(|ui| {
+                if ui.add_enabled(why.is_none(), egui::Button::new("Rename")).clicked() {
+                    go = name.ok();
+                }
+                if ui.button("Cancel").clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                    close = true;
+                }
+            });
+        });
+        if let Some(name) = go {
+            let pattern = pattern.clone();
+            match tags::rename(&path, &name).and_then(|new| self.relabel(new.clone()).map(|()| new)) {
+                Ok(new) => {
+                    self.settings.rename_pattern = pattern;
+                    self.settings_error = self.settings.save().err();
+                    self.files = folder::list_folder(&new);
+                    self.index = self.files.iter().position(|p| *p == new).unwrap_or(0);
+                    for p in &mut self.recent {
+                        if *p == path {
+                            *p = new.clone();
+                        }
+                    }
+                    self.remember(&new);
+                    self.save_notice = Some((Ok(format!("Renamed to {name}")), ctx.input(|i| i.time)));
+                    close = true;
+                }
+                Err(e) => self.save_notice = Some((Err(e), ctx.input(|i| i.time))),
+            }
+        }
+        if close {
+            self.rename = None;
+        }
     }
 
     /// Puts `path` first in Open Recent.

@@ -3,6 +3,7 @@
 
 use crate::edit::{self, Edit};
 use crate::track::Track;
+use crate::tags::TagEdit;
 use crate::wsola::{Speed, Wsola};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -114,7 +115,8 @@ pub fn copy_choice(source: &Path, codec: &str, bits: Option<u32>, last: Choice) 
 
 /// Writes frames `edit` of `track` (fully decoded) to `target` as `choice` says. Ok(false) when
 /// the file is saved but the original's tags could not be copied.
-pub fn save(track: &Track, edit: &Edit, choice: Choice, target: &Path) -> Result<bool, String> {
+/// `draft` holds tag edits not yet written to the original, to put in the copy instead.
+pub fn save(track: &Track, edit: &Edit, choice: Choice, target: &Path, draft: Option<&TagEdit>) -> Result<bool, String> {
     if same_file(target, &track.path) {
         return Err("That is the original file; choose another name. The original is never changed.".into());
     }
@@ -127,7 +129,7 @@ pub fn save(track: &Track, edit: &Edit, choice: Choice, target: &Path) -> Result
         let resampled = if rate != own || speed.is_some() { Some(resample(track, edit, rate, speed)?) } else { None };
         let (audio, edit) = resampled.as_ref().map_or((track, edit), |(t, e)| (&**t, e));
         encode(audio, edit, choice, &temp)?;
-        let tags = std::panic::catch_unwind(|| copy_tags(&track.path, &temp, choice.kind)).unwrap_or(false);
+        let tags = std::panic::catch_unwind(|| copy_tags(&track.path, &temp, choice.kind, draft)).unwrap_or(false);
         verify(&temp, audio, edit)?;
         std::fs::rename(&temp, target).map_err(|e| e.to_string())?;
         Ok(tags)
@@ -321,13 +323,21 @@ fn mp3_bitrate(kbps: u32) -> mp3lame_encoder::Bitrate {
 
 /// Copies the original's main tag (cover included where the format holds one) into `to`. True
 /// when there was nothing to copy, too.
-fn copy_tags(from: &Path, to: &Path, kind: Kind) -> bool {
+fn copy_tags(from: &Path, to: &Path, kind: Kind, draft: Option<&TagEdit>) -> bool {
     use lofty::file::TaggedFileExt;
     use lofty::tag::TagExt;
-    let Ok(file) = lofty::read_from_path(from) else { return false };
-    let Some(tag) = file.primary_tag().or_else(|| file.first_tag()) else { return true };
-    let mut tag = tag.clone();
-    tag.re_map(kind.file_type().primary_tag_type());
+    let file = lofty::read_from_path(from).ok();
+    let found = file.as_ref().and_then(|f| f.primary_tag().or_else(|| f.first_tag())).cloned();
+    let kind = kind.file_type().primary_tag_type();
+    let mut tag = match (found, draft) {
+        (Some(tag), _) => tag,
+        (None, Some(_)) => lofty::tag::Tag::new(kind),
+        (None, None) => return file.is_some(),
+    };
+    tag.re_map(kind);
+    if let Some(d) = draft {
+        crate::tags::apply(d, &mut tag);
+    }
     tag.save_to_path(to, lofty::config::WriteOptions::default()).is_ok()
 }
 
@@ -385,7 +395,7 @@ mod tests {
         for (bits, tolerance) in [(16, 1.0 / 32767.0), (24, 1.0 / 8_388_607.0), (32, 0.0)] {
             let path = dir.join(format!("out{bits}.wav"));
             // Ok(false): a made-up track has no original to copy tags from.
-            assert_eq!(save(&track, &edit, Choice { kind: Kind::Wav, wav_bits: bits, ..Choice::default() }, &path), Ok(false));
+            assert_eq!(save(&track, &edit, Choice { kind: Kind::Wav, wav_bits: bits, ..Choice::default() }, &path, None), Ok(false));
             let (got, channels, rate) = read_back(&path);
             assert_eq!((channels, rate, got.len()), (2, 44100, want.len()));
             let worst = got.iter().zip(&want).map(|(a, b)| (a - b).abs()).fold(0.0, f32::max);
@@ -405,7 +415,7 @@ mod tests {
             edit::read(&track, &edit, 0, edit.len(), |b| want.extend_from_slice(b));
             for bits in [16, 24] {
                 let path = dir.join(format!("{channels}-{bits}.flac"));
-                save(&track, &edit, Choice { kind: Kind::Flac, flac_bits: bits, ..Choice::default() }, &path).unwrap();
+                save(&track, &edit, Choice { kind: Kind::Flac, flac_bits: bits, ..Choice::default() }, &path, None).unwrap();
                 let (got, ..) = read_back(&path);
                 let worst = got.iter().zip(&want).map(|(a, b)| (a - b).abs()).fold(0.0, f32::max);
                 assert_eq!(got.len(), want.len());
@@ -413,7 +423,7 @@ mod tests {
             }
             for kind in [Kind::Mp3, Kind::Vorbis] {
                 let path = dir.join(format!("{channels}.{}", kind.ext()));
-                save(&track, &edit, Choice { kind, ..Choice::default() }, &path).unwrap();
+                save(&track, &edit, Choice { kind, ..Choice::default() }, &path, None).unwrap();
                 let (got, c, r) = read_back(&path);
                 assert_eq!((c, r), (channels, 44100));
                 // The length is exact or within a few frames: the encoder's delay is trimmed on decode.
@@ -431,11 +441,11 @@ mod tests {
         let mut want = Vec::new();
         edit::read(&track, &edit, 0, edit.len(), |b| want.extend_from_slice(b));
         let path = dir.join("mono.flac");
-        save(&track, &edit, Choice { flac_bits: 24, ..Choice::default() }, &path).unwrap();
+        save(&track, &edit, Choice { flac_bits: 24, ..Choice::default() }, &path, None).unwrap();
         let (got, c, _) = read_back(&path);
         assert_eq!((c, got.len()), (1, want.len()));
         let path = dir.join("mono.mp3");
-        save(&track, &edit, Choice { kind: Kind::Mp3, ..Choice::default() }, &path).unwrap();
+        save(&track, &edit, Choice { kind: Kind::Mp3, ..Choice::default() }, &path, None).unwrap();
         assert_eq!(read_back(&path).1, 1);
     }
 
@@ -445,14 +455,27 @@ mod tests {
         let track = sine(44100, 2, 44100);
         let path = dir.join("fast.wav");
         let speed = Speed { tape: 1.0, tempo: 2.0, semitones: 2.0 };
-        save(&track, &Edit::whole(44100), Choice { kind: Kind::Wav, speed: Some(speed), ..Choice::default() }, &path).unwrap();
+        save(&track, &Edit::whole(44100), Choice { kind: Kind::Wav, speed: Some(speed), ..Choice::default() }, &path, None).unwrap();
         let (got, c, r) = read_back(&path);
         assert_eq!((c, r), (2, 44100));
         assert!((got.len() / 2).abs_diff(22050) <= 50, "{} frames", got.len() / 2);
         // Tape speed changes the length too.
         let tape = dir.join("tape.wav");
-        save(&track, &Edit::whole(44100), Choice { kind: Kind::Wav, speed: Some(Speed { tape: 1.5, ..Speed::NORMAL }), ..Choice::default() }, &tape).unwrap();
+        save(&track, &Edit::whole(44100), Choice { kind: Kind::Wav, speed: Some(Speed { tape: 1.5, ..Speed::NORMAL }), ..Choice::default() }, &tape, None).unwrap();
         assert!((read_back(&tape).0.len() / 2).abs_diff(29400) <= 50);
+    }
+
+    #[test]
+    fn copies_get_the_unsaved_tag_edits() {
+        use lofty::file::TaggedFileExt;
+        use lofty::tag::Accessor;
+        let dir = scratch("draft");
+        let track = sine(44100, 2, 4410);
+        let path = dir.join("draft.flac");
+        let draft = TagEdit { title: "Draft title".into(), ..TagEdit::default() };
+        save(&track, &Edit::whole(4410), Choice::default(), &path, Some(&draft)).unwrap();
+        let file = lofty::read_from_path(&path).unwrap();
+        assert_eq!(file.primary_tag().unwrap().title().as_deref(), Some("Draft title"));
     }
 
     #[test]
@@ -461,7 +484,7 @@ mod tests {
         let track = sine(44100, 2, 44100);
         let edit = Edit::whole(44100).cut(0, 4410).mono(2);
         let path = dir.join("48k.wav");
-        save(&track, &edit, Choice { kind: Kind::Wav, rate: Some(48000), ..Choice::default() }, &path).unwrap();
+        save(&track, &edit, Choice { kind: Kind::Wav, rate: Some(48000), ..Choice::default() }, &path, None).unwrap();
         let (got, c, r) = read_back(&path);
         assert_eq!((c, r), (1, 48000));
         assert!(got.len().abs_diff(43200) <= 2, "{} frames", got.len());
@@ -476,7 +499,7 @@ mod tests {
     fn mp3_refuses_rates_lame_has_not() {
         let dir = scratch("mp3rate");
         let track = sine(96000, 2, 1000);
-        let err = save(&track, &Edit::whole(1000), Choice { kind: Kind::Mp3, ..Choice::default() }, &dir.join("x.mp3")).unwrap_err();
+        let err = save(&track, &Edit::whole(1000), Choice { kind: Kind::Mp3, ..Choice::default() }, &dir.join("x.mp3"), None).unwrap_err();
         assert!(err.contains("96.0 kHz"), "{err}");
         assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 0, "no temp file left");
     }
@@ -515,7 +538,7 @@ mod tests {
         t.path = path.clone();
         // Through another spelling of the same path, too.
         let other = dir.join(".").join("song.wav");
-        assert!(save(&t, &Edit::whole(100), Choice::default(), &other).is_err());
+        assert!(save(&t, &Edit::whole(100), Choice::default(), &other, None).is_err());
         assert_eq!(std::fs::read(&path).unwrap(), b"not really audio");
     }
 
@@ -545,7 +568,7 @@ mod tests {
         let out = dir.join("out.flac");
         // Five seconds are enough to check the tags.
         let rate = track.format.get().unwrap().rate as u64;
-        assert_eq!(save(&track, &Edit::whole(track.len()).crop(0, 5 * rate), Choice::default(), &out), Ok(true));
+        assert_eq!(save(&track, &Edit::whole(track.len()).crop(0, 5 * rate), Choice::default(), &out, None), Ok(true));
         assert_eq!(read(&out), title);
         assert!(title.is_some());
     }

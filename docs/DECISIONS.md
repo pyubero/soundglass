@@ -92,3 +92,12 @@
 - 2026-11-11 — Save As's "Apply speed and pitch" is off by default, so saving keeps the audio unless asked
 - 2026-11-11 — a last milestone 10 builds on the audio-tools Griffin–Lim modulator: better, faster, pure Rust, with a Fast (real-time) and a Quality (offline) setting (user's choice)
 - 2026-11-11 — Playback → Reset puts speed, tempo and pitch back to normal at once, greyed out when they already are (user's choice)
+- 2026-11-11 — milestone 6 does Edit tags and Rename from tags first, Split into tracks in its own plan next; Join files and Convert a folder are not done (user's choice)
+- 2026-11-11 — tags are edited in Track Info's Tags section, with lofty (already in the tree) (user's choice)
+- 2026-11-11 — edited tags are written in place after a confirm, and Save As / Save Copy take unsaved tag edits (user's choice)
+- 2026-11-11 — in-place tag writes go into a hidden copy next to the file, whose decoded samples must hash the same as the original's, then the copy is renamed over it — the audio is never changed
+- 2026-11-11 — accepted: once confirmed, the old tags aren't recoverable (no backup copy)
+- 2026-11-11 — after a tag write or a rename, the track is relabelled: a new Track sharing the same decoded audio, swapped into the player without a seek, so playback, undo history and selection carry on
+- 2026-11-11 — when symphonia finds no tags, title, artist and album come from lofty — symphonia's WAV reader stops at the audio and misses tags after it, which is where lofty writes them
+- 2026-11-11 — Rename from Tags works on the current file with an editable pattern, remembered in settings.txt (user's choice); a missing tag drops its placeholder and the text before it
+- 2026-11-11 — a rename never replaces a file: a hard link then removing the old name (falling back to check-then-rename where hard links aren't supported); no undo for a single rename

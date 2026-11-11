@@ -65,18 +65,20 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 - **Change speed or pitch.** Separately: slower without lower pitch, or a semitone up without faster. Done with our own WSOLA, live while playing, as three Playback items: Change speed and pitch (tape style), Pitch-preserved speed change, and Time-preserved pitch change. Save As can apply them to the file.
 
 ### 6. Files and tags
-- **Edit tags.** Title, artist, album, year, track number, genre and cover art, saved to a copy or, with confirmation, in place (tags only, never the audio).
-- **Rename from tags.** For example `01 - Artist - Title.mp3`, shown before anything is renamed.
+- **Edit tags.** Title, artist, album, year, track number, genre and cover art, saved to a copy or, with confirmation, in place (tags only, never the audio). Done: Edit in Track Info's Tags section; the copy's audio is checked identical before it replaces the file, and Save As / Save Copy take unsaved tag edits.
+- **Rename from tags.** For example `01 - Artist - Title.mp3`, shown before anything is renamed. Done: File → Rename from Tags… on the current file, with an editable pattern that is remembered; it never replaces an existing file.
 - **Split into tracks.** Split a long recording (vinyl, a concert) at silences or markers, with a preview of the cut points.
-- **Join files.** Put several files one after another into one file.
-- **Convert a folder.** Save every file in a folder in another format and quality.
+- DONT IMPLEMENT **Join files.** Put several files one after another into one file.
+- DONT IMPLEMENT **Convert a folder.** Save every file in a folder in another format and quality.
 
 ### 7. Practice tools
-- **A–B loop with slow-down.** Loop a hard passage at a slower speed without changing the pitch.
-- **Spectrogram.** See frequencies over time, to spot hum, clicks or where notes are.
+- **A–B loop with slow-down.** Loop a hard passage at a slower speed without changing the pitch. First rethink whether this is necessary or the user can already achieve this differently.
+- **Spectrogram.** See frequencies over time, to spot hum, clicks or where notes are. This shows the spectrogram first in a separate panel where we can zoom in/out and right click and drag for panning.
 - **BPM and key.** Estimate the tempo and musical key of the track.
-- **Markers with notes.** Drop named markers (chorus, solo) and jump between them; they can be saved next to the file.
-- **Metronome.** A click at a set tempo, alone or over the track.
+- **Markers with notes.** Drop named markers (chorus, solo) and jump between them; they can be saved next to the file. Only if there is an automatic way of doing this.
+- **Metronome.** A click at a set tempo, alone or over the track, with the song's tempo by default and on the right spots, beware of swing.
+- **Chord recognition** Check if it is even possible.
+
 
 ### 8. Tidy up
 - **Identify track.** Make a Chromaprint fingerprint of the file (pure Rust, rusty-chromaprint), look it up online in AcoustID, then fill in the missing tags from MusicBrainz. Show the match and its score, and on request write the tags and rename the file. Only the fingerprint and the length are sent, and only when you run it. Free for non-commercial use, with one application key; at most 3 lookups per second (AcoustID) and 1 per second (MusicBrainz). Works on whole files, not clips.
