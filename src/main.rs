@@ -55,12 +55,29 @@ fn main() -> eframe::Result {
     let options = eframe::NativeOptions { viewport, persist_window: settings.remember_window_size, ..Default::default() };
     eframe::run_native("soundglass", options, Box::new(move |cc| {
         let _ = ctx.set(cc.egui_ctx.clone());
+        cc.egui_ctx.set_fonts(fonts());
         let player = opening.join().unwrap_or_else(|_| Err("the sound device failed to open".into()));
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
         Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, show_settings: false, settings_error: None, player, t0, timings, shown: false }))
     }))
+}
+
+/// The UI's fonts, from lightview: Apache-2.0 and MIT only, since egui's default set isn't
+/// clearly GPL-compatible. shortcut: no CJK font, so Chinese/Japanese/Korean tags show as boxes;
+/// copy lightview's system CJK font lookup (`markup::read_cjk_font`) when that matters.
+fn fonts() -> egui::FontDefinitions {
+    use egui::{FontData, FontFamily, FontTweak};
+    let mut fonts = egui::FontDefinitions::default();
+    fonts.font_data.insert("Roboto".into(), Arc::new(FontData::from_static(include_bytes!("../fonts/Roboto-Regular.ttf"))));
+    fonts.font_data.insert("Droid Sans Mono".into(), Arc::new(FontData::from_static(include_bytes!("../fonts/DroidSansMono.ttf"))));
+    let icons = FontData::from_static(include_bytes!("../fonts/emoji-icon-font.ttf")).tweak(FontTweak { scale: 0.90, ..Default::default() });
+    fonts.font_data.insert("emoji-icon-font".into(), Arc::new(icons));
+    let family = |names: &[&str]| names.iter().map(|n| n.to_string()).collect::<Vec<_>>();
+    fonts.families.insert(FontFamily::Proportional, family(&["Roboto", "emoji-icon-font"]));
+    fonts.families.insert(FontFamily::Monospace, family(&["Droid Sans Mono", "Roboto", "emoji-icon-font"]));
+    fonts
 }
 
 /// Wakes the window, once it exists, from another thread.

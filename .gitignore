@@ -1,3 +1,10 @@
 target/
 CLAUDE.md
-/*.mp3
+# Test audio copied in by hand; never committed.
+*.mp3
+*.flac
+*.wav
+*.ogg
+*.m4a
+*.aiff
+/1954-Louis Armstrong Plays W.C.Handy/
