@@ -356,7 +356,7 @@ impl eframe::App for App {
                     let items = [
                         ("Undo", &undo_key, history.is_some_and(|h| h.can_undo()), Action::Undo),
                         ("Redo", &redo_key, history.is_some_and(|h| h.can_redo()), Action::Redo),
-                        ("Cut", &cut_key, selected, Action::Cut),
+                        ("Cut out", &cut_key, selected, Action::Cut),
                         ("Crop", &crop_key, selected, Action::Crop),
                         ("Silence", &silence_key, selected, Action::Silence),
                     ];
@@ -1120,6 +1120,8 @@ struct EditView {
     selection: Option<(u64, u64)>,
     /// The fixed end of the selection while dragging.
     anchor: Option<u64>,
+    /// The playhead last frame, to notice it crossing the view's right edge.
+    last_pos: u64,
 }
 
 /// The closest zoom: a few points per frame.
@@ -1142,10 +1144,13 @@ fn zoom_view(start: u64, frames: u64, len: u64, factor: f32, at: u64) -> (u64, u
 fn edit_panel(ui: &mut egui::Ui, view: &mut EditView, cache: &mut WaveCache, track: &Track, edit: &Edit, pos: u64, len: u64, rate: u64, playing: bool) -> Option<u64> {
     let frames = if view.frames == 0 { len } else { view.frames.min(len) }.max(1);
     view.start = view.start.min(len.saturating_sub(frames));
-    // Zoomed in, the view turns the page to follow the playhead.
-    if playing && view.frames != 0 && view.anchor.is_none() && !(view.start..view.start + frames).contains(&pos) {
+    // Zoomed in, the view turns the page when the playhead runs off its right edge; one moved
+    // out of view by panning is left alone.
+    let end = view.start + frames;
+    if playing && view.frames != 0 && view.anchor.is_none() && (view.start..end).contains(&view.last_pos) && pos >= end {
         view.start = pos.min(len.saturating_sub(frames));
     }
+    view.last_pos = pos;
     let centre = view.start + frames / 2;
     ui.horizontal(|ui| {
         match view.selection {
@@ -1156,7 +1161,7 @@ fn edit_panel(ui: &mut egui::Ui, view: &mut EditView, cache: &mut WaveCache, tra
             if ui.button("Fit").on_hover_text("Show the whole track").clicked() {
                 (view.start, view.frames) = (0, 0);
             }
-            if ui.button("+").on_hover_text("Zoom in (Ctrl+scroll)").clicked() {
+            if ui.button("+").on_hover_text("Zoom in (scroll; right-drag to move along)").clicked() {
                 (view.start, view.frames) = zoom_view(view.start, frames, len, 2.0, centre);
             }
             if ui.button("−").on_hover_text("Zoom out").clicked() {
@@ -1166,11 +1171,11 @@ fn edit_panel(ui: &mut egui::Ui, view: &mut EditView, cache: &mut WaveCache, tra
     });
     let size = egui::vec2(ui.available_width(), ui.available_height().max(40.0));
     let (rect, response) = ui.allocate_exact_size(size, egui::Sense::click_and_drag());
-    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Slider, true, "Waveform: click to play from there, drag to select"));
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Slider, true, "Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along"));
     let frame_at = |x: f32| view.start + (((x - rect.left()) / rect.width()).clamp(0.0, 1.0) as f64 * frames as f64) as u64;
     let shift = ui.input(|i| i.modifiers.shift);
     let mut seek = None;
-    if response.drag_started() {
+    if response.drag_started_by(egui::PointerButton::Primary) {
         let from = ui.input(|i| i.pointer.press_origin()).map_or(0, |p| frame_at(p.x));
         // Shift+drag moves the nearer end of the selection.
         view.anchor = Some(match view.selection {
@@ -1178,7 +1183,7 @@ fn edit_panel(ui: &mut egui::Ui, view: &mut EditView, cache: &mut WaveCache, tra
             _ => from,
         });
     }
-    if response.dragged() && let (Some(anchor), Some(p)) = (view.anchor, response.interact_pointer_pos()) {
+    if response.dragged_by(egui::PointerButton::Primary) && let (Some(anchor), Some(p)) = (view.anchor, response.interact_pointer_pos()) {
         let f = frame_at(p.x);
         view.selection = (f != anchor).then(|| (anchor.min(f), anchor.max(f)));
     }
@@ -1192,16 +1197,21 @@ fn edit_panel(ui: &mut egui::Ui, view: &mut EditView, cache: &mut WaveCache, tra
             _ => (view.selection, seek) = (None, Some(f)),
         }
     }
+    // Right-drag and sideways scrolling (touchpads, Shift+wheel) move along; the wheel zooms.
+    let mut pan = if response.dragged_by(egui::PointerButton::Secondary) { response.drag_delta().x } else { 0.0 };
     if response.hovered() {
-        // egui turns Ctrl+scroll into zoom and leaves plain scrolling to pan.
+        // egui turns Ctrl+scroll into zoom_delta; plain vertical scrolling zooms too.
         let (zoom, scroll, pointer) = ui.input(|i| (i.zoom_delta(), i.smooth_scroll_delta, i.pointer.hover_pos()));
+        let zoom = zoom * (scroll.y / 200.0).exp();
         if zoom != 1.0 {
             let at = pointer.map_or(centre, |p| frame_at(p.x));
             (view.start, view.frames) = zoom_view(view.start, frames, len, zoom, at);
-        } else if view.frames != 0 && scroll.x + scroll.y != 0.0 {
-            let shift = (-(scroll.x + scroll.y) / rect.width()) as f64 * frames as f64;
-            view.start = (view.start as f64 + shift).clamp(0.0, len.saturating_sub(frames) as f64) as u64;
         }
+        pan += scroll.x;
+    }
+    if view.frames != 0 && pan != 0.0 {
+        let shift = (-pan / rect.width()) as f64 * view.frames.min(len) as f64;
+        view.start = (view.start as f64 + shift).clamp(0.0, len.saturating_sub(view.frames.min(len)) as f64) as u64;
     }
     let frames = if view.frames == 0 { len } else { view.frames };
     let cols = cache.columns(track, edit, view.start, frames, rect.width() as u64);

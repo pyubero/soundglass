@@ -54,7 +54,7 @@
 - 2026-11-11 — an edited track does not move on gaplessly into the next file; playback stops at its end — the edits must not be left behind unsaved without a word
 - 2026-11-11 — Save As writes WAV, FLAC, MP3 and Ogg Vorbis, not Opus — symphonia can't play Opus back; new dependencies hound, flacenc, mp3lame-encoder, vorbis_rs and lofty approved (user's choice)
 - 2026-11-11 — leaving a file or quitting with unsaved edits asks Save As / Discard / Cancel (user's choice)
-- 2026-11-11 — the Edit panel is a bottom panel that grows the window by its height, like Track Info does by its width; zoom is Ctrl+scroll and −/+/Fit buttons, not Ctrl+0/+/− — egui already uses those keys for the UI's own zoom
+- 2026-11-11 — the Edit panel is a bottom panel that grows the window by its height, like Track Info does by its width; zoom is Ctrl+scroll and −/+/Fit buttons, not Ctrl+0/+/− — egui already uses those keys for the UI's own zoom — changed 2026-11-11: the wheel zooms and right-drag pans (see below)
 - 2026-11-11 — both waveforms draw through edit::min_max: peaks for long spans, the samples themselves for short ones — zoomed-in edges are exact and the strip and panel always agree
 - 2026-11-11 — undone back to the first step, the player gets no edit list, so the track moves on gaplessly again; Cut leaves the playhead at the cut, Crop at 0, Silence keeps the selection
 - 2026-11-11 — the unsaved-edits prompt is raised in go() and open() (every way of leaving a track goes through them) and on the window's close request
@@ -68,3 +68,5 @@
 - 2026-11-11 — Save As defaults to FLAC 16-bit; Ogg Vorbis quality is 0–10 as oggenc counts (default 6)
 - 2026-11-11 — the playhead is drawn where playback is now: the callback stores when it last set the position, and the UI moves it on by the time since (wrapping in a looped region), repainting every frame while playing with a waveform shown — a 250 ms repaint and 10–20 ms position steps made it jump when zoomed in
 - 2026-11-11 — waveform columns are cached per waveform and worked out again only when the width, view, edits or decoded length change; min_max reads samples only below 1024 frames per column — the waveform lagged when every frame re-read up to millions of samples
+- 2026-11-11 — in the Edit panel the wheel zooms around the pointer and right-drag (or sideways scrolling) pans; Cut is named "Cut out" (user's choice)
+- 2026-11-11 — zoomed in, the view turns the page only when the playhead crosses its right edge, so a view panned away from the playhead stays put
