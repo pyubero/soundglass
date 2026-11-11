@@ -3115,6 +3115,7 @@ dependencies = [
  "image",
  "lofty",
  "mp3lame-encoder",
+ "realfft",
  "rfd",
  "rubato",
  "symphonia",

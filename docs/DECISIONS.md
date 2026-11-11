@@ -102,3 +102,8 @@
 - 2026-11-11 — Rename from Tags works on the current file with an editable pattern, remembered in settings.txt (user's choice); a missing tag drops its placeholder and the text before it
 - 2026-11-11 — a rename never replaces a file: a hard link then removing the old name (falling back to check-then-rename where hard links aren't supported); no undo for a single rename
 - 2026-11-11 — app icon = play-shaped equaliser in pito real ibérico "mask" colours (user's choice): one SVG in hicolor/scalable via `Icon=soundglass`, a 256 px PNG embedded as the window icon (X11, Windows; winit ignores it on Wayland, where the panel uses the app id and .desktop file), and a 16–256 px .ico embedded in the .exe by build.rs (winresource, MIT)
+- 2026-11-11 — no Split into tracks (user's choice)
+- 2026-11-11 — A–B loop with slow-down is no new feature: selecting, Loop selection and Pitch-preserved speed change already do it (user's choice)
+- 2026-11-11 — the spectrogram is its own OS window (an immediate egui viewport, redrawn with the main one) with a log frequency axis from 20 Hz (user's choice)
+- 2026-11-11 — realfft as a direct dependency, the version rubato already pulls in (user's choice)
+- 2026-11-11 — the spectrogram shows the edited audio mixed to mono, one 4096-point Hann FFT per pixel column (zoomed out it samples the audio, not averages it), −100 to 0 dBFS; it has its own zoom and no selection

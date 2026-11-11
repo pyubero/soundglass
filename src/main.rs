@@ -7,6 +7,7 @@ mod loudness;
 mod player;
 mod save;
 mod settings;
+mod spectrum;
 mod track;
 mod tags;
 mod wsola;
@@ -78,7 +79,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, spectrum_view: EditView::default(), spectrum: Default::default(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -136,6 +137,10 @@ struct App {
     /// The Edit panel's height as last shown.
     edit_height: f32,
     edit_view: EditView,
+    /// The Spectrogram window: whether it's open, its own zoom, and its picture.
+    show_spectrum: bool,
+    spectrum_view: EditView,
+    spectrum: spectrum::Spectrogram,
     /// Edits since the track was opened; `None` until the first one.
     history: Option<edit::History>,
     looping: bool,
@@ -392,7 +397,7 @@ impl eframe::App for App {
             let (pos, ago) = p.position();
             if playing { display_pos(pos, ago, rate, self.speed.source(), self.edit_view.selection, self.looping, len) } else { pos }
         });
-        if playing && (self.show_edit || self.settings.show_waveform) {
+        if playing && (self.show_edit || self.show_spectrum || self.settings.show_waveform) {
             // About 30 fps: smooth enough for the playhead, cheaper than redrawing at the screen's rate (user's choice).
             ctx.request_repaint_after(Duration::from_millis(WAVE_REPAINT_MS));
         } else if playing {
@@ -540,6 +545,9 @@ impl eframe::App for App {
                         toggle_edit = true;
                         ui.close();
                     }
+                    if ui.checkbox(&mut self.show_spectrum, "Spectrogram").changed() {
+                        ui.close();
+                    }
                     if ui.checkbox(&mut self.settings.show_waveform, "Waveform").changed() {
                         self.settings_error = self.settings.save().err();
                     }
@@ -672,6 +680,9 @@ impl eframe::App for App {
         self.tags_confirm(&ctx);
         self.follow_tags(&ctx);
         self.rename_window(&ctx);
+        if let Some(frame) = self.spectrum_window(&ctx, &edit, pos, len, rate, playing) {
+            actions.push(Action::Seek(frame));
+        }
         if let Some(path) = open_recent {
             self.open(path);
         }
@@ -1289,6 +1300,23 @@ impl App {
         }
     }
 
+    /// View → Spectrogram: its own window, closed with its ✕ or the menu.
+    fn spectrum_window(&mut self, ctx: &egui::Context, edit: &Edit, pos: u64, len: u64, rate: u64, playing: bool) -> Option<u64> {
+        if !self.show_spectrum {
+            return None;
+        }
+        let name = self.track.path.file_name().unwrap_or_default().to_string_lossy();
+        let builder = egui::ViewportBuilder::default().with_title(format!("Spectrogram — {name}")).with_inner_size([900.0, 400.0]);
+        ctx.show_viewport_immediate(egui::ViewportId::from_hash_of("spectrum"), builder, |ui, _| {
+            if ui.input(|i| i.viewport().close_requested()) {
+                self.show_spectrum = false;
+            }
+            egui::CentralPanel::default()
+                .show(ui, |ui| spectrum_panel(ui, &mut self.spectrum_view, &mut self.spectrum, &self.track, edit, pos, len, rate, playing))
+                .inner
+        })
+    }
+
     /// Save As: the format and quality, then the system's save dialog; saves on its own thread.
     fn save_window(&mut self, ctx: &egui::Context) {
         if !self.show_save {
@@ -1746,15 +1774,7 @@ fn zoom_view(start: u64, frames: u64, len: u64, factor: f32, at: u64) -> (u64, u
 /// Selection, zoom and the waveform of the visible part; returns the frame to seek to on a click.
 #[allow(clippy::too_many_arguments)]
 fn edit_panel(ui: &mut egui::Ui, view: &mut EditView, cache: &mut WaveCache, track: &Track, edit: &Edit, pos: u64, len: u64, rate: u64, playing: bool) -> Option<u64> {
-    let frames = if view.frames == 0 { len } else { view.frames.min(len) }.max(1);
-    view.start = view.start.min(len.saturating_sub(frames));
-    // Zoomed in, the view turns the page when the playhead runs off its right edge; one moved
-    // out of view by panning is left alone.
-    let end = view.start + frames;
-    if playing && view.frames != 0 && view.anchor.is_none() && (view.start..end).contains(&view.last_pos) && pos >= end {
-        view.start = pos.min(len.saturating_sub(frames));
-    }
-    view.last_pos = pos;
+    let frames = follow(view, len, pos, playing);
     let centre = view.start + frames / 2;
     ui.horizontal(|ui| {
         match view.selection {
@@ -1801,14 +1821,37 @@ fn edit_panel(ui: &mut egui::Ui, view: &mut EditView, cache: &mut WaveCache, tra
             _ => (view.selection, seek) = (None, Some(f)),
         }
     }
-    // Right-drag and sideways scrolling (touchpads, Shift+wheel) move along; the wheel zooms.
+    zoom_pan(ui, &response, rect, view, len, frames);
+    let frames = if view.frames == 0 { len } else { view.frames };
+    let cols = cache.columns(track, edit, view.start, frames, rect.width() as u64);
+    draw_waveform(&ui.painter_at(rect), ui.visuals(), rect, cols, (view.start, frames), pos, view.selection);
+    seek
+}
+
+/// Keeps `view` inside the track `len` and, zoomed in, turns the page when the playhead `pos`
+/// runs off its right edge (one moved out of view by panning is left alone); the frames shown.
+fn follow(view: &mut EditView, len: u64, pos: u64, playing: bool) -> u64 {
+    let frames = if view.frames == 0 { len } else { view.frames.min(len) }.max(1);
+    view.start = view.start.min(len.saturating_sub(frames));
+    let end = view.start + frames;
+    if playing && view.frames != 0 && view.anchor.is_none() && (view.start..end).contains(&view.last_pos) && pos >= end {
+        view.start = pos.min(len.saturating_sub(frames));
+    }
+    view.last_pos = pos;
+    frames
+}
+
+/// The wheel zooms `view` (showing `frames` across `rect`) around the pointer; right-drag and
+/// sideways scrolling (touchpads, Shift+wheel) move along.
+fn zoom_pan(ui: &egui::Ui, response: &egui::Response, rect: egui::Rect, view: &mut EditView, len: u64, frames: u64) {
+    let frame_at = |x: f32| view.start + (((x - rect.left()) / rect.width()).clamp(0.0, 1.0) as f64 * frames as f64) as u64;
     let mut pan = if response.dragged_by(egui::PointerButton::Secondary) { response.drag_delta().x } else { 0.0 };
     if response.hovered() {
         // egui turns Ctrl+scroll into zoom_delta; plain vertical scrolling zooms too.
         let (zoom, scroll, pointer) = ui.input(|i| (i.zoom_delta(), i.smooth_scroll_delta, i.pointer.hover_pos()));
         let zoom = zoom * (scroll.y / 200.0).exp();
         if zoom != 1.0 {
-            let at = pointer.map_or(centre, |p| frame_at(p.x));
+            let at = pointer.map_or(view.start + frames / 2, |p| frame_at(p.x));
             (view.start, view.frames) = zoom_view(view.start, frames, len, zoom, at);
         }
         pan += scroll.x;
@@ -1817,9 +1860,40 @@ fn edit_panel(ui: &mut egui::Ui, view: &mut EditView, cache: &mut WaveCache, tra
         let shift = (-pan / rect.width()) as f64 * view.frames.min(len) as f64;
         view.start = (view.start as f64 + shift).clamp(0.0, len.saturating_sub(view.frames.min(len)) as f64) as u64;
     }
-    let frames = if view.frames == 0 { len } else { view.frames };
-    let cols = cache.columns(track, edit, view.start, frames, rect.width() as u64);
-    draw_waveform(&ui.painter_at(rect), ui.visuals(), rect, cols, (view.start, frames), pos, view.selection);
+}
+
+/// The spectrogram of edited frames shown in `view`, with frequency marks and the playhead;
+/// returns the frame to seek to on a click.
+#[allow(clippy::too_many_arguments)]
+fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, spectrogram: &mut spectrum::Spectrogram, track: &Track, edit: &Edit, pos: u64, len: u64, rate: u64, playing: bool) -> Option<u64> {
+    let frames = follow(view, len, pos, playing);
+    let (rect, response) = ui.allocate_exact_size(ui.available_size(), egui::Sense::click_and_drag());
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Slider, true, "Spectrogram: click to play from there, scroll to zoom, right-drag to move along"));
+    let seek = response.clicked().then(|| response.interact_pointer_pos()).flatten().map(|p| {
+        view.start + (((p.x - rect.left()) / rect.width()).clamp(0.0, 1.0) as f64 * frames as f64) as u64
+    });
+    zoom_pan(ui, &response, rect, view, len, frames);
+    let frames = if view.frames == 0 { len } else { view.frames }.max(1);
+    let painter = ui.painter_at(rect);
+    // One texel per pixel, so it stays sharp on high-density screens.
+    let ppp = ui.pixels_per_point();
+    let (w, h) = ((rect.width() * ppp) as usize, (rect.height() * ppp) as usize);
+    if let Some(texture) = spectrogram.texture(ui.ctx(), track, edit, view.start, frames, w, h) {
+        let uv = egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0));
+        painter.image(texture.id(), rect, uv, egui::Color32::WHITE);
+    }
+    let nyquist = rate as f32 / 2.0;
+    for (freq, label) in [(100.0, "100 Hz"), (1000.0, "1 kHz"), (10000.0, "10 kHz")] {
+        if freq < nyquist {
+            let y = rect.top() + spectrum::height_of(freq, rate as f32) * rect.height();
+            painter.hline(rect.x_range(), y, egui::Stroke::new(1.0, egui::Color32::from_white_alpha(40)));
+            painter.text(egui::pos2(rect.left() + 4.0, y - 2.0), egui::Align2::LEFT_BOTTOM, label, egui::FontId::proportional(12.0), egui::Color32::from_white_alpha(200));
+        }
+    }
+    let x = rect.left() + ((pos as f64 - view.start as f64) / frames as f64 * rect.width() as f64) as f32;
+    if rect.x_range().contains(x) {
+        painter.vline(x, rect.y_range(), egui::Stroke::new(1.5, egui::Color32::WHITE));
+    }
     seek
 }
 

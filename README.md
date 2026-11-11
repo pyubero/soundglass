@@ -23,6 +23,7 @@ Without a file it asks for one. `--timings` prints the time to the window and to
 - Page Up / Page Down: previous or next file in the folder
 - Ctrl+E: show or hide the Edit panel
 - In the Edit panel: click to play from there, drag to select, Shift+click or Shift+drag to change the selection, scroll to zoom, right-drag (or scroll sideways) to move along
+- View → Spectrogram opens it in its own window (log frequency, 20 Hz up): click to play from there, scroll to zoom, right-drag (or scroll sideways) to move along
 - Esc: clear the selection
 - Delete: cut out the selection; Ctrl+T: crop to it; Ctrl+L: replace it with silence
 - Ctrl+Z: undo; Ctrl+Shift+Z or Ctrl+Y: redo

@@ -67,13 +67,13 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 ### 6. Files and tags
 - **Edit tags.** Title, artist, album, year, track number, genre and cover art, saved to a copy or, with confirmation, in place (tags only, never the audio). Done: Edit in Track Info's Tags section; the copy's audio is checked identical before it replaces the file, and Save As / Save Copy take unsaved tag edits.
 - **Rename from tags.** For example `01 - Artist - Title.mp3`, shown before anything is renamed. Done: File → Rename from Tags… on the current file, with an editable pattern that is remembered; it never replaces an existing file.
-- **Split into tracks.** Split a long recording (vinyl, a concert) at silences or markers, with a preview of the cut points.
+- DONT IMPLEMENT **Split into tracks.** Split a long recording (vinyl, a concert) at silences or markers, with a preview of the cut points.
 - DONT IMPLEMENT **Join files.** Put several files one after another into one file.
 - DONT IMPLEMENT **Convert a folder.** Save every file in a folder in another format and quality.
 
 ### 7. Practice tools
-- **A–B loop with slow-down.** Loop a hard passage at a slower speed without changing the pitch. First rethink whether this is necessary or the user can already achieve this differently.
-- **Spectrogram.** See frequencies over time, to spot hum, clicks or where notes are. This shows the spectrogram first in a separate panel where we can zoom in/out and right click and drag for panning.
+- **A–B loop with slow-down.** Loop a hard passage at a slower speed without changing the pitch. Done with existing tools: drag on the Edit waveform to select, L to loop, Playback → Pitch-preserved speed change.
+- **Spectrogram.** See frequencies over time, to spot hum, clicks or where notes are. This shows the spectrogram first in a separate panel where we can zoom in/out and right click and drag for panning. Done: View → Spectrogram, its own window with a log frequency axis, click to seek.
 - **BPM and key.** Estimate the tempo and musical key of the track.
 - **Markers with notes.** Drop named markers (chorus, solo) and jump between them; they can be saved next to the file. Only if there is an automatic way of doing this.
 - **Metronome.** A click at a set tempo, alone or over the track, with the song's tempo by default and on the right spots, beware of swing.
