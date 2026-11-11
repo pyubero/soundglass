@@ -24,7 +24,7 @@ Without a file it asks for one. `--timings` prints the time to the window and to
 - Ctrl+Z: undo; Ctrl+Shift+Z or Ctrl+Y: redo
 - L: loop the selection on or off (otherwise playback stops at its end)
 - Ctrl+S: Save Copy — the edits next to the original, in its format, as `name-edited` (then `name-edited-2`…)
-- Ctrl+Shift+S: Save As (the original file is never changed), with the format, quality and sample rate
+- Ctrl+Shift+S: Save As (the original file is never changed), with the format, quality and sample rate, and whether to apply the speed and pitch
 - Ctrl+O: open a file
 - Ctrl+Q: quit
 
@@ -38,6 +38,16 @@ The Effects menu works on the selection, or on the whole track when nothing is s
 - Trim silence: removes what is quieter than a level at the start and end
 - Reverse: plays it backwards
 - Channels: mono, stereo or swap left and right (always the whole track)
+
+## Speed and pitch
+
+The Playback menu changes how it plays, live, and the settings combine:
+
+- Change speed and pitch: faster is also higher, like tape (0.5× to 2×)
+- Pitch-preserved speed change: slower or faster at the same pitch (0.5× to 2×)
+- Time-preserved pitch change: up or down by semitones at the same speed (−2 to +2, Custom… up to ±12 in steps of 0.1)
+
+The last two use WSOLA, which can sound a little echoey or stuttery on dense mixes. Save As can apply them to the file.
 
 ## Install as the default audio player
 

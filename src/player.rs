@@ -6,6 +6,7 @@
 
 use crate::edit::{self, Edit};
 use crate::track::Track;
+use crate::wsola::{Speed, Wsola};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use rubato::audioadapter_buffers::direct::InterleavedSlice;
 use rubato::{Adjustable, Async, FixedAsync, Resampler, SincInterpolationParameters, SincInterpolationType, WindowFunction};
@@ -24,7 +25,7 @@ pub enum Cmd {
     Seek(u64),
     /// Linear gain.
     Volume(f32),
-    Speed(f64),
+    Speed(Speed),
     /// The current track's edits; `None` plays it as it is. `Load` clears them.
     Edit(Option<Arc<Edit>>),
     /// Frames to stop at the end of (or loop, when true), once playing inside them.
@@ -128,7 +129,11 @@ struct Engine {
     /// Whether real samples (not silence) have been played yet.
     heard: bool,
     volume: f32,
-    speed: f64,
+    speed: Speed,
+    /// Pitch-preserved speed and pitch; taken out while it runs so `pull` can feed it.
+    wsola: Option<Wsola>,
+    /// WSOLA's output, the resampler's input while it stretches.
+    stretched: Vec<f32>,
     dev_rate: u32,
     /// The input rate the resampler is set for.
     rate: u32,
@@ -149,8 +154,10 @@ impl Engine {
         let resampler = Async::<f32>::new_sinc(1.0, MAX_RATIO, &params, BLOCK, 2, FixedAsync::Output).unwrap();
         let input = vec![0.0; resampler.input_frames_max() * 2];
         let output = vec![0.0; resampler.output_frames_max() * 2];
+        let stretched = input.clone();
         Engine {
-            cur: None, next: None, edit: None, region: None, looping: false, pos: 0, advanced: 0, playing: false, heard: false, volume: 1.0, speed: 1.0,
+            cur: None, next: None, edit: None, region: None, looping: false, pos: 0, advanced: 0, playing: false, heard: false, volume: 1.0, speed: Speed::NORMAL,
+            wsola: Some(Wsola::new(2, dev_rate)), stretched,
             dev_rate, rate: dev_rate, resampler, input, output, out_pos: 0, out_len: 0, retire,
         }
     }
@@ -177,6 +184,9 @@ impl Engine {
             Cmd::Volume(v) => self.volume = v,
             Cmd::Speed(s) => {
                 self.speed = s;
+                if let Some(w) = &mut self.wsola {
+                    w.set_tempo(s.stretch());
+                }
                 self.set_ratio();
             }
             Cmd::Edit(edit) => {
@@ -202,11 +212,14 @@ impl Engine {
     fn seek(&mut self, pos: u64) {
         self.pos = pos;
         self.resampler.reset();
+        if let Some(w) = &mut self.wsola {
+            w.reset();
+        }
         (self.out_pos, self.out_len) = (0, 0);
     }
 
     fn set_ratio(&mut self) {
-        let ratio = self.dev_rate as f64 / (self.rate as f64 * self.speed);
+        let ratio = self.dev_rate as f64 / (self.rate as f64 * self.speed.rate());
         let _ = self.resampler.set_resample_ratio(ratio.clamp(1.0 / MAX_RATIO * 1.001, MAX_RATIO * 0.999), false);
     }
 
@@ -235,13 +248,32 @@ impl Engine {
         let Some(format) = self.cur.as_ref().and_then(|t| t.format.get().copied()) else { return false };
         if format.rate != self.rate {
             self.rate = format.rate;
+            if let Some(w) = &mut self.wsola {
+                w.set_rate(format.rate);
+            }
             self.set_ratio();
         }
         let frames = self.resampler.input_frames_next();
-        if !self.pull(frames) {
+        let stretch = self.speed.stretches();
+        if stretch {
+            let (Some(mut w), mut out) = (self.wsola.take(), std::mem::take(&mut self.stretched)) else { return false };
+            let cap = self.input.len() / 2;
+            let ok = w.process(&mut out[..frames * 2], |dst| {
+                dst.chunks_mut(cap * 2).all(|piece| {
+                    let ok = self.pull(piece.len() / 2);
+                    piece.copy_from_slice(&self.input[..piece.len()]);
+                    ok
+                })
+            });
+            (self.wsola, self.stretched) = (Some(w), out);
+            if !ok {
+                return false;
+            }
+        } else if !self.pull(frames) {
             return false;
         }
-        let input = InterleavedSlice::new(&self.input[..frames * 2], 2, frames).unwrap();
+        let source = if stretch { &self.stretched } else { &self.input };
+        let input = InterleavedSlice::new(&source[..frames * 2], 2, frames).unwrap();
         let capacity = self.output.len() / 2;
         let mut output = InterleavedSlice::new_mut(&mut self.output, 2, capacity).unwrap();
         let (_, written) = self.resampler.process_into_buffer(&input, &mut output, None).unwrap_or((0, 0));
@@ -450,10 +482,32 @@ mod tests {
         e.render(&mut out, 2);
         let normal = e.pos;
         e.handle(Cmd::Seek(0));
-        e.handle(Cmd::Speed(2.0));
+        e.handle(Cmd::Speed(Speed { tape: 2.0, ..Speed::NORMAL }));
         e.render(&mut out, 2);
         let ratio = e.pos as f64 / normal as f64;
         assert!((ratio - 2.0).abs() < 0.02, "ratio {ratio}");
         assert!(out.iter().any(|&s| s != 0.0));
+    }
+
+    /// Frames of input one second of output takes, with these settings.
+    fn input_per_second(speed: Speed) -> f64 {
+        let mut e = engine();
+        e.handle(Cmd::Load(Track::from_samples(48000, 2, vec![0.1; 400_000])));
+        e.handle(Cmd::Speed(speed));
+        e.handle(Cmd::Play);
+        let mut out = vec![0.0; 2 * 48000];
+        e.render(&mut out, 2);
+        assert!(out[48000..].iter().any(|&s| s != 0.0));
+        e.pos as f64
+    }
+
+    #[test]
+    fn pitch_preserved_speed_and_time_preserved_pitch() {
+        let normal = input_per_second(Speed::NORMAL);
+        let faster = input_per_second(Speed { tempo: 2.0, ..Speed::NORMAL }) / normal;
+        assert!((faster - 2.0).abs() < 0.05, "tempo 2: {faster}");
+        // A pitch change stretches and resamples by the same ratio, so the track's pace is kept.
+        let pitched = input_per_second(Speed { semitones: 5.0, ..Speed::NORMAL }) / normal;
+        assert!((pitched - 1.0).abs() < 0.05, "+5 semitones: {pitched}");
     }
 }

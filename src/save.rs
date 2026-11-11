@@ -3,6 +3,7 @@
 
 use crate::edit::{self, Edit};
 use crate::track::Track;
+use crate::wsola::{Speed, Wsola};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -63,11 +64,13 @@ pub struct Choice {
     pub vorbis_quality: u8,
     /// The sample rate to save at; `None` keeps the track's.
     pub rate: Option<u32>,
+    /// Playback's speed and pitch, applied to the audio; `None` leaves them out.
+    pub speed: Option<Speed>,
 }
 
 impl Default for Choice {
     fn default() -> Choice {
-        Choice { kind: Kind::Flac, wav_bits: 16, flac_bits: 16, mp3_kbps: 256, vorbis_quality: 6, rate: None }
+        Choice { kind: Kind::Flac, wav_bits: 16, flac_bits: 16, mp3_kbps: 256, vorbis_quality: 6, rate: None, speed: None }
     }
 }
 
@@ -106,7 +109,7 @@ pub fn copy_choice(source: &Path, codec: &str, bits: Option<u32>, last: Choice) 
         _ => Kind::Flac,
     };
     let deep = bits.is_some_and(|b| b > 16);
-    Choice { kind, wav_bits: if bits == Some(32) { 32 } else if deep { 24 } else { 16 }, flac_bits: if deep { 24 } else { 16 }, rate: None, ..last }
+    Choice { kind, wav_bits: if bits == Some(32) { 32 } else if deep { 24 } else { 16 }, flac_bits: if deep { 24 } else { 16 }, rate: None, speed: None, ..last }
 }
 
 /// Writes frames `edit` of `track` (fully decoded) to `target` as `choice` says. Ok(false) when
@@ -119,10 +122,9 @@ pub fn save(track: &Track, edit: &Edit, choice: Choice, target: &Path) -> Result
     // Hidden, next to the target so the rename stays on one disk, with the real extension so it decodes.
     let temp = target.with_file_name(format!(".{name}.soundglass-part.{}", choice.kind.ext()));
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let resampled = match choice.rate {
-            Some(rate) if track.format.get().is_some_and(|f| f.rate != rate) => Some(resample(track, edit, rate)?),
-            _ => None,
-        };
+        let own = track.format.get().map_or(0, |f| f.rate);
+        let (rate, speed) = (choice.rate.unwrap_or(own), choice.speed.filter(|s| *s != Speed::NORMAL));
+        let resampled = if rate != own || speed.is_some() { Some(resample(track, edit, rate, speed)?) } else { None };
         let (audio, edit) = resampled.as_ref().map_or((track, edit), |(t, e)| (&**t, e));
         encode(audio, edit, choice, &temp)?;
         let tags = std::panic::catch_unwind(|| copy_tags(&track.path, &temp, choice.kind)).unwrap_or(false);
@@ -137,16 +139,42 @@ pub fn save(track: &Track, edit: &Edit, choice: Choice, target: &Path) -> Result
     result
 }
 
-/// The edited track at another sample rate, as a track of its own with no edits.
-fn resample(track: &Track, edit: &Edit, rate: u32) -> Result<(Arc<Track>, Edit), String> {
+/// The edited track at another sample rate and with `speed` applied, as a track of its own with no edits.
+fn resample(track: &Track, edit: &Edit, rate: u32, speed: Option<Speed>) -> Result<(Arc<Track>, Edit), String> {
     use rubato::Resampler;
     let format = track.format.get().ok_or("the track has no audio")?;
     let channels = edit.channels(format.channels);
     let mut samples = Vec::with_capacity(edit.len() as usize * channels);
     edit::read(track, edit, 0, edit.len(), |b| samples.extend_from_slice(b));
+    let speed = speed.unwrap_or(Speed::NORMAL);
+    if speed.stretches() {
+        let mut w = Wsola::new(channels, format.rate);
+        w.set_tempo(speed.stretch());
+        let mut out = vec![0.0; (samples.len() as f64 / speed.stretch()) as usize / channels * channels];
+        let mut pos = 0;
+        w.process(&mut out, |dst| {
+            // Past the end, silence: WSOLA's last window still needs input after it.
+            let rest = samples.get(pos..).unwrap_or_default();
+            let n = dst.len().min(rest.len());
+            dst[..n].copy_from_slice(&rest[..n]);
+            dst[n..].fill(0.0);
+            pos += dst.len();
+            true
+        });
+        samples = out;
+    }
     let frames = samples.len() / channels;
     let err = |e: &dyn std::fmt::Display| format!("resampling: {e}");
-    let mut resampler = rubato::Fft::<f32>::new(format.rate as usize, rate as usize, 1024, channels, rubato::FixedSync::Both).map_err(|e| err(&e))?;
+    let mut resampler: Box<dyn Resampler<f32>> = if speed.rate() == 1.0 {
+        Box::new(rubato::Fft::<f32>::new(format.rate as usize, rate as usize, 1024, channels, rubato::FixedSync::Both).map_err(|e| err(&e))?)
+    } else {
+        // Played faster by `rate()`: not a ratio of whole numbers, so the sinc resampler.
+        let params = rubato::SincInterpolationParameters::new(256, rubato::WindowFunction::Blackman2)
+            .oversampling_factor(256)
+            .interpolation(rubato::SincInterpolationType::Cubic);
+        let ratio = rate as f64 / (format.rate as f64 * speed.rate());
+        Box::new(rubato::Async::<f32>::new_sinc(ratio, 1.0, &params, 1024, channels, rubato::FixedAsync::Input).map_err(|e| err(&e))?)
+    };
     let input = rubato::audioadapter_buffers::direct::InterleavedSlice::new(&samples, channels, frames).map_err(|e| err(&e))?;
     // process_all trims the resampler's delay, so the length scales exactly.
     let out = resampler.process_all(&input, frames, None).map_err(|e| err(&e))?.take_data();
@@ -409,6 +437,22 @@ mod tests {
         let path = dir.join("mono.mp3");
         save(&track, &edit, Choice { kind: Kind::Mp3, ..Choice::default() }, &path).unwrap();
         assert_eq!(read_back(&path).1, 1);
+    }
+
+    #[test]
+    fn saves_with_speed_and_pitch() {
+        let dir = scratch("speed");
+        let track = sine(44100, 2, 44100);
+        let path = dir.join("fast.wav");
+        let speed = Speed { tape: 1.0, tempo: 2.0, semitones: 2.0 };
+        save(&track, &Edit::whole(44100), Choice { kind: Kind::Wav, speed: Some(speed), ..Choice::default() }, &path).unwrap();
+        let (got, c, r) = read_back(&path);
+        assert_eq!((c, r), (2, 44100));
+        assert!((got.len() / 2).abs_diff(22050) <= 50, "{} frames", got.len() / 2);
+        // Tape speed changes the length too.
+        let tape = dir.join("tape.wav");
+        save(&track, &Edit::whole(44100), Choice { kind: Kind::Wav, speed: Some(Speed { tape: 1.5, ..Speed::NORMAL }), ..Choice::default() }, &tape).unwrap();
+        assert!((read_back(&tape).0.len() / 2).abs_diff(29400) <= 50);
     }
 
     #[test]

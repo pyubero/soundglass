@@ -8,6 +8,7 @@ mod player;
 mod save;
 mod settings;
 mod track;
+mod wsola;
 
 use eframe::egui;
 use player::{Cmd, Player};
@@ -75,7 +76,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -119,12 +120,12 @@ struct App {
     settings: settings::Settings,
     /// The volume slider's position, 0 to 1; see `volume_gain`.
     volume: f32,
-    speed: f64,
+    speed: wsola::Speed,
     /// The track (by address) the title bar shows, whether its length was exact then, and whether it had unsaved edits.
     titled: Option<(usize, bool, bool)>,
     recent: Vec<PathBuf>,
-    /// The Custom speed dialog's value while it is open.
-    custom_speed: Option<f64>,
+    /// The Custom speed or pitch dialog's setting and value while it is open.
+    custom_speed: Option<(Knob, f64)>,
     /// The Custom… effect dialog's effect and value.
     custom_fx: Option<(Fx, f64)>,
     show_settings: bool,
@@ -174,7 +175,7 @@ enum Action {
     Seek(u64),
     /// Slider position, 0 to 1.
     Volume(f32),
-    Speed(f64),
+    Speed(wsola::Speed),
     Undo,
     Redo,
     /// Removes the selection.
@@ -254,14 +255,71 @@ enum Pending {
 /// Ok(whether the tags were copied), or why the save failed.
 type SaveResult = std::sync::mpsc::Receiver<Result<bool, String>>;
 
-/// The speeds Playback → Change speed offers directly.
+/// The speeds Playback's two speed submenus offer directly.
 const SPEEDS: [f64; 6] = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 /// Custom speeds move in this step.
 const SPEED_STEP: f64 = 0.05;
+/// The pitch changes, in semitones, Playback → Time-preserved pitch change offers directly.
+const PITCHES: [f64; 5] = [-2.0, -1.0, 0.0, 1.0, 2.0];
+/// Custom pitch changes move in this step, up to an octave either way.
+const PITCH_STEP: f64 = 0.1;
 
 /// `x` rounded to the nearest 0.05 and kept within 0.5×–2×.
 fn snap_speed(x: f64) -> f64 {
     ((x / SPEED_STEP).round() * SPEED_STEP).clamp(0.5, 2.0)
+}
+
+/// One of Playback's three speed and pitch settings.
+#[derive(Clone, Copy, PartialEq)]
+enum Knob {
+    Tape,
+    Tempo,
+    Pitch,
+}
+
+impl Knob {
+    const ALL: [Knob; 3] = [Knob::Tape, Knob::Tempo, Knob::Pitch];
+
+    fn title(self) -> &'static str {
+        match self {
+            Knob::Tape => "Change speed and pitch",
+            Knob::Tempo => "Pitch-preserved speed change",
+            Knob::Pitch => "Time-preserved pitch change",
+        }
+    }
+
+    fn presets(self) -> &'static [f64] {
+        if self == Knob::Pitch { &PITCHES } else { &SPEEDS }
+    }
+
+    fn get(self, s: wsola::Speed) -> f64 {
+        match self {
+            Knob::Tape => s.tape,
+            Knob::Tempo => s.tempo,
+            Knob::Pitch => s.semitones,
+        }
+    }
+
+    fn set(self, s: wsola::Speed, v: f64) -> wsola::Speed {
+        match self {
+            Knob::Tape => wsola::Speed { tape: v, ..s },
+            Knob::Tempo => wsola::Speed { tempo: v, ..s },
+            Knob::Pitch => wsola::Speed { semitones: v, ..s },
+        }
+    }
+
+    fn label(self, v: f64) -> String {
+        match self {
+            Knob::Pitch if v == 0.0 => "0 (Normal)".into(),
+            Knob::Pitch => format!("{}{} semitone{}", if v > 0.0 { "+" } else { "−" }, v.abs(), if v.abs() == 1.0 { "" } else { "s" }),
+            _ if v == 1.0 => "1× (Normal)".into(),
+            _ => format!("{v}×"),
+        }
+    }
+
+    fn snap(self, v: f64) -> f64 {
+        if self == Knob::Pitch { ((v / PITCH_STEP).round() * PITCH_STEP).clamp(-12.0, 12.0) } else { snap_speed(v) }
+    }
 }
 
 impl eframe::App for App {
@@ -308,7 +366,7 @@ impl eframe::App for App {
         // Moved on by the time since the audio callback last said, so the playhead glides.
         let pos = player.map_or(0, |p| {
             let (pos, ago) = p.position();
-            if playing { display_pos(pos, ago, rate, self.speed, self.edit_view.selection, self.looping, len) } else { pos }
+            if playing { display_pos(pos, ago, rate, self.speed.source(), self.edit_view.selection, self.looping, len) } else { pos }
         });
         if playing && (self.show_edit || self.settings.show_waveform) {
             // About 30 fps: smooth enough for the playhead, cheaper than redrawing at the screen's rate (user's choice).
@@ -458,21 +516,23 @@ impl eframe::App for App {
                 });
                 ui.menu_button("Playback", |ui| {
                     ui.checkbox(&mut self.looping, "Loop selection").on_hover_text("L");
-                    ui.menu_button("Change speed", |ui| {
-                        for speed in SPEEDS {
-                            let label = if speed == 1.0 { "1× (Normal)".to_string() } else { format!("{speed}×") };
-                            if ui.radio((self.speed - speed).abs() < 1e-6, label).clicked() {
-                                actions.push(Action::Speed(speed));
+                    for knob in Knob::ALL {
+                        ui.menu_button(knob.title(), |ui| {
+                            let now = knob.get(self.speed);
+                            for &v in knob.presets() {
+                                if ui.radio((now - v).abs() < 1e-6, knob.label(v)).clicked() {
+                                    actions.push(Action::Speed(knob.set(self.speed, v)));
+                                    ui.close();
+                                }
+                            }
+                            let custom = !knob.presets().iter().any(|v| (now - v).abs() < 1e-6);
+                            let label = if custom { format!("Custom ({})…", knob.label((now * 100.0).round() / 100.0)) } else { "Custom…".into() };
+                            if ui.radio(custom, label).clicked() {
+                                self.custom_speed = Some((knob, now));
                                 ui.close();
                             }
-                        }
-                        let custom = !SPEEDS.iter().any(|s| (self.speed - s).abs() < 1e-6);
-                        let label = if custom { format!("Custom ({:.2}×)…", self.speed) } else { "Custom…".into() };
-                        if ui.radio(custom, label).clicked() {
-                            self.custom_speed = Some(self.speed);
-                            ui.close();
-                        }
-                    });
+                        });
+                    }
                 });
             });
         });
@@ -718,23 +778,24 @@ impl App {
         }
     }
 
-    /// The Custom speed dialog; returns the speed when OK is pressed.
-    fn speed_window(&mut self, ctx: &egui::Context) -> Option<f64> {
-        let mut draft = self.custom_speed?;
+    /// The Custom speed or pitch dialog; returns the new settings when OK is pressed.
+    fn speed_window(&mut self, ctx: &egui::Context) -> Option<wsola::Speed> {
+        let (knob, mut draft) = self.custom_speed?;
         let (mut chosen, mut close) = (None, false);
-        egui::Window::new("Custom speed").collapsible(false).resizable(false).show(ctx, |ui| {
+        let (step, range, decimals, unit) = if knob == Knob::Pitch { (PITCH_STEP, -12.0..=12.0, 1, " semitones") } else { (SPEED_STEP, 0.5..=2.0, 2, "×") };
+        egui::Window::new(knob.title()).collapsible(false).resizable(false).show(ctx, |ui| {
             ui.horizontal(|ui| {
                 if ui.button("−").clicked() {
-                    draft -= SPEED_STEP;
+                    draft -= step;
                 }
-                ui.add(egui::DragValue::new(&mut draft).range(0.5..=2.0).speed(0.01).fixed_decimals(2).suffix("×"));
+                ui.add(egui::DragValue::new(&mut draft).range(range).speed(step / 5.0).fixed_decimals(decimals).suffix(unit));
                 if ui.button("+").clicked() {
-                    draft += SPEED_STEP;
+                    draft += step;
                 }
             });
             ui.horizontal(|ui| {
                 if ui.button("OK").clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                    chosen = Some(snap_speed(draft));
+                    chosen = Some(knob.set(self.speed, knob.snap(draft)));
                     close = true;
                 }
                 if ui.button("Cancel").clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
@@ -742,7 +803,7 @@ impl App {
                 }
             });
         });
-        self.custom_speed = (!close).then_some(snap_speed(draft));
+        self.custom_speed = (!close).then_some((knob, knob.snap(draft)));
         chosen
     }
 
@@ -1117,7 +1178,14 @@ impl App {
         let busy = self.save_job.is_some();
         egui::Window::new("Save As").open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
             let rate = self.track.format.get().map_or(0, |f| f.rate);
-            ui.add_enabled_ui(!busy, |ui| save_options(ui, &mut self.save_choice, rate));
+            ui.add_enabled_ui(!busy, |ui| {
+                save_options(ui, &mut self.save_choice, rate);
+                if self.speed != wsola::Speed::NORMAL {
+                    let mut apply = self.save_choice.speed.is_some();
+                    ui.checkbox(&mut apply, "Apply speed and pitch");
+                    self.save_choice.speed = apply.then_some(self.speed);
+                }
+            });
             ui.weak("The original file is never changed.");
             ui.add_space(4.0);
             if let Some((_, _, target, _)) = &self.save_job {
@@ -1138,7 +1206,9 @@ impl App {
             }
             // The system dialog asks before replacing an existing file.
             if let Some(target) = picker.save_file() {
-                self.start_save(self.save_choice, target, false);
+                // The settings as they are now, and only while they aren't Normal (the box is hidden then).
+                let speed = self.save_choice.speed.filter(|_| self.speed != wsola::Speed::NORMAL).map(|_| self.speed);
+                self.start_save(save::Choice { speed, ..self.save_choice }, target, false);
             }
         }
         // Closing it while saving only hides it; the save still finishes.
