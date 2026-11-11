@@ -55,12 +55,14 @@ fn main() -> eframe::Result {
     let options = eframe::NativeOptions { viewport, persist_window: settings.remember_window_size, ..Default::default() };
     eframe::run_native("soundglass", options, Box::new(move |cc| {
         let _ = ctx.set(cc.egui_ctx.clone());
+        let mut recent: Vec<PathBuf> = cc.storage.and_then(|s| s.get_string("recent")).unwrap_or_default().lines().map(PathBuf::from).collect();
+        push_recent(&mut recent, &track.path);
         cc.egui_ctx.set_fonts(fonts());
         let player = opening.join().unwrap_or_else(|_| Err("the sound device failed to open".into()));
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, custom_speed: None, show_settings: false, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -105,6 +107,9 @@ struct App {
     /// The volume slider's position, 0 to 1; see `volume_gain`.
     volume: f32,
     speed: f64,
+    /// The track (by address) the title bar shows, and whether its length was exact then.
+    titled: Option<(usize, bool)>,
+    recent: Vec<PathBuf>,
     /// The Custom speed dialog's value while it is open.
     custom_speed: Option<f64>,
     show_settings: bool,
@@ -139,6 +144,11 @@ fn snap_speed(x: f64) -> f64 {
 }
 
 impl eframe::App for App {
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        let recent: Vec<String> = self.recent.iter().map(|p| p.display().to_string()).collect();
+        storage.set_string("recent", recent.join("\n"));
+    }
+
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
         // eframe keeps the window hidden until the first frame is painted, so the window is
@@ -155,7 +165,11 @@ impl eframe::App for App {
                 p.send(Cmd::Play);
             }
         }
-        self.follow_player(&ctx);
+        self.follow_player();
+        // Re-set when the track changes and again once its exact length is known.
+        if self.titled != Some((Arc::as_ptr(&self.track) as usize, self.track.done())) {
+            self.set_title(&ctx);
+        }
 
         let player = self.player.as_ref().ok();
         let rate = self.track.format.get().map_or(0, |f| f.rate as u64);
@@ -185,6 +199,7 @@ impl eframe::App for App {
         }
         let open_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::O);
         let mut open_file = ctx.input_mut(|i| i.consume_shortcut(&open_key));
+        let mut open_recent = None;
         if ctx.input_mut(|i| i.consume_shortcut(&egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Q))) {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
@@ -195,6 +210,18 @@ impl eframe::App for App {
                     if ui.add(egui::Button::new("Open…").shortcut_text(ctx.format_shortcut(&open_key))).clicked() {
                         open_file = true;
                     }
+                    ui.add_enabled_ui(!self.recent.is_empty(), |ui| {
+                        ui.menu_button("Open Recent", |ui| {
+                            self.recent.retain(|p| p.exists());
+                            for path in &self.recent {
+                                let name = path.file_name().unwrap_or_default().to_string_lossy();
+                                if ui.button(name).on_hover_text(path.display().to_string()).clicked() {
+                                    open_recent = Some(path.clone());
+                                    ui.close();
+                                }
+                            }
+                        });
+                    });
                     if ui.button("Settings…").clicked() {
                         self.show_settings = true;
                     }
@@ -262,6 +289,9 @@ impl eframe::App for App {
         if let Some(speed) = self.speed_window(&ctx) {
             actions.push(Action::Speed(speed));
         }
+        if let Some(path) = open_recent {
+            self.open(path);
+        }
         if open_file && let Some(path) = rfd::FileDialog::new().add_filter("Audio", &folder::EXTENSIONS).pick_file() {
             self.open(path);
         }
@@ -271,9 +301,24 @@ impl eframe::App for App {
     }
 }
 
+/// `name — 3:12 — MP3`, leaving out what isn't known.
+fn title(name: &str, length: Option<&str>, format: &str) -> String {
+    [Some(name), length, (!format.is_empty()).then_some(format)].into_iter().flatten().collect::<Vec<_>>().join(" — ")
+}
+
+/// How many files Open Recent lists.
+const RECENT_MAX: usize = 10;
+
+/// Moves `path` to the front of `recent`, keeping at most `RECENT_MAX`. From lightview.
+fn push_recent(recent: &mut Vec<PathBuf>, path: &std::path::Path) {
+    recent.retain(|p| p != path);
+    recent.insert(0, path.to_path_buf());
+    recent.truncate(RECENT_MAX);
+}
+
 impl App {
     /// Notices the player moving into the queued track, and decodes the next file ahead.
-    fn follow_player(&mut self, ctx: &egui::Context) {
+    fn follow_player(&mut self) {
         let Ok(p) = &self.player else { return };
         // Tracks the audio callback is done with are freed here, not in the callback.
         while p.retired.try_recv().is_ok() {}
@@ -282,7 +327,6 @@ impl App {
             self.advanced = advanced;
             if let Some(next) = self.next.take() {
                 (self.track, self.index) = (next, self.index + 1);
-                self.set_title(ctx);
             }
         }
         // Decode ahead once this track is in memory, so Next and the gapless move are instant.
@@ -373,6 +417,7 @@ impl App {
     /// Plays `path` and makes its folder the one Previous and Next move through.
     fn open(&mut self, path: PathBuf) {
         let path = std::fs::canonicalize(&path).unwrap_or(path);
+        self.remember(&path);
         self.files = folder::list_folder(&path);
         self.next = None;
         let index = self.files.iter().position(|p| *p == path).unwrap_or(0);
@@ -391,9 +436,6 @@ impl App {
             p.send(Cmd::Play);
         }
         (self.track, self.index) = (track, index);
-        if let Some(ctx) = self.ctx.get() {
-            self.set_title(ctx);
-        }
     }
 
     fn previous(&mut self) {
@@ -406,9 +448,20 @@ impl App {
         }
     }
 
-    fn set_title(&self, ctx: &egui::Context) {
-        let name = self.track.path.file_name().unwrap_or_default().to_string_lossy().into_owned();
-        ctx.send_viewport_cmd(egui::ViewportCommand::Title(name));
+    /// Shows the file name, length and format in the title bar; the length once it is exact.
+    fn set_title(&mut self, ctx: &egui::Context) {
+        let path = &self.track.path;
+        let name = path.file_name().unwrap_or_default().to_string_lossy();
+        let format = path.extension().unwrap_or_default().to_string_lossy().to_uppercase();
+        let rate = self.track.format.get().map_or(0, |f| f.rate as u64);
+        let length = (self.track.done() && rate > 0).then(|| clock(self.track.len(), rate));
+        ctx.send_viewport_cmd(egui::ViewportCommand::Title(title(&name, length.as_deref(), &format)));
+        self.titled = Some((Arc::as_ptr(&self.track) as usize, self.track.done()));
+    }
+
+    /// Puts `path` first in Open Recent.
+    fn remember(&mut self, path: &std::path::Path) {
+        push_recent(&mut self.recent, path);
     }
 }
 
@@ -648,7 +701,24 @@ pub fn ms(t: Instant) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{marquee, snap_speed, volume_gain};
+    use super::{marquee, push_recent, snap_speed, title, volume_gain};
+    use std::path::PathBuf;
+
+    #[test]
+    fn title_parts() {
+        assert_eq!(title("Long Gone.mp3", Some("3:12"), "MP3"), "Long Gone.mp3 — 3:12 — MP3");
+        assert_eq!(title("Long Gone.mp3", None, "MP3"), "Long Gone.mp3 — MP3");
+        assert_eq!(title("noext", None, ""), "noext");
+    }
+
+    #[test]
+    fn recent_moves_to_front_and_caps() {
+        let mut recent: Vec<PathBuf> = (0..12).map(|i| PathBuf::from(format!("/{i}.mp3"))).collect();
+        push_recent(&mut recent, &PathBuf::from("/5.mp3"));
+        assert_eq!(recent.len(), 10);
+        assert_eq!(recent[0], PathBuf::from("/5.mp3"));
+        assert_eq!(recent.iter().filter(|p| **p == PathBuf::from("/5.mp3")).count(), 1);
+    }
 
     #[test]
     fn speed_snaps_to_the_grid() {
