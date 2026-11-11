@@ -35,3 +35,6 @@
 - 2026-11-11 — soundglass.desktop's MimeType line is the single list of claimed formats; install.sh reads it for xdg-mime, so the two cannot drift
 - 2026-11-11 — UI fonts copied from lightview (Roboto and Droid Sans Mono, Apache-2.0; emoji-icon-font, MIT) with their licence files in fonts/ — eframe without default features has no fonts, and egui's default set is not clearly GPL-compatible; no CJK font yet (user's choice)
 - 2026-11-11 — default window 380 × 680 points, 100 shorter than first planned (user's choice)
+- 2026-11-11 — volume is a small speaker button left of Previous that pops up a slider (user's choice); gain is the slider position cubed, not saved between runs
+- 2026-11-11 — speed lives in Playback → Change speed ▸ with presets and Custom… in steps of 0.05 (user's choice)
+- 2026-11-11 — waveform comes back as a View → Waveform toggle in place of the seek bar line, off by default and remembered in settings.txt (user's choice)

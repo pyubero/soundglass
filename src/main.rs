@@ -60,7 +60,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, show_settings: false, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, show_settings: false, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -102,6 +102,8 @@ struct App {
     /// The cover texture and the track (by address) it belongs to.
     cover: Option<(usize, egui::TextureHandle)>,
     settings: settings::Settings,
+    /// The volume slider's position, 0 to 1; see `volume_gain`.
+    volume: f32,
     show_settings: bool,
     settings_error: Option<String>,
     player: Result<Player, String>,
@@ -118,6 +120,8 @@ enum Action {
     Next,
     Toggle,
     Seek(u64),
+    /// Slider position, 0 to 1.
+    Volume(f32),
 }
 
 impl eframe::App for App {
@@ -212,7 +216,7 @@ impl eframe::App for App {
                     actions.push(Action::Seek(frame));
                 }
                 ui.add_space(8.0);
-                actions.extend(transport(ui, playing, has_next));
+                actions.extend(transport(ui, playing, has_next, self.volume));
             });
         });
 
@@ -254,6 +258,10 @@ impl App {
             Action::Previous => self.previous(),
             Action::Next => self.go(self.index + 1),
             Action::Seek(frame) => p.send(Cmd::Seek(frame)),
+            Action::Volume(v) => {
+                self.volume = v;
+                p.send(Cmd::Volume(volume_gain(v)));
+            }
             Action::Toggle if p.shared.playing.load(Relaxed) => p.send(Cmd::Pause),
             Action::Toggle => {
                 // At the end, Play starts the track again.
@@ -418,15 +426,16 @@ fn seek_bar(ui: &mut egui::Ui, pos: u64, len: u64, rate: u64) -> Option<u64> {
 
 #[derive(Clone, Copy)]
 enum Icon {
+    Volume { muted: bool },
     Previous,
     Play,
     Pause,
     Next,
 }
 
-/// Previous, play/pause and next, centred.
-fn transport(ui: &mut egui::Ui, playing: bool, has_next: bool) -> Vec<Action> {
-    let (size, gap) = (56.0, 16.0);
+/// Volume, then previous, play/pause and next, with play/pause centred.
+fn transport(ui: &mut egui::Ui, playing: bool, has_next: bool, volume: f32) -> Vec<Action> {
+    let (size, small, gap) = (56.0, 40.0, 16.0);
     let buttons = [
         (Icon::Previous, "Previous", true, Action::Previous),
         (if playing { Icon::Pause } else { Icon::Play }, if playing { "Pause" } else { "Play" }, true, Action::Toggle),
@@ -435,7 +444,19 @@ fn transport(ui: &mut egui::Ui, playing: bool, has_next: bool) -> Vec<Action> {
     let mut actions = Vec::new();
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = gap;
-        ui.add_space(((ui.available_width() - 3.0 * size - 2.0 * gap) / 2.0).max(0.0));
+        // Counted as if the volume button had a twin on the right, so play/pause stays centred.
+        let row = 3.0 * size + 2.0 * gap + 2.0 * (small + gap);
+        ui.add_space(((ui.available_width() - row) / 2.0).max(0.0));
+        let label = format!("Volume, {:.0} %", volume * 100.0);
+        let button = icon_button(ui, Icon::Volume { muted: volume == 0.0 }, &label, true, small);
+        let mut v = volume;
+        egui::Popup::from_toggle_button_response(&button)
+            .align(egui::RectAlign::TOP)
+            .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
+            .show(|ui| ui.add(egui::Slider::new(&mut v, 0.0..=1.0).show_value(false).text("Volume")));
+        if v != volume {
+            actions.push(Action::Volume(v));
+        }
         for (icon, label, enabled, action) in buttons {
             if icon_button(ui, icon, label, enabled, size).clicked() {
                 actions.push(action);
@@ -443,6 +464,11 @@ fn transport(ui: &mut egui::Ui, playing: bool, has_next: bool) -> Vec<Action> {
         }
     });
     actions
+}
+
+/// Gain for slider position `v` (0 to 1): a cube curve, so equal steps sound about equally loud.
+fn volume_gain(v: f32) -> f32 {
+    v.clamp(0.0, 1.0).powi(3)
 }
 
 /// A round button with a drawn icon; screen readers get `label`.
@@ -470,6 +496,25 @@ fn icon_button(ui: &mut egui::Ui, icon: Icon, label: &str, enabled: bool, size: 
     let fill = |points| egui::Shape::convex_polygon(points, color, egui::Stroke::NONE);
     let bar = |x: f32| egui::Rect::from_center_size(egui::pos2(x, c.y), egui::vec2(0.35 * u, 2.4 * u));
     match icon {
+        Icon::Volume { muted } => {
+            // A speaker: a box and a cone, then sound waves or a slash.
+            let body = egui::Rect::from_center_size(egui::pos2(c.x - 1.4 * u, c.y), egui::vec2(0.8 * u, 1.2 * u));
+            painter.rect_filled(body, 0.0, color);
+            painter.add(fill(vec![egui::pos2(body.right(), body.top()), egui::pos2(c.x + 0.2 * u, c.y - 1.5 * u), egui::pos2(c.x + 0.2 * u, c.y + 1.5 * u), egui::pos2(body.right(), body.bottom())]));
+            let stroke = egui::Stroke::new(0.3 * u, color);
+            if muted {
+                painter.line_segment([egui::pos2(c.x + 0.7 * u, c.y - 0.8 * u), egui::pos2(c.x + 2.0 * u, c.y + 0.8 * u)], stroke);
+                painter.line_segment([egui::pos2(c.x + 0.7 * u, c.y + 0.8 * u), egui::pos2(c.x + 2.0 * u, c.y - 0.8 * u)], stroke);
+            } else {
+                for r in [1.1 * u, 1.9 * u] {
+                    let arc = (-6..=6).map(|i| {
+                        let a = i as f32 * 0.12;
+                        egui::pos2(c.x + 0.2 * u + r * a.cos(), c.y + r * a.sin())
+                    });
+                    painter.add(egui::Shape::line(arc.collect(), stroke));
+                }
+            }
+        }
         Icon::Play => {
             painter.add(fill(vec![egui::pos2(c.x - 0.8 * u, c.y - 1.4 * u), egui::pos2(c.x + 1.4 * u, c.y), egui::pos2(c.x - 0.8 * u, c.y + 1.4 * u)]));
         }
@@ -502,7 +547,15 @@ pub fn ms(t: Instant) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::marquee;
+    use super::{marquee, volume_gain};
+
+    #[test]
+    fn volume_curve() {
+        assert_eq!(volume_gain(0.0), 0.0);
+        assert_eq!(volume_gain(1.0), 1.0);
+        assert!(volume_gain(0.5) > volume_gain(0.4) && volume_gain(0.5) < 0.5);
+        assert_eq!(volume_gain(2.0), 1.0);
+    }
 
     #[test]
     fn marquee_rests_scrolls_and_returns() {
