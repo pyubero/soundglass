@@ -40,3 +40,5 @@ To undo: delete `~/.local/bin/soundglass` and `~/.local/share/applications/sound
 ## Licence
 
 GPL-3.0-or-later.
+
+Bundled libraries, built from source into the program: LAME (MP3 encoding, LGPL), libvorbis with the aoTuV and Lancer patches and libogg (Ogg Vorbis encoding, BSD-3-Clause). The Rust crates' licences are in `Cargo.lock`'s dependency list; all are GPL-3-compatible.

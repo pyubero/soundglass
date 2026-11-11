@@ -924,6 +924,19 @@ fn save_options(ui: &mut egui::Ui, choice: &mut save::Choice) {
                 ui.radio_value(&mut choice.wav_bits, bits, label);
             }
         }
+        save::Kind::Flac => {
+            for (bits, label) in [(16, "16-bit"), (24, "24-bit")] {
+                ui.radio_value(&mut choice.flac_bits, bits, label);
+            }
+        }
+        save::Kind::Mp3 => {
+            for kbps in [128, 192, 256, 320] {
+                ui.radio_value(&mut choice.mp3_kbps, kbps, format!("{kbps} kb/s"));
+            }
+        }
+        save::Kind::Vorbis => {
+            ui.add(egui::Slider::new(&mut choice.vorbis_quality, 0..=10).text("quality"));
+        }
     });
 }
 

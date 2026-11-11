@@ -8,29 +8,45 @@ use std::path::{Path, PathBuf};
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Kind {
     Wav,
+    Flac,
+    Mp3,
+    Vorbis,
 }
 
 impl Kind {
-    pub const ALL: [Kind; 1] = [Kind::Wav];
+    pub const ALL: [Kind; 4] = [Kind::Wav, Kind::Flac, Kind::Mp3, Kind::Vorbis];
 
     pub fn name(self) -> &'static str {
         match self {
             Kind::Wav => "WAV",
+            Kind::Flac => "FLAC",
+            Kind::Mp3 => "MP3",
+            Kind::Vorbis => "Ogg Vorbis",
         }
     }
 
     pub fn ext(self) -> &'static str {
         match self {
             Kind::Wav => "wav",
+            Kind::Flac => "flac",
+            Kind::Mp3 => "mp3",
+            Kind::Vorbis => "ogg",
         }
     }
 
     fn file_type(self) -> lofty::file::FileType {
+        use lofty::file::FileType;
         match self {
-            Kind::Wav => lofty::file::FileType::Wav,
+            Kind::Wav => FileType::Wav,
+            Kind::Flac => FileType::Flac,
+            Kind::Mp3 => FileType::Mpeg,
+            Kind::Vorbis => FileType::Vorbis,
         }
     }
 }
+
+/// The sample rates LAME encodes.
+const MP3_RATES: [u32; 9] = [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000];
 
 /// The format and, for each format, its quality, so switching formats keeps each one's choice.
 #[derive(Clone, Copy, Debug)]
@@ -38,11 +54,17 @@ pub struct Choice {
     pub kind: Kind,
     /// 16, 24, or 32 for 32-bit float.
     pub wav_bits: u16,
+    /// 16 or 24.
+    pub flac_bits: u16,
+    /// Constant bitrate, 128 to 320.
+    pub mp3_kbps: u32,
+    /// 0 to 10, as oggenc counts.
+    pub vorbis_quality: u8,
 }
 
 impl Default for Choice {
     fn default() -> Choice {
-        Choice { kind: Kind::Wav, wav_bits: 16 }
+        Choice { kind: Kind::Flac, wav_bits: 16, flac_bits: 16, mp3_kbps: 256, vorbis_quality: 6 }
     }
 }
 
@@ -111,8 +133,104 @@ fn encode(track: &Track, edit: &Edit, choice: Choice, path: &Path) -> Result<(),
             result.map_err(err)?;
             w.finalize().map_err(err)?;
         }
+        Kind::Flac => {
+            let bits = choice.flac_bits;
+            let scale = ((1u32 << (bits - 1)) - 1) as f32;
+            let mut samples: Vec<i32> = Vec::with_capacity(edit.len() as usize * channels);
+            ok &= edit::read(track, edit, 0, edit.len(), |block| samples.extend(block.iter().map(|&x| (x.clamp(-1.0, 1.0) * scale).round() as i32)));
+            let dbg = |e: &dyn std::fmt::Debug| format!("FLAC: {e:?}");
+            use flacenc::error::Verify;
+            let config = flacenc::config::Encoder::default().into_verified().map_err(|e| dbg(&e))?;
+            let source = flacenc::source::MemSource::from_samples(&samples, channels, bits as usize, rate as usize);
+            let stream = flacenc::encode_with_fixed_block_size(&config, source, config.block_size).map_err(|e| dbg(&e))?;
+            let mut sink = flacenc::bitsink::ByteSink::new();
+            flacenc::component::BitRepr::write(&stream, &mut sink).map_err(|e| dbg(&e))?;
+            let mut bytes = sink.into_inner();
+            // STREAMINFO's minimum block size must leave out the last, shorter block (the FLAC spec);
+            // flacenc counts it, and symphonia then reads the stream as variable-block and fails.
+            if bytes.len() >= 12 && &bytes[..4] == b"fLaC" {
+                bytes.copy_within(10..12, 8);
+            }
+            std::fs::write(path, &bytes).map_err(|e| e.to_string())?;
+        }
+        Kind::Mp3 => {
+            use mp3lame_encoder::{Builder, FlushGap, InterleavedPcm, MonoPcm};
+            if channels > 2 {
+                return Err("MP3 holds mono or stereo only; save as FLAC or WAV instead".into());
+            }
+            if !MP3_RATES.contains(&rate) {
+                return Err(format!("MP3 can't hold {:.1} kHz audio; save as FLAC or WAV instead", rate as f64 / 1000.0));
+            }
+            let dbg = |e: &dyn std::fmt::Debug| format!("MP3: {e:?}");
+            let mut b = Builder::new().ok_or("MP3: LAME failed to start")?;
+            b.set_num_channels(channels as u8).map_err(|e| dbg(&e))?;
+            b.set_sample_rate(rate).map_err(|e| dbg(&e))?;
+            b.set_brate(mp3_bitrate(choice.mp3_kbps)).map_err(|e| dbg(&e))?;
+            b.set_quality(mp3lame_encoder::Quality::Best).map_err(|e| dbg(&e))?;
+            let mut enc = b.build().map_err(|e| dbg(&e))?;
+            let mut out = Vec::new();
+            let mut result = Ok(0);
+            // Blocks of at most 4096 frames, to keep LAME's output buffer small.
+            ok &= edit::read(track, edit, 0, edit.len(), |block| {
+                for part in block.chunks(4096 * channels) {
+                    out.reserve(mp3lame_encoder::max_required_buffer_size(part.len()));
+                    let r = if channels == 1 { enc.encode_to_vec(MonoPcm(part), &mut out) } else { enc.encode_to_vec(InterleavedPcm(part), &mut out) };
+                    if result.is_ok() {
+                        result = r;
+                    }
+                }
+            });
+            result.map_err(|e| dbg(&e))?;
+            out.reserve(7200);
+            enc.flush_to_vec::<FlushGap>(&mut out).map_err(|e| dbg(&e))?;
+            // The LAME tag frame goes over the empty frame LAME put first (after any ID3v2 tag): it
+            // carries the exact length, so players (symphonia too) trim the encoder's delay and padding.
+            // It is written into spare capacity, so room is reserved first.
+            let mut tag = Vec::with_capacity(enc.lame_tag_size());
+            let at = enc.id3v2_tag_size();
+            if enc.lame_tag_encode_to_vec(&mut tag).is_some() && at + tag.len() <= out.len() {
+                out[at..at + tag.len()].copy_from_slice(&tag);
+            }
+            std::fs::write(path, &out).map_err(|e| e.to_string())?;
+        }
+        Kind::Vorbis => {
+            use std::num::{NonZeroU8, NonZeroU32};
+            let dbg = |e: vorbis_rs::VorbisError| format!("Ogg Vorbis: {e}");
+            let file = std::io::BufWriter::new(std::fs::File::create(path).map_err(|e| e.to_string())?);
+            let (r, c) = (NonZeroU32::new(rate).ok_or("no sample rate")?, NonZeroU8::new(channels as u8).ok_or("no channels")?);
+            let mut b = vorbis_rs::VorbisEncoderBuilder::new(r, c, file).map_err(dbg)?;
+            b.bitrate_management_strategy(vorbis_rs::VorbisBitrateManagementStrategy::QualityVbr { target_quality: choice.vorbis_quality as f32 / 10.0 });
+            let mut enc = b.build().map_err(dbg)?;
+            let mut planar = vec![Vec::new(); channels];
+            let mut result = Ok(());
+            ok &= edit::read(track, edit, 0, edit.len(), |block| {
+                // libvorbis works best with blocks of about a thousand frames.
+                for part in block.chunks(1024 * channels) {
+                    for (ch, plane) in planar.iter_mut().enumerate() {
+                        plane.clear();
+                        plane.extend(part.iter().skip(ch).step_by(channels));
+                    }
+                    if result.is_ok() {
+                        result = enc.encode_audio_block(&planar);
+                    }
+                }
+            });
+            result.map_err(dbg)?;
+            use std::io::Write;
+            enc.finish().map_err(dbg)?.flush().map_err(|e| e.to_string())?;
+        }
     }
     if ok { Ok(()) } else { Err("part of the track could not be read".into()) }
+}
+
+fn mp3_bitrate(kbps: u32) -> mp3lame_encoder::Bitrate {
+    use mp3lame_encoder::Bitrate::*;
+    match kbps {
+        ..=128 => Kbps128,
+        129..=192 => Kbps192,
+        193..=256 => Kbps256,
+        _ => Kbps320,
+    }
 }
 
 /// Copies the original's main tag (cover included where the format holds one) into `to`. True
@@ -182,7 +300,7 @@ mod tests {
         for (bits, tolerance) in [(16, 1.0 / 32767.0), (24, 1.0 / 8_388_607.0), (32, 0.0)] {
             let path = dir.join(format!("out{bits}.wav"));
             // Ok(false): a made-up track has no original to copy tags from.
-            assert_eq!(save(&track, &edit, Choice { kind: Kind::Wav, wav_bits: bits }, &path), Ok(false));
+            assert_eq!(save(&track, &edit, Choice { kind: Kind::Wav, wav_bits: bits, ..Choice::default() }, &path), Ok(false));
             let (got, channels, rate) = read_back(&path);
             assert_eq!((channels, rate, got.len()), (2, 44100, want.len()));
             let worst = got.iter().zip(&want).map(|(a, b)| (a - b).abs()).fold(0.0, f32::max);
@@ -190,6 +308,43 @@ mod tests {
         }
         // No temp files left behind.
         assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 3);
+    }
+
+    #[test]
+    fn flac_is_exact_and_lossy_formats_keep_the_length() {
+        let dir = scratch("formats");
+        for channels in [1, 2] {
+            let track = sine(44100, channels, 100_000);
+            let edit = Edit::whole(100_000).silence(0, 5000);
+            let mut want = Vec::new();
+            edit::read(&track, &edit, 0, edit.len(), |b| want.extend_from_slice(b));
+            for bits in [16, 24] {
+                let path = dir.join(format!("{channels}-{bits}.flac"));
+                save(&track, &edit, Choice { kind: Kind::Flac, flac_bits: bits, ..Choice::default() }, &path).unwrap();
+                let (got, ..) = read_back(&path);
+                let worst = got.iter().zip(&want).map(|(a, b)| (a - b).abs()).fold(0.0, f32::max);
+                assert_eq!(got.len(), want.len());
+                assert!(worst <= 1.0 / ((1u32 << (bits - 1)) - 1) as f32, "{bits}-bit FLAC off by {worst}");
+            }
+            for kind in [Kind::Mp3, Kind::Vorbis] {
+                let path = dir.join(format!("{channels}.{}", kind.ext()));
+                save(&track, &edit, Choice { kind, ..Choice::default() }, &path).unwrap();
+                let (got, c, r) = read_back(&path);
+                assert_eq!((c, r), (channels, 44100));
+                // The length is exact or within a few frames: the encoder's delay is trimmed on decode.
+                let frames = (got.len() / channels) as i64;
+                assert!((frames - edit.len() as i64).abs() <= 2, "{} {channels} ch: {frames} frames, want {}", kind.name(), edit.len());
+            }
+        }
+    }
+
+    #[test]
+    fn mp3_refuses_rates_lame_has_not() {
+        let dir = scratch("mp3rate");
+        let track = sine(96000, 2, 1000);
+        let err = save(&track, &Edit::whole(1000), Choice { kind: Kind::Mp3, ..Choice::default() }, &dir.join("x.mp3")).unwrap_err();
+        assert!(err.contains("96.0 kHz"), "{err}");
+        assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 0, "no temp file left");
     }
 
     #[test]
@@ -228,7 +383,7 @@ mod tests {
             f.primary_tag().or_else(|| f.first_tag()).and_then(|t| t.title().map(|s| s.into_owned()))
         };
         let title = read(&copy);
-        let out = dir.join("out.wav");
+        let out = dir.join("out.flac");
         // Five seconds are enough to check the tags.
         let rate = track.format.get().unwrap().rate as u64;
         assert_eq!(save(&track, &Edit::whole(track.len()).crop(0, 5 * rate), Choice::default(), &out), Ok(true));

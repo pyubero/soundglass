@@ -62,3 +62,7 @@
 - 2026-11-11 — tags are copied with lofty from the original's primary tag, or its first one (the test album has only ID3v1), re-mapped to the target format's main tag type; a save whose tags can't be copied still succeeds and says so
 - 2026-11-11 — after Save As the view stays on the original with its edits, now counted as saved; the save runs on a copy of the edit list, so editing on while it saves is safe
 - 2026-11-11 — no dither when saving to 16 or 24 bits — simple, and inaudible for music at normal levels
+- 2026-11-11 — MP3 is constant bitrate only (128–320 kb/s), mono or stereo at LAME's rates (up to 48 kHz); anything else is refused with a message, not resampled
+- 2026-11-11 — the MP3 encoder is flushed with padding (FlushGap) and its LAME tag frame overwrites LAME's empty first frame — that tag holds the delay and padding, so the saved file decodes to the exact length; FlushNoGap drops the last ~2000 frames
+- 2026-11-11 — flacenc's STREAMINFO is patched so its minimum block size leaves out the shorter last block, as the FLAC spec says — otherwise symphonia 0.6 can't open the file (ffmpeg can)
+- 2026-11-11 — Save As defaults to FLAC 16-bit; Ogg Vorbis quality is 0–10 as oggenc counts (default 6)

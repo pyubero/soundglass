@@ -8,12 +8,15 @@ license = "GPL-3.0-or-later"
 [dependencies]
 cpal = "0.18.2"
 eframe = { version = "0.37", default-features = false, features = ["glow", "wayland", "x11", "accesskit", "persistence"] }
+flacenc = "0.5.1"
 hound = "3.5.1"
 image = { version = "0.25.10", default-features = false, features = ["jpeg", "png"] }
 lofty = "0.25.5"
+mp3lame-encoder = "0.3.0"
 rfd = "0.18.0"
 rubato = "5.0.1"
 symphonia = { version = "0.6.1", features = ["all"] }
+vorbis_rs = "0.5.6"
 
 # Unoptimised decoders are 10–50× slower; keep dependencies fast in debug builds.
 [profile.dev.package."*"]
