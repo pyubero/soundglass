@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="icon/soundglass.svg" width="128" alt="soundglass logo">
+</p>
+
 # soundglass
 
 A small, fast audio player for Linux, written in Rust. Open a file and hear it at once. See [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md) for where it is heading.
@@ -62,7 +66,7 @@ Reset puts all three back to normal. The last two use WSOLA, which can sound a l
 
 This builds soundglass, copies it to `~/.local/bin`, adds `soundglass.desktop` to `~/.local/share/applications`, and makes it the default for MP3, FLAC, WAV, Ogg Vorbis, M4A/AAC, AIFF, CAF and Matroska audio. Opus is not supported yet.
 
-To undo: delete `~/.local/bin/soundglass` and `~/.local/share/applications/soundglass.desktop`, then pick another default app in System Settings → Default Applications (or File Associations).
+To undo: delete `~/.local/bin/soundglass`, `~/.local/share/applications/soundglass.desktop` and `~/.local/share/icons/hicolor/scalable/apps/soundglass.svg`, then pick another default app in System Settings → Default Applications (or File Associations).
 
 ## Licence
 

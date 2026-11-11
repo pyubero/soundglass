@@ -21,3 +21,7 @@ vorbis_rs = "0.5.6"
 # Unoptimised decoders are 10–50× slower; keep dependencies fast in debug builds.
 [profile.dev.package."*"]
 opt-level = 3
+
+[build-dependencies]
+# Embeds icon/soundglass.ico in the Windows .exe; does nothing on other targets.
+winresource = "0.1.34"

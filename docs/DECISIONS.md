@@ -101,3 +101,4 @@
 - 2026-11-11 — when symphonia finds no tags, title, artist and album come from lofty — symphonia's WAV reader stops at the audio and misses tags after it, which is where lofty writes them
 - 2026-11-11 — Rename from Tags works on the current file with an editable pattern, remembered in settings.txt (user's choice); a missing tag drops its placeholder and the text before it
 - 2026-11-11 — a rename never replaces a file: a hard link then removing the old name (falling back to check-then-rename where hard links aren't supported); no undo for a single rename
+- 2026-11-11 — app icon = play-shaped equaliser in pito real ibérico "mask" colours (user's choice): one SVG in hicolor/scalable via `Icon=soundglass`, a 256 px PNG embedded as the window icon (X11, Windows; winit ignores it on Wayland, where the panel uses the app id and .desktop file), and a 16–256 px .ico embedded in the .exe by build.rs (winresource, MIT)

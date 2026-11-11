@@ -63,7 +63,8 @@ fn main() -> eframe::Result {
     let name = track.path.file_name().unwrap_or_default().to_string_lossy().into_owned();
     let settings = settings::load();
     let remembered = settings.window_size.filter(|_| settings.remember_window_size);
-    let viewport = egui::ViewportBuilder::default().with_title(&name).with_inner_size(remembered.unwrap_or(DEFAULT_SIZE)).with_min_inner_size([260.0, 420.0]);
+    let viewport = egui::ViewportBuilder::default().with_title(&name).with_inner_size(remembered.unwrap_or(DEFAULT_SIZE)).with_min_inner_size([260.0, 420.0])
+        .with_icon(eframe::icon_data::from_png_bytes(include_bytes!("../icon/soundglass-256.png")).unwrap());
     // soundglass keeps the window size itself (see `App::save`): eframe's own saving can't follow Track Info.
     let options = eframe::NativeOptions { viewport, persist_window: false, ..Default::default() };
     let (show_info, show_edit) = (remembered.is_some() && settings.info_panel, remembered.is_some() && settings.edit_panel);
