@@ -297,6 +297,36 @@ pub fn read(track: &Track, edit: &Edit, a: u64, b: u64, mut sink: impl FnMut(&[f
     true
 }
 
+/// The largest sample of edited frames `a..b`, as a factor (1.0 is full scale).
+pub fn peak(track: &Track, edit: &Edit, a: u64, b: u64) -> f32 {
+    let mut peak = 0f32;
+    read(track, edit, a, b, |s| peak = s.iter().fold(peak, |p, x| p.max(x.abs())));
+    peak
+}
+
+/// The integrated loudness of edited frames `a..b` in LUFS; −∞ when silent or under 400 ms.
+pub fn loudness(track: &Track, edit: &Edit, a: u64, b: u64) -> f64 {
+    let Some(format) = track.format.get() else { return f64::NEG_INFINITY };
+    let mut meter = crate::loudness::Meter::new(format.rate, edit.channels(format.channels));
+    read(track, edit, a, b, |s| meter.push(s));
+    meter.integrated()
+}
+
+/// The frames from the first to the last one louder than `db` within `a..b`; `None` if all are quieter.
+pub fn audible(track: &Track, edit: &Edit, a: u64, b: u64, db: f32) -> Option<(u64, u64)> {
+    let channels = edit.channels(track.format.get().map_or(1, |f| f.channels));
+    let (level, mut frame, mut found) = (10f32.powf(db / 20.0), a, None::<(u64, u64)>);
+    read(track, edit, a, b, |s| {
+        for f in s.chunks_exact(channels) {
+            if f.iter().any(|x| x.abs() > level) {
+                found = Some((found.map_or(frame, |(first, _)| first), frame + 1));
+            }
+            frame += 1;
+        }
+    });
+    found
+}
+
 /// Lowest and highest sample of edited frames `a..b`, from `peaks` (the track's, one per `PEAK`
 /// frames) for pieces at least that long and from the samples themselves for shorter ones, so
 /// zoomed-in edges are exact. `None` where nothing is decoded yet.
@@ -410,6 +440,27 @@ mod tests {
         assert_eq!(all(&track, &m.stereo(2)), [2., 2., 3., 3.]);
         // Cuts keep the mix.
         assert_eq!(m.cut(0, 1).mix, m.mix);
+    }
+
+    #[test]
+    fn measures_peak_loudness_and_the_audible_part() {
+        // Silence, a 1 s sine at half scale, silence.
+        let mut samples = vec![0.0; 48000];
+        samples.extend((0..48000).map(|i| (i as f32 * 0.06).sin() * 0.5));
+        samples.extend(vec![0.0; 48000]);
+        let track = Track::from_samples(48000, 1, samples);
+        let e = Edit::whole(144_000);
+        assert!((peak(&track, &e, 0, e.len()) - 0.5).abs() < 1e-3);
+        // Normalizing: the gain that takes the peak to −1 dBFS lands it there.
+        let d = -1.0 - 20.0 * peak(&track, &e, 0, e.len()).log10();
+        let n = e.gain(0, e.len(), d, d);
+        assert!((20.0 * peak(&track, &n, 0, n.len()).log10() + 1.0).abs() < 0.01);
+        let lufs = loudness(&track, &e, 0, e.len());
+        assert!((loudness(&track, &e.gain(0, e.len(), 3.0, 3.0), 0, e.len()) - lufs - 3.0).abs() < 0.01);
+        assert_eq!(loudness(&track, &e, 0, 1000), f64::NEG_INFINITY);
+        let (first, last) = audible(&track, &e, 0, e.len(), -60.0).unwrap();
+        assert!(first >= 48000 && first < 48010 && last > 95_990 && last <= 96_000, "{first} {last}");
+        assert_eq!(audible(&track, &e, 0, 48000, -60.0), None);
     }
 
     #[test]

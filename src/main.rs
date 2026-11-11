@@ -75,7 +75,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -125,6 +125,8 @@ struct App {
     recent: Vec<PathBuf>,
     /// The Custom speed dialog's value while it is open.
     custom_speed: Option<f64>,
+    /// The Custom… effect dialog's effect and value.
+    custom_fx: Option<(Fx, f64)>,
     show_settings: bool,
     show_info: bool,
     show_edit: bool,
@@ -180,6 +182,66 @@ enum Action {
     /// Keeps only the selection.
     Crop,
     Silence,
+    Fx(Fx),
+}
+
+/// A quick fix from the Effects menu, on the selection or, without one, the whole track.
+#[derive(Clone, Copy, PartialEq)]
+enum Fx {
+    /// Over this many seconds from the start, or the whole selection with `None`.
+    FadeIn(Option<f64>),
+    /// Over this many seconds before the end, or the whole selection with `None`.
+    FadeOut(Option<f64>),
+    /// By this many dB.
+    Gain(f64),
+    /// The peak to this many dBFS.
+    Peak(f64),
+    /// The integrated loudness to this many LUFS.
+    Loudness(f64),
+    /// Removes what is quieter than this many dB at the start and end.
+    Trim(f64),
+    Reverse,
+    Mono,
+    Stereo,
+    Swap,
+}
+
+impl Fx {
+    /// The Custom… dialog's title, unit, range and first value.
+    fn custom(self) -> (&'static str, &'static str, std::ops::RangeInclusive<f64>, f64) {
+        match self {
+            Fx::FadeIn(_) => ("Fade in", " s", 0.1..=600.0, 3.0),
+            Fx::FadeOut(_) => ("Fade out", " s", 0.1..=600.0, 3.0),
+            Fx::Gain(_) => ("Gain", " dB", -40.0..=40.0, 2.0),
+            Fx::Peak(_) => ("Normalize peak", " dBFS", -40.0..=0.0, -1.0),
+            Fx::Loudness(_) => ("Normalize loudness", " LUFS", -40.0..=-5.0, -14.0),
+            _ => ("Trim silence below", " dB", -90.0..=-10.0, -60.0),
+        }
+    }
+
+    /// The same effect by `v`.
+    fn with(self, v: f64) -> Fx {
+        match self {
+            Fx::FadeIn(_) => Fx::FadeIn(Some(v)),
+            Fx::FadeOut(_) => Fx::FadeOut(Some(v)),
+            Fx::Gain(_) => Fx::Gain(v),
+            Fx::Peak(_) => Fx::Peak(v),
+            Fx::Loudness(_) => Fx::Loudness(v),
+            _ => Fx::Trim(v),
+        }
+    }
+}
+
+/// The presets the Effects menu offers.
+const FADES: [f64; 3] = [1.0, 3.0, 5.0];
+const GAINS: [f64; 6] = [-6.0, -3.0, -1.0, 1.0, 3.0, 6.0];
+const PEAKS: [f64; 2] = [-1.0, 0.0];
+const LOUDNESS: [f64; 3] = [-14.0, -16.0, -23.0];
+const TRIMS: [f64; 3] = [-60.0, -50.0, -40.0];
+
+/// `x` with a real minus sign.
+fn signed(x: f64) -> String {
+    format!("{x}").replace('-', "−")
 }
 
 /// Where to go once unsaved edits are saved or discarded.
@@ -282,7 +344,7 @@ impl eframe::App for App {
                 actions.push(action);
             }
         }
-        if ctx.memory(|m| m.focused().is_none()) && self.custom_speed.is_none() && self.pending.is_none() {
+        if ctx.memory(|m| m.focused().is_none()) && self.custom_speed.is_none() && self.custom_fx.is_none() && self.pending.is_none() {
             let plain = |k| ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, k));
             if plain(egui::Key::Escape) {
                 self.edit_view.selection = None;
@@ -378,6 +440,7 @@ impl eframe::App for App {
                         }
                     }
                 });
+                ui.menu_button("Effects", |ui| self.effects_menu(ui, &mut actions));
                 ui.menu_button("View", |ui| {
                     let mut on = self.show_info;
                     if ui.add(egui::Checkbox::new(&mut on, "Track Info")).on_hover_text(ctx.format_shortcut(&info_key)).clicked() {
@@ -486,6 +549,9 @@ impl eframe::App for App {
         self.settings_window(&ctx);
         if let Some(speed) = self.speed_window(&ctx) {
             actions.push(Action::Speed(speed));
+        }
+        if let Some(fx) = self.fx_window(&ctx) {
+            actions.push(Action::Fx(fx));
         }
         if save_copy {
             self.save_copy();
@@ -626,7 +692,7 @@ impl App {
     fn apply(&mut self, action: Action, pos: u64, len: u64) {
         let Ok(p) = &self.player else { return };
         match action {
-            Action::Undo | Action::Redo | Action::Cut | Action::Crop | Action::Silence => self.change(action, pos),
+            Action::Undo | Action::Redo | Action::Cut | Action::Crop | Action::Silence | Action::Fx(_) => self.change(action, pos),
             Action::Previous => self.previous(),
             Action::Next => self.go(self.index + 1),
             Action::Seek(frame) => p.send(Cmd::Seek(frame)),
@@ -677,6 +743,111 @@ impl App {
             });
         });
         self.custom_speed = (!close).then_some(snap_speed(draft));
+        chosen
+    }
+
+    /// The Effects menu: presets, then Custom… in each submenu.
+    fn effects_menu(&mut self, ui: &mut egui::Ui, actions: &mut Vec<Action>) {
+        let (done, selected) = (self.track.done(), self.edit_view.selection.is_some());
+        let out = self.edit().channels(self.track.format.get().map_or(1, |f| f.channels));
+        let (mut chosen, mut custom) = (None, None);
+        let pick = |ui: &mut egui::Ui, label: &str, enabled: bool| {
+            let clicked = ui.add_enabled(done && enabled, egui::Button::new(label)).clicked();
+            if clicked {
+                ui.close();
+            }
+            clicked
+        };
+        ui.weak(if selected { "On the selection" } else { "On the whole track" });
+        for (name, fade) in [("Fade in", Fx::FadeIn as fn(Option<f64>) -> Fx), ("Fade out", Fx::FadeOut)] {
+            ui.menu_button(name, |ui| {
+                if pick(ui, "Whole selection", selected) {
+                    chosen = Some(fade(None));
+                }
+                for secs in FADES {
+                    if pick(ui, &format!("{secs} s"), true) {
+                        chosen = Some(fade(Some(secs)));
+                    }
+                }
+                if pick(ui, "Custom…", true) {
+                    custom = Some(fade(None));
+                }
+            });
+        }
+        ui.menu_button("Gain", |ui| {
+            for db in GAINS {
+                if pick(ui, &format!("{}{} dB", if db > 0.0 { "+" } else { "" }, signed(db)), true) {
+                    chosen = Some(Fx::Gain(db));
+                }
+            }
+            if pick(ui, "Custom…", true) {
+                custom = Some(Fx::Gain(0.0));
+            }
+        });
+        ui.menu_button("Normalize", |ui| {
+            for db in PEAKS {
+                if pick(ui, &format!("Peak to {} dBFS", signed(db)), true) {
+                    chosen = Some(Fx::Peak(db));
+                }
+            }
+            for lufs in LOUDNESS {
+                if pick(ui, &format!("Loudness to {} LUFS", signed(lufs)), true) {
+                    chosen = Some(Fx::Loudness(lufs));
+                }
+            }
+            if pick(ui, "Custom peak…", true) {
+                custom = Some(Fx::Peak(0.0));
+            }
+            if pick(ui, "Custom loudness…", true) {
+                custom = Some(Fx::Loudness(0.0));
+            }
+        });
+        ui.menu_button("Trim silence", |ui| {
+            for db in TRIMS {
+                if pick(ui, &format!("Below {} dB", signed(db)), true) {
+                    chosen = Some(Fx::Trim(db));
+                }
+            }
+            if pick(ui, "Custom…", true) {
+                custom = Some(Fx::Trim(0.0));
+            }
+        });
+        if pick(ui, "Reverse", true) {
+            chosen = Some(Fx::Reverse);
+        }
+        ui.separator();
+        ui.menu_button("Channels", |ui| {
+            ui.weak("On the whole track");
+            for (label, enabled, fx) in [("Mono", out >= 2, Fx::Mono), ("Stereo", out == 1, Fx::Stereo), ("Swap left and right", out == 2, Fx::Swap)] {
+                if pick(ui, label, enabled) {
+                    chosen = Some(fx);
+                }
+            }
+        });
+        actions.extend(chosen.map(Action::Fx));
+        if let Some(fx) = custom {
+            self.custom_fx = Some((fx, fx.custom().3));
+        }
+    }
+
+    /// The Custom… effect dialog; returns the effect when OK is pressed.
+    fn fx_window(&mut self, ctx: &egui::Context) -> Option<Fx> {
+        let (fx, mut draft) = self.custom_fx?;
+        let (title, unit, range, _) = fx.custom();
+        let (mut chosen, mut close) = (None, false);
+        egui::Window::new(title).collapsible(false).resizable(false).show(ctx, |ui| {
+            ui.add(egui::DragValue::new(&mut draft).range(range).speed(0.1).fixed_decimals(1).suffix(unit));
+            ui.horizontal(|ui| {
+                if ui.button("OK").clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                    chosen = Some(fx.with(draft));
+                    close = true;
+                }
+                if ui.button("Cancel").clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                    close = true;
+                }
+            });
+        });
+        self.custom_fx = (!close).then_some((fx, draft));
         chosen
     }
 
@@ -780,6 +951,50 @@ impl App {
             (Action::Silence, Some((a, b))) => {
                 history.push(cur.silence(a, b));
                 pos
+            }
+            (Action::Fx(fx), _) => {
+                let (rate, src) = self.track.format.get().map_or((1, 1), |f| (f.rate, f.channels));
+                let (a, b) = sel.unwrap_or((0, cur.len()));
+                let frames = |secs: f64| (secs * rate as f64) as u64;
+                // shortcut: peak, loudness and trim measure on the UI thread (~0.1 s per 5 min); move to a thread if long recordings stutter.
+                let edited = match fx {
+                    Fx::FadeIn(secs) => Ok(cur.gain(a, secs.map_or(b, |s| (a + frames(s)).min(b)), edit::FLOOR_DB, 0.0)),
+                    Fx::FadeOut(secs) => Ok(cur.gain(secs.map_or(a, |s| b.saturating_sub(frames(s)).max(a)), b, 0.0, edit::FLOOR_DB)),
+                    Fx::Gain(db) => Ok(cur.gain(a, b, db as f32, db as f32)),
+                    Fx::Peak(target) => match edit::peak(&self.track, &cur, a, b) {
+                        0.0 => Err("Nothing to normalize: it's silent"),
+                        peak => {
+                            let db = target as f32 - 20.0 * peak.log10();
+                            Ok(cur.gain(a, b, db, db))
+                        }
+                    },
+                    Fx::Loudness(target) => match edit::loudness(&self.track, &cur, a, b) {
+                        lufs if lufs.is_finite() => Ok(cur.gain(a, b, (target - lufs) as f32, (target - lufs) as f32)),
+                        _ => Err("Too short or too quiet to measure its loudness"),
+                    },
+                    Fx::Trim(db) => match edit::audible(&self.track, &cur, a, b, db as f32) {
+                        Some((first, last)) if (first, last) != (a, b) => Ok(cur.cut(last, b).cut(a, first)),
+                        Some(_) => Err("No silence at the start or end to trim"),
+                        None => Err("It's all quieter than that; nothing trimmed"),
+                    },
+                    Fx::Reverse => Ok(cur.reverse(a, b)),
+                    Fx::Mono => Ok(cur.mono(src)),
+                    Fx::Stereo => Ok(cur.stereo(src)),
+                    Fx::Swap => Ok(cur.swap(src)),
+                };
+                match edited {
+                    Ok(e) => history.push(e),
+                    Err(m) => {
+                        self.save_notice = Some((Ok(m.into()), self.ctx.get().map_or(0.0, |c| c.input(|i| i.time))));
+                        return;
+                    }
+                }
+                if let Fx::Trim(_) = fx {
+                    view.selection = None;
+                    a
+                } else {
+                    pos
+                }
             }
             _ => return,
         };
