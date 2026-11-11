@@ -60,7 +60,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, show_settings: false, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, custom_speed: None, show_settings: false, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -104,6 +104,9 @@ struct App {
     settings: settings::Settings,
     /// The volume slider's position, 0 to 1; see `volume_gain`.
     volume: f32,
+    speed: f64,
+    /// The Custom speed dialog's value while it is open.
+    custom_speed: Option<f64>,
     show_settings: bool,
     settings_error: Option<String>,
     player: Result<Player, String>,
@@ -122,6 +125,17 @@ enum Action {
     Seek(u64),
     /// Slider position, 0 to 1.
     Volume(f32),
+    Speed(f64),
+}
+
+/// The speeds Playback → Change speed offers directly.
+const SPEEDS: [f64; 6] = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
+/// Custom speeds move in this step.
+const SPEED_STEP: f64 = 0.05;
+
+/// `x` rounded to the nearest 0.05 and kept within 0.5×–2×.
+fn snap_speed(x: f64) -> f64 {
+    ((x / SPEED_STEP).round() * SPEED_STEP).clamp(0.5, 2.0)
 }
 
 impl eframe::App for App {
@@ -185,9 +199,27 @@ impl eframe::App for App {
                         self.show_settings = true;
                     }
                     ui.separator();
+                    ui.separator();
                     if ui.add(egui::Button::new("Quit").shortcut_text(ctx.format_shortcut(&egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Q)))).clicked() {
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
+                });
+                ui.menu_button("Playback", |ui| {
+                    ui.menu_button("Change speed", |ui| {
+                        for speed in SPEEDS {
+                            let label = if speed == 1.0 { "1× (Normal)".to_string() } else { format!("{speed}×") };
+                            if ui.radio((self.speed - speed).abs() < 1e-6, label).clicked() {
+                                actions.push(Action::Speed(speed));
+                                ui.close();
+                            }
+                        }
+                        let custom = !SPEEDS.iter().any(|s| (self.speed - s).abs() < 1e-6);
+                        let label = if custom { format!("Custom ({:.2}×)…", self.speed) } else { "Custom…".into() };
+                        if ui.radio(custom, label).clicked() {
+                            self.custom_speed = Some(self.speed);
+                            ui.close();
+                        }
+                    });
                 });
             });
         });
@@ -221,6 +253,9 @@ impl eframe::App for App {
         });
 
         self.settings_window(&ctx);
+        if let Some(speed) = self.speed_window(&ctx) {
+            actions.push(Action::Speed(speed));
+        }
         if open_file && let Some(path) = rfd::FileDialog::new().add_filter("Audio", &folder::EXTENSIONS).pick_file() {
             self.open(path);
         }
@@ -258,6 +293,10 @@ impl App {
             Action::Previous => self.previous(),
             Action::Next => self.go(self.index + 1),
             Action::Seek(frame) => p.send(Cmd::Seek(frame)),
+            Action::Speed(speed) => {
+                self.speed = speed;
+                p.send(Cmd::Speed(speed));
+            }
             Action::Volume(v) => {
                 self.volume = v;
                 p.send(Cmd::Volume(volume_gain(v)));
@@ -271,6 +310,34 @@ impl App {
                 p.send(Cmd::Play);
             }
         }
+    }
+
+    /// The Custom speed dialog; returns the speed when OK is pressed.
+    fn speed_window(&mut self, ctx: &egui::Context) -> Option<f64> {
+        let mut draft = self.custom_speed?;
+        let (mut chosen, mut close) = (None, false);
+        egui::Window::new("Custom speed").collapsible(false).resizable(false).show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                if ui.button("−").clicked() {
+                    draft -= SPEED_STEP;
+                }
+                ui.add(egui::DragValue::new(&mut draft).range(0.5..=2.0).speed(0.01).fixed_decimals(2).suffix("×"));
+                if ui.button("+").clicked() {
+                    draft += SPEED_STEP;
+                }
+            });
+            ui.horizontal(|ui| {
+                if ui.button("OK").clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                    chosen = Some(snap_speed(draft));
+                    close = true;
+                }
+                if ui.button("Cancel").clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                    close = true;
+                }
+            });
+        });
+        self.custom_speed = (!close).then_some(snap_speed(draft));
+        chosen
     }
 
     fn settings_window(&mut self, ctx: &egui::Context) {
@@ -547,7 +614,16 @@ pub fn ms(t: Instant) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{marquee, volume_gain};
+    use super::{marquee, snap_speed, volume_gain};
+
+    #[test]
+    fn speed_snaps_to_the_grid() {
+        let close = |a: f64, b: f64| (a - b).abs() < 1e-9;
+        assert!(close(snap_speed(1.37), 1.35));
+        assert!(close(snap_speed(1.026), 1.05));
+        assert!(close(snap_speed(0.3), 0.5));
+        assert!(close(snap_speed(2.6), 2.0));
+    }
 
     #[test]
     fn volume_curve() {
