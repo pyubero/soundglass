@@ -75,3 +75,9 @@
 - 2026-11-11 — the save job lives in App, shared by Save Copy and Save As; "Saved …" shows in the player view for 4 s, errors until the next save
 - 2026-11-11 — while playing with a waveform shown, the window redraws every 33 ms (about 30 fps; 50 ms was tried first), not at the screen's rate — a little less smooth, less CPU (user's choice)
 - 2026-11-11 — "Remember window size" also stores whether the Edit panel is open and its height — the saved size included the panel, so a restart without it came back too tall
+- 2026-11-11 — milestone 4 does fade, gain, normalize, trim silence, reverse and mono/stereo/swap now; speed and pitch move to a new milestone 5 that first studies time-stretching (our own vs crates, licence, quality, real time) (user's choice)
+- 2026-11-11 — change sample rate is a Save As option, not an edit — playback is resampled to the device anyway, and rubato is already in the tree (user's choice)
+- 2026-11-11 — effects pick their amount from preset menu items, each menu with a Custom… value (user's choice)
+- 2026-11-11 — effects are fields on the edit list's pieces (a gain ramp in dB, a reversed flag) plus a channel matrix on the edit, not rendered audio — they cost nothing and undo stays an older list
+- 2026-11-11 — gain is a ramp linear in dB, so stacked gains and fades add up to one ramp per piece; at or below −60 dB is silence, and a fade runs from −60 to 0 dB
+- 2026-11-11 — effects apply to the selection, or the whole track without one; mono, stereo and swap always to the whole track — a file has one channel count

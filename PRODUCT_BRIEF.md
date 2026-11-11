@@ -57,31 +57,34 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 - **Normalize.** Bring the peak to a level, or the loudness to a target LUFS so several files sound equally loud.
 - **Trim silence.** Remove the quiet bits at the start and end.
 - **Mono, stereo, channel swap.** Mix down to mono, duplicate mono to stereo, or swap left and right.
-- **Change sample rate.** For example 48 kHz to 44.1 kHz.
-- **Change speed or pitch.** Separately: slower without lower pitch, or a semitone up without faster.
 - **Reverse.** Play the selection backwards.
+- **Change sample rate.** For example 48 kHz to 44.1 kHz, chosen in Save As.
 
-### 5. Files and tags
+### 5. Speed and pitch
+- **Study time-stretching first.** Compare writing our own (WSOLA, phase vocoder) with existing crates: licence, quality on music, and whether it runs in real time for the slow-down loop in milestone 7. Pick one before building.
+- **Change speed or pitch.** Separately: slower without lower pitch, or a semitone up without faster.
+
+### 6. Files and tags
 - **Edit tags.** Title, artist, album, year, track number, genre and cover art, saved to a copy or, with confirmation, in place (tags only, never the audio).
 - **Rename from tags.** For example `01 - Artist - Title.mp3`, shown before anything is renamed.
 - **Split into tracks.** Split a long recording (vinyl, a concert) at silences or markers, with a preview of the cut points.
 - **Join files.** Put several files one after another into one file.
 - **Convert a folder.** Save every file in a folder in another format and quality.
 
-### 6. Practice tools
+### 7. Practice tools
 - **A–B loop with slow-down.** Loop a hard passage at a slower speed without changing the pitch.
 - **Spectrogram.** See frequencies over time, to spot hum, clicks or where notes are.
 - **BPM and key.** Estimate the tempo and musical key of the track.
 - **Markers with notes.** Drop named markers (chorus, solo) and jump between them; they can be saved next to the file.
 - **Metronome.** A click at a set tempo, alone or over the track.
 
-### 7. Tidy up
+### 8. Tidy up
 - **Identify track.** Make a Chromaprint fingerprint of the file (pure Rust, rusty-chromaprint), look it up online in AcoustID, then fill in the missing tags from MusicBrainz. Show the match and its score, and on request write the tags and rename the file. Only the fingerprint and the length are sent, and only when you run it. Free for non-commercial use, with one application key; at most 3 lookups per second (AcoustID) and 1 per second (MusicBrainz). Works on whole files, not clips.
 - **Clean up a music folder.** The same in one pass over a folder and all its subfolders: identify every file, show a list of proposed tags and new names to accept or skip, then apply. Files that aren't found are left alone. Ctrl+Z undoes the renames. About 1,000 files take 6 minutes at AcoustID's limit.
 - **Group duplicate songs.** Find copies of the same recording in a folder by how they sound, even in different formats or bitrates, and even when one copy is trimmed or starts later (peak-based matching like Olaf or Panako, written by us; it compares only your own files, so it needs no database), show the groups, and move each into its own folder. Nothing is deleted, and Ctrl+Z puts everything back.
 - **Use a local database (later, for power users).** Point Identify Track at your own AcoustID and MusicBrainz server built from their public data exports, so nothing goes online. Too big to ship with the app.
 
-### 8. Local AI (optional download)
+### 9. Local AI (optional download)
 - **Split into stems.** Vocals, drums, bass and the rest as separate files, for karaoke or practising along.
 - **Remove noise.** Clean background noise and hum from voice recordings.
 - **Transcribe speech.** Turn a talk or voice memo into text you can copy.
