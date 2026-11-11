@@ -222,8 +222,11 @@ impl eframe::App for App {
         let info_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::I);
         let viewport = ctx.input(|i| i.viewport().clone());
         let resizable = !viewport.maximized.unwrap_or(false) && !viewport.fullscreen.unwrap_or(false);
-        if resizable && let Some(r) = viewport.inner_rect {
-            self.window_size = Some([r.width(), r.height()]);
+        // Not `viewport.inner_rect`: it needs the window's position, which Wayland never gives,
+        // so it is always None there. The canvas size is the inner size on every platform.
+        if resizable {
+            let size = ctx.viewport_rect().size();
+            self.window_size = Some([size.x, size.y]);
         }
         let mut toggle_info = ctx.input_mut(|i| i.consume_shortcut(&info_key));
         if ctx.input_mut(|i| i.consume_shortcut(&egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Q))) {
