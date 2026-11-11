@@ -2,7 +2,7 @@
 
 *Milestone 5, step 1. Written 2026-11-11. Nothing here is decided yet; the choice goes in DECISIONS.md once it is made.*
 
-Speed and pitch changes (milestone 5) and the slow-down practice loop (milestone 7) both need a time-stretcher: something that changes how long audio lasts without changing its pitch, or the pitch without the length. This document explains how such algorithms work, then how each candidate library does it, and what that means for soundglass.
+Speed and pitch changes (milestone 5) and the slow-down practice loop (milestone 7) both need a time-stretcher: something that changes how long audio lasts without changing its pitch, or the pitch without the length. This document explains how such algorithms work, then how each candidate library does it, how they compare with the modulator in audio-tools (our own earlier Python work), and what that means for soundglass.
 
 ## 1. The problem
 
@@ -50,6 +50,23 @@ The main approaches:
 - **Phase reset.** Detect onsets (for example a sudden rise in spectral energy, "spectral flux"). At an onset, copy the input phases straight into the output instead of advancing them, so the attack is reproduced as it was.
 - **Move the stretching away from transients.** Stretch less (or not at all) right at an onset, and more in the steady parts between, so the overall factor is still right.
 - **Multi-resolution.** Long windows resolve close frequencies well (good for bass and sustained tones) but blur time. Short windows keep attacks sharp but blur frequency. Some stretchers analyse with several window lengths at once and use each where it fits.
+
+### Phase reconstruction — Griffin–Lim
+A different way round the phase problem: keep only the magnitudes, change them as needed, and then *invent* phases that fit. Griffin & Lim (1984) showed how:
+1. Start from some phase, often random.
+2. Turn the spectrogram (wanted magnitudes plus current phases) back into a signal with an inverse STFT.
+3. Take that signal's STFT. Its magnitudes are not quite the wanted ones, because overlapping frames constrain each other, but its phases are now consistent with a real signal.
+4. Keep those phases, put the wanted magnitudes back, and go to 2.
+
+Each round brings the result closer to a signal whose STFT really has the wanted magnitudes. "Fast Griffin–Lim" (Perraudin, Balazs & Søndergaard, 2013) adds momentum, pushing each step a little further in the direction it is already going, and gets there in far fewer rounds.
+
+Since no input phase is carried over, nothing can drift apart the way a basic phase vocoder's bins do. But the phases it finds are only "consistent", not the original ones, and that shows:
+- a slightly metallic, phasey sound on tones;
+- attacks smeared, often with a faint pre-echo, since nothing tells it where the attack was;
+- a low noise floor when started from random phases;
+- a different result on each run.
+
+It needs the whole spectrogram and many passes over it, so it works offline. Real-time variants exist: RTISI and RTISI-LA (Zhu, Beauregard & Wyse, 2007) build the phases frame by frame with a few frames of look-ahead.
 
 ### Pitch shifting and formants
 Two ways:
@@ -144,6 +161,68 @@ GPL (or commercial). GPL-2.0-or-later is compatible with our GPL-3.0-or-later. I
 ### Our own WSOLA
 About 150 lines of Rust, no dependency, fully understood and easy to make allocation-free. It suits speech and single instruments, and mild slow-downs (0.75× and up) on light material. On a full band it will warble and repeat attacks, as described in section 2. Pitch would be stretch then resample, which we can already do with rubato.
 
+### The audio-tools modulator (ours, Python)
+The speed and pitch modulator in `audio-tools/` (`speed_modulator.py` and `pitch_modulator.py`, built on librosa). It is a fifth family next to the four above: **magnitude interpolation plus phase reconstruction**.
+
+**Algorithm.**
+1. Load the file with `librosa.load`. With no arguments this resamples to 22 050 Hz mono (*librosa's documented default; librosa isn't installed here to confirm*).
+2. Take the STFT and keep only the magnitudes; the input phase is thrown away.
+   - Speed uses n_fft 2048 (about 93 ms at 22.05 kHz) with a 512 hop.
+   - Pitch uses n_fft 4096 with a 1024 hop.
+3. Change the magnitudes:
+   - **Speed:** each frequency bin's magnitude over time is redrawn with a cubic spline at `ceil(frames ÷ factor)` evenly spaced points. A factor of 0.7 gives 1/0.7 as many frames, so the audio lasts longer.
+   - **Pitch:** each frame's spectrum is redrawn along frequency with a cubic spline, so the value at frequency f is the original's at f ÷ 2^(n/12). The whole spectrum is moved by n semitones and the number of frames stays the same.
+4. Rebuild a signal with `librosa.griffinlim` at the same hop. Its defaults are 32 rounds of fast Griffin–Lim (momentum 0.99) from random phases (*also librosa's documented defaults, unconfirmed here*).
+5. Optionally add count-in clicks at the song's tempo (`utils_audio.add_intro_ticks`, using `librosa.beat.beat_track`), then write MP3 through ffmpeg.
+
+`speed_modulator_librosa.ipynb` runs librosa's own `effects.time_stretch` on the same song for comparison. That is a basic phase vocoder.
+
+**What follows from the design.**
+- **Phase:** it never moves phases on. All coherence, vertical and horizontal, comes from Griffin–Lim making the STFT consistent. So it avoids the basic phase vocoder's drifting bins but trades them for Griffin–Lim's own sound (section 2).
+- **Time:** interpolating the magnitudes means no frames are skipped or repeated, as they are in OLA and WSOLA. Slow-downs come out smooth on sustained notes. But an attack that rose within one frame now rises over 1 ÷ factor frames. With nothing to detect transients and no phase to keep them sharp, attacks soften, more so the slower it goes.
+- **Pitch:** moving the bins is the same idea Signalsmith Stretch uses, but on the whole spectrum linearly. There is no peak-aware map that keeps harmonics 1:1, and no formant handling, so voices take on the chipmunk or giant sound.
+- **Cost:** offline only. The whole song, then 32 rounds of STFT plus inverse STFT. That is fine on a 3-minute song at 22 kHz mono, and about four times the work at 44.1 kHz stereo.
+
+### The audio-tools modulator against each candidate
+- **Basic phase vocoder** (librosa's `time_stretch`, the one you compared it with):
+  - It uses the same STFT, but keeps the input phase and moves it on, where ours rebuilds it.
+  - The phase vocoder keeps the original phases where they matter (steady tones, the start of attacks) but drifts into phasiness. Ours never drifts but never had the original phases.
+  - Expect the phase vocoder to be more "present" on tones and ours to be smoother but a little metallic.
+  - Both are offline as written.
+- **Signalsmith Stretch:**
+  - It is the closest relative. Both work on the spectrum, and both move bins for pitch.
+  - Where ours iterates 32 times to find consistent phases, Signalsmith *predicts* them in one pass from neighbouring points, using the input's own phase relationships. It gets coherence by construction instead of by search, and works block by block, live.
+  - For pitch, Signalsmith keeps strong harmonics 1:1, has a tonality limit and keeps formants; ours scales everything evenly.
+  - Neither detects transients.
+- **timestretch:**
+  - The opposite approach: mostly time-domain (SOLA) plus a locked phase vocoder for wide ratios.
+  - It is built to run live with no allocation. Ours can't run live at all.
+  - Its focus is DJ tempo changes; ours was made for practice slow-downs (0.66–0.7× in the scripts).
+- **Bungee:**
+  - It keeps each tone's bins together by locking them to the partial's peak: phase locking, so it keeps much more of the original phase than ours.
+  - Both soften attacks, Bungee on purpose (it suppresses partials whose energy jumps), ours as a side effect of interpolating.
+  - Bungee's grains can go anywhere, reverse included; ours can only stretch a whole file.
+- **Rubber Band:**
+  - It is furthest from ours on attacks. It detects transients, resets phase there and moves the stretch away from them, and R3 analyses with several window lengths.
+  - On drums and plucked notes it should sound clearly sharper. On sustained acoustic music the gap is smaller.
+- **WSOLA:**
+  - Time domain, cheap and live, with opposite failures: WSOLA stutters and doubles attacks on dense music, ours smears them.
+  - WSOLA keeps the true waveform (and true phase) inside each window, which ours never has.
+
+### What is specific to the current scripts
+These are details of the scripts, not limits of the method:
+- **22.05 kHz mono.** Loading at librosa's default rate drops everything above about 11 kHz (cymbals, breath, air) and the stereo image.
+- **Spline overshoot.** Cubic splines can swing past the points they join, so around sharp changes the new magnitudes can go negative. Griffin–Lim then treats a negative magnitude as a phase flip.
+- **Pitch down extrapolates.** For a downward shift, the top of the new spectrum asks the spline for values beyond the original's highest frequency, where a cubic spline extrapolates freely.
+- **Random start.** Griffin–Lim from random phases gives a slightly different result each time and a faint noise floor.
+
+### How it could be improved (ideas, not plans)
+- **Start Griffin–Lim from phase-vocoder phases** instead of random ones. Starting closer to the answer is known to need far fewer rounds and to keep attacks sharper.
+- **Interpolate log-magnitudes** (or use a spline that can't overshoot), and clamp at 0.
+- **Keep the native rate and stereo.** Rebuild mid and side, or left and right with shared phases, as Signalsmith copies phase differences between channels.
+- **RTISI-LA** for frame-by-frame, live use.
+- **Porting it to Rust** would need only an FFT, and realfft and rustfft are already in our tree through rubato.
+
 ### Smaller crates seen
 - `wsola` 0.1.0: MIT, pure Rust WSOLA.
 - `pitch_shift` 2.1.0: a phase vocoder.
@@ -170,6 +249,8 @@ How the candidates compare on those needs:
 - **Rubber Band** probably has the best quality and the best transient handling, but it is the most work to bind and build.
 - **Our own WSOLA** is the cheapest and safest, and probably enough for practising a single instrument. It is clearly worse on full mixes.
 
+- **The audio-tools modulator** is ours and understood. Ported to Rust it would need nothing new. As it stands it can only make offline edits, and it would need fixes (native rate, stereo, a better start for Griffin–Lim) to match the others there. It can't be the live loop without RTISI-LA. Its count-in clicks fit milestone 7's metronome.
+
 The two needs might be met by one engine or two (for example, the best offline engine for edits and a lighter one for the live loop). One engine is simpler and makes edits sound the same as the loop.
 
 ## 5. Unverified
@@ -178,7 +259,8 @@ The two needs might be met by one engine or two (for example, the best offline e
 - Bungee's exact hop, window shape and transient logic (`Timing.cpp`, `Window.cpp` and `Partials.cpp` were not read).
 - Signalsmith Stretch's latency in samples, and whether `process()` really never allocates.
 - The internals of Rubber Band R3, and R2's phase reset (from its option documentation, not re-read).
-- Quality on our material for every candidate: nothing in this study has been listened to.
+- librosa's defaults as the audio-tools scripts use them (22 050 Hz mono load; 32 rounds of fast Griffin–Lim from random phases): from librosa's documentation, not checked against an installed librosa.
+- Quality on our material for every candidate, the audio-tools modulator included: nothing in this study has been listened to.
 
 ## 6. Next step (optional)
 
@@ -191,6 +273,7 @@ A benchmark and blind listening test in a throwaway crate outside the repo:
   - output length against the target
   - the pitch of a test sine
 - **Blind files:** written with shuffled names and a separate key, for you to rank by ear.
+- **The audio-tools modulator in the same set,** run on the same clips (as it is, and at 44.1 kHz stereo), so it is judged blind next to the libraries.
 
 ## 7. Sources
 
@@ -200,4 +283,5 @@ A benchmark and blind listening test in a throwaway crate outside the repo:
 - Bungee: [repository](https://github.com/kupix/bungee), [website](https://bungee.parabolaresearch.com/), [bungee-rs](https://docs.rs/bungee-rs)
 - Rubber Band: [R3 announcement (2022)](https://breakfastquay.com/news/20220707.html), [integration guide](https://www.breakfastquay.com/rubberband/integration.html)
 - Small crates: [wsola](https://docs.rs/crate/wsola/0.1.0), [pitch_shift](https://docs.rs/crate/pitch_shift/2.1.0), [phase_vocoder](https://docs.rs/crate/phase_vocoder/0.1.0), [rocoder](https://docs.rs/crate/rocoder/latest)
-- Background papers, cited from general knowledge rather than re-read: Flanagan & Golden, "Phase vocoder" (1966); Dolson, "The phase vocoder: a tutorial" (1986); Moulines & Charpentier, PSOLA (1990); Verhelst & Roelands, WSOLA (1993); Laroche & Dolson, "Improved phase vocoder time-scale modification of audio" (1999).
+- The audio-tools modulator: `audio-tools/speed_modulator.py`, `audio-tools/pitch_modulator.py`, `audio-tools/speed_modulator_librosa.ipynb`, `audio-tools/utils_audio.py` (read for this study)
+- Background papers, cited from general knowledge rather than re-read: Flanagan & Golden, "Phase vocoder" (1966); Dolson, "The phase vocoder: a tutorial" (1986); Moulines & Charpentier, PSOLA (1990); Verhelst & Roelands, WSOLA (1993); Laroche & Dolson, "Improved phase vocoder time-scale modification of audio" (1999); Griffin & Lim, "Signal estimation from modified short-time Fourier transform" (1984); Perraudin, Balazs & Søndergaard, "A fast Griffin-Lim algorithm" (2013); Zhu, Beauregard & Wyse, "Real-time signal estimation from modified short-time Fourier transform magnitude spectra" (RTISI-LA, 2007).
