@@ -8,7 +8,7 @@ use symphonia::core::errors::Error;
 use symphonia::core::formats::probe::Hint;
 use symphonia::core::formats::{FormatOptions, TrackType};
 use symphonia::core::io::MediaSourceStream;
-use symphonia::core::meta::MetadataOptions;
+use symphonia::core::meta::{MetadataOptions, StandardTag, StandardVisualKey};
 
 /// Frames per chunk: about 1.5 s at 44.1 kHz. The player reads whole chunks without copying the list.
 pub const CHUNK: usize = 65536;
@@ -23,12 +23,26 @@ pub struct Format {
     pub channels: usize,
 }
 
+/// What the file's tags say, each `None` when missing.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Tags {
+    pub title: Option<String>,
+    pub artist: Option<String>,
+    pub album: Option<String>,
+}
+
+/// Largest cover side kept, in pixels; bigger embedded pictures are shrunk on load.
+const COVER_MAX: u32 = 512;
+
 // shortcut: whole track in memory (~1.4 GB per hour at 48 kHz stereo); a RAM limit in Settings comes later (user's choice).
 pub struct Track {
     pub path: PathBuf,
     pub format: OnceLock<Format>,
     /// Length the container reports, before decoding finishes.
     pub expected: OnceLock<u64>,
+    pub tags: OnceLock<Tags>,
+    /// The embedded front cover (or first picture), decoded off the UI thread.
+    pub cover: OnceLock<eframe::egui::ColorImage>,
     /// Interleaved samples, `CHUNK` frames each except the last.
     chunks: Mutex<Vec<Arc<[f32]>>>,
     /// Frames in `chunks`.
@@ -41,13 +55,29 @@ pub struct Track {
 
 impl Track {
     /// Starts decoding `path` on its own thread; `notify` runs whenever more audio is ready.
-    pub fn load(path: PathBuf, notify: impl Fn() + Send + 'static) -> Arc<Track> {
+    pub fn load(path: PathBuf, notify: impl Fn() + Send + Sync + 'static) -> Arc<Track> {
+        let notify = Arc::new(notify);
         let track = Arc::new(Track::empty(path));
         let t = track.clone();
         std::thread::spawn(move || {
             let mut cur: Vec<f32> = Vec::new();
             let (mut peak, mut peak_frames) = ((f32::MAX, f32::MIN), 0);
-            let result = decode(&t.path.clone(), |samples, channels, rate, expected| {
+            let on_meta = |tags, picture: Option<Box<[u8]>>| {
+                let _ = t.tags.set(tags);
+                // On its own thread: a large JPEG must not hold up the first sound.
+                if let Some(data) = picture {
+                    let (t, notify) = (t.clone(), notify.clone());
+                    std::thread::spawn(move || {
+                        if let Ok(img) = image::load_from_memory(&data) {
+                            let rgba = img.thumbnail(COVER_MAX, COVER_MAX).to_rgba8();
+                            let size = [rgba.width() as usize, rgba.height() as usize];
+                            let _ = t.cover.set(eframe::egui::ColorImage::from_rgba_unmultiplied(size, &rgba));
+                            notify();
+                        }
+                    });
+                }
+            };
+            let result = decode(&t.path.clone(), on_meta, |samples, channels, rate, expected| {
                 if let Some(n) = expected {
                     let _ = t.expected.set(n);
                 }
@@ -101,6 +131,8 @@ impl Track {
             path,
             format: OnceLock::new(),
             expected: OnceLock::new(),
+            tags: OnceLock::new(),
+            cover: OnceLock::new(),
             chunks: Mutex::new(Vec::new()),
             decoded: AtomicU64::new(0),
             peaks: Mutex::new(Vec::new()),
@@ -154,7 +186,12 @@ impl Track {
 /// Decodes the default audio track packet by packet, handing interleaved f32 samples, the channel
 /// count, the sample rate and the container's length to `sink`. Stops at the first error `sink`
 /// returns. symphonia's decoders already trim encoder delay and padding, so albums are gapless.
-pub fn decode(path: &Path, mut sink: impl FnMut(&[f32], usize, u32, Option<u64>) -> Result<(), String>) -> Result<(), String> {
+/// `on_meta` gets the tags and the cover's encoded bytes once, before the first samples.
+pub fn decode(
+    path: &Path,
+    on_meta: impl FnOnce(Tags, Option<Box<[u8]>>),
+    mut sink: impl FnMut(&[f32], usize, u32, Option<u64>) -> Result<(), String>,
+) -> Result<(), String> {
     let file = std::fs::File::open(path).map_err(|e| e.to_string())?;
     let mss = MediaSourceStream::new(Box::new(file), Default::default());
     let mut hint = Hint::new();
@@ -164,6 +201,23 @@ pub fn decode(path: &Path, mut sink: impl FnMut(&[f32], usize, u32, Option<u64>)
     let mut format = symphonia::default::get_probe()
         .probe(&hint, mss, FormatOptions::default(), MetadataOptions::default())
         .map_err(|e| format!("not a supported audio file ({e})"))?;
+    let (mut tags, mut picture) = (Tags::default(), None);
+    if let Some(rev) = format.metadata().skip_to_latest() {
+        for tag in &rev.media.tags {
+            // ID3v1 pads its fixed-width fields with spaces or NULs.
+            let text = |v: &str| Some(v.trim_matches(|c: char| c.is_whitespace() || c == '\0').to_string()).filter(|t| !t.is_empty());
+            match &tag.std {
+                Some(StandardTag::TrackTitle(v)) => tags.title = text(v),
+                Some(StandardTag::Artist(v)) => tags.artist = text(v),
+                Some(StandardTag::Album(v)) => tags.album = text(v),
+                _ => {}
+            }
+        }
+        let visuals = &rev.media.visuals;
+        let front = visuals.iter().find(|v| v.usage == Some(StandardVisualKey::FrontCover)).or(visuals.first());
+        picture = front.map(|v| v.data.clone());
+    }
+    on_meta(tags, picture);
     let track = format.default_track(TrackType::Audio).ok_or("no audio track")?;
     let (track_id, expected) = (track.id, track.num_frames);
     let params = track.codec_params.as_ref().and_then(|p| p.audio()).ok_or("no audio track")?;
@@ -221,6 +275,37 @@ pub mod tests {
         wav
     }
 
+    /// `wav` behind an ID3v2.4 tag carrying title, artist and album, as MP3s have.
+    /// (symphonia 0.6.1 reads a WAV's own INFO chunk but then drops it, so that can't be used.)
+    fn tagged_wav() -> Vec<u8> {
+        let mut frames = Vec::new();
+        for (id, text) in [(b"TIT2", "Long Gone   "), (b"TPE1", "Some Artist"), (b"TALB", "An Album")] {
+            let body: Vec<u8> = [3u8].into_iter().chain(text.bytes()).collect(); // 3 = UTF-8
+            frames.extend(id);
+            frames.extend(syncsafe(body.len()));
+            frames.extend([0, 0]);
+            frames.extend(body);
+        }
+        let mut tag = b"ID3\x04\x00\x00".to_vec();
+        tag.extend(syncsafe(frames.len()));
+        tag.extend(frames);
+        tag.extend(wav(100, 8000));
+        tag
+    }
+
+    /// ID3v2 sizes: 7 bits per byte.
+    fn syncsafe(n: usize) -> [u8; 4] {
+        [(n >> 21) as u8 & 0x7f, (n >> 14) as u8 & 0x7f, (n >> 7) as u8 & 0x7f, n as u8 & 0x7f]
+    }
+
+    #[test]
+    fn reads_tags() {
+        let mut got = None;
+        decode(&temp_file("tagged.wav", &tagged_wav()), |tags, _| got = Some(tags), |_, _, _, _| Ok(())).unwrap();
+        let want = Tags { title: Some("Long Gone".into()), artist: Some("Some Artist".into()), album: Some("An Album".into()) };
+        assert_eq!(got, Some(want));
+    }
+
     fn wait(track: &Track) {
         while !track.done() {
             std::thread::yield_now();
@@ -230,7 +315,7 @@ pub mod tests {
     #[test]
     fn decodes_a_wav() {
         let mut total = 0;
-        decode(&temp_file("tone.wav", &wav(1000, 22050)), |samples, channels, rate, _| {
+        decode(&temp_file("tone.wav", &wav(1000, 22050)), |tags, cover| assert_eq!((tags, cover), (Tags::default(), None)), |samples, channels, rate, _| {
             assert_eq!((channels, rate), (2, 22050));
             total += samples.len();
             Ok(())
@@ -262,7 +347,7 @@ pub mod tests {
     #[test]
     fn junk_is_an_error_not_a_panic() {
         let path = temp_file("junk.mp3", &[0x5a; 4096]);
-        assert!(decode(&path, |_, _, _, _| Ok(())).is_err());
+        assert!(decode(&path, |_, _| {}, |_, _, _, _| Ok(())).is_err());
         let track = Track::load(path, || {});
         wait(&track);
         assert!(track.error.lock().unwrap().is_some());

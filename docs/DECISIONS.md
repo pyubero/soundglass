@@ -25,3 +25,5 @@
 - 2026-11-11 — Previous restarts the track after 3 s of play, otherwise goes to the previous file, as Spotify does
 - 2026-11-11 — the next file in the folder is decoded once the current one is in memory and queued, so Next is instant and the end of a song flows into the next one
 - 2026-11-11 — no .opus in the folder list or the default-app types — symphonia 0.6 has no Opus decoder
+- 2026-11-11 — WAV INFO tags are not shown — symphonia 0.6.1 reads the INFO chunk but drops it (wave/mod.rs builds WavReader from opts.external_data.metadata); ID3, Vorbis comments and MP4 tags work
+- 2026-11-11 — the cover is decoded on its own thread and shrunk to at most 512 px — a large embedded JPEG must not delay the first sound or the UI
