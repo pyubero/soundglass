@@ -54,3 +54,5 @@
 - 2026-11-11 — an edited track does not move on gaplessly into the next file; playback stops at its end — the edits must not be left behind unsaved without a word
 - 2026-11-11 — Save As writes WAV, FLAC, MP3 and Ogg Vorbis, not Opus — symphonia can't play Opus back; new dependencies hound, flacenc, mp3lame-encoder, vorbis_rs and lofty approved (user's choice)
 - 2026-11-11 — leaving a file or quitting with unsaved edits asks Save As / Discard / Cancel (user's choice)
+- 2026-11-11 — the Edit panel is a bottom panel that grows the window by its height, like Track Info does by its width; zoom is Ctrl+scroll and −/+/Fit buttons, not Ctrl+0/+/− — egui already uses those keys for the UI's own zoom
+- 2026-11-11 — both waveforms draw through edit::min_max: peaks for long spans, the samples themselves for short ones — zoomed-in edges are exact and the strip and panel always agree

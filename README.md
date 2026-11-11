@@ -17,6 +17,10 @@ Without a file it asks for one. `--timings` prints the time to the window and to
 - Space: play/pause
 - Left / Right: back or forward 5 s
 - Page Up / Page Down: previous or next file in the folder
+- Ctrl+E: show or hide the Edit panel
+- In the Edit panel: click to play from there, drag to select, Shift+click or Shift+drag to change the selection, scroll to move along, Ctrl+scroll to zoom
+- Esc: clear the selection
+- L: loop the selection on or off (otherwise playback stops at its end)
 - Ctrl+O: open a file
 - Ctrl+Q: quit
 

@@ -14,6 +14,7 @@ use std::sync::atomic::Ordering::Relaxed;
 use std::path::PathBuf;
 use std::sync::{Arc, OnceLock};
 use std::time::{Duration, Instant};
+use edit::Edit;
 use track::Track;
 
 /// The window's size when nothing is remembered: a vertical phone's shape, about 9:16.
@@ -70,7 +71,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, show_info, controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, show_info, show_edit: false, edit_height: 160.0, edit_view: EditView::default(), history: None, looping: false, sent_region: None, controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -122,6 +123,15 @@ struct App {
     custom_speed: Option<f64>,
     show_settings: bool,
     show_info: bool,
+    show_edit: bool,
+    /// The Edit panel's height as last shown.
+    edit_height: f32,
+    edit_view: EditView,
+    /// Edits since the track was opened; `None` until the first one.
+    history: Option<edit::History>,
+    looping: bool,
+    /// The selection and Loop last sent to the player, to send them again only when they change.
+    sent_region: Option<(Option<(u64, u64)>, bool)>,
     /// Height of everything below the cover, as measured last frame.
     controls_height: f32,
     /// Track Info's width as last shown.
@@ -195,7 +205,8 @@ impl eframe::App for App {
 
         let player = self.player.as_ref().ok();
         let rate = self.track.format.get().map_or(0, |f| f.rate as u64);
-        let (pos, len) = (player.map_or(0, |p| p.shared.pos.load(Relaxed)), self.track.len());
+        let edit = self.edit();
+        let (pos, len) = (player.map_or(0, |p| p.shared.pos.load(Relaxed)), edit.len());
         let playing = player.is_some_and(|p| p.shared.playing.load(Relaxed));
         if playing {
             ctx.request_repaint_after(Duration::from_millis(250));
@@ -219,6 +230,16 @@ impl eframe::App for App {
         if key(egui::Key::ArrowRight) {
             actions.push(Action::Seek((pos + step).min(len)));
         }
+        if ctx.memory(|m| m.focused().is_none()) && self.custom_speed.is_none() {
+            if key(egui::Key::Escape) {
+                self.edit_view.selection = None;
+            }
+            if key(egui::Key::L) {
+                self.looping = !self.looping;
+            }
+        }
+        let edit_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::E);
+        let mut toggle_edit = ctx.input_mut(|i| i.consume_shortcut(&edit_key));
         let open_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::O);
         let mut open_file = ctx.input_mut(|i| i.consume_shortcut(&open_key));
         let mut open_recent = None;
@@ -269,11 +290,17 @@ impl eframe::App for App {
                         toggle_info = true;
                         ui.close();
                     }
+                    let mut on = self.show_edit;
+                    if ui.add(egui::Checkbox::new(&mut on, "Edit")).on_hover_text(ctx.format_shortcut(&edit_key)).clicked() {
+                        toggle_edit = true;
+                        ui.close();
+                    }
                     if ui.checkbox(&mut self.settings.show_waveform, "Waveform").changed() {
                         self.settings_error = self.settings.save().err();
                     }
                 });
                 ui.menu_button("Playback", |ui| {
+                    ui.checkbox(&mut self.looping, "Loop selection").on_hover_text("L");
                     ui.menu_button("Change speed", |ui| {
                         for speed in SPEEDS {
                             let label = if speed == 1.0 { "1× (Normal)".to_string() } else { format!("{speed}×") };
@@ -301,8 +328,25 @@ impl eframe::App for App {
             self.show_info = !self.show_info;
             // Grow or shrink by the panel, so the player view keeps its size.
             if resizable && let Some(size) = self.window_size {
-                let size = resize_for_panel(size, self.show_info, self.info_width);
+                let size = resize_for_panel(size, self.show_info, self.info_width, 0);
                 ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::vec2(size[0], size[1])));
+            }
+        }
+        if toggle_edit {
+            self.show_edit = !self.show_edit;
+            if resizable && let Some(size) = self.window_size {
+                let size = resize_for_panel(size, self.show_edit, self.edit_height, 1);
+                ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::vec2(size[0], size[1])));
+            }
+        }
+        // Before Track Info, so it spans the whole width.
+        if self.show_edit {
+            let panel = egui::Panel::bottom("edit").resizable(true).size_range(100.0..=400.0).default_size(self.edit_height).show(ui, |ui| {
+                edit_panel(ui, &mut self.edit_view, &self.track, &edit, pos, len, rate, playing)
+            });
+            self.edit_height = panel.response.rect.height();
+            if let Some(frame) = panel.inner {
+                actions.push(Action::Seek(frame));
             }
         }
         if self.show_info {
@@ -328,7 +372,7 @@ impl eframe::App for App {
                         ui.colored_label(ui.visuals().error_fg_color, e);
                     }
                     ui.add_space(12.0);
-                    let wave = self.settings.show_waveform.then_some(&*self.track);
+                    let wave = self.settings.show_waveform.then_some((&*self.track, &*edit, self.edit_view.selection));
                     if let Some(frame) = seek_bar(ui, pos, len, rate, wave) {
                         actions.push(Action::Seek(frame));
                     }
@@ -356,6 +400,11 @@ impl eframe::App for App {
         }
         for action in actions {
             self.apply(action, pos, len);
+        }
+        let region = (self.edit_view.selection, self.looping);
+        if self.sent_region != Some(region) && let Ok(p) = &self.player {
+            p.send(Cmd::Region(region.0, region.1));
+            self.sent_region = Some(region);
         }
     }
 }
@@ -433,9 +482,10 @@ fn info_panel(ui: &mut egui::Ui, track: &Track, file_size: Option<u64>) {
     });
 }
 
-/// The window size after Track Info opens (wider by `width`) or closes (narrower by it).
-fn resize_for_panel([w, h]: [f32; 2], opening: bool, width: f32) -> [f32; 2] {
-    [if opening { w + width } else { (w - width).max(1.0) }, h]
+/// The window size after a panel opens (bigger by `extent` along `axis`, 0 = width) or closes.
+fn resize_for_panel(mut size: [f32; 2], opening: bool, extent: f32, axis: usize) -> [f32; 2] {
+    size[axis] = if opening { size[axis] + extent } else { (size[axis] - extent).max(1.0) };
+    size
 }
 
 
@@ -461,6 +511,7 @@ impl App {
             self.advanced = advanced;
             if let Some(next) = self.next.take() {
                 (self.track, self.index) = (next, self.index + 1);
+                (self.history, self.edit_view, self.sent_region) = (None, EditView::default(), None);
             }
         }
         // Decode ahead once this track is in memory, so Next and the gapless move are instant.
@@ -487,8 +538,11 @@ impl App {
             }
             Action::Toggle if p.shared.playing.load(Relaxed) => p.send(Cmd::Pause),
             Action::Toggle => {
-                // At the end, Play starts the track again.
-                if self.track.done() && pos >= len {
+                // With a selection, Play starts it unless the playhead is already inside it;
+                // at the end, Play starts the track again.
+                if let Some((a, b)) = self.edit_view.selection && !(a..b).contains(&pos) {
+                    p.send(Cmd::Seek(a));
+                } else if self.track.done() && pos >= len {
                     p.send(Cmd::Seek(0));
                 }
                 p.send(Cmd::Play);
@@ -570,6 +624,17 @@ impl App {
             p.send(Cmd::Play);
         }
         (self.track, self.index) = (track, index);
+        self.forget_edits();
+    }
+
+    /// Starts afresh on a new track: no edits, no selection, the whole track in view.
+    fn forget_edits(&mut self) {
+        (self.history, self.edit_view, self.sent_region) = (None, EditView::default(), None);
+    }
+
+    /// The current edits, or the whole track when there are none.
+    fn edit(&self) -> Arc<Edit> {
+        self.history.as_ref().map_or_else(|| Arc::new(Edit::whole(self.track.len())), |h| h.current().clone())
     }
 
     fn previous(&mut self) {
@@ -668,9 +733,10 @@ fn marquee(text_w: f32, avail_w: f32, time: f64) -> f32 {
     shift.clamp(0.0, overflow) as f32
 }
 
-/// A slim bar, or `wave`'s waveform, with the times at its ends; returns the frame to seek to
-/// when clicked or dragged.
-fn seek_bar(ui: &mut egui::Ui, pos: u64, len: u64, rate: u64, wave: Option<&Track>) -> Option<u64> {
+/// A slim bar, or the waveform (`track` through `edit`, with the selection), with the times at
+/// its ends; returns the frame to seek to when clicked or dragged.
+type Wave<'a> = (&'a Track, &'a Edit, Option<(u64, u64)>);
+fn seek_bar(ui: &mut egui::Ui, pos: u64, len: u64, rate: u64, wave: Option<Wave>) -> Option<u64> {
     let height = if wave.is_some() { 48.0 } else { 18.0 };
     let (rect, response) = ui.allocate_exact_size(egui::vec2(ui.available_width(), height), egui::Sense::click_and_drag());
     let seconds = pos.checked_div(rate).unwrap_or(0) as f64;
@@ -680,8 +746,8 @@ fn seek_bar(ui: &mut egui::Ui, pos: u64, len: u64, rate: u64, wave: Option<&Trac
     let bar = egui::Rect::from_center_size(rect.center(), egui::vec2(rect.width(), 4.0));
     let x = bar.left() + bar.width() * fraction;
     let painter = ui.painter_at(rect);
-    if let Some(track) = wave {
-        draw_waveform(&painter, visuals, rect, track, x);
+    if let Some((track, edit, selection)) = wave {
+        draw_waveform(&painter, visuals, rect, track, edit, (0, len), pos, selection);
     } else {
         painter.rect_filled(bar, 2.0, visuals.widgets.inactive.bg_fill);
         painter.rect_filled(egui::Rect::from_min_max(bar.min, egui::pos2(x, bar.max.y)), 2.0, visuals.selection.bg_fill);
@@ -697,25 +763,129 @@ fn seek_bar(ui: &mut egui::Ui, pos: u64, len: u64, rate: u64, wave: Option<&Trac
     Some((((p.x - bar.left()) / bar.width()).clamp(0.0, 1.0) as f64 * len as f64) as u64)
 }
 
-/// The whole track across `rect`, played part (left of `played`) highlighted, with the playhead.
-/// Fills in as decoding goes. From the first waveform view (a61e538).
-fn draw_waveform(painter: &egui::Painter, visuals: &egui::Visuals, rect: egui::Rect, track: &Track, played: f32) {
-    let len = track.len().max(1);
-    let (mid, half) = (rect.center().y, rect.height() / 2.0);
+/// Edited frames `view` (start, count) of `track` across `rect`: the played part highlighted, the
+/// selection shaded, and the playhead at `pos`. Fills in as decoding goes.
+#[allow(clippy::too_many_arguments)]
+fn draw_waveform(painter: &egui::Painter, visuals: &egui::Visuals, rect: egui::Rect, track: &Track, edit: &Edit, (start, frames): (u64, u64), pos: u64, selection: Option<(u64, u64)>) {
+    let frames = frames.max(1);
+    let x_of = |f: u64| rect.left() + ((f as f64 - start as f64) / frames as f64 * rect.width() as f64) as f32;
+    if let Some((a, b)) = selection {
+        let shade = egui::Rect::from_x_y_ranges(x_of(a).max(rect.left())..=x_of(b).min(rect.right()), rect.y_range());
+        painter.rect_filled(shade, 0.0, visuals.selection.bg_fill.gamma_multiply(0.35));
+    }
+    let (mid, half, played) = (rect.center().y, rect.height() / 2.0, x_of(pos));
     let columns = rect.width() as u64;
     let peaks = track.peaks.lock().unwrap();
     for c in 0..columns {
-        let a = (c * len / columns) as usize / track::PEAK;
-        let b = ((c + 1) * len / columns) as usize / track::PEAK;
-        let Some(slice) = peaks.get(a..(b.max(a + 1)).min(peaks.len())).filter(|s| !s.is_empty()) else { break };
-        let (lo, hi) = slice.iter().fold((0f32, 0f32), |(l, h), &(a, b)| (l.min(a), h.max(b)));
+        let a = start + c * frames / columns;
+        let b = (start + (c + 1) * frames / columns).max(a + 1);
+        let Some((lo, hi)) = edit::min_max(track, &peaks, edit, a, b) else { break };
         let x = rect.left() + c as f32 + 0.5;
         let color = if x < played { visuals.selection.bg_fill } else { visuals.text_color() };
         // At least one point tall, so silence still shows as a line.
         let (top, bottom) = ((mid - hi * half).min(mid - 0.5), (mid - lo * half).max(mid + 0.5));
         painter.line_segment([egui::pos2(x, top), egui::pos2(x, bottom)], egui::Stroke::new(1.0, color));
     }
-    painter.vline(played, rect.y_range(), egui::Stroke::new(1.5, visuals.strong_text_color()));
+    if rect.x_range().contains(played) {
+        painter.vline(played, rect.y_range(), egui::Stroke::new(1.5, visuals.strong_text_color()));
+    }
+}
+
+/// The Edit panel's view and selection, in edited frames.
+#[derive(Default)]
+struct EditView {
+    start: u64,
+    /// Frames shown; 0 shows the whole track, following it as it grows while decoding.
+    frames: u64,
+    selection: Option<(u64, u64)>,
+    /// The fixed end of the selection while dragging.
+    anchor: Option<u64>,
+}
+
+/// The closest zoom: a few points per frame.
+const MIN_VIEW: u64 = 64;
+
+/// The view (start, frames) zoomed in by `factor` (2 = twice as close) with frame `at` staying
+/// where it is on screen; (0, 0) once it shows the whole track.
+fn zoom_view(start: u64, frames: u64, len: u64, factor: f32, at: u64) -> (u64, u64) {
+    let new = ((frames as f64 / factor as f64) as u64).max(MIN_VIEW);
+    if new >= len {
+        return (0, 0);
+    }
+    let rel = at.saturating_sub(start) as f64 / frames.max(1) as f64;
+    let start = (at as f64 - rel * new as f64).max(0.0) as u64;
+    (start.min(len - new), new)
+}
+
+/// Selection, zoom and the waveform of the visible part; returns the frame to seek to on a click.
+#[allow(clippy::too_many_arguments)]
+fn edit_panel(ui: &mut egui::Ui, view: &mut EditView, track: &Track, edit: &Edit, pos: u64, len: u64, rate: u64, playing: bool) -> Option<u64> {
+    let frames = if view.frames == 0 { len } else { view.frames.min(len) }.max(1);
+    view.start = view.start.min(len.saturating_sub(frames));
+    // Zoomed in, the view turns the page to follow the playhead.
+    if playing && view.frames != 0 && view.anchor.is_none() && !(view.start..view.start + frames).contains(&pos) {
+        view.start = pos.min(len.saturating_sub(frames));
+    }
+    let centre = view.start + frames / 2;
+    ui.horizontal(|ui| {
+        match view.selection {
+            Some((a, b)) => ui.label(format!("{} – {} ({:.3} s)", clock_ms(a, rate), clock_ms(b, rate), (b - a) as f64 / rate.max(1) as f64)),
+            None => ui.weak("Drag on the waveform to select"),
+        };
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            if ui.button("Fit").on_hover_text("Show the whole track").clicked() {
+                (view.start, view.frames) = (0, 0);
+            }
+            if ui.button("+").on_hover_text("Zoom in (Ctrl+scroll)").clicked() {
+                (view.start, view.frames) = zoom_view(view.start, frames, len, 2.0, centre);
+            }
+            if ui.button("−").on_hover_text("Zoom out").clicked() {
+                (view.start, view.frames) = zoom_view(view.start, frames, len, 0.5, centre);
+            }
+        });
+    });
+    let size = egui::vec2(ui.available_width(), ui.available_height().max(40.0));
+    let (rect, response) = ui.allocate_exact_size(size, egui::Sense::click_and_drag());
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Slider, true, "Waveform: click to play from there, drag to select"));
+    let frame_at = |x: f32| view.start + (((x - rect.left()) / rect.width()).clamp(0.0, 1.0) as f64 * frames as f64) as u64;
+    let shift = ui.input(|i| i.modifiers.shift);
+    let mut seek = None;
+    if response.drag_started() {
+        let from = ui.input(|i| i.pointer.press_origin()).map_or(0, |p| frame_at(p.x));
+        // Shift+drag moves the nearer end of the selection.
+        view.anchor = Some(match view.selection {
+            Some((a, b)) if shift => if from.abs_diff(a) < from.abs_diff(b) { b } else { a },
+            _ => from,
+        });
+    }
+    if response.dragged() && let (Some(anchor), Some(p)) = (view.anchor, response.interact_pointer_pos()) {
+        let f = frame_at(p.x);
+        view.selection = (f != anchor).then(|| (anchor.min(f), anchor.max(f)));
+    }
+    if response.drag_stopped() {
+        view.anchor = None;
+    }
+    if response.clicked() && let Some(p) = response.interact_pointer_pos() {
+        let f = frame_at(p.x);
+        match view.selection {
+            Some((a, b)) if shift => view.selection = Some((a.min(f), b.max(f))),
+            _ => (view.selection, seek) = (None, Some(f)),
+        }
+    }
+    if response.hovered() {
+        // egui turns Ctrl+scroll into zoom and leaves plain scrolling to pan.
+        let (zoom, scroll, pointer) = ui.input(|i| (i.zoom_delta(), i.smooth_scroll_delta, i.pointer.hover_pos()));
+        if zoom != 1.0 {
+            let at = pointer.map_or(centre, |p| frame_at(p.x));
+            (view.start, view.frames) = zoom_view(view.start, frames, len, zoom, at);
+        } else if view.frames != 0 && scroll.x + scroll.y != 0.0 {
+            let shift = (-(scroll.x + scroll.y) / rect.width()) as f64 * frames as f64;
+            view.start = (view.start as f64 + shift).clamp(0.0, len.saturating_sub(frames) as f64) as u64;
+        }
+    }
+    let frames = if view.frames == 0 { len } else { view.frames };
+    draw_waveform(&ui.painter_at(rect), ui.visuals(), rect, track, edit, (view.start, frames), pos, view.selection);
+    seek
 }
 
 #[derive(Clone, Copy)]
@@ -835,13 +1005,19 @@ fn clock(frames: u64, rate: u64) -> String {
     format!("{}:{:02}", s / 60, s % 60)
 }
 
+/// `frames` at `rate` as m:ss.mmm, for selection edges.
+fn clock_ms(frames: u64, rate: u64) -> String {
+    let ms = (frames * 1000).checked_div(rate).unwrap_or(0);
+    format!("{}:{:02}.{:03}", ms / 60_000, ms / 1000 % 60, ms % 1000)
+}
+
 pub fn ms(t: Instant) -> f64 {
     t.elapsed().as_secs_f64() * 1000.0
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{cover_side, info_rows, marquee, push_recent, resize_for_panel, snap_speed, title, volume_gain};
+    use super::{clock_ms, cover_side, info_rows, marquee, push_recent, resize_for_panel, snap_speed, title, volume_gain, zoom_view};
     use std::path::PathBuf;
 
     #[test]
@@ -863,8 +1039,21 @@ mod tests {
 
     #[test]
     fn panel_grows_and_shrinks_the_window() {
-        assert_eq!(resize_for_panel([380.0, 680.0], true, 320.0), [700.0, 680.0]);
-        assert_eq!(resize_for_panel([700.0, 680.0], false, 320.0), [380.0, 680.0]);
+        assert_eq!(resize_for_panel([380.0, 680.0], true, 320.0, 0), [700.0, 680.0]);
+        assert_eq!(resize_for_panel([700.0, 680.0], false, 320.0, 0), [380.0, 680.0]);
+        assert_eq!(resize_for_panel([380.0, 680.0], true, 160.0, 1), [380.0, 840.0]);
+    }
+
+    #[test]
+    fn zoom_keeps_the_frame_in_place() {
+        // Twice as close around frame 500 of 0..1000: 500 stays in the middle.
+        assert_eq!(zoom_view(0, 1000, 1000, 2.0, 500), (250, 500));
+        // Around the left edge, the left edge stays.
+        assert_eq!(zoom_view(0, 1000, 1000, 2.0, 0), (0, 500));
+        // Out past the whole track shows it all; never closer than MIN_VIEW.
+        assert_eq!(zoom_view(250, 500, 1000, 0.25, 500), (0, 0));
+        assert_eq!(zoom_view(0, 100, 1000, 100.0, 50).1, super::MIN_VIEW);
+        assert_eq!(clock_ms(48000 * 61 + 24000, 48000), "1:01.500");
     }
 
     #[test]
