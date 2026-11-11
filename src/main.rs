@@ -69,7 +69,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, show_info, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, show_info, controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -121,6 +121,8 @@ struct App {
     custom_speed: Option<f64>,
     show_settings: bool,
     show_info: bool,
+    /// Height of everything below the cover, as measured last frame.
+    controls_height: f32,
     /// Track Info's width as last shown.
     info_width: f32,
     /// The window's size in points, last seen while not maximized or fullscreen.
@@ -309,26 +311,35 @@ impl eframe::App for App {
         }
         egui::CentralPanel::default().show(ui, |ui| {
             ui.vertical_centered(|ui| {
-                // The cover takes the width, but leaves room below for text, bar and buttons.
-                let side = ui.available_width().min(ui.available_height() - 190.0).max(64.0);
+                // The cover takes the width, but leaves room below for what was measured last frame.
+                let gap = 16.0 + 2.0 * ui.spacing().item_spacing.y;
+                let side = cover_side(ui.available_width(), ui.available_height(), self.controls_height, gap);
                 cover_art(ui, cover.as_ref(), side);
                 ui.add_space(16.0);
-                let title = tags.title.unwrap_or_else(|| self.track.path.file_stem().unwrap_or_default().to_string_lossy().into_owned());
-                let time = ui.input(|i| i.time);
-                marquee_label(ui, &title, egui::TextStyle::Heading.resolve(ui.style()), ui.visuals().strong_text_color(), time);
-                for line in [tags.artist, tags.album].into_iter().flatten() {
-                    marquee_label(ui, &line, egui::TextStyle::Body.resolve(ui.style()), ui.visuals().text_color(), time);
+                let controls = ui.scope(|ui| {
+                    let title = tags.title.unwrap_or_else(|| self.track.path.file_stem().unwrap_or_default().to_string_lossy().into_owned());
+                    let time = ui.input(|i| i.time);
+                    marquee_label(ui, &title, egui::TextStyle::Heading.resolve(ui.style()), ui.visuals().strong_text_color(), time);
+                    for line in [tags.artist, tags.album].into_iter().flatten() {
+                        marquee_label(ui, &line, egui::TextStyle::Body.resolve(ui.style()), ui.visuals().text_color(), time);
+                    }
+                    if let Some(e) = &error {
+                        ui.colored_label(ui.visuals().error_fg_color, e);
+                    }
+                    ui.add_space(12.0);
+                    let wave = self.settings.show_waveform.then_some(&*self.track);
+                    if let Some(frame) = seek_bar(ui, pos, len, rate, wave) {
+                        actions.push(Action::Seek(frame));
+                    }
+                    ui.add_space(8.0);
+                    actions.extend(transport(ui, playing, has_next, self.volume));
+                });
+                let height = controls.response.rect.height();
+                if (height - self.controls_height).abs() > 0.5 {
+                    // Settles in one extra frame when tags, the waveform or an error line change it.
+                    self.controls_height = height;
+                    ui.ctx().request_repaint();
                 }
-                if let Some(e) = &error {
-                    ui.colored_label(ui.visuals().error_fg_color, e);
-                }
-                ui.add_space(12.0);
-                let wave = self.settings.show_waveform.then_some(&*self.track);
-                if let Some(frame) = seek_bar(ui, pos, len, rate, wave) {
-                    actions.push(Action::Seek(frame));
-                }
-                ui.add_space(8.0);
-                actions.extend(transport(ui, playing, has_next, self.volume));
             });
         });
 
@@ -587,6 +598,12 @@ impl App {
     }
 }
 
+/// The cover's side: the full width, unless the height left after the controls (`controls`
+/// tall, `gap` above them) is less; never below 64 points or wider than the window.
+fn cover_side(width: f32, height: f32, controls: f32, gap: f32) -> f32 {
+    (height - controls - gap).min(width).max(64.0).min(width)
+}
+
 /// The cover, fitted in a `side` × `side` square, or a placeholder note when there is none.
 fn cover_art(ui: &mut egui::Ui, cover: Option<&egui::TextureHandle>, side: f32) {
     let (rect, response) = ui.allocate_exact_size(egui::vec2(side, side), egui::Sense::hover());
@@ -823,7 +840,7 @@ pub fn ms(t: Instant) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{info_rows, marquee, push_recent, resize_for_panel, snap_speed, title, volume_gain};
+    use super::{cover_side, info_rows, marquee, push_recent, resize_for_panel, snap_speed, title, volume_gain};
     use std::path::PathBuf;
 
     #[test]
@@ -847,6 +864,14 @@ mod tests {
     fn panel_grows_and_shrinks_the_window() {
         assert_eq!(resize_for_panel([380.0, 680.0], true, 320.0), [700.0, 680.0]);
         assert_eq!(resize_for_panel([700.0, 680.0], false, 320.0), [380.0, 680.0]);
+    }
+
+    #[test]
+    fn cover_leaves_room_for_the_controls() {
+        assert_eq!(cover_side(1200.0, 680.0, 250.0, 22.0), 408.0, "wide: limited by height");
+        assert_eq!(cover_side(364.0, 680.0, 250.0, 22.0), 364.0, "narrow: limited by width");
+        assert_eq!(cover_side(364.0, 300.0, 250.0, 22.0), 64.0, "tiny: smallest cover");
+        assert_eq!(cover_side(40.0, 300.0, 250.0, 22.0), 40.0, "never wider than the window");
     }
 
     #[test]

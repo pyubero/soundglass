@@ -47,3 +47,4 @@
 - 2026-11-11 — no eframe window persistence — eframe 0.37 saves the window only if persist_window was on at start, restores a saved one even when it is off, and knows nothing of the panel; App::save blanks its "window" entry so a stale size is never restored
 - 2026-11-11 — maximized or fullscreen frames are not recorded as the window size, and Track Info does not resize a maximized window
 - 2026-11-11 — the window size is read from ctx.viewport_rect(), not viewport().inner_rect — egui-winit builds inner_rect from the window position, which Wayland never reports, so it is always None there
+- 2026-11-11 — the cover is sized from the controls' height measured on the previous frame, not a fixed guess — a fixed 190 pt pushed the buttons out of wide windows; it settles in one extra frame
