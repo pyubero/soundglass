@@ -2012,13 +2012,13 @@ fn spectrum_settings(ui: &mut egui::Ui, s: &mut settings::Settings, rate: u64) -
     });
     ui.checkbox(&mut s.note_octaves, "Octave numbers");
     ui.separator();
-    for (colour, label) in [(&mut s.note_c_color, "C lines"), (&mut s.note_color, "Other lines")] {
+    for (colour, label) in [(&mut s.note_c_color, "Tonic lines (C for all notes)"), (&mut s.note_color, "Other lines")] {
         ui.horizontal(|ui| {
             egui::color_picker::color_edit_button_srgba(ui, colour, egui::color_picker::Alpha::OnlyBlend);
             ui.label(label);
         });
     }
-    ui.add(egui::Slider::new(&mut s.note_c_width, 1.0..=6.0).text("C line width"));
+    ui.add(egui::Slider::new(&mut s.note_c_width, 1.0..=6.0).text("Tonic line width"));
     ui.add(egui::Slider::new(&mut s.note_label_size, 6.0..=24.0).text("Label size"));
     *s != before
 }
@@ -2075,7 +2075,8 @@ fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, selection: &mut Option
         let step = rect.height() * 2f32.ln() / per_octave / ((nyquist / low).ln() * (band[1] - band[0]));
         let (every, one_an_octave) = (step >= s.note_label_size, step * per_octave >= s.note_label_size);
         // Short of room, one name an octave: on C, or on the tonic in a scale (D major has no C).
-        let named = s.note_scale.map_or(0, |k| spectrum::KEYS[k].1);
+        // The tonal centre: the scale's tonic, or C with all notes. Its lines stand out and, short of room, carry the names.
+        let tonic = s.note_scale.map_or(0, |k| spectrum::KEYS[k].1);
         let font = egui::FontId::proportional(s.note_label_size);
         for note in spectrum::notes(s.note_a4, low, nyquist, s.note_scale, s.note_flats, s.note_instrument) {
             let (freq, pc) = (note.freq, note.pc);
@@ -2083,9 +2084,9 @@ fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, selection: &mut Option
             if !rect.y_range().contains(y) {
                 continue;
             }
-            let stroke = if pc == 0 { egui::Stroke::new(s.note_c_width, s.note_c_color) } else { egui::Stroke::new(1.0, s.note_color) };
+            let stroke = if pc == tonic { egui::Stroke::new(s.note_c_width, s.note_c_color) } else { egui::Stroke::new(1.0, s.note_color) };
             painter.hline(rect.x_range(), y, stroke);
-            if every || (one_an_octave && pc == named) {
+            if every || (one_an_octave && pc == tonic) {
                 let name = spectrum::note_name(&note, s.note_solfege, s.note_octaves);
                 let galley = painter.layout_no_wrap(name, font.clone(), egui::Color32::WHITE);
                 let at = egui::pos2(rect.left() + 4.0, y - galley.size().y / 2.0);
