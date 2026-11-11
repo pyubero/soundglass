@@ -30,3 +30,4 @@
 - 2026-11-11 — the waveform leaves the main view; its drawing code stays in git (a61e538) and track peaks are kept for the later editing view
 - 2026-11-11 — transport icons and the placeholder note are drawn with egui shapes, not font glyphs — they render the same whatever fonts are installed
 - 2026-11-11 — Space toggles playback only when no widget has focus — a focused button already takes Space as its own click
+- 2026-11-11 — settings live in settings.txt (key=value) in eframe's storage folder, read before the window opens and written atomically; "Remember window size" (default off) switches eframe's persist_window — no serde/ron until settings grow

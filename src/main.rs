@@ -3,6 +3,7 @@
 
 mod folder;
 mod player;
+mod settings;
 mod track;
 
 use eframe::egui;
@@ -48,14 +49,15 @@ fn main() -> eframe::Result {
     let name = track.path.file_name().unwrap_or_default().to_string_lossy().into_owned();
     // A vertical phone's shape, about 9:19.5.
     let viewport = egui::ViewportBuilder::default().with_title(&name).with_inner_size([380.0, 780.0]).with_min_inner_size([260.0, 420.0]);
-    let options = eframe::NativeOptions { viewport, ..Default::default() };
+    let settings = settings::load();
+    let options = eframe::NativeOptions { viewport, persist_window: settings.remember_window_size, ..Default::default() };
     eframe::run_native("soundglass", options, Box::new(move |cc| {
         let _ = ctx.set(cc.egui_ctx.clone());
         let player = opening.join().unwrap_or_else(|_| Err("the sound device failed to open".into()));
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, show_settings: false, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -80,6 +82,9 @@ struct App {
     ctx: Arc<OnceLock<egui::Context>>,
     /// The cover texture and the track (by address) it belongs to.
     cover: Option<(usize, egui::TextureHandle)>,
+    settings: settings::Settings,
+    show_settings: bool,
+    settings_error: Option<String>,
     player: Result<Player, String>,
     t0: Instant,
     timings: bool,
@@ -148,6 +153,10 @@ impl eframe::App for App {
         egui::Panel::top("menu").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("File", |ui| {
+                    if ui.button("Settings…").clicked() {
+                        self.show_settings = true;
+                    }
+                    ui.separator();
                     if ui.add(egui::Button::new("Quit").shortcut_text(ctx.format_shortcut(&egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Q)))).clicked() {
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
@@ -183,6 +192,7 @@ impl eframe::App for App {
             });
         });
 
+        self.settings_window(&ctx);
         for action in actions {
             self.apply(action, pos, len);
         }
@@ -226,6 +236,20 @@ impl App {
                 p.send(Cmd::Play);
             }
         }
+    }
+
+    fn settings_window(&mut self, ctx: &egui::Context) {
+        let mut open = self.show_settings;
+        egui::Window::new("Settings").open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
+            if ui.checkbox(&mut self.settings.remember_window_size, "Remember window size").changed() {
+                self.settings_error = self.settings.save().err();
+            }
+            ui.weak("Takes effect the next time soundglass opens.");
+            if let Some(e) = &self.settings_error {
+                ui.colored_label(ui.visuals().error_fg_color, e);
+            }
+        });
+        self.show_settings = open;
     }
 
     /// The current track's cover as a texture, uploaded once per track.
