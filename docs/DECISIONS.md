@@ -20,3 +20,8 @@
 - 2026-11-11 — no gapless code of our own — symphonia 0.6's decoders already trim encoder delay and padding
 - 2026-11-11 — a decode thread stops when only it still holds the track — moving on to another file must not keep decoding the old one
 - 2026-11-11 — waveform from per-1024-frame min/max peaks collected while decoding, drawn as one line per pixel column — cheap to redraw every frame, and it fills in as the file decodes
+- 2026-11-11 — milestone 1.5 "Usable player" goes before the rest of milestone 2: phone-shaped minimal UI, previous/next, default app (user's choice)
+- 2026-11-11 — three buttons (previous, play/pause, next) plus a top menu bar for future tools (user's choice)
+- 2026-11-11 — Previous restarts the track after 3 s of play, otherwise goes to the previous file, as Spotify does
+- 2026-11-11 — the next file in the folder is decoded once the current one is in memory and queued, so Next is instant and the end of a song flows into the next one
+- 2026-11-11 — no .opus in the folder list or the default-app types — symphonia 0.6 has no Opus decoder

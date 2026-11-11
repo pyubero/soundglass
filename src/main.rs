@@ -1,18 +1,22 @@
 // No console window behind the app on Windows (debug builds keep it, for --timings output).
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
+mod folder;
 mod player;
 mod track;
 
 use eframe::egui;
 use player::{Cmd, Player};
 use std::sync::atomic::Ordering::Relaxed;
+use std::path::PathBuf;
 use std::sync::{Arc, OnceLock};
 use std::time::{Duration, Instant};
 use track::Track;
 
 /// How far Left and Right jump.
 const STEP_SECONDS: u64 = 5;
+/// Previous restarts the track after this much has played, as Spotify does.
+const RESTART_SECONDS: u64 = 3;
 
 fn main() -> eframe::Result {
     let t0 = Instant::now();
@@ -36,7 +40,9 @@ fn main() -> eframe::Result {
 
     // Decoding and opening the sound device overlap the window's OpenGL setup.
     let ctx: Arc<OnceLock<egui::Context>> = Arc::new(OnceLock::new());
-    let track = Track::load(path, repaint(&ctx));
+    let track = Track::load(path.clone(), repaint(&ctx));
+    let files = folder::list_folder(&path);
+    let index = files.iter().position(|p| *p == path).unwrap_or(0);
     let opening = std::thread::spawn(move || Player::open(t0, timings, bench));
 
     let name = track.path.file_name().unwrap_or_default().to_string_lossy().into_owned();
@@ -47,7 +53,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, player, t0, timings, shown: false }))
     }))
 }
 
@@ -63,6 +69,13 @@ fn repaint(ctx: &Arc<OnceLock<egui::Context>>) -> impl Fn() + Send + 'static {
 
 struct App {
     track: Arc<Track>,
+    /// The next file in the folder, decoded ahead and queued for gapless playback.
+    next: Option<Arc<Track>>,
+    files: Vec<PathBuf>,
+    index: usize,
+    /// The player's `advanced` count last seen, to notice when it moved into `next` by itself.
+    advanced: u64,
+    ctx: Arc<OnceLock<egui::Context>>,
     player: Result<Player, String>,
     t0: Instant,
     timings: bool,
@@ -73,6 +86,12 @@ struct App {
 impl eframe::App for App {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
+        if ctx.input(|i| i.key_pressed(egui::Key::PageUp)) {
+            self.previous();
+        }
+        if ctx.input(|i| i.key_pressed(egui::Key::PageDown)) {
+            self.go(self.index + 1);
+        }
         let player = self.player.as_ref().ok();
         // eframe keeps the window hidden until the first frame is painted, so the window is
         // visible from the second frame on. shortcut: the compositor maps it a few ms after that;
@@ -89,13 +108,32 @@ impl eframe::App for App {
             }
         }
 
+        if let Some(p) = player {
+            let advanced = p.shared.advanced.load(Relaxed);
+            if advanced != self.advanced {
+                self.advanced = advanced;
+                if let Some(next) = self.next.take() {
+                    (self.track, self.index) = (next, self.index + 1);
+                    self.set_title(&ctx);
+                }
+            }
+            // Decode ahead once this track is in memory, so Next and the gapless move are instant.
+            if self.track.done() && self.next.is_none() && let Some(path) = self.files.get(self.index + 1) {
+                let next = Track::load(path.clone(), repaint(&self.ctx));
+                p.send(Cmd::Queue(next.clone()));
+                self.next = Some(next);
+            }
+        }
+
         let rate = self.track.format.get().map_or(0, |f| f.rate as u64);
         let (pos, len) = (player.map_or(0, |p| p.shared.pos.load(Relaxed)), self.track.len());
         let playing = player.is_some_and(|p| p.shared.playing.load(Relaxed));
         if let Some(p) = player {
             // Tracks the audio callback is done with are freed here, not in the callback.
             while p.retired.try_recv().is_ok() {}
-            let (space, left, right) = ctx.input(|i| (i.key_pressed(egui::Key::Space), i.key_pressed(egui::Key::ArrowLeft), i.key_pressed(egui::Key::ArrowRight)));
+            let key = |k| ctx.input(|i| i.key_pressed(k));
+            let (space, left, right) = (key(egui::Key::Space), key(egui::Key::ArrowLeft), key(egui::Key::ArrowRight));
+
             if space {
                 if playing {
                     p.send(Cmd::Pause);
@@ -137,6 +175,40 @@ impl eframe::App for App {
                 p.send(Cmd::Seek(frame));
             }
         });
+    }
+}
+
+impl App {
+    /// Plays file `index` of the folder, using the track decoded ahead when it is that one.
+    fn go(&mut self, index: usize) {
+        let (Some(path), Ok(p)) = (self.files.get(index), &self.player) else { return };
+        let track = match self.next.take() {
+            Some(next) if next.path == *path => next,
+            _ => Track::load(path.clone(), repaint(&self.ctx)),
+        };
+        p.send(Cmd::Load(track.clone()));
+        if self.shown {
+            p.send(Cmd::Play);
+        }
+        (self.track, self.index) = (track, index);
+        if let Some(ctx) = self.ctx.get() {
+            self.set_title(ctx);
+        }
+    }
+
+    fn previous(&mut self) {
+        let Ok(p) = &self.player else { return };
+        let rate = self.track.format.get().map_or(0, |f| f.rate as u64);
+        if p.shared.pos.load(Relaxed) > RESTART_SECONDS * rate || self.index == 0 {
+            p.send(Cmd::Seek(0));
+        } else {
+            self.go(self.index - 1);
+        }
+    }
+
+    fn set_title(&self, ctx: &egui::Context) {
+        let name = self.track.path.file_name().unwrap_or_default().to_string_lossy().into_owned();
+        ctx.send_viewport_cmd(egui::ViewportCommand::Title(name));
     }
 }
 
