@@ -30,7 +30,7 @@
 - 2026-11-11 — the waveform leaves the main view; its drawing code stays in git (a61e538) and track peaks are kept for the later editing view
 - 2026-11-11 — transport icons and the placeholder note are drawn with egui shapes, not font glyphs — they render the same whatever fonts are installed
 - 2026-11-11 — Space toggles playback only when no widget has focus — a focused button already takes Space as its own click
-- 2026-11-11 — settings live in settings.txt (key=value) in eframe's storage folder, read before the window opens and written atomically; "Remember window size" (default off) switches eframe's persist_window — no serde/ron until settings grow
+- 2026-11-11 — settings live in settings.txt (key=value) in eframe's storage folder, read before the window opens and written atomically; "Remember window size" (default off) switches eframe's persist_window — no serde/ron until settings grow — changed 2026-11-11: soundglass now stores the window size itself (see below); persist_window is always off
 - 2026-11-11 — started without a file (from the app menu), soundglass shows the Open dialog first and quits if it is cancelled; an empty start window can come later
 - 2026-11-11 — soundglass.desktop's MimeType line is the single list of claimed formats; install.sh reads it for xdg-mime, so the two cannot drift
 - 2026-11-11 — UI fonts copied from lightview (Roboto and Droid Sans Mono, Apache-2.0; emoji-icon-font, MIT) with their licence files in fonts/ — eframe without default features has no fonts, and egui's default set is not clearly GPL-compatible; no CJK font yet (user's choice)
@@ -42,3 +42,7 @@
 - 2026-11-11 — K-weighting coefficients come from the BS.1770 analogue prototypes for any rate (as libebur128 does); tests check the standard's −3.01 LUFS reference at 44.1 and 48 kHz
 - 2026-11-11 — Track Info's bitrate is the average (file size × 8 ÷ length), tags included — simple and right for VBR files too
 - 2026-11-11 — Open Recent lists files opened at startup or through Open…, not each Next; stored in eframe storage as lines, as lightview does
+- 2026-11-11 — Track Info is a right side panel like lightview's inspector; opening it widens the window by the panel and closing it shrinks it back, so the player keeps its size (user's choice)
+- 2026-11-11 — "Remember window size" stores the whole window (panel included), whether Track Info is open and its width, so a restart comes back coherent (user's choice)
+- 2026-11-11 — no eframe window persistence — eframe 0.37 saves the window only if persist_window was on at start, restores a saved one even when it is off, and knows nothing of the panel; App::save blanks its "window" entry so a stale size is never restored
+- 2026-11-11 — maximized or fullscreen frames are not recorded as the window size, and Track Info does not resize a maximized window

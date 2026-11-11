@@ -15,6 +15,9 @@ use std::sync::{Arc, OnceLock};
 use std::time::{Duration, Instant};
 use track::Track;
 
+/// The window's size when nothing is remembered: a vertical phone's shape, about 9:16.
+const DEFAULT_SIZE: [f32; 2] = [380.0, 680.0];
+
 /// How far Left and Right jump.
 const STEP_SECONDS: u64 = 5;
 /// Previous restarts the track after this much has played, as Spotify does.
@@ -50,10 +53,13 @@ fn main() -> eframe::Result {
     let opening = std::thread::spawn(move || Player::open(t0, timings, bench));
 
     let name = track.path.file_name().unwrap_or_default().to_string_lossy().into_owned();
-    // A vertical phone's shape, about 9:16.
-    let viewport = egui::ViewportBuilder::default().with_title(&name).with_inner_size([380.0, 680.0]).with_min_inner_size([260.0, 420.0]);
     let settings = settings::load();
-    let options = eframe::NativeOptions { viewport, persist_window: settings.remember_window_size, ..Default::default() };
+    let remembered = settings.window_size.filter(|_| settings.remember_window_size);
+    let viewport = egui::ViewportBuilder::default().with_title(&name).with_inner_size(remembered.unwrap_or(DEFAULT_SIZE)).with_min_inner_size([260.0, 420.0]);
+    // soundglass keeps the window size itself (see `App::save`): eframe's own saving can't follow Track Info.
+    let options = eframe::NativeOptions { viewport, persist_window: false, ..Default::default() };
+    let show_info = remembered.is_some() && settings.info_panel;
+    let (window_size, info_width) = (remembered, settings.info_width);
     eframe::run_native("soundglass", options, Box::new(move |cc| {
         let _ = ctx.set(cc.egui_ctx.clone());
         let mut recent: Vec<PathBuf> = cc.storage.and_then(|s| s.get_string("recent")).unwrap_or_default().lines().map(PathBuf::from).collect();
@@ -63,7 +69,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, show_info: false, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: 1.0, titled: None, recent, custom_speed: None, show_settings: false, show_info, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -115,6 +121,10 @@ struct App {
     custom_speed: Option<f64>,
     show_settings: bool,
     show_info: bool,
+    /// Track Info's width as last shown.
+    info_width: f32,
+    /// The window's size in points, last seen while not maximized or fullscreen.
+    window_size: Option<[f32; 2]>,
     settings_error: Option<String>,
     player: Result<Player, String>,
     t0: Instant,
@@ -149,6 +159,13 @@ impl eframe::App for App {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         let recent: Vec<String> = self.recent.iter().map(|p| p.display().to_string()).collect();
         storage.set_string("recent", recent.join("\n"));
+        // eframe restores a "window" entry even with persist_window off, and an old one would win
+        // over ours; an empty one no longer parses, so eframe leaves the size to us.
+        storage.set_string("window", String::new());
+        if self.settings.remember_window_size {
+            (self.settings.window_size, self.settings.info_panel, self.settings.info_width) = (self.window_size, self.show_info, self.info_width);
+            self.settings_error = self.settings.save().err();
+        }
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
@@ -203,9 +220,12 @@ impl eframe::App for App {
         let mut open_file = ctx.input_mut(|i| i.consume_shortcut(&open_key));
         let mut open_recent = None;
         let info_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::I);
-        if ctx.input_mut(|i| i.consume_shortcut(&info_key)) {
-            self.show_info = !self.show_info;
+        let viewport = ctx.input(|i| i.viewport().clone());
+        let resizable = !viewport.maximized.unwrap_or(false) && !viewport.fullscreen.unwrap_or(false);
+        if resizable && let Some(r) = viewport.inner_rect {
+            self.window_size = Some([r.width(), r.height()]);
         }
+        let mut toggle_info = ctx.input_mut(|i| i.consume_shortcut(&info_key));
         if ctx.input_mut(|i| i.consume_shortcut(&egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Q))) {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
@@ -238,8 +258,9 @@ impl eframe::App for App {
                     }
                 });
                 ui.menu_button("View", |ui| {
-                    if ui.add(egui::Button::new("Track Info…").shortcut_text(ctx.format_shortcut(&info_key))).clicked() {
-                        self.show_info = true;
+                    let mut on = self.show_info;
+                    if ui.add(egui::Checkbox::new(&mut on, "Track Info")).on_hover_text(ctx.format_shortcut(&info_key)).clicked() {
+                        toggle_info = true;
                         ui.close();
                     }
                     if ui.checkbox(&mut self.settings.show_waveform, "Waveform").changed() {
@@ -270,6 +291,19 @@ impl eframe::App for App {
         let tags = self.track.tags.get().cloned().unwrap_or_default();
         let error = self.track.error.lock().unwrap().clone().or_else(|| self.player.as_ref().err().cloned());
         let has_next = self.index + 1 < self.files.len();
+        if toggle_info {
+            self.show_info = !self.show_info;
+            // Grow or shrink by the panel, so the player view keeps its size.
+            if resizable && let Some(size) = self.window_size {
+                let size = resize_for_panel(size, self.show_info, self.info_width);
+                ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::vec2(size[0], size[1])));
+            }
+        }
+        if self.show_info {
+            let size = std::fs::metadata(&self.track.path).map(|m| m.len()).ok();
+            let panel = egui::Panel::right("info").resizable(true).size_range(240.0..=360.0).default_size(self.info_width).show(ui, |ui| info_panel(ui, &self.track, size));
+            self.info_width = panel.response.rect.width();
+        }
         egui::CentralPanel::default().show(ui, |ui| {
             ui.vertical_centered(|ui| {
                 // The cover takes the width, but leaves room below for text, bar and buttons.
@@ -296,7 +330,6 @@ impl eframe::App for App {
         });
 
         self.settings_window(&ctx);
-        self.info_window(&ctx);
         if let Some(speed) = self.speed_window(&ctx) {
             actions.push(Action::Speed(speed));
         }
@@ -318,7 +351,9 @@ fn title(name: &str, length: Option<&str>, format: &str) -> String {
 }
 
 /// Track Info's rows; "—" for what isn't known, "measuring…" while loudness is computed.
-fn info_rows(track: &Track, file_size: Option<u64>) -> Vec<(&'static str, String)> {
+/// Grouped as Track Info shows them: General, Audio, Tags.
+type Rows = Vec<(&'static str, String)>;
+fn info_rows(track: &Track, file_size: Option<u64>) -> [(&'static str, Rows); 3] {
     let unknown = || "—".to_string();
     let tags = track.tags.get().cloned().unwrap_or_default();
     let info = track.info.get().cloned().unwrap_or_default();
@@ -338,22 +373,57 @@ fn info_rows(track: &Track, file_size: Option<u64>) -> Vec<(&'static str, String
         (None, true) => ("measuring…".into(), "measuring…".into()),
         (None, false) => ("after loading".into(), "after loading".into()),
     };
-    vec![
-        ("Title", tags.title.unwrap_or_else(unknown)),
-        ("Artist", tags.artist.unwrap_or_else(unknown)),
-        ("Album", tags.album.unwrap_or_else(unknown)),
-        ("Length", seconds.map_or_else(unknown, |_| clock(track.len(), rate))),
+    let path = &track.path;
+    let general = vec![
+        ("Name", path.file_name().unwrap_or_default().to_string_lossy().into_owned()),
+        ("Folder", path.parent().map_or_else(unknown, |p| p.display().to_string())),
         ("Format", or(info.container)),
         ("Codec", or(info.codec)),
+        ("File size", file_size.map_or_else(unknown, |b| format!("{:.1} MB", b as f64 / 1e6))),
+        ("Length", seconds.map_or_else(unknown, |_| clock(track.len(), rate))),
         ("Bitrate", bitrate),
+    ];
+    let audio = vec![
         ("Sample rate", if rate > 0 { format!("{:.1} kHz", rate as f64 / 1000.0) } else { unknown() }),
         ("Channels", channels),
         ("Bit depth", info.bits.map_or_else(unknown, |b| format!("{b}-bit"))),
-        ("File size", file_size.map_or_else(unknown, |b| format!("{:.1} MB", b as f64 / 1e6))),
         ("Loudness", loudness.0),
         ("Peak", loudness.1),
-    ]
+    ];
+    let tags = vec![
+        ("Title", tags.title.unwrap_or_else(unknown)),
+        ("Artist", tags.artist.unwrap_or_else(unknown)),
+        ("Album", tags.album.unwrap_or_else(unknown)),
+    ];
+    [("General", general), ("Audio", audio), ("Tags", tags)]
 }
+
+/// Track Info's body, laid out like lightview's inspector: collapsing sections of two-column grids.
+fn info_panel(ui: &mut egui::Ui, track: &Track, file_size: Option<u64>) {
+    // Fill the panel's width: shrinking to the content made it shrink with it (as in lightview).
+    egui::ScrollArea::vertical().auto_shrink([false, true]).show(ui, |ui| {
+        for (section, rows) in info_rows(track, file_size) {
+            egui::CollapsingHeader::new(section).default_open(true).show(ui, |ui| {
+                egui::Grid::new(section).num_columns(2).spacing([12.0, 6.0]).show(ui, |ui| {
+                    // Tags ends with every tag as the file has it.
+                    let raw = if section == "Tags" { track.info.get().map(|i| i.raw.clone()).unwrap_or_default() } else { Vec::new() };
+                    for (name, value) in rows.into_iter().map(|(n, v)| (n.to_string(), v)).chain(raw) {
+                        ui.label(name);
+                        ui.add(egui::Label::new(value).wrap());
+                        ui.end_row();
+                    }
+                });
+            });
+        }
+    });
+}
+
+/// The window size after Track Info opens (wider by `width`) or closes (narrower by it).
+fn resize_for_panel([w, h]: [f32; 2], opening: bool, width: f32) -> [f32; 2] {
+    [if opening { w + width } else { (w - width).max(1.0) }, h]
+}
+
+
 
 /// How many files Open Recent lists.
 const RECENT_MAX: usize = 10;
@@ -411,40 +481,6 @@ impl App {
         }
     }
 
-    fn info_window(&mut self, ctx: &egui::Context) {
-        if !self.show_info {
-            return;
-        }
-        let (mut open, cover, track) = (true, self.cover_texture(ctx), self.track.clone());
-        let size = std::fs::metadata(&track.path).map(|m| m.len()).ok();
-        egui::Window::new("Track Info").open(&mut open).default_width(340.0).show(ctx, |ui| {
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                if cover.is_some() {
-                    cover_art(ui, cover.as_ref(), 120.0);
-                }
-                egui::Grid::new("info").num_columns(2).striped(true).show(ui, |ui| {
-                    for (name, value) in info_rows(&track, size) {
-                        ui.label(name);
-                        ui.label(value);
-                        ui.end_row();
-                    }
-                });
-                if let Some(info) = track.info.get().filter(|i| !i.raw.is_empty()) {
-                    ui.collapsing("All tags", |ui| {
-                        egui::Grid::new("tags").num_columns(2).show(ui, |ui| {
-                            for (key, value) in &info.raw {
-                                ui.label(key);
-                                ui.label(value);
-                                ui.end_row();
-                            }
-                        });
-                    });
-                }
-            });
-        });
-        self.show_info = open;
-    }
-
     /// The Custom speed dialog; returns the speed when OK is pressed.
     fn speed_window(&mut self, ctx: &egui::Context) -> Option<f64> {
         let mut draft = self.custom_speed?;
@@ -479,7 +515,7 @@ impl App {
             if ui.checkbox(&mut self.settings.remember_window_size, "Remember window size").changed() {
                 self.settings_error = self.settings.save().err();
             }
-            ui.weak("Takes effect the next time soundglass opens.");
+            ui.weak("Applies the next time soundglass opens; the window and Track Info as you quit are kept.");
             if let Some(e) = &self.settings_error {
                 ui.colored_label(ui.visuals().error_fg_color, e);
             }
@@ -784,14 +820,16 @@ pub fn ms(t: Instant) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{info_rows, marquee, push_recent, snap_speed, title, volume_gain};
+    use super::{info_rows, marquee, push_recent, resize_for_panel, snap_speed, title, volume_gain};
     use std::path::PathBuf;
 
     #[test]
     fn track_info_rows() {
         // 2 s of stereo at 44.1 kHz in a 352 800-byte file: 1411 kb/s, like a CD.
         let track = crate::track::Track::from_samples(44100, 2, vec![0.0; 2 * 88200]);
-        let rows = info_rows(&track, Some(352_800));
+        let groups = info_rows(&track, Some(352_800));
+        assert_eq!(groups.each_ref().map(|(s, _)| *s), ["General", "Audio", "Tags"]);
+        let rows: Vec<_> = groups.into_iter().flat_map(|(_, r)| r).collect();
         let row = |name| rows.iter().find(|(n, _)| *n == name).unwrap().1.clone();
         assert_eq!(row("Length"), "0:02");
         assert_eq!(row("Sample rate"), "44.1 kHz");
@@ -800,6 +838,12 @@ mod tests {
         assert_eq!(row("File size"), "0.4 MB");
         assert_eq!(row("Title"), "—");
         assert_eq!(row("Loudness"), "measuring…");
+    }
+
+    #[test]
+    fn panel_grows_and_shrinks_the_window() {
+        assert_eq!(resize_for_panel([380.0, 680.0], true, 320.0), [700.0, 680.0]);
+        assert_eq!(resize_for_panel([700.0, 680.0], false, 320.0), [380.0, 680.0]);
     }
 
     #[test]

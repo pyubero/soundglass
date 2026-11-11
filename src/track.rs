@@ -342,8 +342,10 @@ pub mod tests {
         assert_eq!(got, Some((want, 3)));
     }
 
+    /// Until the decode thread is finished, loudness pass included: it briefly locks the
+    /// chunk list, and `chunk_at` (try_lock, for the audio callback) would see None meanwhile.
     fn wait(track: &Track) {
-        while !track.done() {
+        while !(track.done() && (track.format.get().is_none() || track.loudness.get().is_some())) {
             std::thread::yield_now();
         }
     }
