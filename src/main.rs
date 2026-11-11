@@ -30,7 +30,9 @@ fn main() -> eframe::Result {
             _ => path = Some(std::path::PathBuf::from(arg)),
         }
     }
-    let Some(path) = path else {
+    // Started from the app menu, with no file: ask for one.
+    // shortcut: no empty window to open from; give App an Option<Track> if an empty start is wanted.
+    let Some(path) = path.or_else(|| rfd::FileDialog::new().add_filter("Audio", &folder::EXTENSIONS).pick_file()) else {
         eprintln!("usage: soundglass FILE [--timings | --bench]");
         std::process::exit(2);
     };
@@ -146,6 +148,8 @@ impl eframe::App for App {
         if key(egui::Key::ArrowRight) {
             actions.push(Action::Seek((pos + step).min(len)));
         }
+        let open_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::O);
+        let mut open_file = ctx.input_mut(|i| i.consume_shortcut(&open_key));
         if ctx.input_mut(|i| i.consume_shortcut(&egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Q))) {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
@@ -153,6 +157,9 @@ impl eframe::App for App {
         egui::Panel::top("menu").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("File", |ui| {
+                    if ui.add(egui::Button::new("Open…").shortcut_text(ctx.format_shortcut(&open_key))).clicked() {
+                        open_file = true;
+                    }
                     if ui.button("Settings…").clicked() {
                         self.show_settings = true;
                     }
@@ -193,6 +200,9 @@ impl eframe::App for App {
         });
 
         self.settings_window(&ctx);
+        if open_file && let Some(path) = rfd::FileDialog::new().add_filter("Audio", &folder::EXTENSIONS).pick_file() {
+            self.open(path);
+        }
         for action in actions {
             self.apply(action, pos, len);
         }
@@ -260,6 +270,15 @@ impl App {
             self.cover = Some((key, ctx.load_texture("cover", image, egui::TextureOptions::LINEAR)));
         }
         self.cover.as_ref().map(|(_, t)| t.clone())
+    }
+
+    /// Plays `path` and makes its folder the one Previous and Next move through.
+    fn open(&mut self, path: PathBuf) {
+        let path = std::fs::canonicalize(&path).unwrap_or(path);
+        self.files = folder::list_folder(&path);
+        self.next = None;
+        let index = self.files.iter().position(|p| *p == path).unwrap_or(0);
+        self.go(index);
     }
 
     /// Plays file `index` of the folder, using the track decoded ahead when it is that one.
