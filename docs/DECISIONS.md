@@ -9,3 +9,4 @@
 - 2026-11-11 — std mpsc sync_channel of Vec<f32> between decoder and audio callback, no ring-buffer crate — no new dependency; accepted limit: memory is freed inside the audio callback
 - 2026-11-11 — audio starts before the window opens — decoding and device setup overlap OpenGL setup, as lightview does for images
 - 2026-11-11 — "first sound" is timed when the first real samples reach the cpal callback — the device's own output latency is not included
+- 2026-11-11 — sound is held (device outputs silence) until the window's second frame, i.e. after eframe makes it visible; it keeps playing when minimized (user's choice)

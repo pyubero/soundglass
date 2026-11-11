@@ -4,6 +4,7 @@
 mod audio;
 
 use eframe::egui;
+use std::sync::atomic::{AtomicBool, Ordering::Relaxed};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Instant;
 
@@ -27,15 +28,15 @@ fn main() -> eframe::Result {
         std::process::exit(1);
     });
 
-    // Decoding and opening the sound device overlap the window's OpenGL setup.
-    let (error, ctx) = (Arc::new(Mutex::new(None)), Arc::new(OnceLock::new()));
-    audio::play(path.clone(), t0, timings, bench, error.clone(), ctx.clone());
+    // Decoding and opening the sound device overlap the window's OpenGL setup; output waits for `shown`.
+    let (error, ctx, shown) = (Arc::new(Mutex::new(None)), Arc::new(OnceLock::new()), Arc::new(AtomicBool::new(false)));
+    audio::play(path.clone(), t0, timings, bench, error.clone(), ctx.clone(), shown.clone());
 
     let name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
     let options = eframe::NativeOptions { viewport: egui::ViewportBuilder::default().with_title(&name), ..Default::default() };
     eframe::run_native("soundglass", options, Box::new(move |cc| {
         let _ = ctx.set(cc.egui_ctx.clone());
-        Ok(Box::new(App { name, error, t0, timings, window_reported: false }))
+        Ok(Box::new(App { name, error, t0, timings, shown }))
     }))
 }
 
@@ -44,14 +45,18 @@ struct App {
     error: Arc<Mutex<Option<String>>>,
     t0: Instant,
     timings: bool,
-    window_reported: bool,
+    shown: Arc<AtomicBool>,
 }
 
 impl eframe::App for App {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        if self.timings && !self.window_reported {
+        // eframe keeps the window hidden until the first frame is painted, so the window is
+        // visible from the second frame on. shortcut: the compositor maps it a few ms after that;
+        // winit has no "now on screen" event, so this is the closest signal there is.
+        if ui.ctx().cumulative_frame_nr() == 0 {
+            ui.ctx().request_repaint();
+        } else if !self.shown.swap(true, Relaxed) && self.timings {
             eprintln!("window      {:.1} ms", ms(self.t0));
-            self.window_reported = true;
         }
         ui.heading(&self.name);
         ui.label(self.error.lock().unwrap().as_deref().unwrap_or("Playing"));

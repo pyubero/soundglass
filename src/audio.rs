@@ -2,6 +2,7 @@
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering::Relaxed};
 use std::sync::mpsc::{Receiver, sync_channel};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Instant;
@@ -49,15 +50,16 @@ pub fn decode(path: &Path, mut sink: impl FnMut(&[f32], usize, u32) -> Result<()
     Ok(())
 }
 
-/// Plays `path` on a background thread. Errors go to `error`, and the window is woken to show them.
-pub fn play(path: PathBuf, t0: Instant, timings: bool, bench: bool, error: Arc<Mutex<Option<String>>>, ctx: Arc<OnceLock<eframe::egui::Context>>) {
+/// Plays `path` on a background thread, silent until `shown` is set. Errors go to `error`, and the
+/// window is woken to show them.
+pub fn play(path: PathBuf, t0: Instant, timings: bool, bench: bool, error: Arc<Mutex<Option<String>>>, ctx: Arc<OnceLock<eframe::egui::Context>>, shown: Arc<AtomicBool>) {
     std::thread::spawn(move || {
         let (mut stream, mut tx) = (None, None);
         let result = decode(&path, |samples, channels, rate| {
             if stream.is_none() {
                 // About 1 s of MP3 packets or 3 s of FLAC: enough to ride out a slow disk.
                 let (t, rx) = sync_channel(32);
-                stream = Some(open(channels, rate, rx, t0, timings, bench)?);
+                stream = Some(open(channels, rate, rx, t0, timings, bench, shown.clone())?);
                 tx = Some(t);
             }
             // shortcut: rate or channel changes mid-file (chained Ogg) are ignored, handle them with resampling in milestone 2.
@@ -80,7 +82,7 @@ pub fn play(path: PathBuf, t0: Instant, timings: bool, bench: bool, error: Arc<M
     });
 }
 
-fn open(channels: usize, rate: u32, rx: Receiver<Vec<f32>>, t0: Instant, timings: bool, bench: bool) -> Result<cpal::Stream, String> {
+fn open(channels: usize, rate: u32, rx: Receiver<Vec<f32>>, t0: Instant, timings: bool, bench: bool, shown: Arc<AtomicBool>) -> Result<cpal::Stream, String> {
     let device = cpal::default_host().default_output_device().ok_or("no sound output device")?;
     // shortcut: no resampling, the device must accept the file's rate (PipeWire and PulseAudio do); add rubato in milestone 2, before Windows.
     let config = cpal::StreamConfig { channels: channels as u16, sample_rate: rate, buffer_size: cpal::BufferSize::Default };
@@ -89,6 +91,11 @@ fn open(channels: usize, rate: u32, rx: Receiver<Vec<f32>>, t0: Instant, timings
         .build_output_stream(
             config,
             move |out: &mut [f32], _: &cpal::OutputCallbackInfo| {
+                // No sound before the window is on screen; the queue is left untouched so the song starts at its first sample.
+                if !shown.load(Relaxed) {
+                    out.fill(0.0);
+                    return;
+                }
                 let mut i = 0;
                 while i < out.len() {
                     if pos == buf.len() {
