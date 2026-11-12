@@ -59,6 +59,7 @@ Reset puts all three back to normal. The last two use WSOLA, which can sound a l
 
 - Track Info shows the estimated tempo and key (Audio, after loading; the first 10 minutes are analysed). Tempo is counted as people tap along, so it can be an octave off.
 - In Track Info, Edit (in Tags) changes the title, artist, album, year, track, genre, BPM, key and cover; the estimate buttons fill BPM and Key, and ½× / 2× halve or double the BPM. Save… asks first, then writes the tags into the file; the audio is checked unchanged before the file is replaced. Save As and Save Copy also take tag edits not yet saved.
+- File → Identify Track… (online, only when you click Look up) sends the file's Chromaprint fingerprint and length to AcoustID and lists the matches with their score; Use Match fetches the genre from MusicBrainz (sending only the recording's ID) and fills Track Info's tag editor, only the empty fields unless you untick that. Nothing is written until Save… there. It is greyed out until the build has an AcoustID key and a contact URL (`src/identify.rs`).
 - File → Rename from Tags… renames the current file from a pattern such as `{track} - {artist} - {title}` (also `{album}`, `{year}`, `{genre}`), with a preview. A missing tag is left out, and an existing file is never replaced.
 
 ## Install as the default audio player

@@ -6,6 +6,7 @@ description = "A small, fast audio player and quick editor"
 license = "GPL-3.0-or-later"
 
 [dependencies]
+base64 = "0.23.1"
 bpm-key = { version = "0.1.0", default-features = false }
 cpal = "0.18.2"
 eframe = { version = "0.37", default-features = false, features = ["glow", "wayland", "x11", "accesskit", "persistence"] }
@@ -17,7 +18,10 @@ mp3lame-encoder = "0.3.0"
 rfd = "0.18.0"
 realfft = "3.5.1"
 rubato = "5.0.1"
+rusty-chromaprint = "0.3.0"
+serde_json = "1.0.154"
 symphonia = { version = "0.6.1", features = ["all"] }
+ureq = "3.5.2"
 vorbis_rs = "0.5.6"
 
 # Unoptimised decoders are 10–50× slower; keep dependencies fast in debug builds.

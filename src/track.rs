@@ -231,6 +231,11 @@ impl Track {
         self.decoded.load(Relaxed)
     }
 
+    /// The decoded chunks so far (shared, not copied): for analyses off the audio thread.
+    pub fn chunks(&self) -> Vec<Arc<[f32]>> {
+        self.chunks.lock().unwrap().clone()
+    }
+
     pub fn done(&self) -> bool {
         self.done.load(Relaxed)
     }

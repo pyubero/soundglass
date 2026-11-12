@@ -4,6 +4,7 @@
 mod chords;
 mod edit;
 mod folder;
+mod identify;
 mod loudness;
 mod player;
 mod save;
@@ -81,7 +82,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, identify: None, controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -168,6 +169,7 @@ struct App {
     tag_job: Option<std::sync::mpsc::Receiver<Result<(), String>>>,
     /// File → Rename from Tags… while open: the pattern being edited, and the file's tags.
     rename: Option<(String, Result<tags::TagEdit, String>)>,
+    identify: Option<Identify>,
     /// Height of everything below the cover, as measured last frame.
     controls_height: f32,
     /// Track Info's width as last shown.
@@ -180,6 +182,23 @@ struct App {
     timings: bool,
     /// Whether the window is on screen; playback starts then.
     shown: bool,
+}
+
+/// File → Identify Track… while open.
+struct Identify {
+    /// The file it's for: it closes when another one plays.
+    path: PathBuf,
+    /// The matches, or why there are none; `None` before Look up.
+    found: Option<Result<Vec<identify::Match>, String>>,
+    pick: usize,
+    only_empty: bool,
+    /// The running lookup, or the genre fetch for the picked match.
+    job: Option<std::sync::mpsc::Receiver<IdentifyJob>>,
+}
+
+enum IdentifyJob {
+    Found(Result<Vec<identify::Match>, String>),
+    Genre(Result<Option<String>, String>),
 }
 
 /// Track Info's tag fields: the tags as the file has them, and as edited.
@@ -483,6 +502,12 @@ impl eframe::App for App {
                         self.rename = Some((self.settings.rename_pattern.clone(), tags::read(&self.track.path)));
                         ui.close();
                     }
+                    let why = if !identify::ready() { Some("not set up") } else if !self.track.done() { Some("after loading") } else { None };
+                    let item = ui.add_enabled(why.is_none(), egui::Button::new("Identify Track…"));
+                    if item.on_disabled_hover_text(why.unwrap_or_default()).clicked() {
+                        self.identify = Some(Identify { path: self.track.path.clone(), found: None, pick: 0, only_empty: true, job: None });
+                        ui.close();
+                    }
                     if ui.button("Settings…").clicked() {
                         self.show_settings = true;
                     }
@@ -562,6 +587,10 @@ impl eframe::App for App {
         let tags = self.track.tags.get().cloned().unwrap_or_default();
         let error = self.track.error.lock().unwrap().clone().or_else(|| self.player.as_ref().err().cloned());
         let has_next = self.index + 1 < self.files.len();
+        // A match taken into the tag editor shows Track Info, where it is.
+        if self.identify_window(&ctx) && !self.show_info {
+            toggle_info = true;
+        }
         if toggle_info {
             self.show_info = !self.show_info;
             // Grow or shrink by the panel, so the player view keeps its size.
@@ -1548,6 +1577,114 @@ impl App {
     }
 
     /// File → Rename from Tags…: the pattern, a preview of the name, Rename and Cancel.
+    /// File → Identify Track…: Look up, pick a match, and Use Match fills the tag editor
+    /// (nothing is written here). True when the tag editor was filled.
+    fn identify_window(&mut self, ctx: &egui::Context) -> bool {
+        let Some(id) = &mut self.identify else { return false };
+        if id.path != self.track.path {
+            self.identify = None;
+            return false;
+        }
+        let mut genre = None;
+        if let Some(rx) = &id.job {
+            match rx.try_recv() {
+                Ok(IdentifyJob::Found(found)) => (id.found, id.pick, id.job) = (Some(found), 0, None),
+                Ok(IdentifyJob::Genre(g)) => (genre, id.job) = (Some(g), None),
+                Err(std::sync::mpsc::TryRecvError::Empty) => {}
+                Err(std::sync::mpsc::TryRecvError::Disconnected) => (id.found, id.job) = (Some(Err("The lookup stopped.".into())), None),
+            }
+        }
+        let busy = id.job.is_some();
+        let saving = self.tag_job.is_some();
+        let (mut look, mut take, mut close) = (false, false, false);
+        egui::Window::new("Identify Track").collapsible(false).resizable(false).show(ctx, |ui| {
+            ui.set_max_width(380.0);
+            ui.label("Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer.");
+            ui.add_space(6.0);
+            let mut found = 0;
+            match &id.found {
+                None => {}
+                Some(Err(e)) => {
+                    ui.colored_label(ui.visuals().error_fg_color, e);
+                }
+                Some(Ok(m)) if m.is_empty() => {
+                    ui.label("No match found.");
+                }
+                Some(Ok(matches)) => {
+                    found = matches.len();
+                    for (i, m) in matches.iter().enumerate() {
+                        ui.radio_value(&mut id.pick, i, format!("{:.0} %  {} — {}", m.score * 100.0, m.title, if m.artist.is_empty() { "?" } else { &m.artist }));
+                        let release = [m.album.clone(), m.year.clone(), if m.track.is_empty() { String::new() } else { format!("track {}", m.track) }];
+                        let release: Vec<String> = release.into_iter().filter(|s| !s.is_empty()).collect();
+                        if !release.is_empty() {
+                            ui.indent(i, |ui| ui.weak(release.join(", ")));
+                        }
+                    }
+                }
+            }
+            if busy {
+                ui.horizontal(|ui| {
+                    ui.spinner();
+                    ui.label(if id.found.is_some() { "Fetching the genre…" } else { "Looking up…" });
+                });
+            }
+            ui.checkbox(&mut id.only_empty, "Only fill empty tags");
+            ui.horizontal(|ui| {
+                look = ui.add_enabled(!busy, egui::Button::new("Look up")).clicked();
+                let item = ui.add_enabled(!busy && !saving && found > 0, egui::Button::new("Use Match")).on_hover_text("Fills Track Info's tag editor; Save… there writes the tags");
+                take = item.on_disabled_hover_text(if saving { "saving tags…" } else { "" }).clicked();
+                close = ui.button("Close").clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape));
+            });
+        });
+        if look {
+            let (tx, rx) = std::sync::mpsc::channel();
+            let (track, ctx) = (self.track.clone(), ctx.clone());
+            std::thread::spawn(move || {
+                let found = identify::fingerprint(&track).and_then(|(fp, secs)| identify::lookup(&fp, secs));
+                let _ = tx.send(IdentifyJob::Found(found));
+                ctx.request_repaint();
+            });
+            (id.found, id.job) = (None, Some(rx));
+        }
+        let picked = || match &id.found {
+            Some(Ok(m)) => m.get(id.pick).cloned(),
+            _ => None,
+        };
+        if take && let Some(m) = picked() {
+            let (tx, rx) = std::sync::mpsc::channel();
+            let ctx = ctx.clone();
+            std::thread::spawn(move || {
+                let _ = tx.send(IdentifyJob::Genre(identify::genre(&m.recording)));
+                ctx.request_repaint();
+            });
+            id.job = Some(rx);
+        }
+        if close {
+            self.identify = None;
+            return false;
+        }
+        let (Some(genre), Some(m)) = (genre, picked()) else { return false };
+        let only_empty = id.only_empty;
+        // Over the tag editor's own unsaved edits, if it's open: they aren't dropped.
+        let base = match &self.tag_editor {
+            Some(e) => Ok((e.read.clone(), e.draft.clone())),
+            None => tags::read(&self.track.path).map(|t| (t.clone(), t)),
+        };
+        match base {
+            Ok((read, base)) => {
+                // Without a genre (MusicBrainz unreachable, or none voted) the rest is still filled.
+                let draft = identify::fill(&base, &m, genre.ok().flatten().as_deref(), only_empty);
+                self.tag_editor = Some(TagEditor { read, draft, confirm: false, error: None });
+                self.identify = None;
+                true
+            }
+            Err(e) => {
+                self.save_notice = Some((Err(e), ctx.input(|i| i.time)));
+                false
+            }
+        }
+    }
+
     fn rename_window(&mut self, ctx: &egui::Context) {
         let Some((pattern, read)) = &mut self.rename else { return };
         let path = self.track.path.clone();
