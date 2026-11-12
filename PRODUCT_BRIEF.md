@@ -76,7 +76,7 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 - **Spectrogram.** See frequencies over time, to spot hum, clicks or where notes are. This shows the spectrogram first in a separate panel where we can zoom in/out and right click and drag for panning. Done: View → Spectrogram, its own window with a log frequency axis, click to seek, with note lines and their settings on its toolbar.
 - **BPM and key.** Estimate the tempo and musical key of the track. Done with the bpm-key crate: shown in Track Info, offered in its tag editor (with ½× / 2×), and Key ≈ … on the Spectrogram toolbar sets Scale shown.
 - DONT IMPLEMENT **Markers with notes.** Drop named markers (chorus, solo) and jump between them; they can be saved next to the file. Only if there is an automatic way of doing this.
-- **Metronome.** A click at a set tempo, alone or over the track, with the song's tempo by default and on the right spots, beware of swing. Later: a first try (Ellis dynamic-programming beat tracker on bpm-key's onset envelope) placed the clicks too badly on the test album; it waits until we improve the beat tracking ourselves.
+- **Metronome.** A click at a set tempo, alone or over the track, with the song's tempo by default and on the right spots, beware of swing. Later: a first try (Ellis dynamic-programming beat tracker on bpm-key's onset envelope) placed the clicks too badly on the test album; it waits until we improve the beat tracking ourselves; the attempt and its results are in [docs/BEAT_TRACKING.md](docs/BEAT_TRACKING.md).
 - **Chord recognition** Check if it is even possible.
 
 
