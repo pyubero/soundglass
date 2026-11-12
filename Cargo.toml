@@ -6,6 +6,7 @@ description = "A small, fast audio player and quick editor"
 license = "GPL-3.0-or-later"
 
 [dependencies]
+bpm-key = { version = "0.1.0", default-features = false }
 cpal = "0.18.2"
 eframe = { version = "0.37", default-features = false, features = ["glow", "wayland", "x11", "accesskit", "persistence"] }
 flacenc = "0.5.1"

@@ -4,7 +4,7 @@
 
 use lofty::file::TaggedFileExt;
 use lofty::picture::{Picture, PictureType};
-use lofty::tag::{Accessor, Tag, TagExt};
+use lofty::tag::{Accessor, ItemKey, Tag, TagExt};
 use std::path::{Path, PathBuf};
 
 /// Largest cover accepted, in bytes.
@@ -28,6 +28,10 @@ pub struct TagEdit {
     pub year: String,
     pub track: String,
     pub genre: String,
+    /// Whole beats per minute.
+    pub bpm: String,
+    /// The musical key, as "Am" or "Eb".
+    pub key: String,
     pub cover: Cover,
 }
 
@@ -48,6 +52,8 @@ fn read_tags(path: &Path) -> Result<TagEdit, String> {
         year: tag.date().map(|d| d.year.to_string()).unwrap_or_default(),
         track: tag.track().map(|t| t.to_string()).unwrap_or_default(),
         genre: text(tag.genre()),
+        bpm: text(tag.get_string(ItemKey::IntegerBpm).or(tag.get_string(ItemKey::Bpm)).map(Into::into)),
+        key: text(tag.get_string(ItemKey::InitialKey).map(Into::into)),
         cover: Cover::Keep,
     })
 }
@@ -86,6 +92,18 @@ pub fn apply(edit: &TagEdit, tag: &mut Tag) {
     match edit.track.trim().parse::<u32>() {
         Ok(n) => tag.set_track(n),
         Err(_) => tag.remove_track(),
+    }
+    tag.remove_key(ItemKey::IntegerBpm);
+    tag.remove_key(ItemKey::Bpm);
+    // shortcut: RIFF INFO and AIFF text have no BPM or key field, so those are dropped there.
+    if let Ok(bpm) = edit.bpm.trim().parse::<u32>() {
+        // ID3 and MP4 have a whole-number BPM field; Vorbis comments and APE only the text one.
+        let _ = tag.insert_text(ItemKey::IntegerBpm, bpm.to_string()) || tag.insert_text(ItemKey::Bpm, bpm.to_string());
+    }
+    if edit.key.trim().is_empty() {
+        tag.remove_key(ItemKey::InitialKey);
+    } else {
+        tag.insert_text(ItemKey::InitialKey, edit.key.trim().to_string());
     }
     match &edit.cover {
         Cover::Keep => {}
@@ -241,7 +259,7 @@ mod tests {
         let dir = scratch("inplace");
         let path = flac(&dir);
         let before = audio(&path).unwrap();
-        let edit = TagEdit { title: "St. Louis Blues".into(), artist: "Louis".into(), year: "1954".into(), track: "3".into(), cover: cover(png()).unwrap(), ..TagEdit::default() };
+        let edit = TagEdit { title: "St. Louis Blues".into(), artist: "Louis".into(), year: "1954".into(), track: "3".into(), bpm: "119".into(), key: "Fm".into(), cover: cover(png()).unwrap(), ..TagEdit::default() };
         write_in_place(&path, &edit).unwrap();
         assert_eq!(read(&path).unwrap(), TagEdit { cover: Cover::Keep, ..edit });
         assert_eq!(audio(&path).unwrap(), before);
@@ -262,8 +280,9 @@ mod tests {
         let track = crate::track::Track::from_samples(44100, 2, vec![0.1; 4410 * 2]);
         crate::save::save(&track, &crate::edit::Edit::whole(4410), crate::save::Choice { kind: crate::save::Kind::Wav, ..Default::default() }, &path, None).unwrap();
         let before = audio(&path).unwrap();
-        write_in_place(&path, &TagEdit { title: "Wave".into(), genre: "Jazz".into(), ..TagEdit::default() }).unwrap();
-        assert_eq!(read(&path).unwrap(), TagEdit { title: "Wave".into(), genre: "Jazz".into(), ..TagEdit::default() });
+        let edit = TagEdit { title: "Wave".into(), genre: "Jazz".into(), bpm: "96".into(), key: "Eb".into(), ..TagEdit::default() };
+        write_in_place(&path, &edit).unwrap();
+        assert_eq!(read(&path).unwrap(), edit);
         assert_eq!(audio(&path).unwrap(), before);
     }
 

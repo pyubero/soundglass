@@ -10,6 +10,7 @@ mod settings;
 mod spectrum;
 mod track;
 mod tags;
+mod tempo;
 mod wsola;
 
 use eframe::egui;
@@ -702,6 +703,11 @@ fn info_rows(track: &Track, file_size: Option<u64>) -> [(&'static str, Rows); 3]
         (None, true) => ("measuring…".into(), "measuring…".into()),
         (None, false) => ("after loading".into(), "after loading".into()),
     };
+    let (tempo, key) = match (track.tempo.get(), track.done()) {
+        (Some(e), _) => (e.bpm.map_or_else(unknown, |b| format!("≈ {b:.0} BPM")), e.key.map_or_else(unknown, |k| format!("≈ {}", k.name()))),
+        (None, true) => ("measuring…".into(), "measuring…".into()),
+        (None, false) => ("after loading".into(), "after loading".into()),
+    };
     let path = &track.path;
     let general = vec![
         ("Name", path.file_name().unwrap_or_default().to_string_lossy().into_owned()),
@@ -718,6 +724,8 @@ fn info_rows(track: &Track, file_size: Option<u64>) -> [(&'static str, Rows); 3]
         ("Bit depth", info.bits.map_or_else(unknown, |b| format!("{b}-bit"))),
         ("Loudness", loudness.0),
         ("Peak", loudness.1),
+        ("Tempo", tempo),
+        ("Key", key),
     ];
     let tags = vec![
         ("Title", tags.title.unwrap_or_else(unknown)),
@@ -735,7 +743,8 @@ enum TagClick {
 }
 
 /// The tag fields of Track Info's editor, with Save and Cancel; Cancel closes it here.
-fn tag_fields(ui: &mut egui::Ui, editor: &mut Option<TagEditor>) -> Option<TagClick> {
+/// `estimate` offers the measured tempo and key for the BPM and Key fields.
+fn tag_fields(ui: &mut egui::Ui, editor: &mut Option<TagEditor>, estimate: tempo::Estimate) -> Option<TagClick> {
     let e = editor.as_mut()?;
     let mut click = None;
     egui::Grid::new("tag fields").num_columns(2).spacing([12.0, 6.0]).show(ui, |ui| {
@@ -745,6 +754,34 @@ fn tag_fields(ui: &mut egui::Ui, editor: &mut Option<TagEditor>) -> Option<TagCl
             ui.add(egui::TextEdit::singleline(field).desired_width(f32::INFINITY));
             ui.end_row();
         }
+        ui.label("BPM");
+        ui.horizontal(|ui| {
+            ui.add(egui::TextEdit::singleline(&mut d.bpm).desired_width(48.0));
+            if let Some(bpm) = estimate.bpm
+                && ui.button(format!("≈ {bpm:.0}")).on_hover_text("Use the estimated tempo").clicked()
+            {
+                d.bpm = format!("{bpm:.0}");
+            }
+            // Any estimate can be an octave off: a slow song counted at double time, or the reverse.
+            let n = d.bpm.trim().parse::<u32>().ok().filter(|&n| n > 0);
+            if ui.add_enabled(n.is_some(), egui::Button::new("½×")).on_hover_text("Half the tempo").clicked() {
+                d.bpm = n.unwrap_or(0).div_ceil(2).to_string();
+            }
+            if ui.add_enabled(n.is_some(), egui::Button::new("2×")).on_hover_text("Double the tempo").clicked() {
+                d.bpm = (n.unwrap_or(0) * 2).to_string();
+            }
+        });
+        ui.end_row();
+        ui.label("Key");
+        ui.horizontal(|ui| {
+            ui.add(egui::TextEdit::singleline(&mut d.key).desired_width(48.0));
+            if let Some(key) = estimate.key
+                && ui.button(format!("≈ {}", key.short_name())).on_hover_text(format!("Use the estimated key, {}", key.name())).clicked()
+            {
+                d.key = key.short_name();
+            }
+        });
+        ui.end_row();
         ui.label("Cover");
         ui.horizontal(|ui| {
             ui.label(match d.cover {
@@ -789,7 +826,7 @@ fn info_panel(ui: &mut egui::Ui, track: &Track, file_size: Option<u64>, editor: 
             egui::CollapsingHeader::new(section).default_open(true).show(ui, |ui| {
                 if section == "Tags" {
                     if editor.is_some() {
-                        click = tag_fields(ui, editor);
+                        click = tag_fields(ui, editor, track.tempo.get().copied().unwrap_or_default());
                         return;
                     }
                     let edit = ui.add_enabled(can_edit.is_ok(), egui::Button::new("Edit"));
@@ -1330,6 +1367,15 @@ impl App {
                     if notes.clicked() {
                         self.settings.spectrum_notes = !self.settings.spectrum_notes;
                         self.settings_error = self.settings.save().err();
+                    }
+                    if let Some(key) = self.track.tempo.get().and_then(|e| e.key) {
+                        let scale = tempo::major_scale(key);
+                        let major = spectrum::KEYS[scale].0;
+                        let why = if key.is_minor() { format!("Show the notes of {major} major, which {} shares", key.name()) } else { format!("Show the notes of {major} major") };
+                        if ui.selectable_label(self.settings.note_scale == Some(scale), format!("Key ≈ {}", key.name())).on_hover_text(why).clicked() {
+                            (self.settings.note_scale, self.settings.spectrum_notes) = (Some(scale), true);
+                            self.settings_error = self.settings.save().err();
+                        }
                     }
                     if let Some(hop) = self.spectrum.hop().filter(|h| *h != self.settings.spectrum.hop as u64) {
                         ui.weak(format!("hop {hop} for this length")).on_hover_text("A long track: the hop is raised so the spectrogram fits in memory");

@@ -136,3 +136,10 @@
 - 2026-11-11 — with a scale shown, the highlighted lines (colour and width) are on its tonic, e.g. every F# in F# major; with All notes they stay on C (user's choice)
 - 2026-11-12 — no Markers with notes — there is no automatic way to place them (user's choice)
 - 2026-11-12 — BPM and key come from a crate; stratum-dsp and bpm-key (both MIT OR Apache-2.0) are tried on the test album before one is picked (user's choice)
+- 2026-11-12 — BPM and key use bpm-key 0.1.0 (MIT OR Apache-2.0, default features off): on the test album its tempo agreed with stratum-dsp's within 3% apart from doubled or halved tempos, it was 8–10× faster (1–3 s a track), adds 15 crates against 60 (stratum brings a second symphonia, 0.5), and gives no answer on garbage; it has no beat grid (user's choice)
+- 2026-11-12 — the tempo uses bpm-key's human_tempo prior (centred on 100 BPM), with a ½× / 2× switch because any detector can be an octave off (user's choice)
+- 2026-11-12 — tempo and key are estimated on the decode thread right after the loudness, kept on the Track (a OnceLock, carried over by relabel), and skipped for a track nobody holds any more — not a separate cancellable worker, since bpm-key can't stop midway and takes 1–3 s
+- 2026-11-12 — only the first 10 minutes are analysed, mixed to mono (a 10-minute copy, ~115 MB at 48 kHz), from the original audio, not the edits or Speed (accepted)
+- 2026-11-12 — the ½× / 2× switch lives in Track Info's tag editor, on the BPM field; Track Info's Audio rows only show the estimate
+- 2026-11-12 — BPM is written as a whole number (ID3 TBPM, MP4 tmpo; Vorbis and APE as the BPM text field) and the key as its short name ("Fm", "Eb"); RIFF INFO and AIFF text have no such fields, so they're dropped there (accepted)
+- 2026-11-12 — the Spectrogram toolbar's "Key ≈ …" sets Scale shown to the key's major scale (a minor key's relative major) and turns Notes on
