@@ -164,3 +164,9 @@
 - 2026-11-12 — tempo, key and chords are worked out only in Practice mode, by Track::analyse on a thread of its own once decoding is done (started from the UI when the mode is on, so turning it on mid-track works); with it off Track Info hides Tempo and Key and the tag editor hides the ≈ buttons (user's choice)
 - 2026-11-12 — v1 gets a folder browser panel, no library database (user's choice); not designed yet
 - 2026-11-12 — Local AI split: noise removal and speech transcription in v1, stems and melody to MIDI in v2 (user's choice)
+- 2026-11-12 — settings are a serde struct stored as RON under "settings" in eframe's app.ron, read before the window opens, as in lightview; serde and ron are direct dependencies at the versions eframe already pulls in (user's choice) — the entries above that say "kept in settings.txt" now mean kept in these settings
+- 2026-11-12 — the old settings.txt is ignored, not converted: the app starts once from the defaults (user's choice)
+- 2026-11-12 — settings are written by eframe on exit and every 30 s, not on each change, so a crash can lose the last 30 s of changes (accepted, as in lightview)
+- 2026-11-12 — the loaded settings are clamped back into range (A4, widths, label size, scale, spectrogram parameters), since app.ron can be edited by hand
+- 2026-11-12 — themes will follow lightview's pattern when they come: XML files (dark, light, high contrast) built in and copied to <data>/themes/ on first launch for editing, read with roxmltree (a dependency to approve then) (user's choice)
+- 2026-11-12 — .deb and .msi will install only the binary, .desktop file and icon; all user state stays in eframe's data folder (user's choice)

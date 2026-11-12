@@ -22,12 +22,15 @@ It comes in two parts:
 - Identifying a clip recorded from the microphone, Shazam-style: there is no open database of commercial music to match against
 
 ## Carried over from lightview
-egui/eframe UI, menus and assignable shortcuts, settings file, translations, screen reader support and high contrast theme, next file in folder decoded ahead, undo and Trash, Info window, .desktop default-app setup, .deb/.msi packaging, licence notices, `--bench` timings, and the opt-in ONNX Runtime and model manager.
+egui/eframe UI, menus and assignable shortcuts, settings and app state in eframe's data folder (`app.ron`; `~/.local/share/soundglass/`, `%APPDATA%\soundglass\data\` on Windows), themes as editable XML files there, translations, screen reader support and high contrast theme, next file in folder decoded ahead, undo and Trash, Info window, .desktop default-app setup, .deb/.msi packaging, licence notices, `--bench` timings, and the opt-in ONNX Runtime and model manager.
 
 ## Proposed stack
 symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), hound (WAV), a FLAC encoder, LAME through mp3lame-encoder (MP3), libvorbis or libopus (Ogg/Opus).
 
 ## v1: Player
+
+### Packaging
+- **.deb and .msi.** Like lightview's `package-deb.sh` and WiX file: they install only the binary, the .desktop file and the icon; every user file (settings, recent files, themes, AI models) lives in the data folder, so the packages and `install.sh` behave the same.
 
 ### 1. Spike
 - **Play from the command line.** `app song.mp3` opens a window and plays. We measure the time to first sound.

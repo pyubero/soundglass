@@ -13,7 +13,7 @@ use std::sync::mpsc::{Receiver, TryRecvError};
 use std::sync::Arc;
 
 /// The window's shape.
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Shape {
     Hann,
     Hamming,
@@ -33,10 +33,6 @@ impl Shape {
         }
     }
 
-    pub fn from_name(name: &str) -> Option<Shape> {
-        Shape::ALL.into_iter().find(|s| s.name() == name)
-    }
-
     /// The window's `n` weights.
     fn table(self, n: usize) -> Vec<f32> {
         (0..n)
@@ -54,7 +50,7 @@ impl Shape {
 }
 
 /// The colours from quiet to loud.
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum ColourMap {
     Magma,
     Gray,
@@ -72,10 +68,6 @@ impl ColourMap {
         }
     }
 
-    pub fn from_name(name: &str) -> Option<ColourMap> {
-        ColourMap::ALL.into_iter().find(|m| m.name() == name)
-    }
-
     fn stops(self) -> &'static [[f32; 3]] {
         match self {
             ColourMap::Magma => &[[0.0, 0.0, 4.0], [80.0, 18.0, 123.0], [182.0, 54.0, 121.0], [251.0, 136.0, 97.0], [252.0, 253.0, 191.0]],
@@ -88,8 +80,9 @@ impl ColourMap {
 /// The hop choices.
 pub const HOPS: [usize; 3] = [256, 512, 1024];
 
-/// How the spectrogram is analysed and coloured; kept in settings.txt.
-#[derive(Clone, Copy, PartialEq, Debug)]
+/// How the spectrogram is analysed and coloured; kept in the settings.
+#[derive(Clone, Copy, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct Params {
     /// FFT length and window length in frames (the window zero-padded to the FFT), and the step between windows.
     pub fft: usize,
@@ -464,7 +457,7 @@ fn spell(pc: u8, flats: bool, key: Option<usize>) -> Option<(usize, &'static str
 }
 
 /// An instrument whose usual range (in concert pitch) the note lines can be limited to.
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Instrument {
     None,
     Trumpet,
@@ -480,10 +473,6 @@ impl Instrument {
             Instrument::Trumpet => "Trumpet",
             Instrument::TenorSax => "Tenor sax",
         }
-    }
-
-    pub fn from_name(name: &str) -> Option<Instrument> {
-        Instrument::ALL.into_iter().find(|i| i.name() == name)
     }
 
     /// The lowest and highest sounding notes as MIDI numbers: B♭ trumpet written F#3–C6 sounds

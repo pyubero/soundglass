@@ -1,15 +1,20 @@
-//! Settings in `settings.txt` next to eframe's own storage, read before the window opens.
+//! Settings, kept like lightview's: a RON value under `KEY` in eframe's storage
+//! (`~/.local/share/soundglass/app.ron`), read before the window opens.
 
 use eframe::egui::Color32;
-use std::path::{Path, PathBuf};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+
+/// Key in eframe's storage.
+pub const KEY: &str = "settings";
 
 /// Track Info's width when nothing is saved.
 pub const INFO_WIDTH: f32 = 320.0;
 /// The Edit panel's height when nothing is saved.
 pub const EDIT_HEIGHT: f32 = 160.0;
 
-// shortcut: hand-written key=value lines; move to serde + ron (new dependencies, ask first) when settings grow.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Settings {
     /// Reopen with the window, Track Info and the Edit panel as they were at exit, instead of the phone-shaped default.
     pub remember_window_size: bool,
@@ -74,113 +79,35 @@ impl Default for Settings {
 const NOTE_C_COLOR: Color32 = Color32::from_rgba_unmultiplied_const(255, 200, 90, 153);
 const NOTE_COLOR: Color32 = Color32::from_rgba_unmultiplied_const(255, 255, 255, 77);
 
-/// `rrggbbaa`, unmultiplied.
-fn to_hex(c: Color32) -> String {
-    let [r, g, b, a] = c.to_srgba_unmultiplied();
-    format!("{r:02x}{g:02x}{b:02x}{a:02x}")
-}
-
-fn hex(v: &str) -> Option<Color32> {
-    let byte = |i: usize| u8::from_str_radix(v.get(i..i + 2)?, 16).ok();
-    (v.len() == 8).then_some(())?;
-    Some(Color32::from_rgba_unmultiplied(byte(0)?, byte(2)?, byte(4)?, byte(6)?))
-}
-
-fn path() -> Option<PathBuf> {
-    eframe::storage_dir("soundglass").map(|d| d.join("settings.txt"))
-}
-
-/// The saved settings; anything missing or unreadable is the default.
+/// Reads the settings straight from eframe's storage file, so the window size is known before
+/// the window is created; `App::save` writes them back through eframe. Anything missing or
+/// unreadable falls back to the defaults.
 pub fn load() -> Settings {
-    path().and_then(|p| std::fs::read_to_string(p).ok()).map(|s| parse(&s)).unwrap_or_default()
+    let path = eframe::storage_dir("soundglass").map(|d| d.join("app.ron"));
+    path.and_then(|p| std::fs::read_to_string(p).ok()).map(|s| parse(&s)).unwrap_or_default()
 }
 
-fn parse(text: &str) -> Settings {
-    use crate::spectrum::{ColourMap, Instrument, Shape, KEYS};
-    let mut s = Settings::default();
-    // "Natural notes only", before Scale shown replaced it, is C major.
-    let (mut naturals, mut scale) = (false, None);
-    let float = |v: &str| v.trim().parse::<f32>().ok().filter(|n| n.is_finite());
-    let count = |v: &str| v.trim().parse::<usize>().ok();
-    for (key, value) in text.lines().filter_map(|l| l.split_once('=')) {
-        let (value, on) = (value.trim(), value.trim() == "true");
-        let number = |v: &str| v.trim().parse::<f32>().ok().filter(|n| n.is_finite() && *n > 0.0);
-        match key.trim() {
-            "remember_window_size" => s.remember_window_size = on,
-            "show_waveform" => s.show_waveform = on,
-            "practice" => s.practice = on,
-            "window_size" => s.window_size = value.split_once(',').and_then(|(w, h)| Some([number(w)?, number(h)?])),
-            "info_panel" => s.info_panel = on,
-            "info_width" => s.info_width = number(value).unwrap_or(INFO_WIDTH),
-            "edit_panel" => s.edit_panel = on,
-            "edit_height" => s.edit_height = number(value).unwrap_or(EDIT_HEIGHT),
-            "rename_pattern" if !value.is_empty() => s.rename_pattern = value.into(),
-            "spectrum_notes" => s.spectrum_notes = on,
-            "spectrum_chords" => s.spectrum_chords = on,
-            "note_a4" => s.note_a4 = number(value).map_or(440.0, |n| n.clamp(400.0, 480.0)),
-            "note_solfege" => s.note_solfege = on,
-            "note_flats" => s.note_flats = on,
-            "note_octaves" => s.note_octaves = on,
-            "note_naturals" => naturals = on,
-            "note_scale" => scale = Some(KEYS.iter().position(|k| k.0 == value)),
-            "note_instrument" => s.note_instrument = Instrument::from_name(value).unwrap_or(Instrument::None),
-            "note_c_color" => s.note_c_color = hex(value).unwrap_or(NOTE_C_COLOR),
-            "note_color" => s.note_color = hex(value).unwrap_or(NOTE_COLOR),
-            "note_c_width" => s.note_c_width = number(value).map_or(2.0, |n| n.min(6.0)),
-            "spec_fft" => s.spectrum.fft = count(value).unwrap_or(s.spectrum.fft),
-            "spec_window" => s.spectrum.window = count(value).unwrap_or(s.spectrum.window),
-            "spec_hop" => s.spectrum.hop = count(value).unwrap_or(s.spectrum.hop),
-            "spec_shape" => s.spectrum.shape = Shape::from_name(value).unwrap_or(s.spectrum.shape),
-            "spec_floor" => s.spectrum.floor = float(value).unwrap_or(s.spectrum.floor),
-            "spec_ceiling" => s.spectrum.ceiling = float(value).unwrap_or(s.spectrum.ceiling),
-            "spec_low" => s.spectrum.low = float(value).unwrap_or(s.spectrum.low),
-            "spec_colours" => s.spectrum.map = ColourMap::from_name(value).unwrap_or(s.spectrum.map),
-            "note_label_size" => s.note_label_size = number(value).map_or(11.0, |n| n.clamp(6.0, 24.0)),
-            _ => {}
-        }
-    }
-    s.spectrum = s.spectrum.checked();
-    s.note_scale = scale.unwrap_or(naturals.then_some(0));
-    s
+fn parse(app_ron: &str) -> Settings {
+    ron::from_str::<HashMap<String, String>>(app_ron).ok().and_then(|kv| ron::from_str::<Settings>(kv.get(KEY)?).ok()).unwrap_or_default().checked()
 }
 
 impl Settings {
-    pub fn save(&self) -> Result<(), String> {
-        let path = path().ok_or("no folder for settings")?;
-        self.write_to(&path).map_err(|e| format!("could not save settings: {e}"))
-    }
-
-    fn text(&self) -> String {
-        let mut text = format!(
-            "remember_window_size={}\nshow_waveform={}\ninfo_panel={}\ninfo_width={}\nedit_panel={}\nedit_height={}\n",
-            self.remember_window_size, self.show_waveform, self.info_panel, self.info_width, self.edit_panel, self.edit_height
-        );
-        // One line: a pattern can't hold a line break, the dialog's field is single-line.
-        text += &format!("rename_pattern={}\n", self.rename_pattern.replace(['\n', '\r'], " "));
-        text += &format!("practice={}\nspectrum_chords={}\n", self.practice, self.spectrum_chords);
-        text += &format!(
-            "spectrum_notes={}\nnote_a4={}\nnote_solfege={}\nnote_flats={}\nnote_octaves={}\nnote_scale={}\nnote_instrument={}\nnote_c_color={}\nnote_color={}\nnote_c_width={}\nnote_label_size={}\n",
-            self.spectrum_notes, self.note_a4, self.note_solfege, self.note_flats, self.note_octaves, self.note_scale.map_or("all", |k| crate::spectrum::KEYS[k % 12].0), self.note_instrument.name(), to_hex(self.note_c_color), to_hex(self.note_color), self.note_c_width, self.note_label_size
-        );
-        let p = self.spectrum;
-        text += &format!(
-            "spec_fft={}\nspec_window={}\nspec_hop={}\nspec_shape={}\nspec_floor={}\nspec_ceiling={}\nspec_low={}\nspec_colours={}\n",
-            p.fft, p.window, p.hop, p.shape.name(), p.floor, p.ceiling, p.low, p.map.name()
-        );
-        if let Some([w, h]) = self.window_size {
-            text += &format!("window_size={w},{h}\n");
+    /// Back within range: the file can be edited by hand.
+    fn checked(mut self) -> Settings {
+        let d = Settings::default();
+        let positive = |n: f32| n.is_finite() && n > 0.0;
+        self.window_size = self.window_size.filter(|s| s.iter().all(|&n| positive(n)));
+        self.info_width = if positive(self.info_width) { self.info_width } else { d.info_width };
+        self.edit_height = if positive(self.edit_height) { self.edit_height } else { d.edit_height };
+        self.note_a4 = if positive(self.note_a4) { self.note_a4.clamp(400.0, 480.0) } else { d.note_a4 };
+        self.note_c_width = if positive(self.note_c_width) { self.note_c_width.min(6.0) } else { d.note_c_width };
+        self.note_label_size = if positive(self.note_label_size) { self.note_label_size.clamp(6.0, 24.0) } else { d.note_label_size };
+        self.note_scale = self.note_scale.filter(|&k| k < 12);
+        if self.rename_pattern.is_empty() {
+            self.rename_pattern = d.rename_pattern;
         }
-        text
-    }
-
-    /// Writes a temporary file and renames it over the old one, so a crash never leaves half a file.
-    fn write_to(&self, path: &Path) -> std::io::Result<()> {
-        if let Some(dir) = path.parent() {
-            std::fs::create_dir_all(dir)?;
-        }
-        let tmp = path.with_extension("txt.tmp");
-        std::fs::write(&tmp, self.text())?;
-        std::fs::rename(&tmp, path)
+        self.spectrum = self.spectrum.checked();
+        self
     }
 }
 
@@ -190,8 +117,6 @@ mod tests {
 
     #[test]
     fn round_trip_and_defaults() {
-        let dir = std::env::temp_dir().join(format!("soundglass-settings-{}", std::process::id()));
-        let path = dir.join("settings.txt");
         let s = Settings {
             remember_window_size: true, show_waveform: true, practice: true, window_size: Some([700.0, 680.0]), info_panel: true, info_width: 300.0, edit_panel: true, edit_height: 200.0, rename_pattern: "{artist} - {title}".into(),
             spectrum_notes: true,
@@ -217,20 +142,18 @@ mod tests {
                 map: crate::spectrum::ColourMap::BlueRed,
             },
         };
-        s.write_to(&path).unwrap();
-        let back = parse(&std::fs::read_to_string(&path).unwrap());
-        std::fs::remove_dir_all(&dir).unwrap();
-        assert_eq!(back, s);
-        assert_eq!(parse("garbage\n=\nremember_window_size=maybe\nwindow_size=wide,-3\ninfo_width=nan"), Settings::default());
-        let defaults = parse("");
-        assert_eq!((defaults.window_size, defaults.info_panel, defaults.info_width), (None, false, INFO_WIDTH));
-        assert_eq!((defaults.edit_panel, defaults.edit_height), (false, EDIT_HEIGHT));
-        assert_eq!((defaults.spectrum_notes, defaults.spectrum_chords, defaults.note_a4, defaults.note_octaves), (false, false, 440.0, true));
-        assert_eq!(parse("note_a4=1000\nnote_opacity=-1").note_a4, 480.0);
-        assert_eq!(parse("note_naturals=true").note_scale, Some(0));
-        assert_eq!(parse("note_naturals=true\nnote_scale=all").note_scale, None);
-        assert_eq!((parse("note_scale=D").note_scale, parse("note_scale=H").note_scale), (Some(2), None));
-        assert_eq!(parse("note_color=zz00ff80\nnote_c_color=fff").note_color, NOTE_COLOR);
-        assert_eq!(parse("spec_fft=3000\nspec_window=99999\nspec_shape=Kaiser").spectrum, crate::spectrum::Params::default().checked());
+        let app_ron = |v: &str| ron::to_string(&HashMap::from([(KEY.to_string(), v.to_string())])).unwrap();
+        assert_eq!(parse(&app_ron(&ron::to_string(&s).unwrap())), s);
+        for junk in ["", "garbage", "{\"recent\": \"x\"}"] {
+            assert_eq!(parse(junk), Settings::default());
+        }
+        assert_eq!(parse(&app_ron("not ron")), Settings::default());
+        // Only some fields: the rest keep their defaults.
+        let some = parse(&app_ron("(practice: true, spectrum: (fft: 8192))"));
+        assert_eq!((some.practice, some.spectrum.fft, some.note_a4, some.spectrum.hop), (true, 8192, 440.0, crate::spectrum::Params::default().hop));
+        let bad = parse(&app_ron("(note_a4: 1000, info_width: -3, edit_height: 0, window_size: Some((700, -1)), note_scale: Some(12), note_label_size: 99, rename_pattern: \"\", spectrum: (fft: 3000, window: 99999))"));
+        assert_eq!((bad.note_a4, bad.info_width, bad.edit_height, bad.window_size, bad.note_scale, bad.note_label_size), (480.0, INFO_WIDTH, EDIT_HEIGHT, None, None, 24.0));
+        assert_eq!(bad.rename_pattern, crate::tags::DEFAULT_PATTERN);
+        assert_eq!(bad.spectrum, crate::spectrum::Params { fft: 3000, window: 99999, ..Default::default() }.checked());
     }
 }

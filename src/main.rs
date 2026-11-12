@@ -82,7 +82,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, identify: None, controls_height: 260.0, info_width, window_size, settings_error: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, identify: None, controls_height: 260.0, info_width, window_size, player, t0, timings, shown: false }))
     }))
 }
 
@@ -176,7 +176,6 @@ struct App {
     info_width: f32,
     /// The window's size in points, last seen while not maximized or fullscreen.
     window_size: Option<[f32; 2]>,
-    settings_error: Option<String>,
     player: Result<Player, String>,
     t0: Instant,
     timings: bool,
@@ -383,8 +382,8 @@ impl eframe::App for App {
         if self.settings.remember_window_size {
             (self.settings.window_size, self.settings.info_panel, self.settings.info_width) = (self.window_size, self.show_info, self.info_width);
             (self.settings.edit_panel, self.settings.edit_height) = (self.show_edit, self.edit_height);
-            self.settings_error = self.settings.save().err();
         }
+        eframe::set_value(storage, settings::KEY, &self.settings);
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
@@ -551,16 +550,13 @@ impl eframe::App for App {
                         toggle_edit = true;
                         ui.close();
                     }
-                    if ui.checkbox(&mut self.settings.show_waveform, "Waveform").changed() {
-                        self.settings_error = self.settings.save().err();
-                    }
+                    ui.checkbox(&mut self.settings.show_waveform, "Waveform");
                     ui.separator();
                     if ui.checkbox(&mut self.settings.practice, "Practice mode").on_hover_text("Tools for musicians: loops, the spectrogram, tempo, key and chords").changed() {
                         if !self.settings.practice {
                             self.looping = false;
                             self.show_spectrum = false;
                         }
-                        self.settings_error = self.settings.save().err();
                         ui.close();
                     }
                 });
@@ -1106,13 +1102,8 @@ impl App {
     fn settings_window(&mut self, ctx: &egui::Context) {
         let mut open = self.show_settings;
         egui::Window::new("Settings").open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
-            if ui.checkbox(&mut self.settings.remember_window_size, "Remember window size").changed() {
-                self.settings_error = self.settings.save().err();
-            }
+            ui.checkbox(&mut self.settings.remember_window_size, "Remember window size");
             ui.weak("Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.");
-            if let Some(e) = &self.settings_error {
-                ui.colored_label(ui.visuals().error_fg_color, e);
-            }
         });
         self.show_settings = open;
     }
@@ -1413,12 +1404,10 @@ impl App {
                     let notes = ui.selectable_label(self.settings.spectrum_notes, "Notes").on_hover_text("Show or hide the note lines");
                     if notes.clicked() {
                         self.settings.spectrum_notes = !self.settings.spectrum_notes;
-                        self.settings_error = self.settings.save().err();
                     }
                     let chords = ui.selectable_label(self.settings.spectrum_chords, "Chords").on_hover_text("Show or hide the chords along the top");
                     if chords.clicked() {
                         self.settings.spectrum_chords = !self.settings.spectrum_chords;
-                        self.settings_error = self.settings.save().err();
                     }
                     if let Some(key) = self.track.tempo.get().and_then(|e| e.key) {
                         let scale = tempo::major_scale(key);
@@ -1426,7 +1415,6 @@ impl App {
                         let why = if key.is_minor() { format!("Show the notes of {major} major, which {} shares", key.name()) } else { format!("Show the notes of {major} major") };
                         if ui.selectable_label(self.settings.note_scale == Some(scale), format!("Key ≈ {}", key.name())).on_hover_text(why).clicked() {
                             (self.settings.note_scale, self.settings.spectrum_notes) = (Some(scale), true);
-                            self.settings_error = self.settings.save().err();
                         }
                     }
                     if let Some(hop) = self.spectrum.hop().filter(|h| *h != self.settings.spectrum.hop as u64) {
@@ -1441,11 +1429,8 @@ impl App {
                 });
             });
             let mut open = self.show_spectrum_settings;
-            let changed = egui::Window::new("Spectrogram settings").open(&mut open).collapsible(false).resizable(false).show(&ctx, |ui| spectrum_settings(ui, &mut self.settings, rate));
+            egui::Window::new("Spectrogram settings").open(&mut open).collapsible(false).resizable(false).show(&ctx, |ui| spectrum_settings(ui, &mut self.settings, rate));
             self.show_spectrum_settings = open;
-            if changed.and_then(|r| r.inner).unwrap_or(false) {
-                self.settings_error = self.settings.save().err();
-            }
             let seek = egui::CentralPanel::default()
                 .show(ui, |ui| spectrum_panel(ui, &mut self.spectrum_view, &mut self.edit_view.selection, &mut self.spectrum, &self.settings, &self.track, edit, pos, len, rate, playing))
                 .inner;
@@ -1739,7 +1724,6 @@ impl App {
             match tags::rename(&path, &name).and_then(|new| self.relabel(new.clone()).map(|()| new)) {
                 Ok(new) => {
                     self.settings.rename_pattern = pattern;
-                    self.settings_error = self.settings.save().err();
                     self.files = folder::list_folder(&new);
                     self.index = self.files.iter().position(|p| *p == new).unwrap_or(0);
                     for p in &mut self.recent {
@@ -2116,9 +2100,8 @@ fn zoom_pan(ui: &egui::Ui, response: &egui::Response, rect: egui::Rect, view: &m
     }
 }
 
-/// The Spectrogram settings window: the notes' tuning, names and look; true when one changed.
-fn spectrum_settings(ui: &mut egui::Ui, s: &mut settings::Settings, rate: u64) -> bool {
-    let before = s.clone();
+/// The Spectrogram settings window: the notes' tuning, names and look.
+fn spectrum_settings(ui: &mut egui::Ui, s: &mut settings::Settings, rate: u64) {
     let ms = |frames: usize| format!("{frames} ({:.1} ms)", frames as f64 * 1000.0 / rate.max(1) as f64);
     let p = &mut s.spectrum;
     ui.strong("Analysis");
@@ -2226,7 +2209,6 @@ fn spectrum_settings(ui: &mut egui::Ui, s: &mut settings::Settings, rate: u64) -
     }
     ui.add(egui::Slider::new(&mut s.note_c_width, 1.0..=6.0).text("Tonic line width"));
     ui.add(egui::Slider::new(&mut s.note_label_size, 6.0..=24.0).text("Label size"));
-    *s != before
 }
 
 /// The spectrogram of edited frames shown in `view`, with note lines or frequency marks and the
