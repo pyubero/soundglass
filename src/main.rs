@@ -404,6 +404,9 @@ impl eframe::App for App {
             }
         }
         self.follow_player();
+        if self.settings.practice {
+            self.track.analyse(repaint(&self.ctx));
+        }
         // Re-set when the track changes and again once its exact length is known.
         if self.titled != Some((Arc::as_ptr(&self.track) as usize, self.track.done(), self.dirty())) {
             self.set_title(&ctx);
@@ -496,6 +499,7 @@ impl eframe::App for App {
                         self.show_save = true;
                         ui.close();
                     }
+                    ui.separator();
                     let why = if !self.track.done() { Some("after loading") } else if self.tag_job.is_some() { Some("saving tags…") } else { None };
                     let item = ui.add_enabled(why.is_none(), egui::Button::new("Rename from Tags…"));
                     if item.on_disabled_hover_text(why.unwrap_or_default()).clicked() {
@@ -508,11 +512,10 @@ impl eframe::App for App {
                         self.identify = Some(Identify { path: self.track.path.clone(), found: None, pick: 0, only_empty: true, job: None });
                         ui.close();
                     }
+                    ui.separator();
                     if ui.button("Settings…").clicked() {
                         self.show_settings = true;
                     }
-                    ui.separator();
-                    ui.separator();
                     if ui.add(egui::Button::new("Quit").shortcut_text(ctx.format_shortcut(&egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Q)))).clicked() {
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
@@ -548,15 +551,20 @@ impl eframe::App for App {
                         toggle_edit = true;
                         ui.close();
                     }
-                    if ui.checkbox(&mut self.show_spectrum, "Spectrogram").changed() {
-                        ui.close();
-                    }
                     if ui.checkbox(&mut self.settings.show_waveform, "Waveform").changed() {
                         self.settings_error = self.settings.save().err();
                     }
+                    ui.separator();
+                    if ui.checkbox(&mut self.settings.practice, "Practice mode").on_hover_text("Tools for musicians: loops, the spectrogram, tempo, key and chords").changed() {
+                        if !self.settings.practice {
+                            self.looping = false;
+                            self.show_spectrum = false;
+                        }
+                        self.settings_error = self.settings.save().err();
+                        ui.close();
+                    }
                 });
                 ui.menu_button("Playback", |ui| {
-                    ui.checkbox(&mut self.looping, "Loop selection").on_hover_text("L");
                     for knob in Knob::ALL {
                         ui.menu_button(knob.title(), |ui| {
                             let now = knob.get(self.speed);
@@ -580,6 +588,14 @@ impl eframe::App for App {
                         ui.close();
                     }
                 });
+                if self.settings.practice {
+                    ui.menu_button("Practice", |ui| {
+                        ui.checkbox(&mut self.looping, "Loop selection").on_hover_text("L");
+                        if ui.checkbox(&mut self.show_spectrum, "Spectrogram").changed() {
+                            ui.close();
+                        }
+                    });
+                }
             });
         });
 
@@ -620,7 +636,7 @@ impl eframe::App for App {
             let size = std::fs::metadata(&self.track.path).map(|m| m.len()).ok();
             let panel = egui::Panel::right("info").resizable(true).size_range(240.0..=360.0).default_size(self.info_width).show(ui, |ui| {
                 let can_edit = if !self.track.done() { Err("after loading") } else if self.tag_job.is_some() { Err("saving tags…") } else { Ok(()) };
-                info_panel(ui, &self.track, size, &mut self.tag_editor, can_edit)
+                info_panel(ui, &self.track, size, &mut self.tag_editor, can_edit, self.settings.practice)
             });
             match panel.inner {
                 Some(TagClick::Edit) => match tags::read(&self.track.path) {
@@ -713,7 +729,7 @@ fn title(name: &str, length: Option<&str>, format: &str) -> String {
 /// Track Info's rows; "—" for what isn't known, "measuring…" while loudness is computed.
 /// Grouped as Track Info shows them: General, Audio, Tags.
 type Rows = Vec<(&'static str, String)>;
-fn info_rows(track: &Track, file_size: Option<u64>) -> [(&'static str, Rows); 3] {
+fn info_rows(track: &Track, file_size: Option<u64>, practice: bool) -> [(&'static str, Rows); 3] {
     let unknown = || "—".to_string();
     let tags = track.tags.get().cloned().unwrap_or_default();
     let info = track.info.get().cloned().unwrap_or_default();
@@ -748,15 +764,16 @@ fn info_rows(track: &Track, file_size: Option<u64>) -> [(&'static str, Rows); 3]
         ("Length", seconds.map_or_else(unknown, |_| clock(track.len(), rate))),
         ("Bitrate", bitrate),
     ];
-    let audio = vec![
+    let mut audio = vec![
         ("Sample rate", if rate > 0 { format!("{:.1} kHz", rate as f64 / 1000.0) } else { unknown() }),
         ("Channels", channels),
         ("Bit depth", info.bits.map_or_else(unknown, |b| format!("{b}-bit"))),
         ("Loudness", loudness.0),
         ("Peak", loudness.1),
-        ("Tempo", tempo),
-        ("Key", key),
     ];
+    if practice {
+        audio.extend([("Tempo", tempo), ("Key", key)]);
+    }
     let tags = vec![
         ("Title", tags.title.unwrap_or_else(unknown)),
         ("Artist", tags.artist.unwrap_or_else(unknown)),
@@ -848,15 +865,15 @@ fn tag_fields(ui: &mut egui::Ui, editor: &mut Option<TagEditor>, estimate: tempo
 }
 
 /// `can_edit` is why the tags can't be edited now, if they can't.
-fn info_panel(ui: &mut egui::Ui, track: &Track, file_size: Option<u64>, editor: &mut Option<TagEditor>, can_edit: Result<(), &str>) -> Option<TagClick> {
+fn info_panel(ui: &mut egui::Ui, track: &Track, file_size: Option<u64>, editor: &mut Option<TagEditor>, can_edit: Result<(), &str>, practice: bool) -> Option<TagClick> {
     let mut click = None;
     // Fill the panel's width: shrinking to the content made it shrink with it (as in lightview).
     egui::ScrollArea::vertical().auto_shrink([false, true]).show(ui, |ui| {
-        for (section, rows) in info_rows(track, file_size) {
+        for (section, rows) in info_rows(track, file_size, practice) {
             egui::CollapsingHeader::new(section).default_open(true).show(ui, |ui| {
                 if section == "Tags" {
                     if editor.is_some() {
-                        click = tag_fields(ui, editor, track.tempo.get().copied().unwrap_or_default());
+                        click = tag_fields(ui, editor, track.tempo.get().copied().filter(|_| practice).unwrap_or_default());
                         return;
                     }
                     let edit = ui.add_enabled(can_edit.is_ok(), egui::Button::new("Edit"));
@@ -1371,13 +1388,13 @@ impl App {
             if plain(egui::Key::Escape) {
                 self.edit_view.selection = None;
             }
-            if plain(egui::Key::L) {
+            if plain(egui::Key::L) && self.settings.practice {
                 self.looping = !self.looping;
             }
         }
     }
 
-    /// View → Spectrogram: its own window, closed with its ✕ or the menu. Returns what its keys
+    /// Practice → Spectrogram: its own window, closed with its ✕ or the menu. Returns what its keys
     /// and clicks asked for.
     fn spectrum_window(&mut self, ctx: &egui::Context, edit: &Arc<Edit>, pos: u64, len: u64, rate: u64, playing: bool) -> Vec<Action> {
         if !self.show_spectrum {
@@ -2469,7 +2486,7 @@ mod tests {
     fn track_info_rows() {
         // 2 s of stereo at 44.1 kHz in a 352 800-byte file: 1411 kb/s, like a CD.
         let track = crate::track::Track::from_samples(44100, 2, vec![0.0; 2 * 88200]);
-        let groups = info_rows(&track, Some(352_800));
+        let groups = info_rows(&track, Some(352_800), true);
         assert_eq!(groups.each_ref().map(|(s, _)| *s), ["General", "Audio", "Tags"]);
         let rows: Vec<_> = groups.into_iter().flat_map(|(_, r)| r).collect();
         let row = |name| rows.iter().find(|(n, _)| *n == name).unwrap().1.clone();
@@ -2480,6 +2497,9 @@ mod tests {
         assert_eq!(row("File size"), "0.4 MB");
         assert_eq!(row("Title"), "—");
         assert_eq!(row("Loudness"), "measuring…");
+        assert_eq!(row("Tempo"), "measuring…");
+        let off: Vec<_> = info_rows(&track, None, false).into_iter().flat_map(|(_, r)| r).map(|(n, _)| n).collect();
+        assert!(!off.contains(&"Tempo") && !off.contains(&"Key") && off.contains(&"Peak"));
     }
 
     #[test]

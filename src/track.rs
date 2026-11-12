@@ -60,7 +60,7 @@ pub struct Track {
     pub tags: OnceLock<Tags>,
     pub info: OnceLock<Info>,
     pub loudness: OnceLock<Loudness>,
-    /// Tempo and key, estimated after the loudness.
+    /// Tempo and key, estimated by `analyse` (Practice mode only).
     pub tempo: OnceLock<crate::tempo::Estimate>,
     /// Chords over time, in the original's frames, found with the tempo.
     pub chords: OnceLock<Arc<[crate::chords::Span]>>,
@@ -73,6 +73,8 @@ pub struct Track {
     /// Lowest and highest sample of every `PEAK` frames, all channels together, for the waveform.
     pub peaks: Mutex<Vec<(f32, f32)>>,
     done: AtomicBool,
+    /// `analyse` has started (or the results came over with `relabel`).
+    analysing: AtomicBool,
     pub error: Mutex<Option<String>>,
 }
 
@@ -140,17 +142,31 @@ impl Track {
                 let peak = t.peaks.lock().unwrap().iter().fold(0f32, |m, &(lo, hi)| m.max(-lo).max(hi));
                 let _ = t.loudness.set(Loudness { lufs: meter.integrated(), peak_db: 20.0 * (peak as f64).log10() });
                 notify();
-                // Only the decoder holds the track: nobody will look at it.
-                if Arc::strong_count(&t) > 1 {
-                    let mono = crate::tempo::mono(&chunks, *format);
-                    let _ = t.tempo.set(crate::tempo::estimate(&mono, format.rate));
-                    notify();
-                    let _ = t.chords.set(crate::chords::find(&mono, format.rate).into());
-                    notify();
-                }
             }
         });
         track
+    }
+
+    /// Estimates the tempo, key and chords on their own thread, once, after decoding is done.
+    pub fn analyse(self: &Arc<Self>, notify: impl Fn() + Send + 'static) {
+        if !self.done() || self.analysing.swap(true, Relaxed) {
+            return;
+        }
+        let t = self.clone();
+        std::thread::spawn(move || {
+            let Some(format) = t.format.get() else { return };
+            let mono = crate::tempo::mono(&t.chunks(), *format);
+            // Only this thread holds the track: nobody will look at it.
+            if Arc::strong_count(&t) == 1 {
+                return;
+            }
+            let _ = t.tempo.set(crate::tempo::estimate(&mono, format.rate));
+            notify();
+            if Arc::strong_count(&t) > 1 {
+                let _ = t.chords.set(crate::chords::find(&mono, format.rate).into());
+                notify();
+            }
+        });
     }
 
     fn set_meta(self: &Arc<Self>, tags: Tags, info: Info, picture: Option<Box<[u8]>>, notify: Arc<dyn Fn() + Send + Sync>) {
@@ -187,6 +203,7 @@ impl Track {
         }
         if let Some(c) = self.chords.get() {
             let _ = t.chords.set(c.clone());
+            t.analysing.store(true, Relaxed);
         }
         *t.chunks.lock().unwrap() = self.chunks.lock().unwrap().clone();
         *t.peaks.lock().unwrap() = self.peaks.lock().unwrap().clone();
@@ -216,6 +233,7 @@ impl Track {
             decoded: AtomicU64::new(0),
             peaks: Mutex::new(Vec::new()),
             done: AtomicBool::new(false),
+            analysing: AtomicBool::new(false),
             error: Mutex::new(None),
         }
     }

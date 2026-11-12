@@ -138,7 +138,7 @@
 - 2026-11-12 — BPM and key come from a crate; stratum-dsp and bpm-key (both MIT OR Apache-2.0) are tried on the test album before one is picked (user's choice)
 - 2026-11-12 — BPM and key use bpm-key 0.1.0 (MIT OR Apache-2.0, default features off): on the test album its tempo agreed with stratum-dsp's within 3% apart from doubled or halved tempos, it was 8–10× faster (1–3 s a track), adds 15 crates against 60 (stratum brings a second symphonia, 0.5), and gives no answer on garbage; it has no beat grid (user's choice)
 - 2026-11-12 — the tempo uses bpm-key's human_tempo prior (centred on 100 BPM), with a ½× / 2× switch because any detector can be an octave off (user's choice)
-- 2026-11-12 — tempo and key are estimated on the decode thread right after the loudness, kept on the Track (a OnceLock, carried over by relabel), and skipped for a track nobody holds any more — not a separate cancellable worker, since bpm-key can't stop midway and takes 1–3 s
+- 2026-11-12 — tempo and key are estimated on the decode thread right after the loudness, kept on the Track (a OnceLock, carried over by relabel), and skipped for a track nobody holds any more — not a separate cancellable worker, since bpm-key can't stop midway and takes 1–3 s — changed 2026-11-12: only in Practice mode, on a thread of their own (see below)
 - 2026-11-12 — only the first 10 minutes are analysed, mixed to mono (a 10-minute copy, ~115 MB at 48 kHz), from the original audio, not the edits or Speed (accepted)
 - 2026-11-12 — the ½× / 2× switch lives in Track Info's tag editor, on the BPM field; Track Info's Audio rows only show the estimate
 - 2026-11-12 — BPM is written as a whole number (ID3 TBPM, MP4 tmpo; Vorbis and APE as the BPM text field) and the key as its short name ("Fm", "Eb"); RIFF INFO and AIFF text have no such fields, so they're dropped there (accepted)
@@ -156,3 +156,11 @@
 - 2026-11-12 — Identify Track writes nothing: Use Match fills Track Info's tag editor (over its unsaved edits, if open), only empty fields by default, so the existing Save… confirmation and Rename from Tags… do all writing
 - 2026-11-12 — requests are kept a second apart by one shared clock (AcoustID allows 3/s, MusicBrainz 1/s), with a 10 s timeout and a 2 MB reply limit; any network or JSON problem becomes a message, an oddly typed field drops just that value
 - 2026-11-12 — our fingerprint differs from ffmpeg's chromaprint by 1.1 % of bits on an album MP3 (the decoders differ), well inside what AcoustID's matching tolerates (accepted)
+- 2026-11-12 — the app is split in two: v1 the player (playing, folder, tags, quick edits and fixes, cleaning-up AI) and v2 Practice mode (tools for musicians and musicology) (user's choice)
+- 2026-11-12 — Practice mode is a runtime switch, View → Practice mode, off by default and kept in settings.txt; the v2 code stays compiled in, not behind a cargo feature or reverted (user's choice)
+- 2026-11-12 — Practice mode adds a Practice menu after Playback with Loop selection (L) and Spectrogram; Spectrogram leaves View and Loop selection leaves Playback; with the mode off, L does nothing (user's choice)
+- 2026-11-12 — turning Practice mode off stops the loop and closes the Spectrogram window
+- 2026-11-12 — all three speed and pitch items stay in v1's Playback menu (user's choice)
+- 2026-11-12 — tempo, key and chords are worked out only in Practice mode, by Track::analyse on a thread of its own once decoding is done (started from the UI when the mode is on, so turning it on mid-track works); with it off Track Info hides Tempo and Key and the tag editor hides the ≈ buttons (user's choice)
+- 2026-11-12 — v1 gets a folder browser panel, no library database (user's choice); not designed yet
+- 2026-11-12 — Local AI split: noise removal and speech transcription in v1, stems and melody to MIDI in v2 (user's choice)

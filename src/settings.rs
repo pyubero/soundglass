@@ -15,6 +15,8 @@ pub struct Settings {
     pub remember_window_size: bool,
     /// Show a waveform strip instead of the plain seek bar.
     pub show_waveform: bool,
+    /// Practice mode: the v2 tools (loop, spectrogram, tempo, key and chords) shown and analysed.
+    pub practice: bool,
     /// The whole window at exit in points, Track Info and the Edit panel included when they were open.
     pub window_size: Option<[f32; 2]>,
     /// Whether Track Info was open, and its width.
@@ -50,7 +52,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Settings {
-            remember_window_size: false, show_waveform: false, window_size: None, info_panel: false, info_width: INFO_WIDTH, edit_panel: false, edit_height: EDIT_HEIGHT, rename_pattern: crate::tags::DEFAULT_PATTERN.into(),
+            remember_window_size: false, show_waveform: false, practice: false, window_size: None, info_panel: false, info_width: INFO_WIDTH, edit_panel: false, edit_height: EDIT_HEIGHT, rename_pattern: crate::tags::DEFAULT_PATTERN.into(),
             spectrum_notes: false,
             spectrum_chords: false,
             note_a4: 440.0,
@@ -106,6 +108,7 @@ fn parse(text: &str) -> Settings {
         match key.trim() {
             "remember_window_size" => s.remember_window_size = on,
             "show_waveform" => s.show_waveform = on,
+            "practice" => s.practice = on,
             "window_size" => s.window_size = value.split_once(',').and_then(|(w, h)| Some([number(w)?, number(h)?])),
             "info_panel" => s.info_panel = on,
             "info_width" => s.info_width = number(value).unwrap_or(INFO_WIDTH),
@@ -154,7 +157,7 @@ impl Settings {
         );
         // One line: a pattern can't hold a line break, the dialog's field is single-line.
         text += &format!("rename_pattern={}\n", self.rename_pattern.replace(['\n', '\r'], " "));
-        text += &format!("spectrum_chords={}\n", self.spectrum_chords);
+        text += &format!("practice={}\nspectrum_chords={}\n", self.practice, self.spectrum_chords);
         text += &format!(
             "spectrum_notes={}\nnote_a4={}\nnote_solfege={}\nnote_flats={}\nnote_octaves={}\nnote_scale={}\nnote_instrument={}\nnote_c_color={}\nnote_color={}\nnote_c_width={}\nnote_label_size={}\n",
             self.spectrum_notes, self.note_a4, self.note_solfege, self.note_flats, self.note_octaves, self.note_scale.map_or("all", |k| crate::spectrum::KEYS[k % 12].0), self.note_instrument.name(), to_hex(self.note_c_color), to_hex(self.note_color), self.note_c_width, self.note_label_size
@@ -190,7 +193,7 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("soundglass-settings-{}", std::process::id()));
         let path = dir.join("settings.txt");
         let s = Settings {
-            remember_window_size: true, show_waveform: true, window_size: Some([700.0, 680.0]), info_panel: true, info_width: 300.0, edit_panel: true, edit_height: 200.0, rename_pattern: "{artist} - {title}".into(),
+            remember_window_size: true, show_waveform: true, practice: true, window_size: Some([700.0, 680.0]), info_panel: true, info_width: 300.0, edit_panel: true, edit_height: 200.0, rename_pattern: "{artist} - {title}".into(),
             spectrum_notes: true,
             spectrum_chords: true,
             note_a4: 432.0,

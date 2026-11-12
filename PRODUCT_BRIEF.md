@@ -1,9 +1,13 @@
 # Music app (working name) — Product Brief
 
-*Status: draft, 2026-11-11.*
+*Status: draft, 2026-11-11; split into v1 (player) and v2 (Practice mode) 2026-11-12.*
 
 ## What it is
-A small, fast audio player and quick editor for Linux and Windows, written in Rust. It is lightview for sound: open a file and hear it at once, then do the few small jobs people usually open Audacity for, and save the result to a copy.
+A small, fast music player for Linux and Windows, written in Rust, with a quick editor: lightview for sound. Open a file and hear it at once, move through its folder, do the few small jobs people usually open Audacity for, and save the result to a copy.
+
+It comes in two parts:
+- **v1, the player:** playing, browsing a folder, tags, quick edits and fixes, a few AI tools for cleaning up audio.
+- **v2, Practice mode:** tools for musicians and musicology that dig into a track: loops, the spectrogram with notes, tempo, key, chords, a metronome, stems. They are switched on with View → Practice mode, which is off by default; with it off they are neither shown nor worked out.
 
 ## Goals
 1. **Fast.** The window appears in under 200 ms, sound starts before the whole file is decoded, and the waveform fills in as it loads.
@@ -13,7 +17,7 @@ A small, fast audio player and quick editor for Linux and Windows, written in Ru
 
 ## Not doing
 - Multitrack mixing, effect chains, VST/LV2 plugins, MIDI editing
-- A music library, playlist database or streaming services
+- A music library database, playlists or streaming services (browsing the folders on disk is in)
 - Recording studio features (simple recording is an open question)
 - Identifying a clip recorded from the microphone, Shazam-style: there is no open database of commercial music to match against
 
@@ -23,7 +27,7 @@ egui/eframe UI, menus and assignable shortcuts, settings file, translations, scr
 ## Proposed stack
 symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), hound (WAV), a FLAC encoder, LAME through mp3lame-encoder (MP3), libvorbis or libopus (Ogg/Opus).
 
-## Milestones
+## v1: Player
 
 ### 1. Spike
 - **Play from the command line.** `app song.mp3` opens a window and plays. We measure the time to first sound.
@@ -44,9 +48,9 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 - **Title bar.** File name, length and format.
 - **Open and Open Recent, default app.** The system file dialog, the last ten files, and a .desktop file so it can be the default for audio files.
 
-### 3. Looping and Edits
+### 3. Edits
 - **Select a region.** Drag on the waveform; zoom in for precise edges.
-- **Play or loop the selection.** Hear exactly what you selected, over and over.
+- **Play the selection.** Hear exactly what you selected (looping it is in Practice mode).
 - **Cut, crop, silence.** Remove the selection, keep only the selection, or replace it with silence.
 - **Undo and redo.** For every edit.
 - **Save As.** WAV, FLAC, MP3 and Ogg Vorbis, with the quality chosen in the dialog. Tags are kept. Never overwrites the original.
@@ -61,7 +65,7 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 - **Change sample rate.** For example 48 kHz to 44.1 kHz, chosen in Save As.
 
 ### 5. Speed and pitch
-- **Study time-stretching first.** Compare writing our own (WSOLA, phase vocoder) with existing crates: licence, quality on music, and whether it runs in real time for the slow-down loop in milestone 7. Pick one before building. The findings are in [docs/TIME_STRETCH.md](docs/TIME_STRETCH.md).
+- **Study time-stretching first.** Compare writing our own (WSOLA, phase vocoder) with existing crates: licence, quality on music, and whether it runs in real time for the slow-down loop in Practice mode. Pick one before building. The findings are in [docs/TIME_STRETCH.md](docs/TIME_STRETCH.md).
 - **Change speed or pitch.** Separately: slower without lower pitch, or a semitone up without faster. Done with our own WSOLA, live while playing, as three Playback items: Change speed and pitch (tape style), Pitch-preserved speed change, and Time-preserved pitch change. Save As can apply them to the file.
 
 ### 6. Files and tags
@@ -71,14 +75,8 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 - DONT IMPLEMENT **Join files.** Put several files one after another into one file.
 - DONT IMPLEMENT **Convert a folder.** Save every file in a folder in another format and quality.
 
-### 7. Practice tools
-- **A–B loop with slow-down.** Loop a hard passage at a slower speed without changing the pitch. Done with existing tools: drag on the Edit waveform to select, L to loop, Playback → Pitch-preserved speed change.
-- **Spectrogram.** See frequencies over time, to spot hum, clicks or where notes are. This shows the spectrogram first in a separate panel where we can zoom in/out and right click and drag for panning. Done: View → Spectrogram, its own window with a log frequency axis, click to seek, with note lines and their settings on its toolbar.
-- **BPM and key.** Estimate the tempo and musical key of the track. Done with the bpm-key crate: shown in Track Info, offered in its tag editor (with ½× / 2×), and Key ≈ … on the Spectrogram toolbar sets Scale shown.
-- DONT IMPLEMENT **Markers with notes.** Drop named markers (chorus, solo) and jump between them; they can be saved next to the file. Only if there is an automatic way of doing this.
-- **Metronome.** A click at a set tempo, alone or over the track, with the song's tempo by default and on the right spots, beware of swing. Later: a first try (Ellis dynamic-programming beat tracker on bpm-key's onset envelope) placed the clicks too badly on the test album; it waits until we improve the beat tracking ourselves; the attempt and its results are in [docs/BEAT_TRACKING.md](docs/BEAT_TRACKING.md).
-- **Chord recognition** Check if it is even possible. A first try (chroma, major/minor/7th templates, Viterbi) finds the main chords but not the changes: see [docs/CHORDS.md](docs/CHORDS.md). Built anyway, to be improved later: Spectrogram → Chords shows them in a bar along the top.
-
+### 7. Folder browser
+- **Folder panel.** Proposed: a side panel listing the folder's audio files (in the natural order previous/next already uses) to click through. No database. Details to be decided.
 
 ### 8. Tidy up
 - **Identify track.** Make a Chromaprint fingerprint of the file (pure Rust, rusty-chromaprint), look it up online in AcoustID, then fill in the missing tags from MusicBrainz. Show the match and its score, and on request write the tags and rename the file. Only the fingerprint and the length are sent, and only when you run it. Free for non-commercial use, with one application key; at most 3 lookups per second (AcoustID) and 1 per second (MusicBrainz). Works on whole files, not clips. Done (awaiting the key and contact URL, then a check online): File → Identify Track… lists AcoustID's matches; Use Match adds the MusicBrainz genre and fills Track Info's tag editor, so Save… and Rename from Tags… do the writing.
@@ -87,12 +85,25 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 - **Use a local database (later, for power users).** Point Identify Track at your own AcoustID and MusicBrainz server built from their public data exports, so nothing goes online. Too big to ship with the app.
 
 ### 9. Local AI (optional download)
-- **Split into stems.** Vocals, drums, bass and the rest as separate files, for karaoke or practising along.
 - **Remove noise.** Clean background noise and hum from voice recordings.
 - **Transcribe speech.** Turn a talk or voice memo into text you can copy.
+
+## v2: Practice mode
+Everything here is behind View → Practice mode, which adds a Practice menu (Loop selection, Spectrogram) and turns on the tempo, key and chord analysis.
+
+### Practice tools
+- **A–B loop with slow-down.** Loop a hard passage at a slower speed without changing the pitch. Done with existing tools: drag on the Edit waveform to select, Practice → Loop selection (L), Playback → Pitch-preserved speed change.
+- **Spectrogram.** See frequencies over time, to spot hum, clicks or where notes are. This shows the spectrogram first in a separate panel where we can zoom in/out and right click and drag for panning. Done: Practice → Spectrogram, its own window with a log frequency axis, click to seek, with note lines and their settings on its toolbar.
+- **BPM and key.** Estimate the tempo and musical key of the track. Done with the bpm-key crate: shown in Track Info, offered in its tag editor (with ½× / 2×), and Key ≈ … on the Spectrogram toolbar sets Scale shown.
+- DONT IMPLEMENT **Markers with notes.** Drop named markers (chorus, solo) and jump between them; they can be saved next to the file. Only if there is an automatic way of doing this.
+- **Metronome.** A click at a set tempo, alone or over the track, with the song's tempo by default and on the right spots, beware of swing. Later: a first try (Ellis dynamic-programming beat tracker on bpm-key's onset envelope) placed the clicks too badly on the test album; it waits until we improve the beat tracking ourselves; the attempt and its results are in [docs/BEAT_TRACKING.md](docs/BEAT_TRACKING.md).
+- **Chord recognition** Check if it is even possible. A first try (chroma, major/minor/7th templates, Viterbi) finds the main chords but not the changes: see [docs/CHORDS.md](docs/CHORDS.md). Built anyway, to be improved later: Spectrogram → Chords shows them in a bar along the top.
+
+### Local AI for practice (optional download)
+- **Split into stems.** Vocals, drums, bass and the rest as separate files, for karaoke or practising along.
 - **Melody to MIDI.** Turn a sung or played melody into a MIDI file.
 
-### 10. Our own engine: the Griffin–Lim modulator in Rust
+### Our own engine: the Griffin–Lim modulator in Rust
 - **Build on the audio-tools Griffin–Lim modulator** to make a better, improved, faster version in pure Rust. Ideally it has two settings: Fast, for real time (frame by frame with a small look-ahead, like RTISI-LA), and Quality, slower and offline (more iterations, started from phase-vocoder phases). It replaces WSOLA where it sounds better. The ideas to start from are in [docs/TIME_STRETCH.md](docs/TIME_STRETCH.md), section 3.
 
 ## Open questions
