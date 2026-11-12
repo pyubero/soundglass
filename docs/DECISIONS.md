@@ -145,3 +145,7 @@
 - 2026-11-12 — the Spectrogram toolbar's "Key ≈ …" sets Scale shown to the key's major scale (a minor key's relative major) and turns Notes on
 - 2026-11-12 — Metronome postponed: an Ellis (2007) dynamic-programming beat tracker on bpm-key's onset envelope (tightness 100) sounded badly placed on the test album; it waits until we improve the beat tracking ourselves (user's choice)
 - 2026-11-12 — the Metronome's design when it comes back: a Playback checkbox, clicks over the track, a second Metronome slider in the volume popup (greyed out while off), no accented downbeat, and it follows Speed (user's choice)
+- 2026-11-12 — the chord bar is built with the first-try recogniser (chroma, major/minor/dominant 7th templates by Pearson correlation, Viterbi with change penalty 5 and a 0.25 no-chord score), to be improved later (user's choice)
+- 2026-11-12 — chords are found on the decode thread after the tempo and key, from the same mono copy (the first 10 minutes), and kept on the Track in the original's frames
+- 2026-11-12 — the chord bar maps the chords through the edits' pieces (cut parts gone, reversed parts mirrored, silence without chords) instead of hiding them after an edit
+- 2026-11-12 — the Spectrogram's Chords button is next to Notes, its on/off kept in settings.txt; chord roots are spelled like the note lines (the shown scale's spelling, else sharps or flats, solfège when chosen) (user's choice)

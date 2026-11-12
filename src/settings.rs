@@ -27,6 +27,8 @@ pub struct Settings {
     pub rename_pattern: String,
     /// The Spectrogram's note lines: shown or not, the tuning, how they're named and drawn.
     pub spectrum_notes: bool,
+    /// The Spectrogram's chord bar.
+    pub spectrum_chords: bool,
     pub note_a4: f32,
     /// Do Ré Mi instead of C D E.
     pub note_solfege: bool,
@@ -50,6 +52,7 @@ impl Default for Settings {
         Settings {
             remember_window_size: false, show_waveform: false, window_size: None, info_panel: false, info_width: INFO_WIDTH, edit_panel: false, edit_height: EDIT_HEIGHT, rename_pattern: crate::tags::DEFAULT_PATTERN.into(),
             spectrum_notes: false,
+            spectrum_chords: false,
             note_a4: 440.0,
             note_solfege: false,
             note_flats: false,
@@ -110,6 +113,7 @@ fn parse(text: &str) -> Settings {
             "edit_height" => s.edit_height = number(value).unwrap_or(EDIT_HEIGHT),
             "rename_pattern" if !value.is_empty() => s.rename_pattern = value.into(),
             "spectrum_notes" => s.spectrum_notes = on,
+            "spectrum_chords" => s.spectrum_chords = on,
             "note_a4" => s.note_a4 = number(value).map_or(440.0, |n| n.clamp(400.0, 480.0)),
             "note_solfege" => s.note_solfege = on,
             "note_flats" => s.note_flats = on,
@@ -150,6 +154,7 @@ impl Settings {
         );
         // One line: a pattern can't hold a line break, the dialog's field is single-line.
         text += &format!("rename_pattern={}\n", self.rename_pattern.replace(['\n', '\r'], " "));
+        text += &format!("spectrum_chords={}\n", self.spectrum_chords);
         text += &format!(
             "spectrum_notes={}\nnote_a4={}\nnote_solfege={}\nnote_flats={}\nnote_octaves={}\nnote_scale={}\nnote_instrument={}\nnote_c_color={}\nnote_color={}\nnote_c_width={}\nnote_label_size={}\n",
             self.spectrum_notes, self.note_a4, self.note_solfege, self.note_flats, self.note_octaves, self.note_scale.map_or("all", |k| crate::spectrum::KEYS[k % 12].0), self.note_instrument.name(), to_hex(self.note_c_color), to_hex(self.note_color), self.note_c_width, self.note_label_size
@@ -187,6 +192,7 @@ mod tests {
         let s = Settings {
             remember_window_size: true, show_waveform: true, window_size: Some([700.0, 680.0]), info_panel: true, info_width: 300.0, edit_panel: true, edit_height: 200.0, rename_pattern: "{artist} - {title}".into(),
             spectrum_notes: true,
+            spectrum_chords: true,
             note_a4: 432.0,
             note_solfege: true,
             note_flats: true,
@@ -216,7 +222,7 @@ mod tests {
         let defaults = parse("");
         assert_eq!((defaults.window_size, defaults.info_panel, defaults.info_width), (None, false, INFO_WIDTH));
         assert_eq!((defaults.edit_panel, defaults.edit_height), (false, EDIT_HEIGHT));
-        assert_eq!((defaults.spectrum_notes, defaults.note_a4, defaults.note_octaves), (false, 440.0, true));
+        assert_eq!((defaults.spectrum_notes, defaults.spectrum_chords, defaults.note_a4, defaults.note_octaves), (false, false, 440.0, true));
         assert_eq!(parse("note_a4=1000\nnote_opacity=-1").note_a4, 480.0);
         assert_eq!(parse("note_naturals=true").note_scale, Some(0));
         assert_eq!(parse("note_naturals=true\nnote_scale=all").note_scale, None);

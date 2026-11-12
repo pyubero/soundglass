@@ -13,17 +13,21 @@ pub struct Estimate {
     pub key: Option<Key>,
 }
 
-// shortcut: only the first 10 minutes are analysed (a mono copy is made); raise it if long pieces need it.
+// shortcut: only the first 10 minutes are analysed (tempo, key and chords; a mono copy is made); raise it if long pieces need it.
 const MAX_SECONDS: usize = 600;
 
-/// Estimates the tempo and key of interleaved `chunks`, at the tempo people tap along to.
-pub fn estimate(chunks: &[Arc<[f32]>], format: Format) -> Estimate {
+/// Interleaved `chunks` mixed to one channel, for the tempo, key and chords.
+pub fn mono(chunks: &[Arc<[f32]>], format: Format) -> Vec<f32> {
     let channels = format.channels.max(1);
     let max = MAX_SECONDS * format.rate as usize;
-    let mono: Vec<f32> = chunks.iter().flat_map(|c| c.chunks_exact(channels)).take(max).map(|f| f.iter().sum::<f32>() / channels as f32).collect();
+    chunks.iter().flat_map(|c| c.chunks_exact(channels)).take(max).map(|f| f.iter().sum::<f32>() / channels as f32).collect()
+}
+
+/// Estimates the tempo and key of `mono` at `rate`, at the tempo people tap along to.
+pub fn estimate(mono: &[f32], rate: u32) -> Estimate {
     let Ok(cfg) = Config::human_tempo().to_builder().only([Analysis::Tempo, Analysis::Key]).build() else { return Estimate::default() };
     // A hostile file must not take soundglass down with it.
-    match std::panic::catch_unwind(|| bpm_key::analyze(&mono, 1, format.rate, &cfg)) {
+    match std::panic::catch_unwind(|| bpm_key::analyze(mono, 1, rate, &cfg)) {
         Ok(Ok(f)) => Estimate { bpm: f.tempo.map(|t| t.bpm), key: f.key.map(|k| k.key) },
         _ => Estimate::default(),
     }
@@ -44,6 +48,11 @@ mod tests {
     }
 
     #[test]
+    fn mixes_to_mono() {
+        assert_eq!(mono(&chunks(vec![1.0, 0.0, 0.5, 0.5]), Format { rate: 44100, channels: 2 }), vec![0.5, 0.5]);
+    }
+
+    #[test]
     fn clicks_at_120_bpm() {
         let rate = 44100;
         // 30 s of 10 ms decaying 1 kHz bursts every half second.
@@ -53,15 +62,15 @@ mod tests {
                 if t < 0.01 { (t * 6283.0).sin() * (1.0 - t * 100.0) } else { 0.0 }
             })
             .collect();
-        let bpm = estimate(&chunks(s), Format { rate: rate as u32, channels: 1 }).bpm.unwrap();
+        let bpm = estimate(&s, rate as u32).bpm.unwrap();
         assert!((bpm - 120.0).abs() < 2.0, "{bpm}");
     }
 
     #[test]
     fn garbage_gives_nothing() {
         let s = vec![f32::NAN, f32::INFINITY, 1.0, -1.0].repeat(44100);
-        assert_eq!(estimate(&chunks(s), Format { rate: 44100, channels: 2 }), Estimate::default());
-        assert_eq!(estimate(&[], Format { rate: 44100, channels: 2 }), Estimate::default());
+        assert_eq!(estimate(&s, 44100), Estimate::default());
+        assert_eq!(estimate(&[], 44100), Estimate::default());
     }
 
     #[test]

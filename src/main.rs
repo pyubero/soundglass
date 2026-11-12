@@ -1,6 +1,7 @@
 // No console window behind the app on Windows (debug builds keep it, for --timings output).
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
+mod chords;
 mod edit;
 mod folder;
 mod loudness;
@@ -1368,6 +1369,11 @@ impl App {
                         self.settings.spectrum_notes = !self.settings.spectrum_notes;
                         self.settings_error = self.settings.save().err();
                     }
+                    let chords = ui.selectable_label(self.settings.spectrum_chords, "Chords").on_hover_text("Show or hide the chords along the top");
+                    if chords.clicked() {
+                        self.settings.spectrum_chords = !self.settings.spectrum_chords;
+                        self.settings_error = self.settings.save().err();
+                    }
                     if let Some(key) = self.track.tempo.get().and_then(|e| e.key) {
                         let scale = tempo::major_scale(key);
                         let major = spectrum::KEYS[scale].0;
@@ -2107,7 +2113,9 @@ fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, selection: &mut Option
     }
     let status = if !track.done() { Some("Decoding…".to_string()) } else { spectrogram.progress().map(|done| format!("Computing… {:.0} %", done * 100.0)) };
     if let Some(text) = status {
-        painter.text(rect.right_top() + egui::vec2(-6.0, 4.0), egui::Align2::RIGHT_TOP, text, egui::FontId::proportional(12.0), egui::Color32::from_white_alpha(220));
+        // Below the chord bar when it's shown (13 pt text plus 8).
+        let top = if s.spectrum_chords { 25.0 } else { 4.0 };
+        painter.text(rect.right_top() + egui::vec2(-6.0, top), egui::Align2::RIGHT_TOP, text, egui::FontId::proportional(12.0), egui::Color32::from_white_alpha(220));
     }
     if let Some((a, b)) = *selection {
         let shade = egui::Rect::from_x_y_ranges(x_of(a).max(rect.left())..=x_of(b).min(rect.right()), rect.y_range());
@@ -2148,11 +2156,44 @@ fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, selection: &mut Option
             painter.text(egui::pos2(rect.left() + 4.0, y - 2.0), egui::Align2::LEFT_BOTTOM, label, egui::FontId::proportional(12.0), egui::Color32::from_white_alpha(200));
         }
     }
+    if s.spectrum_chords {
+        chord_bar(&painter, rect, &x_of, s, track, edit);
+    }
     let x = x_of(pos);
     if rect.x_range().contains(x) {
         painter.vline(x, rect.y_range(), egui::Stroke::new(1.5, egui::Color32::WHITE));
     }
     seek
+}
+
+/// The Spectrogram's chord bar: a strip along the top, a cell per chord where the edits play it.
+fn chord_bar(painter: &egui::Painter, rect: egui::Rect, x_of: &dyn Fn(u64) -> f32, s: &settings::Settings, track: &Track, edit: &Edit) {
+    let font = egui::FontId::proportional(13.0);
+    let strip = egui::Rect::from_min_size(rect.left_top(), egui::vec2(rect.width(), font.size + 8.0));
+    painter.rect_filled(strip, 0.0, egui::Color32::from_black_alpha(140));
+    let Some(chords) = track.chords.get() else {
+        let text = if track.done() { "Chords: measuring…" } else { "Chords: after loading" };
+        painter.text(strip.left_center() + egui::vec2(6.0, 0.0), egui::Align2::LEFT_CENTER, text, font, egui::Color32::from_white_alpha(200));
+        return;
+    };
+    for (i, (a, b, chord)) in chords::edited(chords, edit).into_iter().enumerate() {
+        let (x0, x1) = (x_of(a).max(strip.left()), x_of(b).min(strip.right()));
+        if x1 <= x0 {
+            continue;
+        }
+        let cell = egui::Rect::from_x_y_ranges(x0..=x1, strip.y_range());
+        painter.rect_filled(cell.shrink2(egui::vec2(0.5, 0.0)), 0.0, egui::Color32::from_black_alpha(if i % 2 == 0 { 200 } else { 160 }));
+        let kind = match chord.kind {
+            chords::Kind::Major => "",
+            chords::Kind::Minor => "m",
+            chords::Kind::Seventh => "7",
+        };
+        let name = spectrum::pc_name(chord.root, s.note_flats, s.note_scale, s.note_solfege) + kind;
+        let galley = painter.layout_no_wrap(name, font.clone(), egui::Color32::WHITE);
+        if galley.size().x + 6.0 <= cell.width() {
+            painter.galley(egui::pos2(cell.left() + 3.0, cell.center().y - galley.size().y / 2.0), galley, egui::Color32::WHITE);
+        }
+    }
 }
 
 #[derive(Clone, Copy)]

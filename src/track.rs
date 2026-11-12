@@ -62,6 +62,8 @@ pub struct Track {
     pub loudness: OnceLock<Loudness>,
     /// Tempo and key, estimated after the loudness.
     pub tempo: OnceLock<crate::tempo::Estimate>,
+    /// Chords over time, in the original's frames, found with the tempo.
+    pub chords: OnceLock<Arc<[crate::chords::Span]>>,
     /// The embedded front cover (or first picture), decoded off the UI thread.
     pub cover: OnceLock<eframe::egui::ColorImage>,
     /// Interleaved samples, `CHUNK` frames each except the last.
@@ -140,7 +142,10 @@ impl Track {
                 notify();
                 // Only the decoder holds the track: nobody will look at it.
                 if Arc::strong_count(&t) > 1 {
-                    let _ = t.tempo.set(crate::tempo::estimate(&chunks, *format));
+                    let mono = crate::tempo::mono(&chunks, *format);
+                    let _ = t.tempo.set(crate::tempo::estimate(&mono, format.rate));
+                    notify();
+                    let _ = t.chords.set(crate::chords::find(&mono, format.rate).into());
                     notify();
                 }
             }
@@ -180,6 +185,9 @@ impl Track {
         if let Some(&e) = self.tempo.get() {
             let _ = t.tempo.set(e);
         }
+        if let Some(c) = self.chords.get() {
+            let _ = t.chords.set(c.clone());
+        }
         *t.chunks.lock().unwrap() = self.chunks.lock().unwrap().clone();
         *t.peaks.lock().unwrap() = self.peaks.lock().unwrap().clone();
         t.decoded.store(self.decoded(), Relaxed);
@@ -202,6 +210,7 @@ impl Track {
             info: OnceLock::new(),
             loudness: OnceLock::new(),
             tempo: OnceLock::new(),
+            chords: OnceLock::new(),
             cover: OnceLock::new(),
             chunks: Mutex::new(Vec::new()),
             decoded: AtomicU64::new(0),

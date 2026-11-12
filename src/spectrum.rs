@@ -527,9 +527,24 @@ pub fn note_name(note: &Note, solfege: bool, octaves: bool) -> String {
     if octaves { format!("{base}{}{}", note.mark, note.octave) } else { format!("{base}{}", note.mark) }
 }
 
+/// Pitch class `pc` as the note lines write it, without an octave: as major scale `key` spells
+/// it when it's in the scale, otherwise with sharps or `flats`.
+pub fn pc_name(pc: u8, flats: bool, key: Option<usize>, solfege: bool) -> String {
+    let (letter, mark) = spell(pc, flats, key).or_else(|| spell(pc, flats, None)).unwrap_or((0, ""));
+    note_name(&Note { freq: 0.0, pc, letter, mark, octave: 0 }, solfege, false)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn names_pitch_classes_in_and_out_of_a_scale() {
+        // F# major spells pitch class 5 as E#; outside the scale, sharps or flats as chosen.
+        assert_eq!(pc_name(5, false, Some(6), false), "E#");
+        assert_eq!(pc_name(1, true, Some(0), false), "Db");
+        assert_eq!(pc_name(10, false, None, true), "La#");
+    }
 
     #[test]
     fn band_zooms_around_the_pointer_and_stays_on_the_axis() {
