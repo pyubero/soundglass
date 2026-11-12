@@ -1,4 +1,5 @@
-//! The audio files next to the one playing, in file-manager order. From lightview's `files.rs`.
+//! The audio files next to the one playing, in file-manager order (from lightview's `files.rs`),
+//! and the Folder panel's listing.
 
 use std::cmp::Ordering;
 use std::path::{Path, PathBuf};
@@ -15,16 +16,39 @@ pub fn list_folder(path: &Path) -> Vec<PathBuf> {
     let dir = path.parent().unwrap_or(Path::new("."));
     let Ok(entries) = std::fs::read_dir(dir) else { return vec![path.to_path_buf()] };
     let mut files: Vec<PathBuf> = entries.filter_map(|e| Some(e.ok()?.path())).filter(|p| is_audio(p)).collect();
-    let name = |p: &PathBuf| p.file_name().unwrap_or_default().to_string_lossy().into_owned();
-    files.sort_by(|a, b| {
-        let (a, b) = (name(a), name(b));
-        natural_cmp(&a, &b).then_with(|| a.cmp(&b))
-    });
+    sort_natural(&mut files);
     // A file opened by its full path is in the list even if its extension isn't one of ours.
     if !files.iter().any(|p| p == path) {
         files.insert(0, path.to_path_buf());
     }
     files
+}
+
+/// The Folder panel's listing of `dir`: its subfolders and its audio files, each by name,
+/// hidden ones (".name") left out.
+pub fn list_dir(dir: &Path) -> std::io::Result<(Vec<PathBuf>, Vec<PathBuf>)> {
+    let (mut dirs, mut files) = (Vec::new(), Vec::new());
+    for path in std::fs::read_dir(dir)?.filter_map(|e| Some(e.ok()?.path())) {
+        if path.file_name().is_none_or(|n| n.to_string_lossy().starts_with('.')) {
+            continue;
+        }
+        if path.is_dir() {
+            dirs.push(path);
+        } else if is_audio(&path) {
+            files.push(path);
+        }
+    }
+    sort_natural(&mut dirs);
+    sort_natural(&mut files);
+    Ok((dirs, files))
+}
+
+fn sort_natural(paths: &mut [PathBuf]) {
+    let name = |p: &PathBuf| p.file_name().unwrap_or_default().to_string_lossy().into_owned();
+    paths.sort_by(|a, b| {
+        let (a, b) = (name(a), name(b));
+        natural_cmp(&a, &b).then_with(|| a.cmp(&b))
+    });
 }
 
 /// Case-insensitive comparison where runs of digits compare as numbers ("track2" < "track10").
@@ -83,5 +107,21 @@ mod tests {
         let names: Vec<String> = list_folder(&dir.join("1 a.wav")).iter().map(|p| p.file_name().unwrap().to_string_lossy().into_owned()).collect();
         std::fs::remove_dir_all(&dir).unwrap();
         assert_eq!(names, ["1 a.wav", "2 b.flac", "10 b.MP3"]);
+    }
+
+    #[test]
+    fn browse_listing() {
+        let dir = std::env::temp_dir().join(format!("soundglass-test-{}-browse", std::process::id()));
+        for d in ["sub 10", "sub 9", ".hidden"] {
+            std::fs::create_dir_all(dir.join(d)).unwrap();
+        }
+        for f in ["b10.mp3", "b2.flac", "notes.txt", ".x.mp3"] {
+            std::fs::write(dir.join(f), b"").unwrap();
+        }
+        let names = |v: Vec<PathBuf>| v.iter().map(|p| p.file_name().unwrap().to_string_lossy().into_owned()).collect::<Vec<_>>();
+        let (dirs, files) = list_dir(&dir).unwrap();
+        std::fs::remove_dir_all(&dir).unwrap();
+        assert_eq!((names(dirs), names(files)), (vec!["sub 9".to_string(), "sub 10".into()], vec!["b2.flac".to_string(), "b10.mp3".into()]));
+        assert!(list_dir(&dir).is_err());
     }
 }

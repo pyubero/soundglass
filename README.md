@@ -21,6 +21,7 @@ Without a file it asks for one. `--timings` prints the time to the window and to
 - Space: play/pause
 - Left / Right: back or forward 5 s
 - Page Up / Page Down: previous or next file in the folder
+- Ctrl+I: show or hide Track Info (on the left); Ctrl+B: show or hide the Folder panel (on the right), which lists `..`, the subfolders and the audio files by name: click a folder to look inside it (playback carries on), click a file to play it. Each panel widens the window instead of squeezing the player
 - Ctrl+E: show or hide the Edit panel
 - In the Edit panel: click to play from there, drag to select, Shift+click or Shift+drag to change the selection, scroll to zoom, right-drag (or scroll sideways) to move along
 - View → Practice mode (off by default) adds a Practice menu with the tools for musicians — Loop selection (L), the Spectrogram — and the tempo, key and chord estimates; with it off none of them is shown or worked out

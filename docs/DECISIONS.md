@@ -170,3 +170,10 @@
 - 2026-11-12 — the loaded settings are clamped back into range (A4, widths, label size, scale, spectrogram parameters), since app.ron can be edited by hand
 - 2026-11-12 — themes will follow lightview's pattern when they come: XML files (dark, light, high contrast) built in and copied to <data>/themes/ on first launch for editing, read with roxmltree (a dependency to approve then) (user's choice)
 - 2026-11-12 — .deb and .msi will install only the binary, .desktop file and icon; all user state stays in eframe's data folder (user's choice)
+- 2026-11-12 — three columns: Track Info on the left, the player in the middle, the Folder panel on the right; each grows the window when opened, and its open state and width are kept with the window size (user's choice)
+- 2026-11-12 — the Folder panel lists file names only, no tags read, so any folder lists at once (user's choice)
+- 2026-11-12 — the Folder panel walks folders: `..`, then subfolders, then audio files, natural order, hidden entries left out; clicking a folder only browses, playback carries on (user's choice)
+- 2026-11-12 — the Folder panel reads its folder only when it opens, when it moves to another folder and after a rename, never each frame; it doesn't watch the disk (accepted: a refresh is closing and reopening the panel)
+- 2026-11-12 — clicking a file in the playing folder plays it like Page Down (no Recent entry); a file elsewhere is opened like Open… (its folder becomes the one to move through, and it goes into Recent)
+- 2026-11-12 — View → Folder is Ctrl+B
+- 2026-11-12 — no swap toggle for the two side panels: the sides are fixed (user's choice)

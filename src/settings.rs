@@ -27,6 +27,9 @@ pub struct Settings {
     /// Whether Track Info was open, and its width.
     pub info_panel: bool,
     pub info_width: f32,
+    /// Whether the Folder panel was open, and its width.
+    pub folder_panel: bool,
+    pub folder_width: f32,
     /// Whether the Edit panel was open, and its height.
     pub edit_panel: bool,
     pub edit_height: f32,
@@ -57,7 +60,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Settings {
-            remember_window_size: false, show_waveform: false, practice: false, window_size: None, info_panel: false, info_width: INFO_WIDTH, edit_panel: false, edit_height: EDIT_HEIGHT, rename_pattern: crate::tags::DEFAULT_PATTERN.into(),
+            remember_window_size: false, show_waveform: false, practice: false, window_size: None, info_panel: false, info_width: INFO_WIDTH, folder_panel: false, folder_width: INFO_WIDTH, edit_panel: false, edit_height: EDIT_HEIGHT, rename_pattern: crate::tags::DEFAULT_PATTERN.into(),
             spectrum_notes: false,
             spectrum_chords: false,
             note_a4: 440.0,
@@ -98,6 +101,7 @@ impl Settings {
         let positive = |n: f32| n.is_finite() && n > 0.0;
         self.window_size = self.window_size.filter(|s| s.iter().all(|&n| positive(n)));
         self.info_width = if positive(self.info_width) { self.info_width } else { d.info_width };
+        self.folder_width = if positive(self.folder_width) { self.folder_width } else { d.folder_width };
         self.edit_height = if positive(self.edit_height) { self.edit_height } else { d.edit_height };
         self.note_a4 = if positive(self.note_a4) { self.note_a4.clamp(400.0, 480.0) } else { d.note_a4 };
         self.note_c_width = if positive(self.note_c_width) { self.note_c_width.min(6.0) } else { d.note_c_width };
@@ -118,7 +122,7 @@ mod tests {
     #[test]
     fn round_trip_and_defaults() {
         let s = Settings {
-            remember_window_size: true, show_waveform: true, practice: true, window_size: Some([700.0, 680.0]), info_panel: true, info_width: 300.0, edit_panel: true, edit_height: 200.0, rename_pattern: "{artist} - {title}".into(),
+            remember_window_size: true, show_waveform: true, practice: true, window_size: Some([700.0, 680.0]), info_panel: true, info_width: 300.0, folder_panel: true, folder_width: 250.0, edit_panel: true, edit_height: 200.0, rename_pattern: "{artist} - {title}".into(),
             spectrum_notes: true,
             spectrum_chords: true,
             note_a4: 432.0,

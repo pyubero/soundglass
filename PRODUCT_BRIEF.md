@@ -79,7 +79,7 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 - DONT IMPLEMENT **Convert a folder.** Save every file in a folder in another format and quality.
 
 ### 7. Folder browser
-- **Folder panel.** Proposed: a side panel listing the folder's audio files (in the natural order previous/next already uses) to click through. No database. Details to be decided.
+- **Folder panel.** A side panel listing the folder's subfolders and audio files by name (natural order, hidden ones left out), with `..` to go up, to click through. No database. Done: View → Folder (Ctrl+B) on the right, with Track Info moved to the left and the player in the middle; clicking a folder only browses, clicking a file plays it (and its folder becomes the one Page Up/Down moves through).
 
 ### 8. Tidy up
 - **Identify track.** Make a Chromaprint fingerprint of the file (pure Rust, rusty-chromaprint), look it up online in AcoustID, then fill in the missing tags from MusicBrainz. Show the match and its score, and on request write the tags and rename the file. Only the fingerprint and the length are sent, and only when you run it. Free for non-commercial use, with one application key; at most 3 lookups per second (AcoustID) and 1 per second (MusicBrainz). Works on whole files, not clips. Done (awaiting the key and contact URL, then a check online): File → Identify Track… lists AcoustID's matches; Use Match adds the MusicBrainz genre and fills Track Info's tag editor, so Save… and Rename from Tags… do the writing.

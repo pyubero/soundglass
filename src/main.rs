@@ -72,7 +72,8 @@ fn main() -> eframe::Result {
     // soundglass keeps the window size itself (see `App::save`): eframe's own saving can't follow Track Info.
     let options = eframe::NativeOptions { viewport, persist_window: false, ..Default::default() };
     let (show_info, show_edit) = (remembered.is_some() && settings.info_panel, remembered.is_some() && settings.edit_panel);
-    let (window_size, info_width, edit_height) = (remembered, settings.info_width, settings.edit_height);
+    let show_folder = remembered.is_some() && settings.folder_panel;
+    let (window_size, info_width, edit_height, folder_width) = (remembered, settings.info_width, settings.edit_height, settings.folder_width);
     eframe::run_native("soundglass", options, Box::new(move |cc| {
         let _ = ctx.set(cc.egui_ctx.clone());
         let mut recent: Vec<PathBuf> = cc.storage.and_then(|s| s.get_string("recent")).unwrap_or_default().lines().map(PathBuf::from).collect();
@@ -82,7 +83,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, identify: None, controls_height: 260.0, info_width, window_size, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, player, t0, timings, shown: false }))
     }))
 }
 
@@ -174,6 +175,10 @@ struct App {
     controls_height: f32,
     /// Track Info's width as last shown.
     info_width: f32,
+    /// The Folder panel, its width, and what it lists (read when its folder changes, not each frame).
+    show_folder: bool,
+    folder_width: f32,
+    browse: Option<Browse>,
     /// The window's size in points, last seen while not maximized or fullscreen.
     window_size: Option<[f32; 2]>,
     player: Result<Player, String>,
@@ -184,6 +189,21 @@ struct App {
 }
 
 /// File → Identify Track… while open.
+/// The Folder panel's folder and its subfolders and audio files.
+struct Browse {
+    dir: PathBuf,
+    listing: Result<(Vec<PathBuf>, Vec<PathBuf>), String>,
+    /// The track last scrolled into view, so it scrolls once per change.
+    scrolled: Option<PathBuf>,
+}
+
+impl Browse {
+    fn new(dir: PathBuf) -> Browse {
+        let listing = folder::list_dir(&dir).map_err(|e| format!("Can't read this folder: {e}"));
+        Browse { dir, listing, scrolled: None }
+    }
+}
+
 struct Identify {
     /// The file it's for: it closes when another one plays.
     path: PathBuf,
@@ -382,6 +402,7 @@ impl eframe::App for App {
         if self.settings.remember_window_size {
             (self.settings.window_size, self.settings.info_panel, self.settings.info_width) = (self.window_size, self.show_info, self.info_width);
             (self.settings.edit_panel, self.settings.edit_height) = (self.show_edit, self.edit_height);
+            (self.settings.folder_panel, self.settings.folder_width) = (self.show_folder, self.folder_width);
         }
         eframe::set_value(storage, settings::KEY, &self.settings);
     }
@@ -468,6 +489,8 @@ impl eframe::App for App {
             self.window_size = Some([size.x, size.y]);
         }
         let mut toggle_info = ctx.input_mut(|i| i.consume_shortcut(&info_key));
+        let folder_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::B);
+        let mut toggle_folder = ctx.input_mut(|i| i.consume_shortcut(&folder_key));
         if ctx.input_mut(|i| i.consume_shortcut(&egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Q))) {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
@@ -545,6 +568,11 @@ impl eframe::App for App {
                         toggle_info = true;
                         ui.close();
                     }
+                    let mut on = self.show_folder;
+                    if ui.add(egui::Checkbox::new(&mut on, "Folder")).on_hover_text(ctx.format_shortcut(&folder_key)).clicked() {
+                        toggle_folder = true;
+                        ui.close();
+                    }
                     let mut on = self.show_edit;
                     if ui.add(egui::Checkbox::new(&mut on, "Edit")).on_hover_text(ctx.format_shortcut(&edit_key)).clicked() {
                         toggle_edit = true;
@@ -611,6 +639,15 @@ impl eframe::App for App {
                 ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::vec2(size[0], size[1])));
             }
         }
+        if toggle_folder {
+            self.show_folder = !self.show_folder;
+            if resizable && let Some(size) = self.window_size {
+                let size = resize_for_panel(size, self.show_folder, self.folder_width, 0);
+                ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::vec2(size[0], size[1])));
+            }
+            // Opens on the playing track's folder, read afresh.
+            self.browse = None;
+        }
         if toggle_edit {
             self.show_edit = !self.show_edit;
             if resizable && let Some(size) = self.window_size {
@@ -630,7 +667,7 @@ impl eframe::App for App {
         }
         if self.show_info {
             let size = std::fs::metadata(&self.track.path).map(|m| m.len()).ok();
-            let panel = egui::Panel::right("info").resizable(true).size_range(240.0..=360.0).default_size(self.info_width).show(ui, |ui| {
+            let panel = egui::Panel::left("info").resizable(true).size_range(240.0..=360.0).default_size(self.info_width).show(ui, |ui| {
                 let can_edit = if !self.track.done() { Err("after loading") } else if self.tag_job.is_some() { Err("saving tags…") } else { Ok(()) };
                 info_panel(ui, &self.track, size, &mut self.tag_editor, can_edit, self.settings.practice)
             });
@@ -647,6 +684,16 @@ impl eframe::App for App {
                 None => {}
             }
             self.info_width = panel.response.rect.width();
+        }
+        if self.show_folder {
+            let panel = egui::Panel::right("folder").resizable(true).size_range(200.0..=400.0).default_size(self.folder_width).show(ui, |ui| self.folder_panel(ui));
+            self.folder_width = panel.response.rect.width();
+            if let Some(path) = panel.inner {
+                match self.files.iter().position(|p| *p == path) {
+                    Some(i) => self.go(i),
+                    None => self.open(path),
+                }
+            }
         }
         egui::CentralPanel::default().show(ui, |ui| {
             ui.vertical_centered(|ui| {
@@ -963,6 +1010,52 @@ impl App {
     }
 
     /// The Custom speed or pitch dialog; returns the new settings when OK is pressed.
+    /// The Folder panel: `..`, the subfolders, then the audio files. A folder click browses
+    /// there; returns the file clicked, to play.
+    fn folder_panel(&mut self, ui: &mut egui::Ui) -> Option<PathBuf> {
+        let here = self.track.path.parent().map(PathBuf::from).unwrap_or_default();
+        let b = self.browse.get_or_insert_with(|| Browse::new(here));
+        let name = |p: &std::path::Path| p.file_name().map_or_else(|| p.display().to_string(), |n| n.to_string_lossy().into_owned());
+        ui.strong(name(&b.dir)).on_hover_text(b.dir.display().to_string());
+        ui.separator();
+        let (mut enter, mut play) = (None, None);
+        egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
+            if let Some(parent) = b.dir.parent() && ui.selectable_label(false, "..").on_hover_text("Up one folder").clicked() {
+                enter = Some(parent.to_path_buf());
+            }
+            match &b.listing {
+                Err(e) => {
+                    ui.colored_label(ui.visuals().error_fg_color, e);
+                }
+                Ok((dirs, files)) => {
+                    for d in dirs {
+                        if ui.selectable_label(false, format!("{}/", name(d))).clicked() {
+                            enter = Some(std::fs::canonicalize(d).unwrap_or_else(|_| d.clone()));
+                        }
+                    }
+                    for f in files {
+                        let current = *f == self.track.path;
+                        let row = ui.selectable_label(current, name(f));
+                        if current && b.scrolled.as_ref() != Some(f) {
+                            row.scroll_to_me(Some(egui::Align::Center));
+                            b.scrolled = Some(f.clone());
+                        }
+                        if row.clicked() && !current {
+                            play = Some(f.clone());
+                        }
+                    }
+                    if dirs.is_empty() && files.is_empty() {
+                        ui.weak("No audio files or folders here");
+                    }
+                }
+            }
+        });
+        if let Some(dir) = enter {
+            *b = Browse::new(dir);
+        }
+        play
+    }
+
     fn speed_window(&mut self, ctx: &egui::Context) -> Option<wsola::Speed> {
         let (knob, mut draft) = self.custom_speed?;
         let (mut chosen, mut close) = (None, false);
@@ -1726,6 +1819,9 @@ impl App {
                     self.settings.rename_pattern = pattern;
                     self.files = folder::list_folder(&new);
                     self.index = self.files.iter().position(|p| *p == new).unwrap_or(0);
+                    if let Some(b) = &mut self.browse {
+                        *b = Browse::new(b.dir.clone());
+                    }
                     for p in &mut self.recent {
                         if *p == path {
                             *p = new.clone();
