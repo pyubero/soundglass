@@ -134,3 +134,5 @@
 - 2026-11-11 — the bins are evenly spaced in Hz, so each texture is drawn as a mesh with one strip per bin placed on the log axis; textures hold at most 4096 bins (FFT 32768 splits into 5) to fit the graphics card
 - 2026-11-11 — the lowest frequency is only drawn, not analysed, so changing it no longer recomputes; larger FFTs raise the hop on shorter tracks than before, since columns × bins must fit the same budget (accepted)
 - 2026-11-11 — with a scale shown, the highlighted lines (colour and width) are on its tonic, e.g. every F# in F# major; with All notes they stay on C (user's choice)
+- 2026-11-12 — no Markers with notes — there is no automatic way to place them (user's choice)
+- 2026-11-12 — BPM and key come from a crate; stratum-dsp and bpm-key (both MIT OR Apache-2.0) are tried on the test album before one is picked (user's choice)

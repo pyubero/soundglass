@@ -75,7 +75,7 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 - **A–B loop with slow-down.** Loop a hard passage at a slower speed without changing the pitch. Done with existing tools: drag on the Edit waveform to select, L to loop, Playback → Pitch-preserved speed change.
 - **Spectrogram.** See frequencies over time, to spot hum, clicks or where notes are. This shows the spectrogram first in a separate panel where we can zoom in/out and right click and drag for panning. Done: View → Spectrogram, its own window with a log frequency axis, click to seek, with note lines and their settings on its toolbar.
 - **BPM and key.** Estimate the tempo and musical key of the track.
-- **Markers with notes.** Drop named markers (chorus, solo) and jump between them; they can be saved next to the file. Only if there is an automatic way of doing this.
+- DONT IMPLEMENT **Markers with notes.** Drop named markers (chorus, solo) and jump between them; they can be saved next to the file. Only if there is an automatic way of doing this.
 - **Metronome.** A click at a set tempo, alone or over the track, with the song's tempo by default and on the right spots, beware of swing.
 - **Chord recognition** Check if it is even possible.
 
