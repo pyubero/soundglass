@@ -143,3 +143,5 @@
 - 2026-11-12 — the ½× / 2× switch lives in Track Info's tag editor, on the BPM field; Track Info's Audio rows only show the estimate
 - 2026-11-12 — BPM is written as a whole number (ID3 TBPM, MP4 tmpo; Vorbis and APE as the BPM text field) and the key as its short name ("Fm", "Eb"); RIFF INFO and AIFF text have no such fields, so they're dropped there (accepted)
 - 2026-11-12 — the Spectrogram toolbar's "Key ≈ …" sets Scale shown to the key's major scale (a minor key's relative major) and turns Notes on
+- 2026-11-12 — Metronome postponed: an Ellis (2007) dynamic-programming beat tracker on bpm-key's onset envelope (tightness 100) sounded badly placed on the test album; it waits until we improve the beat tracking ourselves (user's choice)
+- 2026-11-12 — the Metronome's design when it comes back: a Playback checkbox, clicks over the track, a second Metronome slider in the volume popup (greyed out while off), no accented downbeat, and it follows Speed (user's choice)
