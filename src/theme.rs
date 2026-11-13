@@ -286,6 +286,30 @@ mod tests {
         assert_eq!(parse(TEMPLATES[1].1).unwrap().mode, egui::Theme::Light);
     }
 
+    /// WCAG contrast ratio of two opaque colours.
+    fn contrast(a: Color32, b: Color32) -> f32 {
+        let lum = |c: Color32| {
+            let lin = |v: u8| { let v = v as f32 / 255.0; if v <= 0.03928 { v / 12.92 } else { ((v + 0.055) / 1.055).powf(2.4) } };
+            0.2126 * lin(c.r()) + 0.7152 * lin(c.g()) + 0.0722 * lin(c.b())
+        };
+        let (x, y) = (lum(a), lum(b));
+        (x.max(y) + 0.05) / (x.min(y) + 0.05)
+    }
+
+    #[test]
+    fn templates_are_readable() {
+        for (id, xml) in TEMPLATES {
+            let t = parse(xml).unwrap();
+            let v = &t.visuals;
+            // egui fills the focused window's title bar with `open` but writes the title in the text colour
+            // and the close button in `inactive`'s; 3:1 is the minimum for large text and graphics.
+            let title = v.widgets.open.weak_bg_fill;
+            assert!(contrast(v.widgets.noninteractive.fg_stroke.color, title) >= 3.0, "{id}: window title");
+            assert!(contrast(v.widgets.inactive.fg_stroke.color, title) >= 3.0, "{id}: close button");
+            assert!(contrast(t.played, v.panel_fill) >= 3.0, "{id}: played part");
+        }
+    }
+
     #[test]
     fn missing_keys_take_the_base_values() {
         let t = parse(r##"<theme><colors panel="#102030"/><widget state="hovered" fill="#ff000080"/><unknown/></theme>"##).unwrap();

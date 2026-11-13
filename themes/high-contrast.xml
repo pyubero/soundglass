@@ -7,6 +7,6 @@
   <widget state="inactive" fill="#000000" text="#ffffff" border="#ffffff"/>
   <widget state="hovered" fill="#ffff00" text="#000000" border="#ffff00"/>
   <widget state="active" fill="#ffffff" text="#000000" border="#ffff00"/>
-  <widget state="open" fill="#ffff00" text="#000000" border="#ffff00"/>
+  <widget state="open" fill="#000000" text="#ffff00" border="#ffff00"/>
   <shape rounding="6" stroke="2" spacing="8,3" padding="4,1"/>
 </theme>
