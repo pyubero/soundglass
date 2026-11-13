@@ -13,11 +13,13 @@ mod midi;
 mod runtime;
 mod stems;
 mod transcribe;
+mod tune;
 mod ui;
 
 pub use beats::{Beats, edited as edited_beats};
 pub use catalog::*;
 pub use runtime::*;
+pub use tune::{Tune, tune_for};
 pub use ui::*;
 
 fn data_dir() -> Result<PathBuf, String> {

@@ -1,6 +1,7 @@
 //! Melody to MIDI: Spotify's Basic Pitch (nmp.onnx), its windowing and note decoding ported from
-//! basic_pitch/inference.py and note_creation.py (defaults: onset 0.5, frame 0.3, 127.7 ms
-//! shortest note, inferred onsets, the "melodia trick"). No pitch bends.
+//! basic_pitch/inference.py and note_creation.py (its defaults, in `MidiTune`: onset 0.5,
+//! frame 0.3, 127.7 ms shortest note, inferred onsets, the "melodia trick"). No pitch bends.
+use super::tune::MidiTune;
 use super::*;
 
 pub const RATE: u32 = 22_050;
@@ -14,10 +15,6 @@ const STRIDE: usize = WINDOW - OVERLAP;
 const KEYS: usize = 88;
 /// The lowest key's MIDI number (A0).
 const MIDI_OFFSET: u8 = 21;
-const ONSET: f32 = 0.5;
-const FRAME: f32 = 0.3;
-/// round(127.7 ms × 22050 / 256).
-const MIN_NOTE: usize = 11;
 const ENERGY_TOL: usize = 11;
 
 /// A note: start and end in model frames, MIDI number, mean activation (0–1).
@@ -64,8 +61,15 @@ pub(super) fn activations(model: &Path, mono: &[f32], progress: &dyn Fn(f32), ca
     Ok((notes, onsets))
 }
 
-/// Notes from the activations, as output_to_notes_polyphonic.
-pub(super) fn notes(frames: &[[f32; KEYS]], onsets: &[[f32; KEYS]]) -> Vec<Note> {
+/// Notes from the activations, as output_to_notes_polyphonic with `t`'s thresholds and range.
+pub(super) fn notes(frames: &[[f32; KEYS]], onsets: &[[f32; KEYS]], tune: &MidiTune) -> Vec<Note> {
+    let (onset_thresh, frame_thresh, melodia) = (tune.onset, tune.frame, tune.melodia);
+    // round(ms × 22050 / 256): 11 frames for the default 127.7 ms.
+    let min_note = (tune.min_note_ms as f64 / 1000.0 * RATE as f64 / HOP as f64).round() as usize;
+    // constrain_frequency: keys outside the range are silenced in both.
+    let keys = (tune.low.max(MIDI_OFFSET) - MIDI_OFFSET) as usize..(tune.high.max(MIDI_OFFSET) - MIDI_OFFSET + 1).min(KEYS as u8) as usize;
+    let range = |m: &[[f32; KEYS]]| -> Vec<[f32; KEYS]> { m.iter().map(|f| std::array::from_fn(|k| if keys.contains(&k) { f[k] } else { 0.0 })).collect() };
+    let (frames, onsets) = (&range(frames)[..], &range(onsets)[..]);
     let n = frames.len();
     // Onsets inferred from rises in the frames, scaled to the predicted onsets' peak.
     let rise: Vec<[f32; KEYS]> = (0..n)
@@ -75,7 +79,7 @@ pub(super) fn notes(frames: &[[f32; KEYS]], onsets: &[[f32; KEYS]]) -> Vec<Note>
     let (onset_max, rise_max) = (peak(onsets), peak(&rise));
     let onsets: Vec<[f32; KEYS]> = onsets.iter().zip(&rise).map(|(o, r)| std::array::from_fn(|k| o[k].max(if rise_max > 0.0 { onset_max * r[k] / rise_max } else { 0.0 }))).collect();
     // Peaks in time over the threshold, latest first.
-    let mut starts: Vec<(usize, usize)> = (1..n.saturating_sub(1)).flat_map(|t| (0..KEYS).map(move |k| (t, k))).filter(|&(t, k)| onsets[t][k] >= ONSET && onsets[t][k] > onsets[t - 1][k] && onsets[t][k] > onsets[t + 1][k]).collect();
+    let mut starts: Vec<(usize, usize)> = (1..n.saturating_sub(1)).flat_map(|t| (0..KEYS).map(move |k| (t, k))).filter(|&(t, k)| onsets[t][k] >= onset_thresh && onsets[t][k] > onsets[t - 1][k] && onsets[t][k] > onsets[t + 1][k]).collect();
     starts.reverse();
     let mut left: Vec<[f32; KEYS]> = frames.to_vec();
     let mut out = Vec::new();
@@ -96,11 +100,11 @@ pub(super) fn notes(frames: &[[f32; KEYS]], onsets: &[[f32; KEYS]]) -> Vec<Note>
         // On until the frames stay under the threshold for ENERGY_TOL frames.
         let (mut i, mut below) = (start + 1, 0);
         while i < n - 1 && below < ENERGY_TOL {
-            below = if left[i][k] < FRAME { below + 1 } else { 0 };
+            below = if left[i][k] < frame_thresh { below + 1 } else { 0 };
             i += 1;
         }
         i -= below;
-        if i - start <= MIN_NOTE {
+        if i - start <= min_note {
             continue;
         }
         (start..i).for_each(|t| clear(&mut left, t, k));
@@ -109,7 +113,7 @@ pub(super) fn notes(frames: &[[f32; KEYS]], onsets: &[[f32; KEYS]]) -> Vec<Note>
     // The melodia trick: notes grown both ways from the strongest frame left, again and again.
     // Values only ever drop to 0, so the strongest left is the next one in this list not yet
     // cleared (ties in time, then key order, as numpy's argmax).
-    let mut seeds: Vec<(usize, usize)> = (0..n).flat_map(|t| (0..KEYS).map(move |k| (t, k))).filter(|&(t, k)| left[t][k] > FRAME).collect();
+    let mut seeds: Vec<(usize, usize)> = (0..n).flat_map(|t| (0..KEYS).map(move |k| (t, k))).filter(|&(t, k)| melodia && left[t][k] > frame_thresh).collect();
     seeds.sort_by(|a, b| left[b.0][b.1].total_cmp(&left[a.0][a.1]).then(a.cmp(b)));
     for (mid, k) in seeds {
         if left[mid][k] == 0.0 {
@@ -118,19 +122,19 @@ pub(super) fn notes(frames: &[[f32; KEYS]], onsets: &[[f32; KEYS]]) -> Vec<Note>
         left[mid][k] = 0.0;
         let (mut i, mut below) = (mid + 1, 0);
         while i < n - 1 && below < ENERGY_TOL {
-            below = if left[i][k] < FRAME { below + 1 } else { 0 };
+            below = if left[i][k] < frame_thresh { below + 1 } else { 0 };
             clear(&mut left, i, k);
             i += 1;
         }
         let end = i - 1 - below;
         let (mut i, mut below) = (mid as isize - 1, 0);
         while i > 0 && below < ENERGY_TOL {
-            below = if left[i as usize][k] < FRAME { below + 1 } else { 0 };
+            below = if left[i as usize][k] < frame_thresh { below + 1 } else { 0 };
             clear(&mut left, i as usize, k);
             i -= 1;
         }
         let start = (i + 1 + below as isize) as usize;
-        if end <= start || end - start <= MIN_NOTE {
+        if end <= start || end - start <= min_note {
             continue;
         }
         out.push(Note { start, end, key: k as u8 + MIDI_OFFSET, amp: mean(start, end, k) });
@@ -145,10 +149,11 @@ fn seconds(frame: usize) -> f64 {
     frame as f64 * hop - window_offset * (frame / WINDOW_FRAMES) as f64
 }
 
-/// A format 0 Standard MIDI File at 120 bpm, 220 ticks a beat (as pretty_midi), Electric Piano 1.
-pub(super) fn smf(notes: &[Note]) -> Vec<u8> {
+/// A format 0 Standard MIDI File at `bpm`, 220 ticks a beat (as pretty_midi), Electric Piano 1.
+pub(super) fn smf(notes: &[Note], bpm: f32) -> Vec<u8> {
     const PPQ: f64 = 220.0;
-    let tick = |frame: usize| (seconds(frame).max(0.0) * 2.0 * PPQ).round() as u32;
+    let tick = |frame: usize| (seconds(frame).max(0.0) * bpm as f64 / 60.0 * PPQ).round() as u32;
+    let tempo = ((60_000_000.0 / bpm as f64).round() as u32).to_be_bytes();
     // (tick, off before on at the same tick, bytes)
     let mut events: Vec<(u32, u8, [u8; 3])> = Vec::with_capacity(notes.len() * 2);
     for n in notes {
@@ -157,7 +162,8 @@ pub(super) fn smf(notes: &[Note]) -> Vec<u8> {
         events.push((tick(n.end), 0, [0x80, n.key, 0]));
     }
     events.sort_by_key(|e| (e.0, e.1));
-    let mut track = vec![0x00, 0xFF, 0x51, 0x03, 0x07, 0xA1, 0x20, 0x00, 0xC0, 0x04];
+    // Tempo (µs a beat), then Electric Piano 1.
+    let mut track = vec![0x00, 0xFF, 0x51, 0x03, tempo[1], tempo[2], tempo[3], 0x00, 0xC0, 0x04];
     let mut last = 0;
     for (t, _, bytes) in events {
         push_varlen(&mut track, t - last);

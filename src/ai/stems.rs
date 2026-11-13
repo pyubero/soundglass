@@ -11,7 +11,8 @@ pub const NAMES: [&str; 4] = ["drums", "bass", "other", "vocals"];
 /// The four stems (in `NAMES` order) of a mono or stereo mix, each stereo, as long as the mix.
 /// shortcut: holds all four stems in memory (~170 MB a minute of audio is the 4×2 stems' f32s);
 /// stream them to the encoders if long tracks run out of memory.
-pub(super) fn separate(model: &Path, mut mix: Vec<Vec<f32>>, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<[[Vec<f32>; 2]; 4], String> {
+/// `overlap`: the share of a segment its neighbours overlap, 0.1–0.5 (Demucs' default 0.25).
+pub(super) fn separate(model: &Path, mut mix: Vec<Vec<f32>>, overlap: f32, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<[[Vec<f32>; 2]; 4], String> {
     use ort::value::Tensor;
     let err = |e: ort::Error| e.to_string();
     if mix.len() == 1 {
@@ -28,7 +29,7 @@ pub(super) fn separate(model: &Path, mut mix: Vec<Vec<f32>>, progress: &dyn Fn(f
     let std = (mono.iter().map(|&x| (x as f64 - mean).powi(2)).sum::<f64>() / (total.max(2) - 1) as f64).sqrt() + 1e-8;
     let (mean, std) = (mean as f32, std as f32);
     let mut session = session(model)?;
-    let overlap = SEGMENT / 4;
+    let overlap = ((SEGMENT as f32 * overlap.clamp(0.1, 0.5)) as usize).max(1);
     let stride = SEGMENT - overlap;
     let fade: Vec<f32> = (0..SEGMENT).map(|i| ((i.min(SEGMENT - 1 - i) + 1) as f32 / overlap as f32).min(1.0)).collect();
     let mut out: [[Vec<f32>; 2]; 4] = std::array::from_fn(|_| [vec![0f32; total], vec![0f32; total]]);

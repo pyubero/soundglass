@@ -11,11 +11,12 @@ const MAX_STATES: i64 = 1 << 20;
 
 /// Each channel denoised on its own thread, with its own session and state; the same length
 /// out as in. Two ONNX threads per channel: 30% faster than six on this tiny network.
-pub(super) fn denoise(model: &Path, channels: Vec<Vec<f32>>, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<Vec<Vec<f32>>, String> {
+/// `limit_db`: at most this much reduction (the model's attenuation limit), 0 for no limit.
+pub(super) fn denoise(model: &Path, channels: Vec<Vec<f32>>, limit_db: f32, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<Vec<Vec<f32>>, String> {
     let total = channels.iter().map(|c| c.len() / HOP + 3).sum::<usize>().max(1);
     let done = std::sync::atomic::AtomicUsize::new(0);
     std::thread::scope(|scope| {
-        let runs: Vec<_> = channels.into_iter().map(|ch| scope.spawn(|| channel(model, ch, &done, cancel))).collect();
+        let runs: Vec<_> = channels.into_iter().map(|ch| scope.spawn(|| channel(model, ch, limit_db, &done, cancel))).collect();
         while !runs.iter().all(|r| r.is_finished()) {
             progress(done.load(Ordering::Relaxed) as f32 / total as f32);
             std::thread::sleep(std::time::Duration::from_millis(100));
@@ -24,7 +25,7 @@ pub(super) fn denoise(model: &Path, channels: Vec<Vec<f32>>, progress: &dyn Fn(f
     })
 }
 
-fn channel(model: &Path, mut input: Vec<f32>, done: &std::sync::atomic::AtomicUsize, cancel: &AtomicBool) -> Result<Vec<f32>, String> {
+fn channel(model: &Path, mut input: Vec<f32>, limit_db: f32, done: &std::sync::atomic::AtomicUsize, cancel: &AtomicBool) -> Result<Vec<f32>, String> {
     use ort::value::Tensor;
     let mut session = session_with(model, 2, false)?;
     let states_len = session
@@ -50,7 +51,7 @@ fn channel(model: &Path, mut input: Vec<f32>, done: &std::sync::atomic::AtomicUs
             .run(ort::inputs![
                 "input_frame" => Tensor::from_array(([HOP], frame.to_vec())).map_err(err)?,
                 "states" => Tensor::from_array(([states_len], states)).map_err(err)?,
-                "atten_lim_db" => Tensor::from_array((Vec::<usize>::new(), vec![0f32])).map_err(err)?,
+                "atten_lim_db" => Tensor::from_array((Vec::<usize>::new(), vec![limit_db])).map_err(err)?,
             ])
             .map_err(err)?;
         let (_, enhanced) = output(&outputs, "enhanced_audio_frame")?;

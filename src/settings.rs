@@ -67,11 +67,13 @@ pub struct AiSettings {
     /// The chosen model file per tool; missing means the first installed one.
     pub models: HashMap<crate::ai::Task, String>,
     pub use_gpu: bool,
+    /// Each model's settings, by model file; missing means its defaults.
+    pub tune: HashMap<String, crate::ai::Tune>,
 }
 
 impl Default for AiSettings {
     fn default() -> Self {
-        AiSettings { models: HashMap::new(), use_gpu: true }
+        AiSettings { models: HashMap::new(), use_gpu: true, tune: HashMap::new() }
     }
 }
 
@@ -169,7 +171,7 @@ mod tests {
                 map: crate::spectrum::ColourMap::BlueRed,
             },
             theme: "high-contrast".into(),
-            ai: AiSettings { models: HashMap::from([(crate::ai::Task::Stems, "m.onnx".into())]), use_gpu: false },
+            ai: AiSettings { models: HashMap::from([(crate::ai::Task::Stems, "m.onnx".into())]), use_gpu: false, tune: HashMap::from([("nmp.onnx".to_string(), crate::ai::Tune::Beats(Default::default()))]) },
         };
         let app_ron = |v: &str| ron::to_string(&HashMap::from([(KEY.to_string(), v.to_string())])).unwrap();
         assert_eq!(parse(&app_ron(&ron::to_string(&s).unwrap())), s);

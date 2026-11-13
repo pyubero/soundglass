@@ -103,7 +103,7 @@ fn denoise_lowers_noise() {
         })
         .collect();
     let t0 = std::time::Instant::now();
-    let out = denoise::denoise(&model_path(k.file).unwrap(), vec![noisy.clone()], &|_| {}, &AtomicBool::new(false)).unwrap().remove(0);
+    let out = denoise::denoise(&model_path(k.file).unwrap(), vec![noisy.clone()], 0.0, &|_| {}, &AtomicBool::new(false)).unwrap().remove(0);
     eprintln!("3 s denoised in {:.2} s", t0.elapsed().as_secs_f32());
     let db = |x: &[f32]| 10.0 * (x.iter().map(|v| v * v).sum::<f32>() / x.len() as f32).log10();
     let (noise_in, noise_out) = (db(&noisy[24_000..44_000]), db(&out[24_000..44_000]));
@@ -132,7 +132,7 @@ fn denoise_album_track() {
     let edit = crate::edit::Edit::whole(track.len());
     let t0 = std::time::Instant::now();
     let out = dir.join("song-denoised.flac");
-    assert_eq!(ui::run_tool(Task::Denoise, &CATALOG[0], &track, &edit, &|_| {}, &AtomicBool::new(false)).unwrap(), ui::Done::Open(out.clone()));
+    assert_eq!(ui::run_tool(Task::Denoise, &CATALOG[0], &tune_for(&CATALOG[0], &Default::default()), &track, &edit, &|_| {}, &AtomicBool::new(false)).unwrap(), ui::Done::Open(out.clone()));
     eprintln!("{} s of audio in {:.1} s → {}", track.len() / 44_100, t0.elapsed().as_secs_f32(), out.display());
     let back = crate::track::Track::load(out, || {});
     while !back.done() {
@@ -177,7 +177,7 @@ fn stems_add_up_to_the_mix() {
     let (track, dir) = album_copy("stems");
     let edit = crate::edit::Edit::whole(track.len()).crop(30 * 44_100, 90 * 44_100);
     let t0 = std::time::Instant::now();
-    let done = ui::run_tool(Task::Stems, k, &track, &edit, &|_| {}, &AtomicBool::new(false)).unwrap();
+    let done = ui::run_tool(Task::Stems, k, &tune_for(k, &Default::default()), &track, &edit, &|_| {}, &AtomicBool::new(false)).unwrap();
     eprintln!("60 s split in {:.1} s on the {}", t0.elapsed().as_secs_f32(), if on_gpu() { "GPU" } else { "CPU" });
     assert_eq!(done, ui::Done::Open(dir.join("song-stems").join("vocals.flac")));
     let mix = audio::planar(&track, &edit, 44_100).unwrap();
@@ -241,7 +241,7 @@ fn notes_from_activations_and_midi_bytes() {
     (10..40).for_each(|t| frames[t][39] = 0.8);
     (60..65).for_each(|t| frames[t][43] = 0.9);
     onsets[10][39] = 0.9;
-    let notes = midi::notes(&frames, &onsets);
+    let notes = midi::notes(&frames, &onsets, &Default::default());
     assert_eq!(notes.len(), 1, "{notes:?}");
     let n = notes[0];
     assert_eq!((n.start, n.end, n.key), (10, 40, 60));
@@ -249,9 +249,9 @@ fn notes_from_activations_and_midi_bytes() {
     // A held note without an onset is still found, by the melodia trick.
     let mut frames = vec![[0f32; 88]; 100];
     (20..50).for_each(|t| frames[t][50] = 0.5);
-    let notes = midi::notes(&frames, &vec![[0f32; 88]; 100]);
+    let notes = midi::notes(&frames, &vec![[0f32; 88]; 100], &Default::default());
     assert_eq!(notes.iter().map(|n| n.key).collect::<Vec<_>>(), [71]);
-    let smf = midi::smf(&notes);
+    let smf = midi::smf(&notes, 120.0);
     assert_eq!(&smf[..14], b"MThd\0\0\0\x06\0\0\0\x01\0\xDC");
     let len = u32::from_be_bytes(smf[18..22].try_into().unwrap()) as usize;
     assert_eq!(smf.len(), 22 + len);
@@ -278,7 +278,7 @@ fn midi_finds_a_played_tune() {
         })
         .collect();
     let (frames, onsets) = midi::activations(&model_path(k.file).unwrap(), &mono, &|_| {}, &AtomicBool::new(false)).unwrap();
-    let mut notes = midi::notes(&frames, &onsets);
+    let mut notes = midi::notes(&frames, &onsets, &Default::default());
     notes.sort_by_key(|n| n.start);
     eprintln!("{:?}", notes.iter().map(|n| (n.key, format!("{:.2}", n.start as f32 * 256.0 / rate))).collect::<Vec<_>>());
     assert_eq!(frames.len(), (mono.len() as f64 / (midi_stride() as f64) * 142.0) as usize);
@@ -303,7 +303,7 @@ fn midi_album_track() {
     let (track, dir) = album_copy("midi");
     let edit = crate::edit::Edit::whole(track.len()).crop(0, 60 * 44_100);
     let t0 = std::time::Instant::now();
-    let done = ui::run_tool(Task::Midi, k, &track, &edit, &|_| {}, &AtomicBool::new(false)).unwrap();
+    let done = ui::run_tool(Task::Midi, k, &tune_for(k, &Default::default()), &track, &edit, &|_| {}, &AtomicBool::new(false)).unwrap();
     let out = dir.join("song-melody.mid");
     eprintln!("60 s in {:.1} s, {} bytes", t0.elapsed().as_secs_f32(), std::fs::metadata(&out).unwrap().len());
     assert_eq!(done, ui::Done::Said("Saved song-melody.mid".into()));
@@ -330,7 +330,7 @@ fn beats_on_the_album() {
         }
         let edit = crate::edit::Edit::whole(track.len());
         let t0 = std::time::Instant::now();
-        let said = match ui::run_tool(Task::Beats, k, &track, &edit, &|_| {}, &AtomicBool::new(false)).unwrap() {
+        let said = match ui::run_tool(Task::Beats, k, &tune_for(k, &Default::default()), &track, &edit, &|_| {}, &AtomicBool::new(false)).unwrap() {
             ui::Done::Said(s) => s,
             other => panic!("{other:?}"),
         };
@@ -412,7 +412,7 @@ fn transcribe_a_recording() {
             download(k, &|_| {}, &AtomicBool::new(false)).unwrap();
         }
         let t0 = std::time::Instant::now();
-        let done = ui::run_tool(Task::Transcribe, k, &track, &edit, &|_| {}, &AtomicBool::new(false));
+        let done = ui::run_tool(Task::Transcribe, k, &tune_for(k, &Default::default()), &track, &edit, &|_| {}, &AtomicBool::new(false));
         eprintln!("{} ({:.1} s): {done:?}", k.file, t0.elapsed().as_secs_f32());
     }
 }
@@ -445,4 +445,87 @@ fn install_gpu() {
         download_gpu(&|_| {}, &AtomicBool::new(false)).unwrap();
     }
     assert!(gpu_installed());
+}
+
+#[test]
+fn midi_settings_change_the_notes() {
+    use tune::MidiTune;
+    // C4 from 50 to 80 (onset 0.9, level 0.5); G4 held from the very start to 40, at 0.4, so it
+    // has no rise for an inferred onset: only the melodia trick finds it.
+    let mut frames = vec![[0f32; 88]; 100];
+    let mut onsets = vec![[0f32; 88]; 100];
+    (50..80).for_each(|t| frames[t][39] = 0.5);
+    onsets[50][39] = 0.9;
+    (0..40).for_each(|t| frames[t][46] = 0.4);
+    let keys = |t: MidiTune| {
+        let mut k: Vec<u8> = midi::notes(&frames, &onsets, &t).iter().map(|n| n.key).collect();
+        k.sort();
+        k
+    };
+    let d = MidiTune::default();
+    assert_eq!(keys(d), [60, 67]);
+    // The note threshold over both levels: neither lasts.
+    assert!(keys(MidiTune { frame: 0.6, ..d }).is_empty());
+    // An onset threshold over 0.9 leaves C4 to the melodia trick, which still finds it.
+    assert_eq!(keys(MidiTune { onset: 0.95, ..d }).len(), 2);
+    assert_eq!(keys(MidiTune { melodia: false, ..d }), [60]);
+    assert_eq!(keys(MidiTune { low: 62, ..d }), [67]);
+    assert_eq!(keys(MidiTune { high: 64, ..d }), [60]);
+    // C4's 30 frames are ~350 ms, too short at a 400 ms minimum; G4's 40 frames are long enough.
+    assert_eq!(keys(MidiTune { min_note_ms: 400.0, ..d }), [67]);
+    // The tempo is written as µs a beat: 500 000 at 120 bpm, 1 000 000 at 60.
+    let notes = midi::notes(&frames, &onsets, &d);
+    assert_eq!(midi::smf(&notes, 120.0)[22..30], [0, 0xFF, 0x51, 3, 0x07, 0xA1, 0x20, 0]);
+    assert_eq!(midi::smf(&notes, 60.0)[22..30], [0, 0xFF, 0x51, 3, 0x0F, 0x42, 0x40, 0]);
+}
+
+#[test]
+fn stems_need_one_chosen() {
+    let k = CATALOG.iter().find(|k| k.task == Task::Stems).unwrap();
+    let track = crate::track::Track::from_samples(44_100, 2, vec![0.0; 2000]);
+    let none = Tune::Stems(tune::StemsTune { write: [false; 4], ..Default::default() });
+    let r = ui::run_tool(Task::Stems, k, &none, &track, &crate::edit::Edit::whole(1000), &|_| {}, &AtomicBool::new(false));
+    assert!(r.unwrap_err().contains("at least one stem"));
+}
+
+/// Online: the settings reach the models (denoise limit, chosen stems, Whisper's language).
+#[test]
+#[ignore]
+fn settings_reach_the_models() {
+    let k = installed_model(Task::Denoise);
+    let mut seed = 1u32;
+    let noise: Vec<f32> = (0..2 * denoise::RATE as usize)
+        .map(|_| {
+            seed = seed.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+            ((seed >> 8) as f32 / (1u32 << 24) as f32 * 2.0 - 1.0) * 0.055
+        })
+        .collect();
+    let db = |x: &[f32]| 10.0 * (x[20_000..].iter().map(|v| v * v).sum::<f32>() / (x.len() - 20_000) as f32).log10();
+    let out = denoise::denoise(&model_path(k.file).unwrap(), vec![noise.clone()], 12.0, &|_| {}, &AtomicBool::new(false)).unwrap().remove(0);
+    eprintln!("12 dB limit: noise {:.1} → {:.1} dB", db(&noise), db(&out));
+    assert!((db(&noise) - db(&out) - 12.0).abs() < 3.0);
+
+    let k = installed_model(Task::Stems);
+    let (track, dir) = album_copy("stems-chosen");
+    let edit = crate::edit::Edit::whole(track.len()).crop(0, 10 * 44_100);
+    let only = Tune::Stems(tune::StemsTune { write: [false, true, false, false], ..Default::default() });
+    let done = ui::run_tool(Task::Stems, k, &only, &track, &edit, &|_| {}, &AtomicBool::new(false)).unwrap();
+    let files: Vec<_> = std::fs::read_dir(dir.join("song-stems")).unwrap().map(|e| e.unwrap().file_name()).collect();
+    std::fs::remove_dir_all(&dir).unwrap();
+    assert_eq!(done, ui::Done::Open(dir.join("song-stems").join("bass.flac")));
+    assert_eq!(files, ["bass.flac"]);
+
+    if let Ok(wav) = std::env::var("SG_WAV") {
+        let k = CATALOG.iter().find(|k| k.file.starts_with("small")).unwrap();
+        let track = crate::track::Track::load(wav.into(), || {});
+        while !track.done() {
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        let edit = crate::edit::Edit::whole(track.len());
+        let run = |language: &str, translate: bool| ui::run_tool(Task::Transcribe, k, &Tune::Speech(tune::SpeechTune { language: language.into(), translate, ..Default::default() }), &track, &edit, &|_| {}, &AtomicBool::new(false));
+        eprintln!("en: {:?}", run("en", false));
+        eprintln!("fr: {:?}", run("fr", false));
+        eprintln!("translate: {:?}", run("", true));
+        assert!(run("xx", false).unwrap_err().contains("doesn't know the language"));
+    }
 }

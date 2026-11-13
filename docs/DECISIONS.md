@@ -192,7 +192,7 @@
 - 2026-11-13 — no "Add model file…": every tool needs a specific model's inputs and outputs, so only catalog models are used
 - 2026-11-13 — Remove Noise uses grazder's torchDF streaming export of DeepFilterNet3 (one 16 MB ONNX file, hosted by KimtOS, pinned by revision and hash), not the official three-network export: the STFT, ERB features and deep filtering stay inside the model, so nothing of DeepFilterNet's DSP is rewritten in Rust
 - 2026-11-13 — the AI tools write a new file next to the track (named with create_new, like Save Copy: name-denoised.flac, then -2…) through save.rs's temp, verify and rename, at the track's sample rate as 24-bit FLAC, then open it; the new file has no tags
-- 2026-11-13 — Remove Noise has no strength setting (attenuation limit 0, the model's full effect) and runs each channel on its own thread with 2 ONNX threads (fastest of 1, 2, 4, 6 on a 12-thread CPU); about 2.4× real time on a stereo track (accepted)
+- 2026-11-13 — Remove Noise has no strength setting (attenuation limit 0, the model's full effect) — changed 2026-11-13: per-model settings, see below — and runs each channel on its own thread with 2 ONNX threads (fastest of 1, 2, 4, 6 on a 12-thread CPU); about 2.4× real time on a stereo track (accepted)
 - 2026-11-13 — a model's outputs are looked up by name with an error, never by indexing (a missing name panicked in ort)
 - 2026-11-13 — FLAC is saved without flacenc's fixed predictors (LPC, constant and verbatim only): flacenc 0.5.1's fixed path wrote a 33 MB frame for one ordinary 4096-frame stereo block (a Demucs stem), which symphonia skipped without an error; ffmpeg still read it
 - 2026-11-13 — Save's check reads lossless saves (WAV, FLAC) back frame for frame; lossy ones keep the 0.1 s allowance for encoder delay — the 0.1 s let the skipped 93 ms block through
@@ -200,7 +200,7 @@
 - 2026-11-13 — HTDemucs's weights come with Demucs' MIT licence but one model card says no explicit grant for the weights was found (accepted risk, as the conversions all state MIT)
 - 2026-11-13 — stems go into a new folder next to the track, name-stems/ (then -2…), as drums, bass, other and vocals.flac, and the vocals are opened; a failure removes the folder
 - 2026-11-13 — all four stems are held in memory, ~170 MB a minute (accepted; stream to the encoders if long tracks run out)
-- 2026-11-13 — Melody to MIDI uses Spotify's own nmp.onnx from the basic-pitch repository at a fixed commit, with its windowing and note decoding ported to Rust at Basic Pitch's defaults (onset 0.5, frame 0.3, 127.7 ms, inferred onsets, melodia trick); no pitch bends, no settings
+- 2026-11-13 — Melody to MIDI uses Spotify's own nmp.onnx from the basic-pitch repository at a fixed commit, with its windowing and note decoding ported to Rust at Basic Pitch's defaults (onset 0.5, frame 0.3, 127.7 ms, inferred onsets, melodia trick); no pitch bends, no settings — changed 2026-11-13: per-model settings, see below
 - 2026-11-13 — the melodia trick's repeated whole-matrix argmax is one sort of the candidate frames, skipping those already cleared: the same notes, since values only drop to 0
 - 2026-11-13 — the MIDI file is name-melody.mid (named like the other results), format 0, 120 bpm, 220 ticks a beat, Electric Piano 1, as pretty_midi writes it; a written MIDI file is reported in the tool's window, not opened
 - 2026-11-13 — a hand-written Standard MIDI File writer (~40 lines), no MIDI crate
@@ -221,3 +221,6 @@
 - 2026-11-13 — Whisper large-v3-turbo stays in the catalog despite its 1,037 MB (user's choice)
 - 2026-11-13 — the Metronome is in the volume button's popup: on/off and a Clicks slider (cube curve, as Volume, starts at 70 %, not saved), enabled once Find Beats has run; Practice → Metronome stays as a second switch; Practice mode no longer turns it on or off (user's choice)
 - 2026-11-13 — the song's volume is applied in the player's pull, before the clicks are added, so each slider sets only its own sound; a volume change is heard after the one buffered 512-frame block (~11 ms)
+- 2026-11-13 — each model has a few settings in AI Models, as lightview's preprocessing overrides: saved per model file in AiSettings.tune (one serde struct per kind, every field defaulted and clamped on use, a setting of the wrong kind ignored), Reset to defaults removes them (user's choice)
+- 2026-11-13 — the settings are the references' own knobs: DeepFilterNet's attenuation limit, Demucs' overlap and the stems to write, Basic Pitch's onset/frame thresholds, shortest note, frequency range, melodia trick and MIDI tempo, Beat This!'s peak threshold, Whisper's language and translate task, and the silence level for both speech models
+- 2026-11-13 — Whisper's language is typed as a code (empty to detect) and checked against the model's own list when it runs, not picked from a list (the 99 names aren't in the app)

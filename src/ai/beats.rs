@@ -24,7 +24,8 @@ pub struct Beats {
 
 /// Beats of `mono` (at `RATE`), as frames at the original's `rate`. `filterbank` is
 /// torchaudio's slaney mel filterbank, [513, 128] row-major f32.
-pub(super) fn track(model: &Path, filterbank: &Path, mono: Vec<f32>, rate: u32, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<Beats, String> {
+/// `threshold`: the logit a peak must pass (the reference's 0).
+pub(super) fn track(model: &Path, filterbank: &Path, mono: Vec<f32>, rate: u32, threshold: f32, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<Beats, String> {
     use ort::value::Tensor;
     let err = |e: ort::Error| e.to_string();
     let bank = std::fs::read(filterbank).map_err(|e| e.to_string())?;
@@ -64,9 +65,9 @@ pub(super) fn track(model: &Path, filterbank: &Path, mono: Vec<f32>, rate: u32, 
         }
         progress(0.05 + 0.95 * (n + 1) as f32 / starts.len() as f32);
     }
-    let beats: Vec<f64> = peaks(&beat);
+    let beats: Vec<f64> = peaks(&beat, threshold);
     // Each downbeat moved to its nearest beat.
-    let mut downbeats: Vec<f64> = peaks(&down).into_iter().filter_map(|f| beats.iter().copied().min_by(|a, b| (a - f).abs().total_cmp(&(b - f).abs()))).collect();
+    let mut downbeats: Vec<f64> = peaks(&down, threshold).into_iter().filter_map(|f| beats.iter().copied().min_by(|a, b| (a - f).abs().total_cmp(&(b - f).abs()))).collect();
     downbeats.dedup();
     let frame = |f: f64| (f / FPS * rate as f64).round() as u64;
     Ok(Beats { beats: beats.into_iter().map(frame).collect(), downbeats: downbeats.into_iter().map(frame).collect() })
@@ -133,11 +134,11 @@ fn chunk_starts(frames: usize) -> Vec<isize> {
     starts
 }
 
-/// Frames (as fractions: merged neighbours are averaged) where the logit is positive and the
-/// largest within ±3 frames.
-fn peaks(logits: &[f32]) -> Vec<f64> {
+/// Frames (as fractions: merged neighbours are averaged) where the logit is over `threshold`
+/// and the largest within ±3 frames.
+fn peaks(logits: &[f32], threshold: f32) -> Vec<f64> {
     let n = logits.len();
-    let on: Vec<usize> = (0..n).filter(|&i| logits[i] > 0.0 && logits[i.saturating_sub(3)..(i + 4).min(n)].iter().all(|&x| x <= logits[i])).collect();
+    let on: Vec<usize> = (0..n).filter(|&i| logits[i] > threshold && logits[i.saturating_sub(3)..(i + 4).min(n)].iter().all(|&x| x <= logits[i])).collect();
     // deduplicate_peaks(width = 1): runs of neighbours become their running mean.
     let mut out = Vec::new();
     let mut iter = on.into_iter();
@@ -166,7 +167,9 @@ mod tests {
         assert_eq!(chunk_starts(3000), [-6, 1482, 1506]);
         let mut l = vec![-5f32; 40];
         (l[5], l[6], l[20], l[30]) = (2.0, 2.0, 1.0, -0.5);
-        assert_eq!(peaks(&l), [5.5, 20.0]);
+        assert_eq!(peaks(&l, 0.0), [5.5, 20.0]);
+        // Lower, the weaker peak at 30 counts too.
+        assert_eq!(peaks(&l, -1.0), [5.5, 20.0, 30.0]);
     }
 
     #[test]

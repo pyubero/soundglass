@@ -119,13 +119,14 @@ impl Ai {
     /// Runs `task` on the edited track, on its own thread; the file it makes is opened when done.
     pub fn start_tool(&mut self, task: Task, track: Arc<crate::track::Track>, edit: Arc<crate::edit::Edit>, s: &AiSettings, ctx: &egui::Context) {
         let Ok(model) = Ai::ready(task, s) else { return };
+        let tune = tune_for(model, s);
         let source = track.path.clone();
         let (progress, cancel) = (Arc::new(AtomicU32::new(0)), Arc::new(AtomicBool::new(false)));
         let (tx, done) = std::sync::mpsc::channel();
         let (p, c, ctx) = (progress.clone(), cancel.clone(), ctx.clone());
         std::thread::spawn(move || {
             let report = |x: f32| p.store(x.to_bits(), Ordering::Relaxed);
-            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run_tool(task, model, &track, &edit, &report, &c))).unwrap_or_else(|_| Err("the AI tool failed".into()));
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run_tool(task, model, &tune, &track, &edit, &report, &c))).unwrap_or_else(|_| Err("the AI tool failed".into()));
             let _ = tx.send(result);
             ctx.request_repaint();
         });
@@ -351,6 +352,9 @@ impl Ai {
                 } else if let Some(k) = models.first() {
                     ui.label(format!("{} (installed)", k.label));
                 }
+                for k in CATALOG.iter().filter(|k| k.task == task && installed.contains(&k.file)) {
+                    egui::CollapsingHeader::new(format!("Settings: {}", k.label)).id_salt(("tune", k.file)).show(ui, |ui| super::tune::tune_ui(ui, s, k));
+                }
                 egui::Grid::new(("catalog", task.title())).num_columns(3).spacing([16.0, 6.0]).show(ui, |ui| {
                     for (i, k) in CATALOG.iter().enumerate().filter(|(_, k)| k.task == task && !installed.contains(&k.file)) {
                         ui.label(k.label);
@@ -403,14 +407,14 @@ fn license_ui(ui: &mut egui::Ui, title: &str, l: &License, step: usize, count: u
 }
 
 /// Runs a tool to the end (blocking): its output file, named after the track, next to it.
-pub(super) fn run_tool(task: Task, model: &Known, track: &crate::track::Track, edit: &crate::edit::Edit, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<Done, String> {
+pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::track::Track, edit: &crate::edit::Edit, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<Done, String> {
     let own = track.format.get().ok_or("the track has no audio")?.rate;
-    match task {
-        Task::Denoise => {
+    match (task, tune) {
+        (Task::Denoise, Tune::Denoise(t)) => {
             let target = crate::save::reserve_named(&track.path, "denoised", "flac")?;
             let result = (|| {
                 let channels = audio::planar(track, edit, denoise::RATE)?;
-                let clean = denoise::denoise(&model_path(model.file)?, channels, &|p| progress(0.95 * p), cancel)?;
+                let clean = denoise::denoise(&model_path(model.file)?, channels, t.limit_db, &|p| progress(0.95 * p), cancel)?;
                 audio::save_flac(&clean, denoise::RATE, own, &target)
             })();
             if result.is_err() {
@@ -418,34 +422,41 @@ pub(super) fn run_tool(task: Task, model: &Known, track: &crate::track::Track, e
             }
             result.map(|()| Done::Open(target))
         }
-        Task::Stems => {
+        (Task::Stems, Tune::Stems(t)) => {
+            if !t.write.contains(&true) {
+                return Err("choose at least one stem to write (AI Models → Settings)".into());
+            }
             let dir = reserve_dir(&track.path, "stems")?;
             let result = (|| {
                 let mix = audio::planar(track, edit, stems::RATE)?;
-                let parts = stems::separate(&model_path(model.file)?, mix, &|p| progress(0.9 * p), cancel)?;
-                for (name, part) in stems::NAMES.iter().zip(&parts) {
-                    audio::save_flac(part, stems::RATE, own, &dir.join(format!("{name}.flac")))?;
+                let parts = stems::separate(&model_path(model.file)?, mix, t.overlap, &|p| progress(0.9 * p), cancel)?;
+                let mut written = Vec::new();
+                for ((name, part), _) in stems::NAMES.iter().zip(&parts).zip(t.write).filter(|(_, w)| *w) {
+                    let path = dir.join(format!("{name}.flac"));
+                    audio::save_flac(part, stems::RATE, own, &path)?;
+                    written.push(path);
                 }
-                Ok(Done::Open(dir.join("vocals.flac")))
+                // The vocals, or the last one written (they're written in NAMES order).
+                Ok(Done::Open(written.pop().unwrap()))
             })();
             if result.is_err() {
                 let _ = std::fs::remove_dir_all(&dir);
             }
             result
         }
-        Task::Midi => {
+        (Task::Midi, Tune::Midi(t)) => {
             let target = crate::save::reserve_named(&track.path, "melody", "mid")?;
             let result = (|| {
                 let channels = audio::planar(track, edit, midi::RATE)?;
                 let mono: Vec<f32> = (0..channels[0].len()).map(|i| channels.iter().map(|c| c[i]).sum::<f32>() / channels.len() as f32).collect();
                 let (frames, onsets) = midi::activations(&model_path(model.file)?, &mono, &|p| progress(0.9 * p), cancel)?;
-                let notes = midi::notes(&frames, &onsets);
+                let notes = midi::notes(&frames, &onsets, t);
                 if notes.is_empty() {
                     return Err("no notes were found".to_string());
                 }
                 // Written beside it, then renamed over the reserved name.
                 let part = target.with_extension("mid.part");
-                std::fs::write(&part, midi::smf(&notes)).and_then(|()| std::fs::rename(&part, &target)).map_err(|e| {
+                std::fs::write(&part, midi::smf(&notes, t.tempo)).and_then(|()| std::fs::rename(&part, &target)).map_err(|e| {
                     let _ = std::fs::remove_file(&part);
                     e.to_string()
                 })
@@ -455,24 +466,24 @@ pub(super) fn run_tool(task: Task, model: &Known, track: &crate::track::Track, e
             }
             result.map(|()| Done::Said(format!("Saved {}", target.file_name().unwrap_or_default().to_string_lossy())))
         }
-        Task::Beats => {
+        (Task::Beats, Tune::Beats(t)) => {
             // On the original, not the edits: the beats are mapped through them as they change.
             let whole = crate::edit::Edit::whole(track.len());
             let channels = audio::planar(track, &whole, beats::RATE)?;
             // The mean of the channels, as Beat This! downmixes.
             let mono: Vec<f32> = (0..channels[0].len()).map(|i| channels.iter().map(|c| c[i]).sum::<f32>() / channels.len() as f32).collect();
-            let found = beats::track(&model_path(model.file)?, &model_path(model.data[0].0)?, mono, own, progress, cancel)?;
+            let found = beats::track(&model_path(model.file)?, &model_path(model.data[0].0)?, mono, own, t.threshold, progress, cancel)?;
             let said = format!("Found {} beats and {} downbeats. The volume button's Metronome clicks along.", found.beats.len(), found.downbeats.len());
             *track.beats.lock().unwrap() = Some(Arc::new(found));
             Ok(Done::Said(said))
         }
-        Task::Transcribe => {
+        (Task::Transcribe, Tune::Speech(t)) => {
             let channels = audio::planar(track, edit, transcribe::RATE)?;
             let mono: Vec<f32> = (0..channels[0].len()).map(|i| channels.iter().map(|c| c[i]).sum::<f32>() / channels.len() as f32).collect();
             let path = |f: &str| model_path(f);
             let text = match model.data {
-                [(dj, _), (features, _), (vocab, _)] => transcribe::parakeet(&path(model.file)?, &path(dj)?, &path(features)?, &path(vocab)?, &mono, progress, cancel)?,
-                [(decoder, _), (tokens, _)] => transcribe::whisper(&path(model.file)?, &path(decoder)?, &path(tokens)?, &mono, progress, cancel)?,
+                [(dj, _), (features, _), (vocab, _)] => transcribe::parakeet(&path(model.file)?, &path(dj)?, &path(features)?, &path(vocab)?, &mono, t.silence_db, progress, cancel)?,
+                [(decoder, _), (tokens, _)] => transcribe::whisper(&path(model.file)?, &path(decoder)?, &path(tokens)?, &mono, t, progress, cancel)?,
                 _ => return Err("not a transcription model".into()),
             };
             if text.trim().is_empty() {
@@ -480,6 +491,7 @@ pub(super) fn run_tool(task: Task, model: &Known, track: &crate::track::Track, e
             }
             Ok(Done::Text(text))
         }
+        _ => Err("the settings aren't for this tool".into()),
     }
 }
 

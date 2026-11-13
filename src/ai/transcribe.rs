@@ -7,8 +7,6 @@ use ort::value::{DynValue, Tensor};
 
 pub const RATE: u32 = 16_000;
 const MAX_PIECE: usize = 29 * RATE as usize;
-/// Pieces quieter than this (RMS) are left out: Whisper makes up words in silence.
-const SILENT_RMS: f32 = 0.001;
 
 fn err(e: ort::Error) -> String {
     e.to_string()
@@ -31,8 +29,9 @@ pub(super) fn pieces(x: &[f32]) -> Vec<std::ops::Range<usize>> {
     out
 }
 
-fn silent(x: &[f32]) -> bool {
-    (x.iter().map(|v| v * v).sum::<f32>() / x.len().max(1) as f32).sqrt() < SILENT_RMS
+/// Quieter than `db` (RMS, dBFS): left out, since Whisper makes up words in silence.
+fn silent(x: &[f32], db: f32) -> bool {
+    (x.iter().map(|v| v * v).sum::<f32>() / x.len().max(1) as f32).sqrt() < 10f32.powf(db / 20.0)
 }
 
 /// librosa.filters.mel(sr=16000, n_fft=400, n_mels): slaney scale, slaney (area) norm; rows of 201.
@@ -94,7 +93,8 @@ pub(super) fn whisper_mel(x: &[f32], filters: &[f32], n_mels: usize) -> (Vec<f32
 }
 
 /// Whisper's text of `mono` (at `RATE`), the language detected from the first piece with sound.
-pub(super) fn whisper(encoder: &Path, decoder: &Path, tokens: &Path, mono: &[f32], progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<String, String> {
+/// `tune`: a fixed language (else detected), translate, and the silence level.
+pub(super) fn whisper(encoder: &Path, decoder: &Path, tokens: &Path, mono: &[f32], tune: &super::tune::SpeechTune, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<String, String> {
     let mut enc = session_with(encoder, cores(), false)?;
     let mut dec = session_with(decoder, cores(), false)?;
     let meta = enc.metadata().map_err(err)?;
@@ -107,7 +107,17 @@ pub(super) fn whisper(encoder: &Path, decoder: &Path, tokens: &Path, mono: &[f32
     let mut start = list("sot_sequence")?;
     start.push(no_timestamps);
     let languages = if multilingual { list("all_language_tokens")? } else { Vec::new() };
+    let codes: Vec<String> = if multilingual { get("all_language_codes")?.split(',').map(|c| c.trim().to_string()).collect() } else { Vec::new() };
     drop(meta);
+    // A chosen language is set from the start; detection then never runs.
+    let mut language: Option<i64> = None;
+    if !tune.language.is_empty() {
+        let i = codes.iter().position(|c| *c == tune.language).ok_or_else(|| if multilingual { format!("this model doesn't know the language \"{}\"; it knows {}", tune.language, codes.join(", ")) } else { "this model only knows English: leave the language empty".to_string() })?;
+        language = languages.get(i).copied();
+    }
+    if tune.translate && !multilingual {
+        return Err("this model only knows English, so it can't translate".into());
+    }
     if !matches!(n_mels, 80 | 128) || start.len() < 3 {
         return Err("the model isn't a Whisper export soundglass knows".into());
     }
@@ -120,7 +130,6 @@ pub(super) fn whisper(encoder: &Path, decoder: &Path, tokens: &Path, mono: &[f32
     }
     let (cross_k_name, cross_v_name) = (enc.outputs()[0].name().to_string(), enc.outputs()[1].name().to_string());
     let cache_len = n_layer * n_ctx * n_state;
-    let mut language: Option<i64> = None;
     let mut text = String::new();
     let parts = pieces(mono);
     for (p, range) in parts.iter().enumerate() {
@@ -128,7 +137,7 @@ pub(super) fn whisper(encoder: &Path, decoder: &Path, tokens: &Path, mono: &[f32
             return Err("cancelled".into());
         }
         let piece = &mono[range.clone()];
-        if silent(piece) {
+        if silent(piece, tune.silence_db) {
             continue;
         }
         let (mel, frames) = whisper_mel(piece, &filters, n_mels);
@@ -171,6 +180,9 @@ pub(super) fn whisper(encoder: &Path, decoder: &Path, tokens: &Path, mono: &[f32
         let mut seq = start.clone();
         if let Some(l) = language {
             seq[1] = l;
+        }
+        if tune.translate {
+            seq[2] = translate;
         }
         let (k, v) = empty()?;
         let n = seq.len() as i64;
@@ -229,7 +241,7 @@ fn read_tokens(path: &Path) -> Result<std::collections::HashMap<i64, Vec<u8>>, S
 }
 
 /// Parakeet TDT's text of `mono` (at `RATE`). `vocab` is "token id" per line, `<blk>` the blank.
-pub(super) fn parakeet(encoder: &Path, decoder_joint: &Path, features: &Path, vocab: &Path, mono: &[f32], progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<String, String> {
+pub(super) fn parakeet(encoder: &Path, decoder_joint: &Path, features: &Path, vocab: &Path, mono: &[f32], silence_db: f32, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<String, String> {
     let text = std::fs::read_to_string(vocab).map_err(|e| e.to_string())?;
     let mut tokens: Vec<(usize, String)> = text.lines().filter_map(|l| l.rsplit_once(' ').and_then(|(t, id)| Some((id.trim().parse().ok()?, t.replace('\u{2581}', " "))))).collect();
     tokens.sort_by_key(|t| t.0);
@@ -251,7 +263,7 @@ pub(super) fn parakeet(encoder: &Path, decoder_joint: &Path, features: &Path, vo
             return Err("cancelled".into());
         }
         let piece = &mono[range.clone()];
-        if silent(piece) {
+        if silent(piece, silence_db) {
             continue;
         }
         let mut f = pre
@@ -344,7 +356,7 @@ mod tests {
         assert!(p.iter().all(|r| r.len() <= MAX_PIECE));
         assert!(p[0].end.abs_diff(27 * RATE as usize + 1600) < 1600, "{p:?}");
         assert_eq!(p.last().unwrap().end, x.len());
-        assert!(silent(&[0.0; 100]) && !silent(&x[..1000]));
+        assert!(silent(&[0.0; 100], -60.0) && !silent(&x[..1000], -60.0) && silent(&x[..1000], -6.0));
         assert_eq!(tidy_spaces(" Hello world , ok . Fine"), "Hello world, ok. Fine");
     }
 }
