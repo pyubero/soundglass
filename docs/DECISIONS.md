@@ -163,7 +163,7 @@
 - 2026-11-12 — all three speed and pitch items stay in v1's Playback menu (user's choice)
 - 2026-11-12 — tempo, key and chords are worked out only in Practice mode, by Track::analyse on a thread of its own once decoding is done (started from the UI when the mode is on, so turning it on mid-track works); with it off Track Info hides Tempo and Key and the tag editor hides the ≈ buttons (user's choice)
 - 2026-11-12 — v1 gets a folder browser panel, no library database (user's choice); not designed yet
-- 2026-11-12 — Local AI split: noise removal and speech transcription in v1, stems and melody to MIDI in v2 (user's choice)
+- 2026-11-12 — Local AI split: noise removal and speech transcription in v1, stems and melody to MIDI in v2 (user's choice) — changed 2026-11-13: the brief keeps this grouping, but every AI tool is in the Local AI menu whatever the mode (see below)
 - 2026-11-12 — settings are a serde struct stored as RON under "settings" in eframe's app.ron, read before the window opens, as in lightview; serde and ron are direct dependencies at the versions eframe already pulls in (user's choice) — the entries above that say "kept in settings.txt" now mean kept in these settings
 - 2026-11-12 — the old settings.txt is ignored, not converted: the app starts once from the defaults (user's choice)
 - 2026-11-12 — settings are written by eframe on exit and every 30 s, not on each change, so a crash can lose the last 30 s of changes (accepted, as in lightview)
@@ -208,7 +208,7 @@
 - 2026-11-13 — beats use Beat This!'s "minimal" postprocessing, not the DBN (accepted: it may click at random where the network is unsure; the DBN is in docs/BEAT_TRACKING.md's ideas)
 - 2026-11-13 — beats are found on the original and kept on the Track in its frames (like chords), mapped through the edits when drawn or sent to the player; they are kept across a rename, not saved to disk
 - 2026-11-13 — the Metronome clicks over the track at the found beats: a 25 ms decaying sine, 1.5 kHz at −9 dBFS, 2 kHz at −6 dBFS on downbeats, mixed into the player's input before WSOLA (so it follows speed changes) without allocating; Load and the gapless move turn it off, the UI sends it again for the new track
-- 2026-11-13 — Practice → Metronome is off at start and not saved, greyed out until Find Beats has run on the track; turning Practice mode off turns it off
+- 2026-11-13 — Practice → Metronome is off at start and not saved, greyed out until Find Beats has run on the track; turning Practice mode off turns it off — changed 2026-11-13: it's also in the volume popup and no longer tied to Practice mode (see below)
 - 2026-11-13 — a click alone at a set tempo (no track) is not built
 - 2026-11-13 — Transcribe Speech offers three models, the user picks in AI Models…: Parakeet TDT 0.6B v3 (istupakov's int8 export, 671 MB, with its own feature graph), Whisper small and Whisper large-v3-turbo (sherpa-onnx's int8 exports, 375 MB and 1,037 MB); turbo is over the "hundreds of MB" aim (flagged to the user)
 - 2026-11-13 — Whisper's log-mel is ours (realfft; the filters match OpenAI's mel_filters.npz within 4e-9), padded as sherpa-onnx does; greedy decoding with sherpa's suppressed tokens and at most 224 tokens a piece; the language is detected once, from the first piece with sound
@@ -217,3 +217,7 @@
 - 2026-11-13 — the transcript is shown in a window with Copy and Save as Text… (the system's save dialog, written through a temp file and renamed), not written next to the track
 - 2026-11-13 — Whisper small runs at ~2× real time on the CPU, slower than Parakeet (accepted; IoBinding of the caches is the thing to try)
 - 2026-11-13 — with GPU support, only Split into Stems and Find Beats use CUDA: on a GTX 1050 they ran 2.6× (stems, 60 s in 28 s against 73 s) and 3× (beats) faster, while DeepFilterNet, Basic Pitch and the int8 Whisper and Parakeet models ran 2–3× slower than on the CPU; the results on the GPU matched the CPU's
+- 2026-11-13 — every AI tool is in Local AI whatever Practice mode is; only the Practice menu's own items stay behind it (user's choice)
+- 2026-11-13 — Whisper large-v3-turbo stays in the catalog despite its 1,037 MB (user's choice)
+- 2026-11-13 — the Metronome is in the volume button's popup: on/off and a Clicks slider (cube curve, as Volume, starts at 70 %, not saved), enabled once Find Beats has run; Practice → Metronome stays as a second switch; Practice mode no longer turns it on or off (user's choice)
+- 2026-11-13 — the song's volume is applied in the player's pull, before the clicks are added, so each slider sets only its own sound; a volume change is heard after the one buffered 512-frame block (~11 ms)

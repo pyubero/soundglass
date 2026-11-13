@@ -99,7 +99,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, sent_clicks: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), player, t0, timings, shown: false }))
     }))
 }
 
@@ -172,8 +172,10 @@ struct App {
     panel_cache: WaveCache,
     /// The selection and Loop last sent to the player, to send them again only when they change.
     sent_region: Option<(Option<(u64, u64)>, bool)>,
-    /// Practice → Metronome: clicks at the track's found beats.
+    /// The Metronome (volume popup, or Practice → Metronome): clicks at the track's found beats.
     metronome: bool,
+    /// Its slider position, 0 to 1; like the volume, not saved.
+    click_volume: f32,
     /// What the player was last sent for the Metronome: track, edit and beats, or None for off.
     sent_clicks: Option<Option<(usize, Option<usize>, usize)>>,
     /// Waits for Save As / Discard / Cancel while there are unsaved edits.
@@ -269,6 +271,9 @@ enum Action {
     Seek(u64),
     /// Slider position, 0 to 1.
     Volume(f32),
+    Metronome(bool),
+    /// The Metronome's slider position, 0 to 1.
+    ClickVolume(f32),
     Speed(wsola::Speed),
     Undo,
     Redo,
@@ -608,7 +613,6 @@ impl eframe::App for App {
                         if !self.settings.practice {
                             self.looping = false;
                             self.show_spectrum = false;
-                            self.metronome = false;
                         }
                         ui.close();
                     }
@@ -637,7 +641,7 @@ impl eframe::App for App {
                         ui.close();
                     }
                 });
-                ui.menu_button("Local AI", |ui| ai_tool = self.ai.menu_items(ui, &self.settings.ai, self.settings.practice, self.track.done()));
+                ui.menu_button("Local AI", |ui| ai_tool = self.ai.menu_items(ui, &self.settings.ai, self.track.done()));
                 if self.settings.practice {
                     ui.menu_button("Practice", |ui| {
                         ui.checkbox(&mut self.looping, "Loop selection").on_hover_text("L");
@@ -747,7 +751,8 @@ impl eframe::App for App {
                         actions.push(Action::Seek(frame));
                     }
                     ui.add_space(8.0);
-                    actions.extend(transport(ui, playing, has_next, self.volume));
+                    let metronome = self.track.beats.lock().unwrap().is_some().then_some((self.metronome, self.click_volume));
+                    actions.extend(transport(ui, playing, has_next, self.volume, metronome));
                 });
                 let height = controls.response.rect.height();
                 if (height - self.controls_height).abs() > 0.5 {
@@ -792,9 +797,10 @@ impl eframe::App for App {
         }
         // The Metronome follows the track, its edits and its beats.
         let beats = self.track.beats.lock().unwrap().clone();
-        let want = beats.as_ref().filter(|_| self.metronome && self.settings.practice).map(|b| (Arc::as_ptr(&self.track) as usize, self.history.as_ref().map(|h| Arc::as_ptr(h.current()) as usize), Arc::as_ptr(b) as usize));
+        let want = beats.as_ref().filter(|_| self.metronome).map(|b| (Arc::as_ptr(&self.track) as usize, self.history.as_ref().map(|h| Arc::as_ptr(h.current()) as usize), Arc::as_ptr(b) as usize));
         if self.sent_clicks != Some(want) && let Ok(p) = &self.player {
             let clicks = beats.filter(|_| want.is_some()).map(|b| Arc::new(player::Clicks { beats: ai::edited_beats(&b.beats, &edit), downbeats: ai::edited_beats(&b.downbeats, &edit) }));
+            p.send(Cmd::ClickVolume(volume_gain(self.click_volume)));
             p.send(Cmd::Clicks(clicks));
             self.sent_clicks = Some(want);
         }
@@ -1036,6 +1042,11 @@ impl App {
             Action::Volume(v) => {
                 self.volume = v;
                 p.send(Cmd::Volume(volume_gain(v)));
+            }
+            Action::Metronome(on) => self.metronome = on,
+            Action::ClickVolume(v) => {
+                self.click_volume = v;
+                p.send(Cmd::ClickVolume(volume_gain(v)));
             }
             Action::Toggle if p.shared.playing.load(Relaxed) => p.send(Cmd::Pause),
             Action::Toggle => {
@@ -2517,7 +2528,8 @@ enum Icon {
 }
 
 /// Volume, then previous, play/pause and next, with play/pause centred.
-fn transport(ui: &mut egui::Ui, playing: bool, has_next: bool, volume: f32) -> Vec<Action> {
+/// `metronome`: whether it's on and its slider, once the track's beats are found.
+fn transport(ui: &mut egui::Ui, playing: bool, has_next: bool, volume: f32, metronome: Option<(bool, f32)>) -> Vec<Action> {
     let (size, small, gap) = (56.0, 40.0, 16.0);
     let buttons = [
         (Icon::Previous, "Previous", true, Action::Previous),
@@ -2530,15 +2542,34 @@ fn transport(ui: &mut egui::Ui, playing: bool, has_next: bool, volume: f32) -> V
         // Counted as if the volume button had a twin on the right, so play/pause stays centred.
         let row = 3.0 * size + 2.0 * gap + 2.0 * (small + gap);
         ui.add_space(((ui.available_width() - row) / 2.0).max(0.0));
-        let label = format!("Volume, {:.0} %", volume * 100.0);
+        let ticking = if metronome.is_some_and(|m| m.0) { ", metronome on" } else { "" };
+        let label = format!("Volume, {:.0} %{ticking}", volume * 100.0);
         let button = icon_button(ui, Icon::Volume { muted: volume == 0.0 }, &label, true, small);
         let mut v = volume;
+        let (mut on, mut clicks) = metronome.unwrap_or_default();
         egui::Popup::from_toggle_button_response(&button)
             .align(egui::RectAlign::TOP)
             .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
-            .show(|ui| ui.add(egui::Slider::new(&mut v, 0.0..=1.0).show_value(false).text("Volume")));
+            .show(|ui| {
+                ui.add(egui::Slider::new(&mut v, 0.0..=1.0).show_value(false).text("Volume"));
+                match metronome {
+                    Some(_) => {
+                        ui.checkbox(&mut on, "Metronome").on_hover_text("Clicks on the found beats, louder on the first of each bar");
+                        ui.add_enabled(on, egui::Slider::new(&mut clicks, 0.0..=1.0).show_value(false).text("Clicks"));
+                    }
+                    None => drop(ui.add_enabled(false, egui::Checkbox::new(&mut false, "Metronome")).on_disabled_hover_text("after Local AI → Find Beats")),
+                }
+            });
         if v != volume {
             actions.push(Action::Volume(v));
+        }
+        if let Some((was_on, was)) = metronome {
+            if on != was_on {
+                actions.push(Action::Metronome(on));
+            }
+            if clicks != was {
+                actions.push(Action::ClickVolume(clicks));
+            }
         }
         for (icon, label, enabled, action) in buttons {
             if icon_button(ui, icon, label, enabled, size).clicked() {

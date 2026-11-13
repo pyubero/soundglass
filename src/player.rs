@@ -32,6 +32,8 @@ pub enum Cmd {
     Edit(Option<Arc<Edit>>),
     /// Frames to stop at the end of (or loop, when true), once playing inside them.
     Region(Option<(u64, u64)>, bool),
+    /// The Metronome's linear gain, apart from the song's `Volume`.
+    ClickVolume(f32),
     /// The Metronome: click at these beats of the current track (as edited); `None` is off.
     /// `Load` and moving on to the queued track turn it off.
     Clicks(Option<Arc<Clicks>>),
@@ -47,8 +49,8 @@ pub struct Clicks {
 /// A click: 25 ms of a decaying sine, higher and louder on downbeats.
 const CLICK_SECS: f64 = 0.025;
 
-/// Adds the clicks that sound during frames `pos..` to `stereo` (interleaved, two channels).
-fn add_clicks(stereo: &mut [f32], pos: u64, clicks: &Clicks, rate: u32) {
+/// Adds the clicks that sound during frames `pos..` to `stereo` (interleaved, two channels), at `gain`.
+fn add_clicks(stereo: &mut [f32], pos: u64, clicks: &Clicks, rate: u32, gain: f32) {
     let len = (CLICK_SECS * rate as f64) as u64;
     let end = pos + (stereo.len() / 2) as u64;
     let first = clicks.beats.partition_point(|&b| b + len <= pos);
@@ -56,7 +58,7 @@ fn add_clicks(stereo: &mut [f32], pos: u64, clicks: &Clicks, rate: u32) {
         let (freq, amp) = if clicks.downbeats.binary_search(&b).is_ok() { (2000.0, 0.5) } else { (1500.0, 0.35) };
         for f in b.max(pos)..(b + len).min(end) {
             let t = (f - b) as f64 / rate as f64;
-            let v = (amp * (std::f64::consts::TAU * freq * t).sin() * (-t / 0.006).exp()) as f32;
+            let v = gain * (amp * (std::f64::consts::TAU * freq * t).sin() * (-t / 0.006).exp()) as f32;
             let i = (f - pos) as usize * 2;
             stereo[i] += v;
             stereo[i + 1] += v;
@@ -162,7 +164,9 @@ struct Engine {
     playing: bool,
     /// Whether real samples (not silence) have been played yet.
     heard: bool,
+    /// The song's gain, applied in `pull` so the clicks keep their own.
     volume: f32,
+    click_volume: f32,
     speed: Speed,
     /// Pitch-preserved speed and pitch; taken out while it runs so `pull` can feed it.
     wsola: Option<Wsola>,
@@ -190,7 +194,7 @@ impl Engine {
         let output = vec![0.0; resampler.output_frames_max() * 2];
         let stretched = input.clone();
         Engine {
-            cur: None, next: None, edit: None, clicks: None, region: None, looping: false, pos: 0, advanced: 0, playing: false, heard: false, volume: 1.0, speed: Speed::NORMAL,
+            cur: None, next: None, edit: None, clicks: None, region: None, looping: false, pos: 0, advanced: 0, playing: false, heard: false, volume: 1.0, click_volume: 1.0, speed: Speed::NORMAL,
             wsola: Some(Wsola::new(2, dev_rate)), stretched,
             dev_rate, rate: dev_rate, resampler, input, output, out_pos: 0, out_len: 0, retire,
         }
@@ -221,6 +225,7 @@ impl Engine {
             Cmd::Pause => self.playing = false,
             Cmd::Seek(pos) => self.seek(pos),
             Cmd::Volume(v) => self.volume = v,
+            Cmd::ClickVolume(v) => self.click_volume = v,
             Cmd::Speed(s) => {
                 self.speed = s;
                 if let Some(w) = &mut self.wsola {
@@ -279,7 +284,7 @@ impl Engine {
                 frame.fill(0.0);
                 continue;
             }
-            let (l, r) = (self.output[self.out_pos * 2] * self.volume, self.output[self.out_pos * 2 + 1] * self.volume);
+            let (l, r) = (self.output[self.out_pos * 2], self.output[self.out_pos * 2 + 1]);
             self.out_pos += 1;
             match frame {
                 [m] => *m = (l + r) * 0.5,
@@ -390,8 +395,12 @@ impl Engine {
                     n
                 }
             };
+            let block = &mut self.input[i * 2..(i + n) * 2];
+            if self.volume != 1.0 {
+                block.iter_mut().for_each(|x| *x *= self.volume);
+            }
             if let (Some(c), Some(f)) = (&self.clicks, track.format.get()) {
-                add_clicks(&mut self.input[i * 2..(i + n) * 2], self.pos, c, f.rate);
+                add_clicks(block, self.pos, c, f.rate, self.click_volume);
             }
             (i, self.pos) = (i + n, self.pos + n as u64);
             self.heard = true;
@@ -578,6 +587,26 @@ mod tests {
         assert_eq!([first, left(&e, 800)].concat(), l[..1600]);
         e.handle(Cmd::Load(track));
         assert!(e.clicks.is_none());
+    }
+
+    #[test]
+    fn song_and_clicks_have_their_own_volume() {
+        let mut e = engine();
+        e.handle(Cmd::Load(Track::from_samples(48000, 1, vec![0.5; 6000])));
+        e.handle(Cmd::Clicks(Some(Arc::new(Clicks { beats: vec![3000], downbeats: vec![] }))));
+        let play = |e: &mut Engine| {
+            e.handle(Cmd::Seek(0));
+            assert!(e.pull(4500));
+            let l = left(e, 4500);
+            (l[1000], l[3000..4200].iter().map(|x| (x - l[1000]).abs()).fold(0f32, f32::max))
+        };
+        let (song, click) = play(&mut e);
+        e.handle(Cmd::Volume(0.25));
+        let quiet = play(&mut e);
+        e.handle(Cmd::ClickVolume(0.5));
+        let half = play(&mut e);
+        assert_eq!((song, quiet.0, half.0), (0.5, 0.125, 0.125));
+        assert!((quiet.1 - click).abs() < 1e-6 && (half.1 - click / 2.0).abs() < 1e-6);
     }
 
     #[test]

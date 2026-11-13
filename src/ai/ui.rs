@@ -90,11 +90,11 @@ impl Ai {
         self.jobs.iter().find(|j| j.what == what)
     }
 
-    /// The Local AI menu: the tools that have a model in the catalog (Practice mode's only with
-    /// it on), then AI Models… and, while it's missing, Download AI Runtime…. Returns a tool to run.
-    pub fn menu_items(&mut self, ui: &mut egui::Ui, s: &AiSettings, practice: bool, loaded: bool) -> Option<Task> {
+    /// The Local AI menu: every tool, then AI Models… and, while it's missing, Download AI
+    /// Runtime…. Returns a tool to run.
+    pub fn menu_items(&mut self, ui: &mut egui::Ui, s: &AiSettings, loaded: bool) -> Option<Task> {
         let mut chosen = None;
-        for task in Task::ALL.into_iter().filter(|t| (practice || !t.practice()) && CATALOG.iter().any(|k| k.task == *t)) {
+        for task in Task::ALL {
             let why = Ai::ready(task, s).err().or((!loaded).then_some("after loading")).or(self.run.is_some().then_some("another AI tool is running"));
             if ui.add_enabled(why.is_none(), egui::Button::new(task.title())).on_disabled_hover_text(why.unwrap_or_default()).clicked() {
                 chosen = Some(task);
@@ -335,12 +335,9 @@ impl Ai {
         }
         let installed = installed();
         egui::ScrollArea::vertical().max_height(520.0).show(ui, |ui| {
-            for task in Task::ALL.into_iter().filter(|t| CATALOG.iter().any(|k| k.task == *t)) {
+            for task in Task::ALL {
                 ui.add_space(8.0);
                 ui.strong(task.title());
-                if task.practice() {
-                    ui.weak("In Practice mode.");
-                }
                 let models: Vec<&Known> = CATALOG.iter().filter(|k| k.task == task && installed.contains(&k.file)).collect();
                 if models.len() > 1 {
                     let current = choose(s.models.get(&task), task, &installed);
@@ -465,7 +462,7 @@ pub(super) fn run_tool(task: Task, model: &Known, track: &crate::track::Track, e
             // The mean of the channels, as Beat This! downmixes.
             let mono: Vec<f32> = (0..channels[0].len()).map(|i| channels.iter().map(|c| c[i]).sum::<f32>() / channels.len() as f32).collect();
             let found = beats::track(&model_path(model.file)?, &model_path(model.data[0].0)?, mono, own, progress, cancel)?;
-            let said = format!("Found {} beats and {} downbeats. Practice → Metronome clicks along.", found.beats.len(), found.downbeats.len());
+            let said = format!("Found {} beats and {} downbeats. The volume button's Metronome clicks along.", found.beats.len(), found.downbeats.len());
             *track.beats.lock().unwrap() = Some(Arc::new(found));
             Ok(Done::Said(said))
         }

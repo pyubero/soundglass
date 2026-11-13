@@ -46,11 +46,6 @@ impl Task {
             Task::Beats => "Find Beats",
         }
     }
-
-    /// The Practice mode tools, hidden with it off.
-    pub fn practice(self) -> bool {
-        matches!(self, Task::Stems | Task::Midi | Task::Beats)
-    }
 }
 
 /// A third-party licence, embedded so it can be read before downloading (and offline).
