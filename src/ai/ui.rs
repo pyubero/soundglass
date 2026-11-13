@@ -55,8 +55,8 @@ struct Job {
 pub(super) enum Done {
     Open(PathBuf),
     Said(String),
-    /// A transcript, shown to copy or save.
-    Text(String),
+    /// A transcript, shown to copy or save; true when it's subtitles (.srt).
+    Text(String, bool),
 }
 
 /// An AI tool running on its own thread.
@@ -76,8 +76,8 @@ pub struct Ai {
     run: Option<Run>,
     /// A tool's outcome when nothing opens (a saved MIDI file, an error), shown until closed.
     run_error: Option<(Task, Result<String, String>)>,
-    /// Transcribe Speech's text, and the track it came from (for the .txt's name).
-    transcript: Option<(String, PathBuf)>,
+    /// Transcribe Speech's text, the track it came from (for the file's name), and whether it's subtitles.
+    transcript: Option<(String, PathBuf, bool)>,
     /// A licence being read: what for, and which of its licences.
     license: Option<(Download, usize)>,
     jobs: Vec<Job>,
@@ -153,7 +153,7 @@ impl Ai {
                     return Some(path);
                 }
                 Ok(Ok(Done::Said(m))) => (self.run, self.run_error) = (None, Some((run.task, Ok(m)))),
-                Ok(Ok(Done::Text(t))) => (self.transcript, self.run) = (Some((t, run.source.clone())), None),
+                Ok(Ok(Done::Text(t, subtitles))) => (self.transcript, self.run) = (Some((t, run.source.clone(), subtitles)), None),
                 Ok(Err(e)) => {
                     let task = run.task;
                     let cancelled = run.cancel.load(Ordering::Relaxed);
@@ -189,7 +189,8 @@ impl Ai {
 
     /// Transcribe Speech's result: the text to read or select, Copy, and Save as Text….
     fn transcript_window(&mut self, ctx: &egui::Context) {
-        let Some((text, source)) = &mut self.transcript else { return };
+        let Some((text, source, subtitles)) = &mut self.transcript else { return };
+        let (button, kind, ext) = if *subtitles { ("Save as Subtitles…", "Subtitles", "srt") } else { ("Save as Text…", "Text", "txt") };
         let mut open = true;
         let mut saved = None;
         egui::Window::new("Transcript").open(&mut open).collapsible(false).default_size([480.0, 360.0]).show(ctx, |ui| {
@@ -202,9 +203,9 @@ impl Ai {
                 if ui.button("Copy").clicked() {
                     ctx.copy_text(text.clone());
                 }
-                if ui.button("Save as Text…").clicked() {
-                    let name = format!("{}.txt", source.file_stem().unwrap_or_default().to_string_lossy());
-                    let mut dialog = rfd::FileDialog::new().add_filter("Text", &["txt"]).set_file_name(name);
+                if ui.button(button).clicked() {
+                    let name = format!("{}.{ext}", source.file_stem().unwrap_or_default().to_string_lossy());
+                    let mut dialog = rfd::FileDialog::new().add_filter(kind, &[ext]).set_file_name(name);
                     if let Some(dir) = source.parent() {
                         dialog = dialog.set_directory(dir);
                     }
@@ -481,15 +482,15 @@ pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::tr
             let channels = audio::planar(track, edit, transcribe::RATE)?;
             let mono: Vec<f32> = (0..channels[0].len()).map(|i| channels.iter().map(|c| c[i]).sum::<f32>() / channels.len() as f32).collect();
             let path = |f: &str| model_path(f);
-            let text = match model.data {
+            let cues = match model.data {
                 [(dj, _), (features, _), (vocab, _)] => transcribe::parakeet(&path(model.file)?, &path(dj)?, &path(features)?, &path(vocab)?, &mono, t.silence_db, progress, cancel)?,
                 [(decoder, _), (tokens, _)] => transcribe::whisper(&path(model.file)?, &path(decoder)?, &path(tokens)?, &mono, t, progress, cancel)?,
                 _ => return Err("not a transcription model".into()),
             };
-            if text.trim().is_empty() {
+            if cues.is_empty() {
                 return Err("no speech was found".into());
             }
-            Ok(Done::Text(text))
+            Ok(Done::Text(if t.time_marks { transcribe::srt(&cues) } else { transcribe::plain(&cues) }, t.time_marks))
         }
         _ => Err("the settings aren't for this tool".into()),
     }

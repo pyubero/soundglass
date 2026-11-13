@@ -529,3 +529,35 @@ fn settings_reach_the_models() {
         assert!(run("xx", false).unwrap_err().contains("doesn't know the language"));
     }
 }
+
+/// Online: each transcription model (or those starting with SG_MODEL) on SG_WAV with time marks:
+/// cues in order, inside the recording; the first ones are printed to check by ear.
+#[test]
+#[ignore]
+fn subtitles_of_a_recording() {
+    install_runtime();
+    let only = std::env::var("SG_MODEL").unwrap_or_default();
+    let track = crate::track::Track::load(std::env::var("SG_WAV").unwrap().into(), || {});
+    while !track.done() {
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    }
+    let secs = track.len() as f64 / track.format.get().unwrap().rate as f64;
+    let edit = crate::edit::Edit::whole(track.len());
+    for k in CATALOG.iter().filter(|k| k.task == Task::Transcribe && k.file.starts_with(&only)) {
+        if !std::iter::once(k.file).chain(k.data.iter().map(|d| d.0)).all(|f| model_path(f).unwrap().is_file()) {
+            download(k, &|_| {}, &AtomicBool::new(false)).unwrap();
+        }
+        let tune = Tune::Speech(tune::SpeechTune { time_marks: true, ..Default::default() });
+        let ui::Done::Text(srt, true) = ui::run_tool(Task::Transcribe, k, &tune, &track, &edit, &|_| {}, &AtomicBool::new(false)).unwrap() else { panic!() };
+        let time = |t: &str| {
+            let (hms, ms) = t.trim().split_once(',').unwrap();
+            let p: Vec<f64> = hms.split(':').map(|x| x.parse().unwrap()).collect();
+            p[0] * 3600.0 + p[1] * 60.0 + p[2] + ms.parse::<f64>().unwrap() / 1000.0
+        };
+        let spans: Vec<(f64, f64)> = srt.lines().filter_map(|l| l.split_once(" --> ")).map(|(a, b)| (time(a), time(b))).collect();
+        eprintln!("{}: {} cues over {secs:.1} s\n{}", k.file, spans.len(), srt.chars().take(700).collect::<String>());
+        assert!(!spans.is_empty());
+        assert!(spans.iter().all(|&(a, b)| a <= b && b <= secs + 0.1), "{spans:?}");
+        assert!(spans.windows(2).all(|w| w[0].0 <= w[1].0), "{spans:?}");
+    }
+}

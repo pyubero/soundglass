@@ -92,9 +92,90 @@ pub(super) fn whisper_mel(x: &[f32], filters: &[f32], n_mels: usize) -> (Vec<f32
     (mel, total)
 }
 
+/// A stretch of speech: its start and end in seconds, and its words.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Cue {
+    pub start: f64,
+    pub end: f64,
+    pub text: String,
+}
+
+/// The cues' words as one text.
+pub(super) fn plain(cues: &[Cue]) -> String {
+    cues.iter().map(|c| c.text.as_str()).collect::<Vec<_>>().join(" ")
+}
+
+/// The cues as an .srt file: number, `hh:mm:ss,mmm --> hh:mm:ss,mmm`, text, blank line.
+pub(super) fn srt(cues: &[Cue]) -> String {
+    let time = |s: f64| {
+        let ms = (s.max(0.0) * 1000.0).round() as u64;
+        format!("{:02}:{:02}:{:02},{:03}", ms / 3_600_000, ms / 60_000 % 60, ms / 1000 % 60, ms % 1000)
+    };
+    cues.iter().enumerate().map(|(i, c)| format!("{}\n{} --> {}\n{}\n\n", i + 1, time(c.start), time(c.end.max(c.start)), c.text)).collect()
+}
+
+/// Whisper's ApplyTimestampRules (decoding.py) for the next token after `said`: timestamps
+/// (ids from `ts_begin`, 20 ms each) come first (at most 1 s in), in pairs, never back in time,
+/// and are taken whenever all of them together are likelier than the best text token.
+pub(super) fn timestamp_rules(logits: &mut [f32], said: &[i64], ts_begin: usize, eot: usize) {
+    let n = logits.len();
+    let ts_begin = ts_begin.min(n);
+    let is_ts = |t: &i64| *t as usize >= ts_begin;
+    let last = said.last().is_some_and(is_ts);
+    let penultimate = said.len() < 2 || is_ts(&said[said.len() - 2]);
+    if last {
+        let range = if penultimate { ts_begin..n } else { 0..eot.min(n) };
+        logits[range].fill(f32::NEG_INFINITY);
+    }
+    if let Some(&t) = said.iter().rev().find(|t| is_ts(t)) {
+        let floor = if last && !penultimate { t as usize } else { t as usize + 1 };
+        logits[ts_begin..floor.min(n)].fill(f32::NEG_INFINITY);
+    }
+    if said.is_empty() {
+        logits[..ts_begin].fill(f32::NEG_INFINITY);
+        logits[(ts_begin + 51).min(n)..].fill(f32::NEG_INFINITY);
+    }
+    let max = logits.iter().copied().fold(f32::NEG_INFINITY, f32::max);
+    if max == f32::NEG_INFINITY {
+        return;
+    }
+    // log-sum-exp of the timestamps against the best text token, both relative to the max.
+    let ts_mass: f32 = logits[ts_begin..].iter().map(|&x| (x - max).exp()).sum();
+    let best_text = logits[..ts_begin].iter().copied().fold(f32::NEG_INFINITY, f32::max);
+    if ts_mass > 0.0 && ts_mass.ln() > best_text - max {
+        logits[..ts_begin].fill(f32::NEG_INFINITY);
+    }
+}
+
+/// Words (start, end in seconds, text with its leading space) grouped into subtitle cues: a cue
+/// ends after . ? ! once it's 1 s long, before a word that would take it past 7 s or 84
+/// characters, and at a pause of more than 1 s.
+pub(super) fn cues_from_words(words: &[(f64, f64, String)]) -> Vec<Cue> {
+    let mut cues: Vec<Cue> = Vec::new();
+    let mut open: Option<Cue> = None;
+    for (start, end, word) in words {
+        if let Some(c) = &open
+            && (start - c.end > 1.0 || end - c.start > 7.0 || c.text.len() + word.len() > 84)
+        {
+            cues.extend(open.take());
+        }
+        let c = open.get_or_insert(Cue { start: *start, end: *end, text: String::new() });
+        c.text.push_str(word);
+        c.end = *end;
+        if c.end - c.start >= 1.0 && c.text.trim_end().ends_with(['.', '?', '!']) {
+            cues.extend(open.take());
+        }
+    }
+    cues.extend(open);
+    cues.iter_mut().for_each(|c| c.text = tidy_spaces(&c.text));
+    cues.retain(|c| !c.text.is_empty());
+    cues
+}
+
 /// Whisper's text of `mono` (at `RATE`), the language detected from the first piece with sound.
 /// `tune`: a fixed language (else detected), translate, and the silence level.
-pub(super) fn whisper(encoder: &Path, decoder: &Path, tokens: &Path, mono: &[f32], tune: &super::tune::SpeechTune, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<String, String> {
+/// With `tune.time_marks`, Whisper writes its own segment times; else one cue a piece.
+pub(super) fn whisper(encoder: &Path, decoder: &Path, tokens: &Path, mono: &[f32], tune: &super::tune::SpeechTune, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<Vec<Cue>, String> {
     let mut enc = session_with(encoder, cores(), false)?;
     let mut dec = session_with(decoder, cores(), false)?;
     let meta = enc.metadata().map_err(err)?;
@@ -105,7 +186,11 @@ pub(super) fn whisper(encoder: &Path, decoder: &Path, tokens: &Path, mono: &[f32
     let (eot, sot, no_timestamps, no_speech, translate, blank) = (num("eot", 1 << 20)?, num("sot", 1 << 20)?, num("no_timestamps", 1 << 20)?, num("no_speech", 1 << 20)?, num("translate", 1 << 20)?, num("blank_id", 1 << 20)?);
     let multilingual = num("is_multilingual", 1)? == 1;
     let mut start = list("sot_sequence")?;
-    start.push(no_timestamps);
+    if !tune.time_marks {
+        start.push(no_timestamps);
+    }
+    // The timestamp tokens follow <|notimestamps|>: <|0.00|>, <|0.02|>…
+    let ts_begin = no_timestamps as usize + 1;
     let languages = if multilingual { list("all_language_tokens")? } else { Vec::new() };
     let codes: Vec<String> = if multilingual { get("all_language_codes")?.split(',').map(|c| c.trim().to_string()).collect() } else { Vec::new() };
     drop(meta);
@@ -130,13 +215,14 @@ pub(super) fn whisper(encoder: &Path, decoder: &Path, tokens: &Path, mono: &[f32
     }
     let (cross_k_name, cross_v_name) = (enc.outputs()[0].name().to_string(), enc.outputs()[1].name().to_string());
     let cache_len = n_layer * n_ctx * n_state;
-    let mut text = String::new();
+    let mut cues = Vec::new();
     let parts = pieces(mono);
     for (p, range) in parts.iter().enumerate() {
         if cancel.load(Ordering::Relaxed) {
             return Err("cancelled".into());
         }
         let piece = &mono[range.clone()];
+        let (at, len) = (range.start as f64 / RATE as f64, piece.len() as f64 / RATE as f64);
         if silent(piece, tune.silence_db) {
             continue;
         }
@@ -203,6 +289,9 @@ pub(super) fn whisper(encoder: &Path, decoder: &Path, tokens: &Path, mono: &[f32
                     }
                 }
             }
+            if tune.time_marks {
+                timestamp_rules(&mut logits, &said, ts_begin, eot as usize);
+            }
             let next = (0..logits.len()).max_by(|&a, &b| logits[a].total_cmp(&logits[b])).unwrap_or(eot as usize) as i64;
             if next == eot || offset as usize >= n_ctx {
                 break;
@@ -214,17 +303,28 @@ pub(super) fn whisper(encoder: &Path, decoder: &Path, tokens: &Path, mono: &[f32
                 return Err("cancelled".into());
             }
         }
-        let bytes: Vec<u8> = said.iter().filter_map(|t| table.get(t)).flatten().copied().collect();
-        let piece_text = String::from_utf8_lossy(&bytes);
-        if !piece_text.trim().is_empty() {
-            if !text.is_empty() {
-                text.push(' ');
+        let words = |toks: &[i64]| String::from_utf8_lossy(&toks.iter().filter(|&&t| t < eot).filter_map(|t| table.get(t)).flatten().copied().collect::<Vec<u8>>()).trim().to_string();
+        // <|a|> text <|b|>, then the next pair; text after the last time runs to the piece's end.
+        let (mut from, mut text) = (0.0, Vec::new());
+        for &t in &said {
+            if t as usize >= ts_begin {
+                let time = (t as usize - ts_begin) as f64 * 0.02;
+                if !text.is_empty() {
+                    cues.push(Cue { start: at + from, end: at + time.min(len), text: words(&text) });
+                    text.clear();
+                }
+                from = time.min(len);
+            } else {
+                text.push(t);
             }
-            text.push_str(piece_text.trim());
+        }
+        if !text.is_empty() {
+            cues.push(Cue { start: at + from, end: at + len, text: words(&text) });
         }
         progress((p + 1) as f32 / parts.len() as f32);
     }
-    Ok(text)
+    cues.retain(|c| !c.text.is_empty());
+    Ok(cues)
 }
 
 /// sherpa-onnx's tokens.txt: a token's bytes in base64, then its id, per line.
@@ -240,8 +340,9 @@ fn read_tokens(path: &Path) -> Result<std::collections::HashMap<i64, Vec<u8>>, S
         .collect())
 }
 
-/// Parakeet TDT's text of `mono` (at `RATE`). `vocab` is "token id" per line, `<blk>` the blank.
-pub(super) fn parakeet(encoder: &Path, decoder_joint: &Path, features: &Path, vocab: &Path, mono: &[f32], silence_db: f32, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<String, String> {
+/// Parakeet TDT's speech in `mono` (at `RATE`), as cues of its words' times (80 ms an encoder
+/// frame). `vocab` is "token id" per line, `<blk>` the blank.
+pub(super) fn parakeet(encoder: &Path, decoder_joint: &Path, features: &Path, vocab: &Path, mono: &[f32], silence_db: f32, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<Vec<Cue>, String> {
     let text = std::fs::read_to_string(vocab).map_err(|e| e.to_string())?;
     let mut tokens: Vec<(usize, String)> = text.lines().filter_map(|l| l.rsplit_once(' ').and_then(|(t, id)| Some((id.trim().parse().ok()?, t.replace('\u{2581}', " "))))).collect();
     tokens.sort_by_key(|t| t.0);
@@ -256,7 +357,9 @@ pub(super) fn parakeet(encoder: &Path, decoder_joint: &Path, features: &Path, vo
         if s.len() == 3 && ok(s[0]) && ok(s[2]) { Ok((s[0] as usize, s[2] as usize)) } else { Err("the model isn't Parakeet TDT".into()) }
     };
     let ((l1, h1), (l2, h2)) = (state_shape("input_states_1")?, state_shape("input_states_2")?);
-    let mut words: Vec<usize> = Vec::new();
+    // onnx-asr: window_step 0.01 s × subsampling 8.
+    const FRAME: f64 = 0.08;
+    let mut cues = Vec::new();
     let parts = pieces(mono);
     for (p, range) in parts.iter().enumerate() {
         if cancel.load(Ordering::Relaxed) {
@@ -284,14 +387,15 @@ pub(super) fn parakeet(encoder: &Path, decoder_joint: &Path, features: &Path, vo
         let encoded = encoded.to_vec();
         drop(out);
         let mut states = (vec![0f32; l1 * h1], vec![0f32; l2 * h2]);
-        let mut said: Vec<usize> = Vec::new();
+        // Each token with its frame and how many frames it lasts.
+        let mut said: Vec<(usize, usize, usize)> = Vec::new();
         let (mut t, mut emitted) = (0usize, 0);
         while t < len {
             if cancel.load(Ordering::Relaxed) {
                 return Err("cancelled".into());
             }
             let frame: Vec<f32> = (0..dim).map(|d| encoded[d * frames + t]).collect();
-            let last = said.last().copied().unwrap_or(blank) as i32;
+            let last = said.last().map_or(blank, |s| s.0) as i32;
             let out = dj
                 .run(ort::inputs![
                     "encoder_outputs" => Tensor::from_array(([1usize, dim, 1], frame)).map_err(err)?,
@@ -309,7 +413,7 @@ pub(super) fn parakeet(encoder: &Path, decoder_joint: &Path, features: &Path, vo
             let (token, skip) = (argmax(&logits[..vocab.len()]), argmax(&logits[vocab.len()..]));
             if token != blank {
                 states = (output(&out, "output_states_1")?.1.to_vec(), output(&out, "output_states_2")?.1.to_vec());
-                said.push(token);
+                said.push((token, t, skip.max(1)));
                 emitted += 1;
             }
             if skip > 0 {
@@ -318,13 +422,22 @@ pub(super) fn parakeet(encoder: &Path, decoder_joint: &Path, features: &Path, vo
                 (t, emitted) = (t + 1, 0);
             }
         }
-        // Pieces join with a space.
-        words.extend(said);
-        words.push(usize::MAX);
+        // Words: a token starting with a space (▁) starts one.
+        let at = range.start as f64 / RATE as f64;
+        let mut words: Vec<(f64, f64, String)> = Vec::new();
+        for &(token, frame, dur) in &said {
+            let text = vocab.get(token).map_or("", |s| s.as_str());
+            let (start, end) = (at + frame as f64 * FRAME, at + (frame + dur) as f64 * FRAME);
+            match words.last_mut() {
+                Some(w) if !text.starts_with(' ') => (w.1, w.2) = (end, w.2.clone() + text),
+                _ => words.push((start, end, text.to_string())),
+            }
+        }
+        // Cues never run from one piece into the next.
+        cues.extend(cues_from_words(&words));
         progress((p + 1) as f32 / parts.len() as f32);
     }
-    let joined: String = words.iter().map(|&w| vocab.get(w).map_or(" ", |s| s.as_str())).collect();
-    Ok(tidy_spaces(&joined))
+    Ok(cues)
 }
 
 /// onnx-asr's `\A\s|\s\B|(\s)\b` → keep a space only before a word character, never at the start.
@@ -358,5 +471,50 @@ mod tests {
         assert_eq!(p.last().unwrap().end, x.len());
         assert!(silent(&[0.0; 100], -60.0) && !silent(&x[..1000], -60.0) && silent(&x[..1000], -6.0));
         assert_eq!(tidy_spaces(" Hello world , ok . Fine"), "Hello world, ok. Fine");
+    }
+
+    #[test]
+    fn srt_and_cues() {
+        let cues = [Cue { start: 1.24, end: 4.8, text: "Hello.".into() }, Cue { start: 3725.0, end: 3726.5005, text: "Later".into() }];
+        assert_eq!(srt(&cues), "1\n00:00:01,240 --> 00:00:04,800\nHello.\n\n2\n01:02:05,000 --> 01:02:06,501\nLater\n\n");
+        assert_eq!(plain(&cues), "Hello. Later");
+        let w = |a: f64, b: f64, t: &str| (a, b, t.to_string());
+        // A sentence end after 1 s, a pause over 1 s, and the 7 s limit each start a cue.
+        let words = [w(0.0, 0.5, " Hi."), w(0.6, 1.2, " One"), w(1.2, 1.6, " two."), w(3.0, 3.4, " Three"), w(3.5, 9.0, " four"), w(9.0, 11.0, " five")];
+        let got: Vec<(f64, f64, String)> = cues_from_words(&words).into_iter().map(|c| (c.start, c.end, c.text)).collect();
+        assert_eq!(got, [w(0.0, 1.6, "Hi. One two."), w(3.0, 9.0, "Three four"), w(9.0, 11.0, "five")]);
+    }
+
+    #[test]
+    fn whisper_timestamp_rules() {
+        // Ids: text 0–9, eot 10, timestamps from 20 (0.00 s), 20 ms each; 100 ids in all.
+        let (eot, ts) = (10, 20);
+        let fresh = || {
+            let mut l = vec![0f32; 100];
+            l[3] = 5.0;
+            l
+        };
+        let allowed = |l: &[f32]| (0..l.len()).filter(|&i| l[i] > f32::NEG_INFINITY).collect::<Vec<_>>();
+        // First: only timestamps up to 1 s (ids 20–70).
+        let mut l = fresh();
+        timestamp_rules(&mut l, &[], ts, eot);
+        assert_eq!(allowed(&l), (20..=70).collect::<Vec<_>>());
+        // After <|0.10|> text <|0.40|>: no text, nothing before 0.40 (a pair may close on it).
+        let mut l = fresh();
+        timestamp_rules(&mut l, &[25, 3, 40], ts, eot);
+        assert!(allowed(&l).iter().all(|&i| i == eot || i >= 40), "{:?}", allowed(&l));
+        // After a pair: text (or eot), no timestamps.
+        let mut l = fresh();
+        timestamp_rules(&mut l, &[25, 3, 40, 40], ts, eot);
+        assert!(allowed(&l).iter().all(|&i| i < ts));
+        // After text: a timestamp later than the last one, or text; text wins here (5 against 0s)…
+        let mut l = fresh();
+        timestamp_rules(&mut l, &[25, 3], ts, eot);
+        assert!(allowed(&l).contains(&3) && !allowed(&l).contains(&25) && allowed(&l).contains(&26));
+        // …but when all timestamps together are likelier than the best text token, a timestamp it is.
+        let mut l = vec![0f32; 100];
+        l[3] = 2.0;
+        timestamp_rules(&mut l, &[25, 3], ts, eot);
+        assert!(allowed(&l).iter().all(|&i| i >= ts));
     }
 }
