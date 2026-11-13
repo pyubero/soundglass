@@ -1,6 +1,7 @@
 // No console window behind the app on Windows (debug builds keep it, for --timings output).
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
+mod ai;
 mod chords;
 mod edit;
 mod folder;
@@ -78,6 +79,7 @@ fn main() -> eframe::Result {
 
     let name = track.path.file_name().unwrap_or_default().to_string_lossy().into_owned();
     let settings = settings::load();
+    ai::set_use_gpu(settings.ai.use_gpu);
     let remembered = settings.window_size.filter(|_| settings.remember_window_size);
     let viewport = egui::ViewportBuilder::default().with_title(&name).with_inner_size(remembered.unwrap_or(DEFAULT_SIZE)).with_min_inner_size([260.0, 420.0])
         .with_icon(eframe::icon_data::from_png_bytes(include_bytes!("../icon/soundglass-256.png")).unwrap());
@@ -97,7 +99,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), player, t0, timings, shown: false }))
     }))
 }
 
@@ -187,6 +189,8 @@ struct App {
     /// File → Rename from Tags… while open: the pattern being edited, and the file's tags.
     rename: Option<(String, Result<tags::TagEdit, String>)>,
     identify: Option<Identify>,
+    /// Local AI: the AI Models window, licence prompts and downloads.
+    ai: ai::Ai,
     /// Height of everything below the cover, as measured last frame.
     controls_height: f32,
     /// Track Info's width as last shown.
@@ -627,6 +631,7 @@ impl eframe::App for App {
                         ui.close();
                     }
                 });
+                ui.menu_button("Local AI", |ui| self.ai.menu_items(ui));
                 if self.settings.practice {
                     ui.menu_button("Practice", |ui| {
                         ui.checkbox(&mut self.looping, "Loop selection").on_hover_text("L");
@@ -761,6 +766,7 @@ impl eframe::App for App {
         self.tags_confirm(&ctx);
         self.follow_tags(&ctx);
         self.rename_window(&ctx);
+        self.ai.windows(&ctx, &mut self.settings.ai);
         actions.extend(self.spectrum_window(&ctx, &edit, pos, len, rate, playing));
         if let Some(path) = open_recent {
             self.open(path);

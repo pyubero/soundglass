@@ -88,6 +88,7 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 - **Use a local database (later, for power users).** Point Identify Track at your own AcoustID and MusicBrainz server built from their public data exports, so nothing goes online. Too big to ship with the app.
 
 ### 9. Local AI (optional download)
+The runtime and model manager, as in lightview: Local AI → Download AI Runtime… and AI Models… (CPU, and NVIDIA's CUDA as a second download). Done. The tools, each a milestone: Remove noise (DeepFilterNet3), Transcribe speech (Whisper small, Parakeet TDT 0.6B v3 or Whisper large-v3-turbo, chosen in AI Models…), and for Practice mode Split into stems (HTDemucs), Melody to MIDI (Basic Pitch) and Find beats (Beat This!, which brings back the Metronome).
 - **Remove noise.** Clean background noise and hum from voice recordings.
 - **Transcribe speech.** Turn a talk or voice memo into text you can copy.
 

@@ -57,6 +57,22 @@ pub struct Settings {
     pub spectrum: crate::spectrum::Params,
     /// `theme::SYSTEM`, a shipped theme's id, or the file name (without `.xml`) of a user theme.
     pub theme: String,
+    /// Local AI: the model each tool uses, and whether to use the GPU.
+    pub ai: AiSettings,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AiSettings {
+    /// The chosen model file per tool; missing means the first installed one.
+    pub models: HashMap<crate::ai::Task, String>,
+    pub use_gpu: bool,
+}
+
+impl Default for AiSettings {
+    fn default() -> Self {
+        AiSettings { models: HashMap::new(), use_gpu: true }
+    }
 }
 
 impl Default for Settings {
@@ -77,6 +93,7 @@ impl Default for Settings {
             note_label_size: 11.0,
             spectrum: Default::default(),
             theme: crate::theme::SYSTEM.into(),
+            ai: AiSettings::default(),
         }
     }
 }
@@ -152,6 +169,7 @@ mod tests {
                 map: crate::spectrum::ColourMap::BlueRed,
             },
             theme: "high-contrast".into(),
+            ai: AiSettings { models: HashMap::from([(crate::ai::Task::Stems, "m.onnx".into())]), use_gpu: false },
         };
         let app_ron = |v: &str| ron::to_string(&HashMap::from([(KEY.to_string(), v.to_string())])).unwrap();
         assert_eq!(parse(&app_ron(&ron::to_string(&s).unwrap())), s);

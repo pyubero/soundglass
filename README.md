@@ -92,6 +92,10 @@ The three files set every key, so they work as templates. `mode` is `dark` or `l
 
 Unknown elements and attributes are ignored.
 
+## Local AI
+
+Nothing AI is shipped. Local AI → Download AI Runtime… installs ONNX Runtime 1.31.1 (11 MB on Linux, 83 MB on Windows) into the data folder's `lib/`, and AI Models… downloads the models into `models/`. Each download shows its licence first, is pinned by SHA-256 (a file that doesn't match is deleted) and is only made when you click. With an NVIDIA driver, AI Models… also offers GPU support: ONNX Runtime's CUDA 12 build and NVIDIA's libraries (about 1.5 GB, into `gpu/`); it takes effect after a restart.
+
 ## Install as the default audio player
 
 ```
