@@ -178,3 +178,5 @@
 - 2026-11-12 — View → Folder is Ctrl+B
 - 2026-11-12 — no swap toggle for the two side panels: the sides are fixed (user's choice)
 - 2026-11-13 — the seek bar's Line or Waveform look is chosen in File → Settings…, not the View menu: it's a lasting preference, not a panel (user's choice)
+- 2026-11-13 — Identify Track's online check and Clean up a music folder wait until an AcoustID key is available (user's choice)
+- 2026-11-13 — no Delete or Move to Trash: the app never deletes a file; lightview's Trash isn't carried over (user's choice)

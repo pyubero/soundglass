@@ -11,7 +11,7 @@ It comes in two parts:
 
 ## Goals
 1. **Fast.** The window appears in under 200 ms, sound starts before the whole file is decoded, and the waveform fills in as it loads.
-2. **Safe.** The original file is never changed. Edits are saved only to a copy, with full undo and redo. Delete moves to the Trash.
+2. **Safe.** The original file is never changed. Edits are saved only to a copy, with full undo and redo. The app never deletes a file.
 3. **Small.** A handful of tools that each do one job. Not a DAW.
 4. **Private.** No telemetry, no account. It goes online only when you ask (track identification, AI downloads).
 
@@ -22,7 +22,7 @@ It comes in two parts:
 - Identifying a clip recorded from the microphone, Shazam-style: there is no open database of commercial music to match against
 
 ## Carried over from lightview
-egui/eframe UI, menus and assignable shortcuts, settings and app state in eframe's data folder (`app.ron`; `~/.local/share/soundglass/`, `%APPDATA%\soundglass\data\` on Windows), themes as editable XML files there, translations, screen reader support and high contrast theme, next file in folder decoded ahead, undo and Trash, Info window, .desktop default-app setup, .deb/.msi packaging, licence notices, `--bench` timings, and the opt-in ONNX Runtime and model manager.
+egui/eframe UI, menus and assignable shortcuts, settings and app state in eframe's data folder (`app.ron`; `~/.local/share/soundglass/`, `%APPDATA%\soundglass\data\` on Windows), themes as editable XML files there, translations, screen reader support and high contrast theme, next file in folder decoded ahead, undo, Info window, .desktop default-app setup, .deb/.msi packaging, licence notices, `--bench` timings, and the opt-in ONNX Runtime and model manager.
 
 ## Proposed stack
 symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), hound (WAV), a FLAC encoder, LAME through mp3lame-encoder (MP3), libvorbis or libopus (Ogg/Opus).
@@ -83,7 +83,7 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 
 ### 8. Tidy up
 - **Identify track.** Make a Chromaprint fingerprint of the file (pure Rust, rusty-chromaprint), look it up online in AcoustID, then fill in the missing tags from MusicBrainz. Show the match and its score, and on request write the tags and rename the file. Only the fingerprint and the length are sent, and only when you run it. Free for non-commercial use, with one application key; at most 3 lookups per second (AcoustID) and 1 per second (MusicBrainz). Works on whole files, not clips. Done (awaiting the key and contact URL, then a check online): File → Identify Track… lists AcoustID's matches; Use Match adds the MusicBrainz genre and fills Track Info's tag editor, so Save… and Rename from Tags… do the writing.
-- **Clean up a music folder.** The same in one pass over a folder and all its subfolders: identify every file, show a list of proposed tags and new names to accept or skip, then apply. Files that aren't found are left alone. Ctrl+Z undoes the renames. About 1,000 files take 6 minutes at AcoustID's limit.
+- **Clean up a music folder.** The same in one pass over a folder and all its subfolders: identify every file, show a list of proposed tags and new names to accept or skip, then apply. Files that aren't found are left alone. Ctrl+Z undoes the renames. About 1,000 files take 6 minutes at AcoustID's limit. Later: waits, like Identify Track, for an AcoustID key.
 - **Group duplicate songs.** Find copies of the same recording in a folder by how they sound, even in different formats or bitrates, and even when one copy is trimmed or starts later (peak-based matching like Olaf or Panako, written by us; it compares only your own files, so it needs no database), show the groups, and move each into its own folder. Nothing is deleted, and Ctrl+Z puts everything back.
 - **Use a local database (later, for power users).** Point Identify Track at your own AcoustID and MusicBrainz server built from their public data exports, so nothing goes online. Too big to ship with the app.
 
