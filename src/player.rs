@@ -18,8 +18,8 @@ use std::time::Instant;
 pub enum Cmd {
     /// Play this track from the start; drops the queued one.
     Load(Arc<Track>),
-    /// Play this track when the current one ends, without a gap.
-    Queue(Arc<Track>),
+    /// Play this track when the current one ends, without a gap; `None` stops there.
+    Queue(Option<Arc<Track>>),
     /// The same audio as the current track under new tags or a new name: carries on where it is.
     Swap(Arc<Track>),
     Play,
@@ -213,7 +213,7 @@ impl Engine {
                 self.seek(0);
             }
             Cmd::Queue(track) => {
-                let old = self.next.replace(track);
+                let old = std::mem::replace(&mut self.next, track);
                 self.retire(old);
             }
             Cmd::Swap(track) => {
@@ -454,12 +454,24 @@ mod tests {
     fn moves_into_the_queued_track_without_a_gap() {
         let mut e = engine();
         e.handle(Cmd::Load(Track::from_samples(48000, 2, ramp(100, 0.0))));
-        e.handle(Cmd::Queue(Track::from_samples(48000, 1, (1000..1100).map(|i| i as f32).collect())));
+        e.handle(Cmd::Queue(Some(Track::from_samples(48000, 1, (1000..1100).map(|i| i as f32).collect()))));
         assert!(e.pull(150));
         let mut want = ramp(100, 0.0);
         want.extend((1000..1050).flat_map(|i| [i as f32, i as f32]));
         assert_eq!(e.input[..300], want[..]);
         assert_eq!((e.pos, e.advanced), (50, 1));
+    }
+
+    #[test]
+    fn an_empty_queue_drops_the_queued_track() {
+        let mut e = engine();
+        e.handle(Cmd::Load(Track::from_samples(48000, 2, ramp(10, 0.0))));
+        e.handle(Cmd::Queue(Some(Track::from_samples(48000, 2, ramp(10, 0.0)))));
+        e.handle(Cmd::Queue(None));
+        e.handle(Cmd::Play);
+        assert!(e.pull(20));
+        assert!(!e.pull(20));
+        assert_eq!(e.advanced, 0);
     }
 
     #[test]
@@ -526,7 +538,7 @@ mod tests {
     fn does_not_move_on_while_edited() {
         let mut e = engine();
         e.handle(Cmd::Load(Track::from_samples(48000, 1, vec![1.0; 10])));
-        e.handle(Cmd::Queue(Track::from_samples(48000, 1, vec![2.0; 10])));
+        e.handle(Cmd::Queue(Some(Track::from_samples(48000, 1, vec![2.0; 10]))));
         e.handle(Cmd::Edit(Some(Arc::new(Edit::whole(10).cut(0, 5)))));
         e.handle(Cmd::Play);
         assert!(e.pull(10));

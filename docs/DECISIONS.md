@@ -247,6 +247,12 @@
 - 2026-11-13 — the .deb and .msi are built by GitHub Actions on v* tags, as in lightview (user's choice); the .deb on ubuntu-22.04 for glibc 2.35, the .msi with WiX 5; the Windows installer's UpgradeCode fcb583ea-f665-4dde-bf30-ce898cbfe489 never changes
 - 2026-11-13 — the .wxs's extensions are checked against folder.rs's EXTENSIONS by a unit test, so the two can't drift
 - 2026-11-13 — licence texts for crates published without one are kept in licenses/crates/: vorbis_rs's from its repository; rusty-chromaprint has none anywhere (MIT in Cargo.toml, no copyright holder named), so the standard MIT text with "the rusty-chromaprint authors" is used — accepted
+- 2026-11-13 — the play-order button cycles In order, Repeat track, Shuffle, and is drawn with the painter like the other transport icons, not loaded from SVG (user's choice) — SVG would need egui_extras' svg feature (resvg), a new dependency
+- 2026-11-13 — Shuffle plays each track of the folder once, starting from the current one, then stops (user's choice); the order is computed from a seed and the start file, so a folder change needs no list kept in step
+- 2026-11-13 — the play order and the volume are remembered in the settings (user's choice)
+- 2026-11-13 — Shuffle's randomness comes from std's RandomState hash keys and a xorshift, not a random-number crate
+- 2026-11-13 — Next and Previous move through the folder in Repeat track; only the end of the track repeats it, by queueing the same decoded track
+- 2026-11-13 — accepted: Repeat track stops at the end of an edited track (the player never advances past unsaved edits) and turns the Metronome off on each repeat (clicks are dropped on every advance)
 - 2026-11-13 — readers off the audio thread (Save As/Copy, the AI tools' audio) use edit::read_all, which waits for the chunk list; only the player's callback uses edit::read, which never blocks — a missed try_lock had let a resampled save write a shorter file that still passed its check
 - 2026-11-13 — a panic in the decoder is caught on the decode thread and shown as "this file can't be decoded", with what was decoded kept — it had left the track on "Decoding…" forever
 - 2026-11-13 — Rename from Tags adds "_" to a Windows reserved name (CON, PRN, AUX, NUL, COM1–9, LPT1–9, any extension) on every platform, and allows a rename that only changes letter case when the disk sees it as the same file

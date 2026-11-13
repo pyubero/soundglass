@@ -47,6 +47,7 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 - **Previous/next in folder.** Page Up/Down moves through the folder's audio files, and the next one is decoded ahead so it starts at once.
 - **Gapless playback.** Albums that flow from track to track play without a gap.
 - **Volume and speed.** A volume slider and playback speed from 0.5× to 2×.
+- **Play order.** A button right of Next cycles In order, Repeat track and Shuffle (each track once, in a random order, then stop); the order and the volume are kept between runs.
 - **Track Info.** A window with title, artist, album, cover art, length, format, codec, bitrate, sample rate, channels, bit depth, file size, loudness (LUFS) and peak level, and all other tags read-only.
 - **Title bar.** File name, length and format.
 - **Open and Open Recent, default app.** The system file dialog, the last ten files, and a .desktop file so it can be the default for audio files.
@@ -73,7 +74,7 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 
 ### 6. Files and tags
 - **Edit tags.** Title, artist, album, year, track number, genre and cover art, saved to a copy or, with confirmation, in place (tags only, never the audio). Done: Edit in Track Info's Tags section; the copy's audio is checked identical before it replaces the file, and Save As / Save Copy take unsaved tag edits.
-- **Rename from tags.** For example `01 - Artist - Title.mp3`, shown before anything is renamed. Done: File → Rename from Tags… on the current file, with an editable pattern that is remembered; it never replaces an existing file.
+- **Rename from tags.** For example `01 - Artist - Title.mp3`, shown before anything is renamed. Done: File → Rename from Tags… on the current file, with an editable pattern that is remembered; it never replaces an existing file, and adds `_` to names Windows reserves (CON, NUL, COM1…).
 - DONT IMPLEMENT **Split into tracks.** Split a long recording (vinyl, a concert) at silences or markers, with a preview of the cut points.
 - DONT IMPLEMENT **Join files.** Put several files one after another into one file.
 - DONT IMPLEMENT **Convert a folder.** Save every file in a folder in another format and quality.

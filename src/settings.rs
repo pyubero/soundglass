@@ -61,6 +61,21 @@ pub struct Settings {
     pub cover_fit: bool,
     /// Local AI: the model each tool uses, and whether to use the GPU.
     pub ai: AiSettings,
+    /// What plays when a track ends, and what Next and Previous move to.
+    pub order: Order,
+    /// The volume slider's position, 0 to 1.
+    pub volume: f32,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub enum Order {
+    /// The folder's tracks one after another, then stop.
+    #[default]
+    InOrder,
+    /// The same track again and again.
+    RepeatOne,
+    /// Each of the folder's tracks once, in a random order, then stop.
+    Shuffle,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -101,6 +116,8 @@ impl Default for Settings {
             theme: crate::theme::SYSTEM.into(),
             cover_fit: false,
             ai: AiSettings::default(),
+            order: Order::InOrder,
+            volume: 1.0,
         }
     }
 }
@@ -178,6 +195,8 @@ mod tests {
             },
             theme: "high-contrast".into(),
             ai: AiSettings { models: HashMap::from([(crate::ai::Task::Stems, "m.onnx".into())]), use_gpu: false, lossless: true, tune: HashMap::from([("nmp.onnx".to_string(), crate::ai::Tune::Beats(Default::default()))]) },
+            order: Order::Shuffle,
+            volume: 0.4,
         };
         let app_ron = |v: &str| ron::to_string(&HashMap::from([(KEY.to_string(), v.to_string())])).unwrap();
         assert_eq!(parse(&app_ron(&ron::to_string(&s).unwrap())), s);

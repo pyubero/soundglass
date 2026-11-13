@@ -25,6 +25,7 @@ use std::sync::{Arc, OnceLock};
 use std::time::{Duration, Instant};
 use edit::Edit;
 use track::Track;
+use settings::Order;
 
 /// The window's size when nothing is remembered: a vertical phone's shape, about 9:16.
 const DEFAULT_SIZE: [f32; 2] = [380.0, 680.0];
@@ -96,10 +97,12 @@ fn main() -> eframe::Result {
         theme::seed_folder();
         let theme_error = theme::apply(&cc.egui_ctx, &settings.theme);
         let player = opening.join().unwrap_or_else(|_| Err("the sound device failed to open".into()));
+        let volume = settings.volume;
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
+            p.send(Cmd::Volume(volume_gain(volume)));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_offer: None, cover_asked: Default::default(), rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_offer: None, cover_asked: Default::default(), rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), player, t0, timings, shown: false }))
     }))
 }
 
@@ -135,6 +138,8 @@ struct App {
     next: Option<Arc<Track>>,
     files: Vec<PathBuf>,
     index: usize,
+    /// The Shuffle order's seed and the file it starts from; see `shuffled`.
+    shuffle: (u64, usize),
     /// The player's `advanced` count last seen, to notice when it moved into `next` by itself.
     advanced: u64,
     ctx: Arc<OnceLock<egui::Context>>,
@@ -287,6 +292,7 @@ enum Action {
     Previous,
     Next,
     Toggle,
+    Order(Order),
     Seek(u64),
     /// Slider position, 0 to 1.
     Volume(f32),
@@ -452,6 +458,7 @@ impl eframe::App for App {
             (self.settings.edit_panel, self.settings.edit_height) = (self.show_edit, self.edit_height);
             (self.settings.folder_panel, self.settings.folder_width) = (self.show_folder, self.folder_width);
         }
+        self.settings.volume = self.volume;
         eframe::set_value(storage, settings::KEY, &self.settings);
     }
 
@@ -691,7 +698,7 @@ impl eframe::App for App {
         let cover = self.cover_texture(&ctx);
         let tags = self.track.tags.get().cloned().unwrap_or_default();
         let error = self.track.error.lock().unwrap().clone().or_else(|| self.player.as_ref().err().cloned());
-        let has_next = self.index + 1 < self.files.len();
+        let has_next = self.neighbour(false).is_some();
         // A match taken into the tag editor shows Track Info, where it is.
         if self.identify_window(&ctx) && !self.show_info {
             toggle_info = true;
@@ -785,7 +792,7 @@ impl eframe::App for App {
                     }
                     ui.add_space(8.0);
                     let metronome = self.track.beats.lock().unwrap_or_else(|e| e.into_inner()).is_some().then_some((self.metronome, self.click_volume));
-                    actions.extend(transport(ui, playing, has_next, self.volume, metronome));
+                    actions.extend(transport(ui, playing, has_next, self.volume, metronome, self.settings.order));
                 });
                 let height = controls.response.rect.height();
                 if (height - self.controls_height).abs() > 0.5 {
@@ -1068,16 +1075,31 @@ impl App {
         if advanced != self.advanced {
             self.advanced = advanced;
             if let Some(next) = self.next.take() {
-                (self.track, self.index) = (next, self.index + 1);
+                let index = self.files.iter().position(|p| *p == next.path).unwrap_or(self.index);
+                (self.track, self.index) = (next, index);
                 (self.history, self.edit_view, self.sent_region) = (None, EditView::default(), None);
             }
         }
         // Decode ahead once this track is in memory, so Next and the gapless move are instant.
-        if self.track.done() && self.next.is_none() && let Some(path) = self.files.get(self.index + 1) {
-            let next = Track::load(path.clone(), repaint(&self.ctx));
-            p.send(Cmd::Queue(next.clone()));
+        if self.track.done() && self.next.is_none() && let Some(index) = self.upcoming() {
+            // Repeat track queues the same, already decoded track.
+            let next = if index == self.index { self.track.clone() } else { Track::load(self.files[index].clone(), repaint(&self.ctx)) };
+            p.send(Cmd::Queue(Some(next.clone())));
             self.next = Some(next);
         }
+    }
+
+    /// The file to play when this track ends, by the play order.
+    fn upcoming(&self) -> Option<usize> {
+        match self.settings.order {
+            Order::RepeatOne => Some(self.index),
+            order => neighbour(order, self.shuffle, self.files.len(), self.index, false),
+        }
+    }
+
+    /// The file Next (or Previous, with `back`) moves to; Repeat track moves through the folder.
+    fn neighbour(&self, back: bool) -> Option<usize> {
+        neighbour(self.settings.order, self.shuffle, self.files.len(), self.index, back)
     }
 
     fn apply(&mut self, action: Action, pos: u64, len: u64) {
@@ -1085,7 +1107,23 @@ impl App {
         match action {
             Action::Undo | Action::Redo | Action::Cut | Action::Crop | Action::Silence | Action::Fx(_) => self.change(action, pos),
             Action::Previous => self.previous(),
-            Action::Next => self.go(self.index + 1),
+            Action::Next => {
+                if let Some(index) = self.neighbour(false) {
+                    self.go(index);
+                }
+            }
+            Action::Order(order) => {
+                if order == Order::Shuffle {
+                    self.shuffle = (random_seed(), self.index);
+                }
+                self.settings.order = order;
+                // A track queued for the old order is dropped; follow_player queues the new one.
+                // shortcut: should the player move into the old one before Queue(None) arrives, the UI misses it.
+                if self.next.as_ref().map(|n| &n.path) != self.upcoming().map(|i| &self.files[i]) {
+                    self.next = None;
+                    p.send(Cmd::Queue(None));
+                }
+            }
             Action::Seek(frame) => p.send(Cmd::Seek(frame)),
             Action::Speed(speed) => {
                 self.speed = speed;
@@ -1357,6 +1395,7 @@ impl App {
         self.files = folder::list_folder(&path);
         self.next = None;
         let index = self.files.iter().position(|p| *p == path).unwrap_or(0);
+        self.shuffle.1 = index;
         self.go(index);
     }
 
@@ -1724,10 +1763,9 @@ impl App {
     fn previous(&mut self) {
         let Ok(p) = &self.player else { return };
         let rate = self.track.format.get().map_or(0, |f| f.rate as u64);
-        if p.shared.pos.load(Relaxed) > RESTART_SECONDS * rate || self.index == 0 {
-            p.send(Cmd::Seek(0));
-        } else {
-            self.go(self.index - 1);
+        match self.neighbour(true) {
+            Some(index) if p.shared.pos.load(Relaxed) <= RESTART_SECONDS * rate => self.go(index),
+            _ => p.send(Cmd::Seek(0)),
         }
     }
 
@@ -2759,11 +2797,12 @@ enum Icon {
     Play,
     Pause,
     Next,
+    Order(Order),
 }
 
-/// Volume, then previous, play/pause and next, with play/pause centred.
+/// Volume, then previous, play/pause and next, then the play order, with play/pause centred.
 /// `metronome`: whether it's on and its slider, once the track's beats are found.
-fn transport(ui: &mut egui::Ui, playing: bool, has_next: bool, volume: f32, metronome: Option<(bool, f32)>) -> Vec<Action> {
+fn transport(ui: &mut egui::Ui, playing: bool, has_next: bool, volume: f32, metronome: Option<(bool, f32)>, order: Order) -> Vec<Action> {
     let (size, small, gap) = (56.0, 40.0, 16.0);
     let buttons = [
         (Icon::Previous, "Previous", true, Action::Previous),
@@ -2773,7 +2812,7 @@ fn transport(ui: &mut egui::Ui, playing: bool, has_next: bool, volume: f32, metr
     let mut actions = Vec::new();
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = gap;
-        // Counted as if the volume button had a twin on the right, so play/pause stays centred.
+        // The volume and play-order buttons are the same size, so play/pause stays centred.
         let row = 3.0 * size + 2.0 * gap + 2.0 * (small + gap);
         ui.add_space(((ui.available_width() - row) / 2.0).max(0.0));
         let ticking = if metronome.is_some_and(|m| m.0) { ", metronome on" } else { "" };
@@ -2810,8 +2849,45 @@ fn transport(ui: &mut egui::Ui, playing: bool, has_next: bool, volume: f32, metr
                 actions.push(action);
             }
         }
+        let (name, then) = match order {
+            Order::InOrder => ("In order", Order::RepeatOne),
+            Order::RepeatOne => ("Repeat track", Order::Shuffle),
+            Order::Shuffle => ("Shuffle", Order::InOrder),
+        };
+        if icon_button(ui, Icon::Order(order), &format!("Play order, {name}"), true, small).on_hover_text(name).clicked() {
+            actions.push(Action::Order(then));
+        }
     });
     actions
+}
+
+/// The track before or after `index` of `len`: the folder's order, or the shuffled one in Shuffle.
+fn neighbour(order: Order, shuffle: (u64, usize), len: usize, index: usize, back: bool) -> Option<usize> {
+    let list: Vec<usize> = if order == Order::Shuffle { shuffled(len, shuffle.0, shuffle.1) } else { (0..len).collect() };
+    let k = list.iter().position(|&i| i == index)?;
+    list.get(if back { k.checked_sub(1)? } else { k + 1 }).copied()
+}
+
+/// 0..len in a random order set by `seed` (Fisher–Yates on a xorshift), with `start` first.
+fn shuffled(len: usize, seed: u64, start: usize) -> Vec<usize> {
+    let mut list: Vec<usize> = (0..len).collect();
+    let mut x = seed | 1;
+    for i in (1..len).rev() {
+        x ^= x << 13;
+        x ^= x >> 7;
+        x ^= x << 17;
+        list.swap(i, (x % (i as u64 + 1)) as usize);
+    }
+    if let Some(k) = list.iter().position(|&i| i == start) {
+        list.swap(0, k);
+    }
+    list
+}
+
+/// A new random number from std's per-process hash keys, so no random-number crate is needed.
+fn random_seed() -> u64 {
+    use std::hash::BuildHasher;
+    std::hash::RandomState::new().hash_one(Instant::now())
 }
 
 /// Gain for slider position `v` (0 to 1): a cube curve, so equal steps sound about equally loud.
@@ -2879,6 +2955,41 @@ fn icon_button(ui: &mut egui::Ui, icon: Icon, label: &str, enabled: bool, size: 
             painter.add(fill(triangle(0.9 * u, -1.0 * u)));
             painter.rect_filled(bar(c.x + 1.1 * u), 0.0, color);
         }
+        Icon::Order(order) => {
+            let stroke = egui::Stroke::new(0.3 * u, color);
+            // An arrowhead at `tip` pointing along `dir` (a unit vector).
+            let head = |tip: egui::Pos2, dir: egui::Vec2| {
+                let (back, side) = (tip - 0.8 * u * dir, 0.55 * u * dir.rot90());
+                fill(vec![tip, back + side, back - side])
+            };
+            let right = egui::vec2(1.0, 0.0);
+            match order {
+                Order::InOrder => {
+                    painter.line_segment([egui::pos2(c.x - 1.5 * u, c.y), egui::pos2(c.x + 0.9 * u, c.y)], stroke);
+                    painter.add(head(egui::pos2(c.x + 1.5 * u, c.y), right));
+                }
+                Order::RepeatOne => {
+                    // A circle open at the right, its end arrowed, around a 1.
+                    let (r, a0, a1) = (1.5 * u, 0.4_f32, std::f32::consts::TAU - 0.5);
+                    let arc = (0..=24).map(|i| {
+                        let a = a0 + (a1 - a0) * i as f32 / 24.0;
+                        c + r * egui::vec2(a.cos(), a.sin())
+                    });
+                    painter.add(egui::Shape::line(arc.collect(), stroke));
+                    let a = a1 + 0.25;
+                    painter.add(head(c + r * egui::vec2(a.cos(), a.sin()), egui::vec2(-a.sin(), a.cos())));
+                    painter.text(c, egui::Align2::CENTER_CENTER, "1", egui::FontId::proportional(1.7 * u), color);
+                }
+                Order::Shuffle => {
+                    for (y0, y1) in [(-0.9, 0.9), (0.9, -0.9)] {
+                        let (from, to) = (egui::pos2(c.x - 1.5 * u, c.y + y0 * u), egui::pos2(c.x + 1.5 * u, c.y + y1 * u));
+                        let dir = (to - from).normalized();
+                        painter.line_segment([from, to - 0.6 * u * dir], stroke);
+                        painter.add(head(to, dir));
+                    }
+                }
+            }
+        }
     }
     response
 }
@@ -2901,7 +3012,8 @@ pub fn ms(t: Instant) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{clock_ms, cover_fit_side, cover_side, display_pos, info_rows, marquee, push_recent, resize_for_panel, snap_speed, title, volume_gain, zoom_view};
+    use super::{clock_ms, cover_fit_side, cover_side, display_pos, info_rows, marquee, neighbour, push_recent, resize_for_panel, shuffled, snap_speed, title, volume_gain, zoom_view};
+    use crate::settings::Order;
     use std::path::PathBuf;
 
     #[test]
@@ -2943,6 +3055,35 @@ mod tests {
         // Past the region's end it doesn't count.
         assert_eq!(display_pos(5000, ms(10), 48000, 1.0, Some((1000, 1200)), true, 100_000), 5480);
         assert_eq!(display_pos(1000, ms(500), 48000, 1.0, None, false, 100_000), 5800, "capped at 0.1 s");
+    }
+
+    #[test]
+    fn shuffle_plays_each_track_once_from_the_start() {
+        let list = shuffled(16, 12345, 7);
+        let mut sorted = list.clone();
+        sorted.sort();
+        assert_eq!(sorted, (0..16).collect::<Vec<_>>());
+        assert_eq!(list[0], 7);
+        assert_eq!(list, shuffled(16, 12345, 7), "the same seed, the same order");
+        assert_ne!(list, shuffled(16, 999, 7));
+        assert!(shuffled(0, 1, 0).is_empty());
+        // Walking it with Next visits every track, then stops.
+        let (mut at, mut seen) = (7, vec![7]);
+        while let Some(i) = neighbour(Order::Shuffle, (12345, 7), 16, at, false) {
+            (at, seen) = (i, [seen, vec![i]].concat());
+        }
+        assert_eq!(seen, list);
+        assert_eq!(neighbour(Order::Shuffle, (12345, 7), 16, list[3], true), Some(list[2]));
+        assert_eq!(neighbour(Order::Shuffle, (12345, 7), 16, 7, true), None);
+    }
+
+    #[test]
+    fn in_order_and_repeat_move_through_the_folder() {
+        for order in [Order::InOrder, Order::RepeatOne] {
+            assert_eq!(neighbour(order, (1, 0), 3, 1, false), Some(2));
+            assert_eq!(neighbour(order, (1, 0), 3, 2, false), None);
+            assert_eq!(neighbour(order, (1, 0), 3, 0, true), None);
+        }
     }
 
     #[test]
