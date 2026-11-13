@@ -135,7 +135,7 @@ pub fn save(track: &Track, edit: &Edit, choice: Choice, target: &Path, draft: Op
         let (audio, edit) = resampled.as_ref().map_or((track, edit), |(t, e)| (&**t, e));
         encode(audio, edit, choice, &temp)?;
         let tags = std::panic::catch_unwind(|| copy_tags(&track.path, &temp, choice.kind, draft)).unwrap_or(false);
-        verify(&temp, audio, edit)?;
+        verify(&temp, audio, edit, matches!(choice.kind, Kind::Wav | Kind::Flac))?;
         std::fs::rename(&temp, target).map_err(|e| e.to_string())?;
         Ok(tags)
     }))
@@ -233,7 +233,11 @@ fn encode(track: &Track, edit: &Edit, choice: Choice, path: &Path) -> Result<(),
             ok &= edit::read(track, edit, 0, edit.len(), |block| samples.extend(block.iter().map(|&x| (x.clamp(-1.0, 1.0) * scale).round() as i32)));
             let dbg = |e: &dyn std::fmt::Debug| format!("FLAC: {e:?}");
             use flacenc::error::Verify;
-            let config = flacenc::config::Encoder::default().into_verified().map_err(|e| dbg(&e))?;
+            let mut config = flacenc::config::Encoder::default();
+            // flacenc 0.5.1's fixed predictors made a 33 MB frame of one 4096-frame stereo block
+            // (a Demucs stem), which symphonia then skipped; LPC alone codes that block in 20 KB.
+            config.subframe_coding.use_fixed = false;
+            let config = config.into_verified().map_err(|e| dbg(&e))?;
             let source = flacenc::source::MemSource::from_samples(&samples, channels, bits as usize, rate as usize);
             let stream = flacenc::encode_with_fixed_block_size(&config, source, config.block_size).map_err(|e| dbg(&e))?;
             let mut sink = flacenc::bitsink::ByteSink::new();
@@ -348,7 +352,8 @@ fn copy_tags(from: &Path, to: &Path, kind: Kind, draft: Option<&TagEdit>) -> boo
 
 /// Decodes the written file: it must have the track's rate, the edit's channels and its length,
 /// give or take 0.1 s (lossy encoders pad the end).
-fn verify(path: &Path, track: &Track, edit: &Edit) -> Result<(), String> {
+/// `exact`: a lossless format must read back frame for frame; a lossy one within 0.1 s (encoder delay).
+fn verify(path: &Path, track: &Track, edit: &Edit, exact: bool) -> Result<(), String> {
     let want = track.format.get().copied().ok_or("the track has no audio")?;
     let (mut frames, mut got) = (0u64, None);
     crate::track::decode(path, |_, _, _| {}, |samples, channels, rate, _| {
@@ -357,7 +362,7 @@ fn verify(path: &Path, track: &Track, edit: &Edit) -> Result<(), String> {
         Ok(())
     })
     .map_err(|e| format!("the saved file doesn't read back ({e})"))?;
-    if got.is_some_and(|(r, c)| r != want.rate || c != edit.channels(want.channels)) || frames.abs_diff(edit.len()) > want.rate as u64 / 10 {
+    if got.is_some_and(|(r, c)| r != want.rate || c != edit.channels(want.channels)) || frames.abs_diff(edit.len()) > if exact { 0 } else { want.rate as u64 / 10 } {
         return Err(format!("the saved file reads back wrong ({frames} frames, expected {})", edit.len()));
     }
     Ok(())

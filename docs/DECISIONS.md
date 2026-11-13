@@ -194,3 +194,5 @@
 - 2026-11-13 — the AI tools write a new file next to the track (named with create_new, like Save Copy: name-denoised.flac, then -2…) through save.rs's temp, verify and rename, at the track's sample rate as 24-bit FLAC, then open it; the new file has no tags
 - 2026-11-13 — Remove Noise has no strength setting (attenuation limit 0, the model's full effect) and runs each channel on its own thread with 2 ONNX threads (fastest of 1, 2, 4, 6 on a 12-thread CPU); about 2.4× real time on a stereo track (accepted)
 - 2026-11-13 — a model's outputs are looked up by name with an error, never by indexing (a missing name panicked in ort)
+- 2026-11-13 — FLAC is saved without flacenc's fixed predictors (LPC, constant and verbatim only): flacenc 0.5.1's fixed path wrote a 33 MB frame for one ordinary 4096-frame stereo block (a Demucs stem), which symphonia skipped without an error; ffmpeg still read it
+- 2026-11-13 — Save's check reads lossless saves (WAV, FLAC) back frame for frame; lossy ones keep the 0.1 s allowance for encoder delay — the 0.1 s let the skipped 93 ms block through
