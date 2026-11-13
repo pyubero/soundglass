@@ -204,3 +204,9 @@
 - 2026-11-13 — the melodia trick's repeated whole-matrix argmax is one sort of the candidate frames, skipping those already cleared: the same notes, since values only drop to 0
 - 2026-11-13 — the MIDI file is name-melody.mid (named like the other results), format 0, 120 bpm, 220 ticks a beat, Electric Piano 1, as pretty_midi writes it; a written MIDI file is reported in the tool's window, not opened
 - 2026-11-13 — a hand-written Standard MIDI File writer (~40 lines), no MIDI crate
+- 2026-11-13 — Find Beats uses musetric's ONNX export of Beat This! final0 (191 MB, pinned), not songbird's 83 MB final0.onnx, whose logits were up to 13.8 off on real music; the log-mel front end is our own (realfft, torchaudio's filterbank from the same repo), matching a numpy rebuild of torchaudio within 6e-5
+- 2026-11-13 — beats use Beat This!'s "minimal" postprocessing, not the DBN (accepted: it may click at random where the network is unsure; the DBN is in docs/BEAT_TRACKING.md's ideas)
+- 2026-11-13 — beats are found on the original and kept on the Track in its frames (like chords), mapped through the edits when drawn or sent to the player; they are kept across a rename, not saved to disk
+- 2026-11-13 — the Metronome clicks over the track at the found beats: a 25 ms decaying sine, 1.5 kHz at −9 dBFS, 2 kHz at −6 dBFS on downbeats, mixed into the player's input before WSOLA (so it follows speed changes) without allocating; Load and the gapless move turn it off, the UI sends it again for the new track
+- 2026-11-13 — Practice → Metronome is off at start and not saved, greyed out until Find Beats has run on the track; turning Practice mode off turns it off
+- 2026-11-13 — a click alone at a set tempo (no track) is not built

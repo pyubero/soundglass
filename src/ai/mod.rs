@@ -6,6 +6,7 @@ use std::sync::OnceLock;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 mod audio;
+mod beats;
 mod catalog;
 mod denoise;
 mod midi;
@@ -13,6 +14,7 @@ mod runtime;
 mod stems;
 mod ui;
 
+pub use beats::{Beats, edited as edited_beats};
 pub use catalog::*;
 pub use runtime::*;
 pub use ui::*;

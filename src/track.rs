@@ -64,6 +64,8 @@ pub struct Track {
     pub tempo: OnceLock<crate::tempo::Estimate>,
     /// Chords over time, in the original's frames, found with the tempo.
     pub chords: OnceLock<Arc<[crate::chords::Span]>>,
+    /// Beats in the original's frames, from Local AI → Find Beats.
+    pub beats: Mutex<Option<Arc<crate::ai::Beats>>>,
     /// The embedded front cover (or first picture), decoded off the UI thread.
     pub cover: OnceLock<eframe::egui::ColorImage>,
     /// Interleaved samples, `CHUNK` frames each except the last.
@@ -205,6 +207,7 @@ impl Track {
             let _ = t.chords.set(c.clone());
             t.analysing.store(true, Relaxed);
         }
+        *t.beats.lock().unwrap() = self.beats.lock().unwrap().clone();
         *t.chunks.lock().unwrap() = self.chunks.lock().unwrap().clone();
         *t.peaks.lock().unwrap() = self.peaks.lock().unwrap().clone();
         t.decoded.store(self.decoded(), Relaxed);
@@ -228,6 +231,7 @@ impl Track {
             loudness: OnceLock::new(),
             tempo: OnceLock::new(),
             chords: OnceLock::new(),
+            beats: Mutex::new(None),
             cover: OnceLock::new(),
             chunks: Mutex::new(Vec::new()),
             decoded: AtomicU64::new(0),

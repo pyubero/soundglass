@@ -25,8 +25,10 @@ const DEMUCS_LICENSE: License = License { project: "Demucs (HTDemucs v4)", spdx:
 
 const BASIC_PITCH_LICENSE: License = License { project: "Basic Pitch (Spotify)", spdx: "Apache-2.0", url: "https://github.com/spotify/basic-pitch", text: include_str!("../../licenses/basic-pitch.txt") };
 
+const BEAT_THIS_LICENSE: License = License { project: "Beat This! (JKU Linz)", spdx: "MIT", url: "https://github.com/CPJKU/beat_this", text: include_str!("../../licenses/beat-this.txt") };
+
 /// In order of preference per task.
-pub const CATALOG: [Known; 3] = [Known {
+pub const CATALOG: [Known; 4] = [Known {
     file: "denoiser_model.onnx",
     label: "DeepFilterNet3 — speech, 48 kHz",
     task: Task::Denoise,
@@ -58,6 +60,17 @@ pub const CATALOG: [Known; 3] = [Known {
     data: &[],
     converted_by: None,
     licenses: &[BASIC_PITCH_LICENSE],
+}, Known {
+    file: "beat_this.onnx",
+    label: "Beat This! — beats and downbeats",
+    task: Task::Beats,
+    mb: 191,
+    sha256: "1337dc6c21257ed6b803418efc320df42b5d8eb296ef16648ef60457cd4b9e55",
+    base: "https://huggingface.co/musetric/beat-this-onnx/resolve/25308706dda545c0d5950065bb0604ad71bcf1f5",
+    // torchaudio's mel filterbank, for the front end.
+    data: &[("mel-filterbank.bin", "1ee975d96f44ccf2c3bfe37825c1c1f0b089f5703c7a12a84b1f0a3bce004533")],
+    converted_by: Some("The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face."),
+    licenses: &[BEAT_THIS_LICENSE],
 }];
 
 pub(super) fn models_dir() -> Result<PathBuf, String> {

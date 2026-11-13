@@ -32,6 +32,36 @@ pub enum Cmd {
     Edit(Option<Arc<Edit>>),
     /// Frames to stop at the end of (or loop, when true), once playing inside them.
     Region(Option<(u64, u64)>, bool),
+    /// The Metronome: click at these beats of the current track (as edited); `None` is off.
+    /// `Load` and moving on to the queued track turn it off.
+    Clicks(Option<Arc<Clicks>>),
+}
+
+/// Beats and downbeats in the current track's (edited) frames, in order.
+#[derive(Debug, Default, PartialEq)]
+pub struct Clicks {
+    pub beats: Vec<u64>,
+    pub downbeats: Vec<u64>,
+}
+
+/// A click: 25 ms of a decaying sine, higher and louder on downbeats.
+const CLICK_SECS: f64 = 0.025;
+
+/// Adds the clicks that sound during frames `pos..` to `stereo` (interleaved, two channels).
+fn add_clicks(stereo: &mut [f32], pos: u64, clicks: &Clicks, rate: u32) {
+    let len = (CLICK_SECS * rate as f64) as u64;
+    let end = pos + (stereo.len() / 2) as u64;
+    let first = clicks.beats.partition_point(|&b| b + len <= pos);
+    for &b in clicks.beats[first..].iter().take_while(|&&b| b < end) {
+        let (freq, amp) = if clicks.downbeats.binary_search(&b).is_ok() { (2000.0, 0.5) } else { (1500.0, 0.35) };
+        for f in b.max(pos)..(b + len).min(end) {
+            let t = (f - b) as f64 / rate as f64;
+            let v = (amp * (std::f64::consts::TAU * freq * t).sin() * (-t / 0.006).exp()) as f32;
+            let i = (f - pos) as usize * 2;
+            stereo[i] += v;
+            stereo[i + 1] += v;
+        }
+    }
 }
 
 /// What the audio callback is done with, sent back so it is freed on the UI thread.
@@ -39,6 +69,7 @@ pub enum Cmd {
 pub enum Retired {
     Track(Arc<Track>),
     Edit(Arc<Edit>),
+    Clicks(Arc<Clicks>),
 }
 
 #[derive(Default)]
@@ -123,6 +154,7 @@ struct Engine {
     cur: Option<Arc<Track>>,
     next: Option<Arc<Track>>,
     edit: Option<Arc<Edit>>,
+    clicks: Option<Arc<Clicks>>,
     region: Option<(u64, u64)>,
     looping: bool,
     pos: u64,
@@ -158,7 +190,7 @@ impl Engine {
         let output = vec![0.0; resampler.output_frames_max() * 2];
         let stretched = input.clone();
         Engine {
-            cur: None, next: None, edit: None, region: None, looping: false, pos: 0, advanced: 0, playing: false, heard: false, volume: 1.0, speed: Speed::NORMAL,
+            cur: None, next: None, edit: None, clicks: None, region: None, looping: false, pos: 0, advanced: 0, playing: false, heard: false, volume: 1.0, speed: Speed::NORMAL,
             wsola: Some(Wsola::new(2, dev_rate)), stretched,
             dev_rate, rate: dev_rate, resampler, input, output, out_pos: 0, out_len: 0, retire,
         }
@@ -173,6 +205,7 @@ impl Engine {
                 self.retire(old);
                 let edit = self.edit.take();
                 self.retire_edit(edit);
+                self.retire_clicks();
                 self.region = None;
                 self.seek(0);
             }
@@ -200,6 +233,16 @@ impl Engine {
                 self.retire_edit(old);
             }
             Cmd::Region(region, looping) => (self.region, self.looping) = (region, looping),
+            Cmd::Clicks(clicks) => {
+                self.retire_clicks();
+                self.clicks = clicks;
+            }
+        }
+    }
+
+    fn retire_clicks(&mut self) {
+        if let Some(c) = self.clicks.take() {
+            let _ = self.retire.send(Retired::Clicks(c));
         }
     }
 
@@ -301,6 +344,8 @@ impl Engine {
                     Some(next) if self.edit.is_none() && next.format.get().is_some() => {
                         let old = self.cur.replace(next);
                         self.retire(old);
+                        // The beats were the old track's.
+                        self.retire_clicks();
                         (self.pos, self.advanced) = (0, self.advanced + 1);
                         continue;
                     }
@@ -345,6 +390,9 @@ impl Engine {
                     n
                 }
             };
+            if let (Some(c), Some(f)) = (&self.clicks, track.format.get()) {
+                add_clicks(&mut self.input[i * 2..(i + n) * 2], self.pos, c, f.rate);
+            }
             (i, self.pos) = (i + n, self.pos + n as u64);
             self.heard = true;
             if let Some((a, b)) = region
@@ -505,6 +553,31 @@ mod tests {
         e.render(&mut out, 2);
         assert!(out[48000..].iter().any(|&s| s != 0.0));
         e.pos as f64
+    }
+
+    #[test]
+    fn clicks_sound_at_the_beats_and_stop_on_load() {
+        let mut e = engine();
+        let track = Track::from_samples(48000, 1, vec![0.0; 6000]);
+        e.handle(Cmd::Load(track.clone()));
+        e.handle(Cmd::Clicks(Some(Arc::new(Clicks { beats: vec![500, 3000], downbeats: vec![3000] }))));
+        assert!(e.pull(4500));
+        let l = left(&e, 4500);
+        let loud = |a: usize, b: usize| l[a..b].iter().map(|x| x.abs()).fold(0f32, f32::max);
+        // Silence except 25 ms (1200 frames) after each beat, the downbeat louder.
+        assert_eq!(loud(0, 500), 0.0);
+        assert!(loud(500, 1700) > 0.2 && loud(500, 1700) < 0.36);
+        assert_eq!(loud(1700, 3000), 0.0);
+        assert!(loud(3000, 4200) > 0.36);
+        assert_eq!(e.input[1000 * 2], e.input[1000 * 2 + 1]);
+        // Across two pulls, the click carries on where it was.
+        e.handle(Cmd::Seek(0));
+        assert!(e.pull(800));
+        let first = left(&e, 800);
+        assert!(e.pull(800));
+        assert_eq!([first, left(&e, 800)].concat(), l[..1600]);
+        e.handle(Cmd::Load(track));
+        assert!(e.clicks.is_none());
     }
 
     #[test]

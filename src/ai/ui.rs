@@ -50,12 +50,19 @@ struct Job {
     done: Receiver<Result<(), String>>,
 }
 
+/// What a tool made: a file to open, or something to say (a MIDI file saved, beats found).
+#[derive(Debug, PartialEq)]
+pub(super) enum Done {
+    Open(PathBuf),
+    Said(String),
+}
+
 /// An AI tool running on its own thread.
 struct Run {
     task: Task,
     progress: Arc<AtomicU32>,
     cancel: Arc<AtomicBool>,
-    done: Receiver<Result<PathBuf, String>>,
+    done: Receiver<Result<Done, String>>,
 }
 
 /// The Local AI windows' state.
@@ -133,14 +140,11 @@ impl Ai {
                     });
                     ctx.request_repaint_after(std::time::Duration::from_millis(200));
                 }
-                Ok(Ok(path)) => {
-                    let task = run.task;
+                Ok(Ok(Done::Open(path))) => {
                     self.run = None;
-                    if crate::folder::is_audio(&path) {
-                        return Some(path);
-                    }
-                    self.run_error = Some((task, Ok(format!("Saved {}", path.file_name().unwrap_or_default().to_string_lossy()))));
+                    return Some(path);
                 }
+                Ok(Ok(Done::Said(m))) => (self.run, self.run_error) = (None, Some((run.task, Ok(m)))),
                 Ok(Err(e)) => {
                     let task = run.task;
                     let cancelled = run.cancel.load(Ordering::Relaxed);
@@ -358,7 +362,7 @@ fn license_ui(ui: &mut egui::Ui, title: &str, l: &License, step: usize, count: u
 }
 
 /// Runs a tool to the end (blocking): its output file, named after the track, next to it.
-pub(super) fn run_tool(task: Task, model: &Known, track: &crate::track::Track, edit: &crate::edit::Edit, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<PathBuf, String> {
+pub(super) fn run_tool(task: Task, model: &Known, track: &crate::track::Track, edit: &crate::edit::Edit, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<Done, String> {
     let own = track.format.get().ok_or("the track has no audio")?.rate;
     match task {
         Task::Denoise => {
@@ -371,7 +375,7 @@ pub(super) fn run_tool(task: Task, model: &Known, track: &crate::track::Track, e
             if result.is_err() {
                 let _ = std::fs::remove_file(&target);
             }
-            result.map(|()| target)
+            result.map(|()| Done::Open(target))
         }
         Task::Stems => {
             let dir = reserve_dir(&track.path, "stems")?;
@@ -381,7 +385,7 @@ pub(super) fn run_tool(task: Task, model: &Known, track: &crate::track::Track, e
                 for (name, part) in stems::NAMES.iter().zip(&parts) {
                     audio::save_flac(part, stems::RATE, own, &dir.join(format!("{name}.flac")))?;
                 }
-                Ok(dir.join("vocals.flac"))
+                Ok(Done::Open(dir.join("vocals.flac")))
             })();
             if result.is_err() {
                 let _ = std::fs::remove_dir_all(&dir);
@@ -408,7 +412,18 @@ pub(super) fn run_tool(task: Task, model: &Known, track: &crate::track::Track, e
             if result.is_err() {
                 let _ = std::fs::remove_file(&target);
             }
-            result.map(|()| target)
+            result.map(|()| Done::Said(format!("Saved {}", target.file_name().unwrap_or_default().to_string_lossy())))
+        }
+        Task::Beats => {
+            // On the original, not the edits: the beats are mapped through them as they change.
+            let whole = crate::edit::Edit::whole(track.len());
+            let channels = audio::planar(track, &whole, beats::RATE)?;
+            // The mean of the channels, as Beat This! downmixes.
+            let mono: Vec<f32> = (0..channels[0].len()).map(|i| channels.iter().map(|c| c[i]).sum::<f32>() / channels.len() as f32).collect();
+            let found = beats::track(&model_path(model.file)?, &model_path(model.data[0].0)?, mono, own, progress, cancel)?;
+            let said = format!("Found {} beats and {} downbeats. Practice → Metronome clicks along.", found.beats.len(), found.downbeats.len());
+            *track.beats.lock().unwrap() = Some(Arc::new(found));
+            Ok(Done::Said(said))
         }
         _ => Err("not built yet".into()),
     }

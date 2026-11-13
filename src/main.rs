@@ -99,7 +99,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, sent_clicks: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), player, t0, timings, shown: false }))
     }))
 }
 
@@ -172,6 +172,10 @@ struct App {
     panel_cache: WaveCache,
     /// The selection and Loop last sent to the player, to send them again only when they change.
     sent_region: Option<(Option<(u64, u64)>, bool)>,
+    /// Practice → Metronome: clicks at the track's found beats.
+    metronome: bool,
+    /// What the player was last sent for the Metronome: track, edit and beats, or None for off.
+    sent_clicks: Option<Option<(usize, Option<usize>, usize)>>,
     /// Waits for Save As / Discard / Cancel while there are unsaved edits.
     pending: Option<Pending>,
     show_save: bool,
@@ -604,6 +608,7 @@ impl eframe::App for App {
                         if !self.settings.practice {
                             self.looping = false;
                             self.show_spectrum = false;
+                            self.metronome = false;
                         }
                         ui.close();
                     }
@@ -636,6 +641,8 @@ impl eframe::App for App {
                 if self.settings.practice {
                     ui.menu_button("Practice", |ui| {
                         ui.checkbox(&mut self.looping, "Loop selection").on_hover_text("L");
+                        let found = self.track.beats.lock().unwrap().is_some();
+                        ui.add_enabled(found, egui::Checkbox::new(&mut self.metronome, "Metronome")).on_hover_text("Clicks on the beats, louder on the first of each bar").on_disabled_hover_text("after Local AI → Find Beats");
                         if ui.checkbox(&mut self.show_spectrum, "Spectrogram").changed() {
                             ui.close();
                         }
@@ -782,6 +789,14 @@ impl eframe::App for App {
         }
         for action in actions {
             self.apply(action, pos, len);
+        }
+        // The Metronome follows the track, its edits and its beats.
+        let beats = self.track.beats.lock().unwrap().clone();
+        let want = beats.as_ref().filter(|_| self.metronome && self.settings.practice).map(|b| (Arc::as_ptr(&self.track) as usize, self.history.as_ref().map(|h| Arc::as_ptr(h.current()) as usize), Arc::as_ptr(b) as usize));
+        if self.sent_clicks != Some(want) && let Ok(p) = &self.player {
+            let clicks = beats.filter(|_| want.is_some()).map(|b| Arc::new(player::Clicks { beats: ai::edited_beats(&b.beats, &edit), downbeats: ai::edited_beats(&b.downbeats, &edit) }));
+            p.send(Cmd::Clicks(clicks));
+            self.sent_clicks = Some(want);
         }
         let region = (self.edit_view.selection, self.looping);
         if self.sent_region != Some(region) && let Ok(p) = &self.player {
@@ -2443,6 +2458,17 @@ fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, selection: &mut Option
     }
     if s.spectrum_chords {
         chord_bar(&painter, rect, &x_of, s, track, edit);
+    }
+    // Found beats as ticks along the bottom, the first of each bar taller.
+    if let Some(b) = track.beats.lock().unwrap().clone() {
+        let down = ai::edited_beats(&b.downbeats, edit);
+        for f in ai::edited_beats(&b.beats, edit) {
+            let x = x_of(f);
+            if rect.x_range().contains(x) {
+                let h = if down.binary_search(&f).is_ok() { 14.0 } else { 7.0 };
+                painter.vline(x, (rect.bottom() - h)..=rect.bottom(), egui::Stroke::new(1.5, egui::Color32::from_white_alpha(220)));
+            }
+        }
     }
     let x = x_of(pos);
     if rect.x_range().contains(x) {
