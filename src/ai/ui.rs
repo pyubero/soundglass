@@ -92,11 +92,12 @@ impl Ai {
 
     /// The Local AI menu: every tool, then AI Models… and, while it's missing, Download AI
     /// Runtime…. Returns a tool to run.
-    pub fn menu_items(&mut self, ui: &mut egui::Ui, s: &AiSettings, loaded: bool) -> Option<Task> {
+    /// With `selected`, the items say they work on the selection.
+    pub fn menu_items(&mut self, ui: &mut egui::Ui, s: &AiSettings, loaded: bool, selected: bool) -> Option<Task> {
         let mut chosen = None;
         for task in Task::ALL {
             let why = Ai::ready(task, s).err().or((!loaded).then_some("after loading")).or(self.run.is_some().then_some("another AI tool is running"));
-            if ui.add_enabled(why.is_none(), egui::Button::new(task.title())).on_disabled_hover_text(why.unwrap_or_default()).clicked() {
+            if ui.add_enabled(why.is_none(), egui::Button::new(if selected { format!("{} (selection)", task.title()) } else { task.title().to_string() })).on_disabled_hover_text(why.unwrap_or_default()).clicked() {
                 chosen = Some(task);
                 ui.close();
             }
@@ -117,7 +118,8 @@ impl Ai {
     }
 
     /// Runs `task` on the edited track, on its own thread; the file it makes is opened when done.
-    pub fn start_tool(&mut self, task: Task, track: Arc<crate::track::Track>, edit: Arc<crate::edit::Edit>, s: &AiSettings, ctx: &egui::Context) {
+    /// `selection`: edited frames to work on, else the whole track.
+    pub fn start_tool(&mut self, task: Task, track: Arc<crate::track::Track>, edit: Arc<crate::edit::Edit>, selection: Option<(u64, u64)>, s: &AiSettings, ctx: &egui::Context) {
         let Ok(model) = Ai::ready(task, s) else { return };
         let tune = tune_for(model, s);
         let source = track.path.clone();
@@ -126,7 +128,7 @@ impl Ai {
         let (p, c, ctx) = (progress.clone(), cancel.clone(), ctx.clone());
         std::thread::spawn(move || {
             let report = |x: f32| p.store(x.to_bits(), Ordering::Relaxed);
-            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run_tool(task, model, &tune, &track, &edit, &report, &c))).unwrap_or_else(|_| Err("the AI tool failed".into()));
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run_tool(task, model, &tune, &track, &edit, selection, &report, &c))).unwrap_or_else(|_| Err("the AI tool failed".into()));
             let _ = tx.send(result);
             ctx.request_repaint();
         });
@@ -408,8 +410,16 @@ fn license_ui(ui: &mut egui::Ui, title: &str, l: &License, step: usize, count: u
 }
 
 /// Runs a tool to the end (blocking): its output file, named after the track, next to it.
-pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::track::Track, edit: &crate::edit::Edit, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<Done, String> {
+/// With `selection` (edited frames), only that stretch: a clip for the files it writes, the
+/// track's own times for subtitles and beats.
+pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::track::Track, edit: &crate::edit::Edit, selection: Option<(u64, u64)>, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<Done, String> {
     let own = track.format.get().ok_or("the track has no audio")?.rate;
+    if selection.is_some_and(|(a, b)| b.saturating_sub(a) < own as u64 / 2) {
+        return Err("select at least half a second, or nothing for the whole track".into());
+    }
+    let (full, clip) = (edit, selection.map(|(a, b)| edit.crop(a, b)));
+    let edit = clip.as_ref().unwrap_or(full);
+    let offset = selection.map_or(0, |s| s.0);
     match (task, tune) {
         (Task::Denoise, Tune::Denoise(t)) => {
             let target = crate::save::reserve_named(&track.path, "denoised", "flac")?;
@@ -468,12 +478,22 @@ pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::tr
             result.map(|()| Done::Said(format!("Saved {}", target.file_name().unwrap_or_default().to_string_lossy())))
         }
         (Task::Beats, Tune::Beats(t)) => {
-            // On the original, not the edits: the beats are mapped through them as they change.
+            // On the original, not the edits, so the beats can be mapped through them as they
+            // change; a selection is read as edited, its beats mapped back to the original.
             let whole = crate::edit::Edit::whole(track.len());
-            let channels = audio::planar(track, &whole, beats::RATE)?;
+            let channels = audio::planar(track, if selection.is_some() { edit } else { &whole }, beats::RATE)?;
             // The mean of the channels, as Beat This! downmixes.
             let mono: Vec<f32> = (0..channels[0].len()).map(|i| channels.iter().map(|c| c[i]).sum::<f32>() / channels.len() as f32).collect();
-            let found = beats::track(&model_path(model.file)?, &model_path(model.data[0].0)?, mono, own, t.threshold, progress, cancel)?;
+            let mut found = beats::track(&model_path(model.file)?, &model_path(model.data[0].0)?, mono, own, t.threshold, progress, cancel)?;
+            if selection.is_some() {
+                let back = |v: &[u64]| {
+                    let mut v: Vec<u64> = v.iter().filter_map(|&f| full.source_of(offset + f)).collect();
+                    v.sort_unstable();
+                    v.dedup();
+                    v
+                };
+                found = beats::Beats { beats: back(&found.beats), downbeats: back(&found.downbeats) };
+            }
             let said = format!("Found {} beats and {} downbeats. The volume button's Metronome clicks along.", found.beats.len(), found.downbeats.len());
             *track.beats.lock().unwrap() = Some(Arc::new(found));
             Ok(Done::Said(said))
@@ -490,6 +510,7 @@ pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::tr
             if cues.is_empty() {
                 return Err("no speech was found".into());
             }
+            let cues = transcribe::shifted(cues, offset as f64 / own as f64);
             Ok(Done::Text(if t.time_marks { transcribe::srt(&cues) } else { transcribe::plain(&cues) }, t.time_marks))
         }
         _ => Err("the settings aren't for this tool".into()),

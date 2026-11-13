@@ -132,7 +132,7 @@ fn denoise_album_track() {
     let edit = crate::edit::Edit::whole(track.len());
     let t0 = std::time::Instant::now();
     let out = dir.join("song-denoised.flac");
-    assert_eq!(ui::run_tool(Task::Denoise, &CATALOG[0], &tune_for(&CATALOG[0], &Default::default()), &track, &edit, &|_| {}, &AtomicBool::new(false)).unwrap(), ui::Done::Open(out.clone()));
+    assert_eq!(ui::run_tool(Task::Denoise, &CATALOG[0], &tune_for(&CATALOG[0], &Default::default()), &track, &edit, None, &|_| {}, &AtomicBool::new(false)).unwrap(), ui::Done::Open(out.clone()));
     eprintln!("{} s of audio in {:.1} s → {}", track.len() / 44_100, t0.elapsed().as_secs_f32(), out.display());
     let back = crate::track::Track::load(out, || {});
     while !back.done() {
@@ -177,7 +177,7 @@ fn stems_add_up_to_the_mix() {
     let (track, dir) = album_copy("stems");
     let edit = crate::edit::Edit::whole(track.len()).crop(30 * 44_100, 90 * 44_100);
     let t0 = std::time::Instant::now();
-    let done = ui::run_tool(Task::Stems, k, &tune_for(k, &Default::default()), &track, &edit, &|_| {}, &AtomicBool::new(false)).unwrap();
+    let done = ui::run_tool(Task::Stems, k, &tune_for(k, &Default::default()), &track, &edit, None, &|_| {}, &AtomicBool::new(false)).unwrap();
     eprintln!("60 s split in {:.1} s on the {}", t0.elapsed().as_secs_f32(), if on_gpu() { "GPU" } else { "CPU" });
     assert_eq!(done, ui::Done::Open(dir.join("song-stems").join("vocals.flac")));
     let mix = audio::planar(&track, &edit, 44_100).unwrap();
@@ -303,7 +303,7 @@ fn midi_album_track() {
     let (track, dir) = album_copy("midi");
     let edit = crate::edit::Edit::whole(track.len()).crop(0, 60 * 44_100);
     let t0 = std::time::Instant::now();
-    let done = ui::run_tool(Task::Midi, k, &tune_for(k, &Default::default()), &track, &edit, &|_| {}, &AtomicBool::new(false)).unwrap();
+    let done = ui::run_tool(Task::Midi, k, &tune_for(k, &Default::default()), &track, &edit, None, &|_| {}, &AtomicBool::new(false)).unwrap();
     let out = dir.join("song-melody.mid");
     eprintln!("60 s in {:.1} s, {} bytes", t0.elapsed().as_secs_f32(), std::fs::metadata(&out).unwrap().len());
     assert_eq!(done, ui::Done::Said("Saved song-melody.mid".into()));
@@ -330,7 +330,7 @@ fn beats_on_the_album() {
         }
         let edit = crate::edit::Edit::whole(track.len());
         let t0 = std::time::Instant::now();
-        let said = match ui::run_tool(Task::Beats, k, &tune_for(k, &Default::default()), &track, &edit, &|_| {}, &AtomicBool::new(false)).unwrap() {
+        let said = match ui::run_tool(Task::Beats, k, &tune_for(k, &Default::default()), &track, &edit, None, &|_| {}, &AtomicBool::new(false)).unwrap() {
             ui::Done::Said(s) => s,
             other => panic!("{other:?}"),
         };
@@ -412,7 +412,7 @@ fn transcribe_a_recording() {
             download(k, &|_| {}, &AtomicBool::new(false)).unwrap();
         }
         let t0 = std::time::Instant::now();
-        let done = ui::run_tool(Task::Transcribe, k, &tune_for(k, &Default::default()), &track, &edit, &|_| {}, &AtomicBool::new(false));
+        let done = ui::run_tool(Task::Transcribe, k, &tune_for(k, &Default::default()), &track, &edit, None, &|_| {}, &AtomicBool::new(false));
         eprintln!("{} ({:.1} s): {done:?}", k.file, t0.elapsed().as_secs_f32());
     }
 }
@@ -484,7 +484,7 @@ fn stems_need_one_chosen() {
     let k = CATALOG.iter().find(|k| k.task == Task::Stems).unwrap();
     let track = crate::track::Track::from_samples(44_100, 2, vec![0.0; 2000]);
     let none = Tune::Stems(tune::StemsTune { write: [false; 4], ..Default::default() });
-    let r = ui::run_tool(Task::Stems, k, &none, &track, &crate::edit::Edit::whole(1000), &|_| {}, &AtomicBool::new(false));
+    let r = ui::run_tool(Task::Stems, k, &none, &track, &crate::edit::Edit::whole(1000), None, &|_| {}, &AtomicBool::new(false));
     assert!(r.unwrap_err().contains("at least one stem"));
 }
 
@@ -509,7 +509,7 @@ fn settings_reach_the_models() {
     let (track, dir) = album_copy("stems-chosen");
     let edit = crate::edit::Edit::whole(track.len()).crop(0, 10 * 44_100);
     let only = Tune::Stems(tune::StemsTune { write: [false, true, false, false], ..Default::default() });
-    let done = ui::run_tool(Task::Stems, k, &only, &track, &edit, &|_| {}, &AtomicBool::new(false)).unwrap();
+    let done = ui::run_tool(Task::Stems, k, &only, &track, &edit, None, &|_| {}, &AtomicBool::new(false)).unwrap();
     let files: Vec<_> = std::fs::read_dir(dir.join("song-stems")).unwrap().map(|e| e.unwrap().file_name()).collect();
     std::fs::remove_dir_all(&dir).unwrap();
     assert_eq!(done, ui::Done::Open(dir.join("song-stems").join("bass.flac")));
@@ -522,7 +522,7 @@ fn settings_reach_the_models() {
             std::thread::sleep(std::time::Duration::from_millis(20));
         }
         let edit = crate::edit::Edit::whole(track.len());
-        let run = |language: &str, translate: bool| ui::run_tool(Task::Transcribe, k, &Tune::Speech(tune::SpeechTune { language: language.into(), translate, ..Default::default() }), &track, &edit, &|_| {}, &AtomicBool::new(false));
+        let run = |language: &str, translate: bool| ui::run_tool(Task::Transcribe, k, &Tune::Speech(tune::SpeechTune { language: language.into(), translate, ..Default::default() }), &track, &edit, None, &|_| {}, &AtomicBool::new(false));
         eprintln!("en: {:?}", run("en", false));
         eprintln!("fr: {:?}", run("fr", false));
         eprintln!("translate: {:?}", run("", true));
@@ -548,7 +548,7 @@ fn subtitles_of_a_recording() {
             download(k, &|_| {}, &AtomicBool::new(false)).unwrap();
         }
         let tune = Tune::Speech(tune::SpeechTune { time_marks: true, ..Default::default() });
-        let ui::Done::Text(srt, true) = ui::run_tool(Task::Transcribe, k, &tune, &track, &edit, &|_| {}, &AtomicBool::new(false)).unwrap() else { panic!() };
+        let ui::Done::Text(srt, true) = ui::run_tool(Task::Transcribe, k, &tune, &track, &edit, None, &|_| {}, &AtomicBool::new(false)).unwrap() else { panic!() };
         let time = |t: &str| {
             let (hms, ms) = t.trim().split_once(',').unwrap();
             let p: Vec<f64> = hms.split(':').map(|x| x.parse().unwrap()).collect();
@@ -560,4 +560,51 @@ fn subtitles_of_a_recording() {
         assert!(spans.iter().all(|&(a, b)| a <= b && b <= secs + 0.1), "{spans:?}");
         assert!(spans.windows(2).all(|w| w[0].0 <= w[1].0), "{spans:?}");
     }
+}
+
+#[test]
+fn a_tiny_selection_is_refused() {
+    let k = CATALOG.iter().find(|k| k.task == Task::Midi).unwrap();
+    let track = crate::track::Track::from_samples(44_100, 1, vec![0.0; 44_100]);
+    let edit = crate::edit::Edit::whole(44_100);
+    let r = ui::run_tool(Task::Midi, k, &tune_for(k, &Default::default()), &track, &edit, Some((1000, 1000 + 13_000)), &|_| {}, &AtomicBool::new(false));
+    assert!(r.unwrap_err().contains("at least half a second"));
+}
+
+/// Online: the tools on a selection — a clip for files, the track's times for beats and cues.
+#[test]
+#[ignore]
+fn tools_on_a_selection() {
+    let s = crate::settings::AiSettings::default();
+    let (track, dir) = album_copy("selection");
+    let rate = 44_100u64;
+    let edit = crate::edit::Edit::whole(track.len()).cut(0, 5 * rate);
+    let k = installed_model(Task::Denoise);
+    let done = ui::run_tool(Task::Denoise, k, &tune_for(k, &s), &track, &edit, Some((20 * rate, 30 * rate)), &|_| {}, &AtomicBool::new(false)).unwrap();
+    let ui::Done::Open(path) = done else { panic!() };
+    let clip = crate::track::Track::load(path, || {});
+    while !clip.done() {
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    }
+    // Within a frame or two: 44.1 kHz → the model's 48 kHz → 44.1 kHz rounds.
+    assert!(clip.len().abs_diff(10 * rate) <= 2, "{}", clip.len());
+    // Beats of edited 60–90 s: in the original (5 s were cut before) they lie within 65–95 s.
+    let k = installed_model(Task::Beats);
+    ui::run_tool(Task::Beats, k, &tune_for(k, &s), &track, &edit, Some((60 * rate, 90 * rate)), &|_| {}, &AtomicBool::new(false)).unwrap();
+    let b = track.beats.lock().unwrap().clone().unwrap();
+    eprintln!("{} beats, {:.2}–{:.2} s of the original", b.beats.len(), b.beats[0] as f64 / rate as f64, *b.beats.last().unwrap() as f64 / rate as f64);
+    assert!(b.beats.len() > 20 && b.beats.iter().all(|&f| (65 * rate..95 * rate).contains(&f)));
+    std::fs::remove_dir_all(&dir).unwrap();
+    // Cues of 30–60 s of the interview lie within 30–60 s.
+    let album = std::env::current_dir().unwrap().join("1954-Louis Armstrong Plays W.C.Handy");
+    let src = crate::folder::list_dir(&album).unwrap().1.into_iter().find(|f| f.file_name().unwrap().to_string_lossy().starts_with("12")).unwrap();
+    let talk = crate::track::Track::load(src, || {});
+    while !talk.done() {
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    }
+    let k = CATALOG.iter().find(|k| k.file.starts_with("encoder")).unwrap();
+    let ui::Done::Text(srt, true) = ui::run_tool(Task::Transcribe, k, &tune_for(k, &s), &talk, &crate::edit::Edit::whole(talk.len()), Some((30 * rate, 60 * rate)), &|_| {}, &AtomicBool::new(false)).unwrap() else { panic!() };
+    eprintln!("{}", srt.lines().take(8).collect::<Vec<_>>().join("\n"));
+    let starts: Vec<&str> = srt.lines().filter_map(|l| l.split_once(" --> ")).flat_map(|(a, b)| [a, b]).collect();
+    assert!(!starts.is_empty() && starts.iter().all(|t| ("00:00:30,000".."00:01:00,001").contains(t)), "{starts:?}");
 }

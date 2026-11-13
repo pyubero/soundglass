@@ -641,7 +641,7 @@ impl eframe::App for App {
                         ui.close();
                     }
                 });
-                ui.menu_button("Local AI", |ui| ai_tool = self.ai.menu_items(ui, &self.settings.ai, self.track.done()));
+                ui.menu_button("Local AI", |ui| ai_tool = self.ai.menu_items(ui, &self.settings.ai, self.track.done(), self.edit_view.selection.is_some()));
                 if self.settings.practice {
                     ui.menu_button("Practice", |ui| {
                         ui.checkbox(&mut self.looping, "Loop selection").on_hover_text("L");
@@ -780,7 +780,7 @@ impl eframe::App for App {
         self.follow_tags(&ctx);
         self.rename_window(&ctx);
         if let Some(task) = ai_tool {
-            self.ai.start_tool(task, self.track.clone(), edit.clone(), &self.settings.ai, &ctx);
+            self.ai.start_tool(task, self.track.clone(), edit.clone(), self.edit_view.selection, &self.settings.ai, &ctx);
         }
         if let Some(path) = self.ai.windows(&ctx, &mut self.settings.ai) {
             self.open(path);

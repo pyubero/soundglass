@@ -100,6 +100,11 @@ pub struct Cue {
     pub text: String,
 }
 
+/// The cues `by` seconds later (a selection's start, so the times are the track's).
+pub(super) fn shifted(cues: Vec<Cue>, by: f64) -> Vec<Cue> {
+    cues.into_iter().map(|c| Cue { start: c.start + by, end: c.end + by, ..c }).collect()
+}
+
 /// The cues' words as one text.
 pub(super) fn plain(cues: &[Cue]) -> String {
     cues.iter().map(|c| c.text.as_str()).collect::<Vec<_>>().join(" ")
@@ -478,6 +483,7 @@ mod tests {
         let cues = [Cue { start: 1.24, end: 4.8, text: "Hello.".into() }, Cue { start: 3725.0, end: 3726.5005, text: "Later".into() }];
         assert_eq!(srt(&cues), "1\n00:00:01,240 --> 00:00:04,800\nHello.\n\n2\n01:02:05,000 --> 01:02:06,501\nLater\n\n");
         assert_eq!(plain(&cues), "Hello. Later");
+        assert_eq!(shifted(cues[..1].to_vec(), 30.0), [Cue { start: 31.24, end: 34.8, text: "Hello.".into() }]);
         let w = |a: f64, b: f64, t: &str| (a, b, t.to_string());
         // A sentence end after 1 s, a pause over 1 s, and the 7 s limit each start a cue.
         let words = [w(0.0, 0.5, " Hi."), w(0.6, 1.2, " One"), w(1.2, 1.6, " two."), w(3.0, 3.4, " Three"), w(3.5, 9.0, " four"), w(9.0, 11.0, " five")];

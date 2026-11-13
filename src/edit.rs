@@ -88,6 +88,19 @@ impl Edit {
         self.with(segs)
     }
 
+    /// The original's frame played at edited frame `pos`; None in silence or past the end.
+    pub fn source_of(&self, pos: u64) -> Option<u64> {
+        let mut at = 0;
+        for seg in &self.segs {
+            if pos < at + seg.len {
+                let off = pos - at;
+                return (!seg.silent).then_some(if seg.rev { seg.src + seg.len - 1 - off } else { seg.src + off });
+            }
+            at += seg.len;
+        }
+        None
+    }
+
     /// Only frames `a..b`.
     pub fn crop(&self, a: u64, b: u64) -> Edit {
         self.with(self.slice(a, b))
@@ -377,6 +390,20 @@ pub fn min_max(track: &Track, peaks: &[(f32, f32)], edit: &Edit, a: u64, b: u64)
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn source_of_undoes_the_edits() {
+        let e = Edit::whole(100).cut(20, 40).silence(10, 15).reverse(50, 80);
+        // Before the silence as it was; silence has no source; after the cut, 20 frames on.
+        assert_eq!((e.source_of(5), e.source_of(12), e.source_of(30)), (Some(5), None, Some(50)));
+        // Reversed 50..80 plays 99 down to 70.
+        assert_eq!((e.source_of(50), e.source_of(79)), (Some(99), Some(70)));
+        assert_eq!(e.source_of(80), None);
+        // Every played frame maps back to itself through crate::ai::edited_beats.
+        for pos in (0..80).filter(|&p| e.source_of(p).is_some()) {
+            assert_eq!(crate::ai::edited_beats(&[e.source_of(pos).unwrap()], &e), [pos]);
+        }
+    }
 
     fn seg(src: u64, len: u64) -> Seg {
         Seg::plain(src, len)
