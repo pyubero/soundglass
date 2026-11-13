@@ -515,6 +515,7 @@ impl eframe::App for App {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
 
+        let mut ai_tool = None;
         egui::Panel::top("menu").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("File", |ui| {
@@ -631,7 +632,7 @@ impl eframe::App for App {
                         ui.close();
                     }
                 });
-                ui.menu_button("Local AI", |ui| self.ai.menu_items(ui));
+                ui.menu_button("Local AI", |ui| ai_tool = self.ai.menu_items(ui, &self.settings.ai, self.settings.practice, self.track.done()));
                 if self.settings.practice {
                     ui.menu_button("Practice", |ui| {
                         ui.checkbox(&mut self.looping, "Loop selection").on_hover_text("L");
@@ -766,7 +767,12 @@ impl eframe::App for App {
         self.tags_confirm(&ctx);
         self.follow_tags(&ctx);
         self.rename_window(&ctx);
-        self.ai.windows(&ctx, &mut self.settings.ai);
+        if let Some(task) = ai_tool {
+            self.ai.start_tool(task, self.track.clone(), edit.clone(), &self.settings.ai, &ctx);
+        }
+        if let Some(path) = self.ai.windows(&ctx, &mut self.settings.ai) {
+            self.open(path);
+        }
         actions.extend(self.spectrum_window(&ctx, &edit, pos, len, rate, playing));
         if let Some(path) = open_recent {
             self.open(path);

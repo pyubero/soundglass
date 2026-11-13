@@ -96,6 +96,10 @@ Unknown elements and attributes are ignored.
 
 Nothing AI is shipped. Local AI → Download AI Runtime… installs ONNX Runtime 1.31.1 (11 MB on Linux, 83 MB on Windows) into the data folder's `lib/`, and AI Models… downloads the models into `models/`. Each download shows its licence first, is pinned by SHA-256 (a file that doesn't match is deleted) and is only made when you click. With an NVIDIA driver, AI Models… also offers GPU support: ONNX Runtime's CUDA 12 build and NVIDIA's libraries (about 1.5 GB, into `gpu/`); it takes effect after a restart.
 
+The tools work on the track as edited and never change it: each writes a new file next to it and opens it.
+
+- **Remove Noise** (DeepFilterNet3, 16 MB): cleans background noise from speech and writes `name-denoised.flac` at the track's sample rate. Made for voices; on music it can take away more than noise. On a 12-thread CPU it runs about 2.4× faster than real time for a stereo track.
+
 ## Install as the default audio player
 
 ```

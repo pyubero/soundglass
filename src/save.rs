@@ -84,10 +84,15 @@ pub fn suggested_name(original: &Path, kind: Kind) -> String {
 /// `song-edited-2.ext`…) by creating it empty, so nothing is overwritten and no two saves pick
 /// the same name. From lightview's `save::reserve_copy`.
 pub fn reserve_copy(source: &Path, ext: &str) -> Result<PathBuf, String> {
+    reserve_named(source, "edited", ext)
+}
+
+/// Like `reserve_copy`, named `<stem>-<what>.<ext>` (`song-denoised.flac`).
+pub fn reserve_named(source: &Path, what: &str, ext: &str) -> Result<PathBuf, String> {
     let stem = source.file_stem().unwrap_or_default().to_string_lossy();
     for n in 1.. {
         let suffix = if n == 1 { String::new() } else { format!("-{n}") };
-        let dest = source.with_file_name(format!("{stem}-edited{suffix}.{ext}"));
+        let dest = source.with_file_name(format!("{stem}-{what}{suffix}.{ext}"));
         match std::fs::File::options().write(true).create_new(true).open(&dest) {
             Ok(_) => return Ok(dest),
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
@@ -142,7 +147,7 @@ pub fn save(track: &Track, edit: &Edit, choice: Choice, target: &Path, draft: Op
 }
 
 /// The edited track at another sample rate and with `speed` applied, as a track of its own with no edits.
-fn resample(track: &Track, edit: &Edit, rate: u32, speed: Option<Speed>) -> Result<(Arc<Track>, Edit), String> {
+pub fn resample(track: &Track, edit: &Edit, rate: u32, speed: Option<Speed>) -> Result<(Arc<Track>, Edit), String> {
     use rubato::Resampler;
     let format = track.format.get().ok_or("the track has no audio")?;
     let channels = edit.channels(format.channels);

@@ -333,7 +333,11 @@ pub(super) fn environment() -> Result<&'static ort::environment::Environment, St
 pub(super) fn session(path: &Path) -> Result<ort::session::Session, String> {
     // One thread per physical core was ~10% faster than one per hardware thread in lightview.
     // shortcut: assumes two hardware threads per core; read the real core count if that's wrong somewhere.
-    let threads = std::thread::available_parallelism().map_or(1, |n| (n.get() / 2).max(1));
+    session_with(path, std::thread::available_parallelism().map_or(1, |n| (n.get() / 2).max(1)))
+}
+
+/// `session` with `threads` CPU threads: small models run faster on few.
+pub(super) fn session_with(path: &Path, threads: usize) -> Result<ort::session::Session, String> {
     let env = environment()?;
     let cpu = || -> Result<ort::session::Session, String> {
         let builder = ort::session::Session::builder(env).map_err(|e| e.to_string())?;
@@ -363,4 +367,9 @@ pub(super) fn session(path: &Path) -> Result<ort::session::Session, String> {
 /// Whether the last session runs on the GPU.
 pub fn on_gpu() -> bool {
     GPU_LOADED.load(Ordering::Relaxed) && USE_GPU.load(Ordering::Relaxed) && gpu_error().is_none()
+}
+
+/// A model's f32 output by name; an error, not a panic, when a model doesn't have it.
+pub(super) fn output<'a>(outputs: &'a ort::session::SessionOutputs, name: &str) -> Result<(&'a ort::value::Shape, &'a [f32]), String> {
+    outputs.get(name).ok_or_else(|| format!("the model has no output {name}"))?.try_extract_tensor::<f32>().map_err(|e| e.to_string())
 }

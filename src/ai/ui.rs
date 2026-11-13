@@ -50,10 +50,21 @@ struct Job {
     done: Receiver<Result<(), String>>,
 }
 
+/// An AI tool running on its own thread.
+struct Run {
+    task: Task,
+    progress: Arc<AtomicU32>,
+    cancel: Arc<AtomicBool>,
+    done: Receiver<Result<PathBuf, String>>,
+}
+
 /// The Local AI windows' state.
 #[derive(Default)]
 pub struct Ai {
     pub show_models: bool,
+    run: Option<Run>,
+    /// A tool's error, shown in its window until closed.
+    run_error: Option<(Task, String)>,
     /// A licence being read: what for, and which of its licences.
     license: Option<(Download, usize)>,
     jobs: Vec<Job>,
@@ -66,8 +77,18 @@ impl Ai {
         self.jobs.iter().find(|j| j.what == what)
     }
 
-    /// The Local AI menu's own items: AI Models… and, while it's missing, Download AI Runtime….
-    pub fn menu_items(&mut self, ui: &mut egui::Ui) {
+    /// The Local AI menu: the tools that have a model in the catalog (Practice mode's only with
+    /// it on), then AI Models… and, while it's missing, Download AI Runtime…. Returns a tool to run.
+    pub fn menu_items(&mut self, ui: &mut egui::Ui, s: &AiSettings, practice: bool, loaded: bool) -> Option<Task> {
+        let mut chosen = None;
+        for task in Task::ALL.into_iter().filter(|t| (practice || !t.practice()) && CATALOG.iter().any(|k| k.task == *t)) {
+            let why = Ai::ready(task, s).err().or((!loaded).then_some("after loading")).or(self.run.is_some().then_some("another AI tool is running"));
+            if ui.add_enabled(why.is_none(), egui::Button::new(task.title())).on_disabled_hover_text(why.unwrap_or_default()).clicked() {
+                chosen = Some(task);
+                ui.close();
+            }
+        }
+        ui.separator();
         if ui.button("AI Models…").clicked() {
             self.show_models = true;
             ui.close();
@@ -79,6 +100,62 @@ impl Ai {
                 ui.close();
             }
         }
+        chosen
+    }
+
+    /// Runs `task` on the edited track, on its own thread; the file it makes is opened when done.
+    pub fn start_tool(&mut self, task: Task, track: Arc<crate::track::Track>, edit: Arc<crate::edit::Edit>, s: &AiSettings, ctx: &egui::Context) {
+        let Ok(model) = Ai::ready(task, s) else { return };
+        let (progress, cancel) = (Arc::new(AtomicU32::new(0)), Arc::new(AtomicBool::new(false)));
+        let (tx, done) = std::sync::mpsc::channel();
+        let (p, c, ctx) = (progress.clone(), cancel.clone(), ctx.clone());
+        std::thread::spawn(move || {
+            let report = |x: f32| p.store(x.to_bits(), Ordering::Relaxed);
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run_tool(task, model, &track, &edit, &report, &c))).unwrap_or_else(|_| Err("the AI tool failed".into()));
+            let _ = tx.send(result);
+            ctx.request_repaint();
+        });
+        (self.run, self.run_error) = (Some(Run { task, progress, cancel, done }), None);
+    }
+
+    /// The running tool's window; the file it made, once it's done.
+    fn run_window(&mut self, ctx: &egui::Context) -> Option<PathBuf> {
+        if let Some(run) = &self.run {
+            match run.done.try_recv() {
+                Err(TryRecvError::Empty) => {
+                    let p = f32::from_bits(run.progress.load(Ordering::Relaxed));
+                    egui::Window::new(run.task.title()).collapsible(false).resizable(false).show(ctx, |ui| {
+                        ui.label(if on_gpu() { "Running on the GPU…" } else { "Running on the CPU…" });
+                        ui.add(egui::ProgressBar::new(p).desired_width(240.0).show_percentage());
+                        if ui.button("Cancel").clicked() {
+                            run.cancel.store(true, Ordering::Relaxed);
+                        }
+                    });
+                    ctx.request_repaint_after(std::time::Duration::from_millis(200));
+                }
+                Ok(Ok(path)) => {
+                    self.run = None;
+                    return Some(path);
+                }
+                Ok(Err(e)) => {
+                    let task = run.task;
+                    let cancelled = run.cancel.load(Ordering::Relaxed);
+                    self.run = None;
+                    if !cancelled {
+                        self.run_error = Some((task, e));
+                    }
+                }
+                Err(TryRecvError::Disconnected) => (self.run, self.run_error) = (None, Some((run.task, "the AI tool stopped".into()))),
+            }
+        }
+        if let Some((task, e)) = &self.run_error {
+            let mut open = true;
+            egui::Window::new(task.title()).open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| ui.colored_label(ui.visuals().error_fg_color, e));
+            if !open {
+                self.run_error = None;
+            }
+        }
+        None
     }
 
     /// Whether `task` can run now: the runtime and a model for it installed.
@@ -89,9 +166,11 @@ impl Ai {
         choose(s.models.get(&task), task, &installed()).ok_or("needs a model: Local AI → AI Models…")
     }
 
-    /// The AI Models window and the licence prompt; follows the downloads.
-    pub fn windows(&mut self, ctx: &egui::Context, s: &mut AiSettings) {
+    /// The AI Models window, the licence prompt and the running tool; follows the downloads.
+    /// Returns a file a tool made, to open.
+    pub fn windows(&mut self, ctx: &egui::Context, s: &mut AiSettings) -> Option<PathBuf> {
         self.follow(ctx);
+        let made = self.run_window(ctx);
         if self.show_models {
             let mut open = true;
             egui::Window::new("AI Models").open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| self.models_ui(ui, s));
@@ -111,6 +190,7 @@ impl Ai {
                 None => {}
             }
         }
+        made
     }
 
     fn start(&mut self, what: Download, ctx: &egui::Context) {
@@ -200,7 +280,7 @@ impl Ai {
         }
         let installed = installed();
         egui::ScrollArea::vertical().max_height(520.0).show(ui, |ui| {
-            for task in Task::ALL {
+            for task in Task::ALL.into_iter().filter(|t| CATALOG.iter().any(|k| k.task == *t)) {
                 ui.add_space(8.0);
                 ui.strong(task.title());
                 if task.practice() {
@@ -268,4 +348,24 @@ fn license_ui(ui: &mut egui::Ui, title: &str, l: &License, step: usize, count: u
         accept.then_some(true).or(cancel.then_some(false))
     })
     .inner
+}
+
+/// Runs a tool to the end (blocking): its output file, named after the track, next to it.
+pub(super) fn run_tool(task: Task, model: &Known, track: &crate::track::Track, edit: &crate::edit::Edit, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<PathBuf, String> {
+    let own = track.format.get().ok_or("the track has no audio")?.rate;
+    match task {
+        Task::Denoise => {
+            let target = crate::save::reserve_named(&track.path, "denoised", "flac")?;
+            let result = (|| {
+                let channels = audio::planar(track, edit, denoise::RATE)?;
+                let clean = denoise::denoise(&model_path(model.file)?, channels, &|p| progress(0.95 * p), cancel)?;
+                audio::save_flac(&clean, denoise::RATE, own, &target)
+            })();
+            if result.is_err() {
+                let _ = std::fs::remove_file(&target);
+            }
+            result.map(|()| target)
+        }
+        _ => Err("not built yet".into()),
+    }
 }

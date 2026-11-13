@@ -5,7 +5,9 @@ use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 use std::sync::atomic::{AtomicBool, Ordering};
 
+mod audio;
 mod catalog;
+mod denoise;
 mod runtime;
 mod ui;
 

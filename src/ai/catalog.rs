@@ -19,8 +19,21 @@ pub struct Known {
     pub licenses: &'static [License],
 }
 
-/// In order of preference per task. Filled in milestone by milestone.
-pub const CATALOG: [Known; 0] = [];
+const DEEPFILTERNET_LICENSE: License = License { project: "DeepFilterNet", spdx: "MIT OR Apache-2.0", url: "https://github.com/Rikorose/DeepFilterNet", text: include_str!("../../licenses/deepfilternet.txt") };
+
+/// In order of preference per task.
+pub const CATALOG: [Known; 1] = [Known {
+    file: "denoiser_model.onnx",
+    label: "DeepFilterNet3 — speech, 48 kHz",
+    task: Task::Denoise,
+    mb: 16,
+    sha256: "fe5eb64fa2e4154c83f8e4935e82871c850c154387ee892e0ab65fe179e7d8c9",
+    // Pinned to a revision, so the file (and its checksum) can't change under us.
+    base: "https://huggingface.co/kimtos-labs/denoiser-dfn3/resolve/888f33c41851d7168ae31c3637c323b9e2f3c2a4",
+    data: &[],
+    converted_by: Some("The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face."),
+    licenses: &[DEEPFILTERNET_LICENSE],
+}];
 
 pub(super) fn models_dir() -> Result<PathBuf, String> {
     Ok(data_dir()?.join("models"))

@@ -190,3 +190,7 @@
 - 2026-11-13 — no RoFormer stems (their weights' licences are disputed, 260–930 MB) and no CLAP genre tags (licence unclear across exports)
 - 2026-11-13 — downloads go through ureq (already in the tree) with a progress bar and Cancel, not lightview's curl/PowerShell; archives are still unpacked with the system's tar/unzip (PowerShell on Windows), so no archive crates
 - 2026-11-13 — no "Add model file…": every tool needs a specific model's inputs and outputs, so only catalog models are used
+- 2026-11-13 — Remove Noise uses grazder's torchDF streaming export of DeepFilterNet3 (one 16 MB ONNX file, hosted by KimtOS, pinned by revision and hash), not the official three-network export: the STFT, ERB features and deep filtering stay inside the model, so nothing of DeepFilterNet's DSP is rewritten in Rust
+- 2026-11-13 — the AI tools write a new file next to the track (named with create_new, like Save Copy: name-denoised.flac, then -2…) through save.rs's temp, verify and rename, at the track's sample rate as 24-bit FLAC, then open it; the new file has no tags
+- 2026-11-13 — Remove Noise has no strength setting (attenuation limit 0, the model's full effect) and runs each channel on its own thread with 2 ONNX threads (fastest of 1, 2, 4, 6 on a 12-thread CPU); about 2.4× real time on a stereo track (accepted)
+- 2026-11-13 — a model's outputs are looked up by name with an error, never by indexing (a missing name panicked in ort)
