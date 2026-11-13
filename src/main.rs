@@ -578,7 +578,6 @@ impl eframe::App for App {
                         toggle_edit = true;
                         ui.close();
                     }
-                    ui.checkbox(&mut self.settings.show_waveform, "Waveform");
                     ui.separator();
                     if ui.checkbox(&mut self.settings.practice, "Practice mode").on_hover_text("Tools for musicians: loops, the spectrogram, tempo, key and chords").changed() {
                         if !self.settings.practice {
@@ -1195,6 +1194,11 @@ impl App {
     fn settings_window(&mut self, ctx: &egui::Context) {
         let mut open = self.show_settings;
         egui::Window::new("Settings").open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                ui.label("Seek bar:");
+                ui.radio_value(&mut self.settings.show_waveform, false, "Line");
+                ui.radio_value(&mut self.settings.show_waveform, true, "Waveform");
+            });
             ui.checkbox(&mut self.settings.remember_window_size, "Remember window size");
             ui.weak("Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.");
         });
