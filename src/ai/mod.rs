@@ -16,7 +16,7 @@ mod transcribe;
 mod tune;
 mod ui;
 
-pub use beats::{Beats, edited as edited_beats};
+pub use beats::{Beats, bpm, edited as edited_beats};
 pub use catalog::*;
 pub use runtime::*;
 pub use tune::{Tune, tune_for};

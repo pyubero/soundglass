@@ -57,6 +57,8 @@ pub struct Settings {
     pub spectrum: crate::spectrum::Params,
     /// `theme::SYSTEM`, a shipped theme's id, or the file name (without `.xml`) of a user theme.
     pub theme: String,
+    /// The cover fills its space; otherwise it is shown at most 256 px.
+    pub cover_fit: bool,
     /// Local AI: the model each tool uses, and whether to use the GPU.
     pub ai: AiSettings,
 }
@@ -69,11 +71,13 @@ pub struct AiSettings {
     pub use_gpu: bool,
     /// Each model's settings, by model file; missing means its defaults.
     pub tune: HashMap<String, crate::ai::Tune>,
+    /// The tools write 24-bit FLAC, else Ogg Vorbis q6.
+    pub lossless: bool,
 }
 
 impl Default for AiSettings {
     fn default() -> Self {
-        AiSettings { models: HashMap::new(), use_gpu: true, tune: HashMap::new() }
+        AiSettings { models: HashMap::new(), use_gpu: true, tune: HashMap::new(), lossless: false }
     }
 }
 
@@ -95,6 +99,7 @@ impl Default for Settings {
             note_label_size: 11.0,
             spectrum: Default::default(),
             theme: crate::theme::SYSTEM.into(),
+            cover_fit: false,
             ai: AiSettings::default(),
         }
     }
@@ -160,6 +165,7 @@ mod tests {
             note_color: Color32::from_rgba_unmultiplied(0, 0, 255, 255),
             note_c_width: 3.0,
             note_label_size: 14.0,
+            cover_fit: true,
             spectrum: crate::spectrum::Params {
                 fft: 8192,
                 window: 2048,
@@ -171,7 +177,7 @@ mod tests {
                 map: crate::spectrum::ColourMap::BlueRed,
             },
             theme: "high-contrast".into(),
-            ai: AiSettings { models: HashMap::from([(crate::ai::Task::Stems, "m.onnx".into())]), use_gpu: false, tune: HashMap::from([("nmp.onnx".to_string(), crate::ai::Tune::Beats(Default::default()))]) },
+            ai: AiSettings { models: HashMap::from([(crate::ai::Task::Stems, "m.onnx".into())]), use_gpu: false, lossless: true, tune: HashMap::from([("nmp.onnx".to_string(), crate::ai::Tune::Beats(Default::default()))]) },
         };
         let app_ron = |v: &str| ron::to_string(&HashMap::from([(KEY.to_string(), v.to_string())])).unwrap();
         assert_eq!(parse(&app_ron(&ron::to_string(&s).unwrap())), s);

@@ -22,6 +22,15 @@ pub struct Beats {
     pub downbeats: Vec<u64>,
 }
 
+/// Whole beats per minute at `rate`: from the median gap between beats, so a missed or extra
+/// beat doesn't sway it. None for fewer than two beats.
+pub fn bpm(beats: &[u64], rate: u32) -> Option<u32> {
+    let mut gaps: Vec<u64> = beats.windows(2).map(|w| w[1] - w[0]).filter(|&g| g > 0).collect();
+    gaps.sort_unstable();
+    let gap = *gaps.get(gaps.len() / 2)?;
+    Some((60.0 * rate as f64 / gap as f64).round() as u32)
+}
+
 /// Beats of `mono` (at `RATE`), as frames at the original's `rate`. `filterbank` is
 /// torchaudio's slaney mel filterbank, [513, 128] row-major f32.
 /// `threshold`: the logit a peak must pass (the reference's 0).
@@ -160,6 +169,15 @@ fn peaks(logits: &[f32], threshold: f32) -> Vec<f64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn bpm_from_the_median_gap() {
+        // 120 BPM at 48 kHz: a beat every 24000 frames, one missed and one extra.
+        let mut b: Vec<u64> = (0..20).filter(|&i| i != 7).map(|i| i * 24000).collect();
+        b.insert(3, 3 * 24000 + 5000);
+        assert_eq!(bpm(&b, 48000), Some(120));
+        assert_eq!(bpm(&[1000], 48000), None);
+    }
 
     #[test]
     fn chunks_cover_the_piece_and_peaks_merge() {

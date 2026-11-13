@@ -105,7 +105,11 @@ pub fn apply(edit: &TagEdit, tag: &mut Tag) {
     } else {
         tag.insert_text(ItemKey::InitialKey, edit.key.trim().to_string());
     }
-    match &edit.cover {
+    set_cover(tag, &edit.cover);
+}
+
+fn set_cover(tag: &mut Tag, cover: &Cover) {
+    match cover {
         Cover::Keep => {}
         Cover::Remove => {
             while tag.picture_count() > 0 {
@@ -125,20 +129,48 @@ pub fn apply(edit: &TagEdit, tag: &mut Tag) {
 /// Writes `edit` into the file at `path`: into a hidden copy next to it first, whose audio must
 /// decode to exactly the original's samples, then renamed over it.
 pub fn write_in_place(path: &Path, edit: &TagEdit) -> Result<(), String> {
+    write_with(path, |tag| apply(edit, tag))
+}
+
+/// Puts `cover` into the file at `path`, the other tags untouched; written as `write_in_place` does.
+pub fn write_cover(path: &Path, cover: &Cover) -> Result<(), String> {
+    write_with(path, |tag| set_cover(tag, cover))
+}
+
+/// Puts `bpm` into the file at `path`, the other tags untouched; written as `write_in_place` does.
+pub fn write_bpm(path: &Path, bpm: u32) -> Result<(), String> {
+    write_with(path, |tag| {
+        let _ = tag.insert_text(ItemKey::IntegerBpm, bpm.to_string()) || tag.insert_text(ItemKey::Bpm, bpm.to_string());
+    })
+}
+
+/// Whether the file embeds a picture. Err when lofty can't read (so can't write) the format.
+pub fn has_cover(path: &Path) -> Result<bool, String> {
+    let count = || -> Result<bool, String> {
+        let file = lofty::read_from_path(path).map_err(|e| e.to_string())?;
+        Ok(file.tags().iter().any(|t| t.picture_count() > 0))
+    };
+    std::panic::catch_unwind(count).unwrap_or_else(|_| Err("This file's tags can't be read.".into()))
+}
+
+fn write_with(path: &Path, change: impl FnOnce(&mut Tag)) -> Result<(), String> {
     let name = path.file_name().ok_or("no file name")?.to_string_lossy();
     let ext = path.extension().map(|e| e.to_string_lossy()).unwrap_or_default();
     let temp = path.with_file_name(format!(".{name}.soundglass-part.{ext}"));
-    let result = std::panic::catch_unwind(|| -> Result<(), String> {
+    // The edit only reads its captures, so nothing is left half-changed after a panic.
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| -> Result<(), String> {
         std::fs::copy(path, &temp).map_err(|e| e.to_string())?;
         let file = lofty::read_from_path(&temp).map_err(|e| e.to_string())?;
-        let mut tag = file.primary_tag().cloned().unwrap_or_else(|| Tag::new(file.primary_tag_type()));
-        apply(edit, &mut tag);
+        // Only another tag (an MP3's ID3v1): start from its fields, or the new primary tag would hide them.
+        let mut tag = file.primary_tag().or_else(|| file.first_tag()).cloned().unwrap_or_else(|| Tag::new(file.primary_tag_type()));
+        tag.re_map(file.primary_tag_type());
+        change(&mut tag);
         tag.save_to_path(&temp, lofty::config::WriteOptions::default()).map_err(|e| e.to_string())?;
         if audio(path)? != audio(&temp)? {
             return Err("writing the tags would change the audio, so nothing was written".into());
         }
         std::fs::rename(&temp, path).map_err(|e| e.to_string())
-    })
+    }))
     .unwrap_or_else(|_| Err("the tag writer failed".into()));
     if result.is_err() {
         let _ = std::fs::remove_file(&temp);
@@ -294,6 +326,51 @@ mod tests {
         let track = crate::track::Track::from_samples(44100, 2, vec![0.1; 44100 * 2]);
         crate::save::save(&track, &crate::edit::Edit::whole(44100), crate::save::Choice { kind: crate::save::Kind::Wav, ..Default::default() }, &b, None).unwrap();
         assert_ne!(audio(&a).unwrap(), audio(&b).unwrap());
+    }
+
+    #[test]
+    fn writes_a_bpm_and_keeps_the_other_tags() {
+        let dir = scratch("bpm");
+        let path = flac(&dir);
+        write_in_place(&path, &TagEdit { title: "Kept".into(), year: "1954".into(), ..TagEdit::default() }).unwrap();
+        let before = audio(&path).unwrap();
+        write_bpm(&path, 119).unwrap();
+        assert_eq!(read(&path).unwrap(), TagEdit { title: "Kept".into(), year: "1954".into(), bpm: "119".into(), ..TagEdit::default() });
+        assert_eq!(audio(&path).unwrap(), before);
+    }
+
+    #[test]
+    fn writes_a_cover_and_keeps_the_other_tags() {
+        let dir = scratch("cover");
+        let path = flac(&dir);
+        write_in_place(&path, &TagEdit { title: "Kept".into(), ..TagEdit::default() }).unwrap();
+        assert_eq!(has_cover(&path), Ok(false));
+        let before = audio(&path).unwrap();
+        write_cover(&path, &cover(png()).unwrap()).unwrap();
+        write_cover(&path, &cover(png()).unwrap()).unwrap();
+        assert_eq!(has_cover(&path), Ok(true));
+        assert_eq!(lofty::read_from_path(&path).unwrap().primary_tag().unwrap().picture_count(), 1, "replaced, not added");
+        assert_eq!(read(&path).unwrap().title, "Kept");
+        assert_eq!(audio(&path).unwrap(), before);
+        write_cover(&path, &Cover::Remove).unwrap();
+        assert_eq!((has_cover(&path), read(&path).unwrap().title.as_str()), (Ok(false), "Kept"));
+        assert!(has_cover(&dir.join("missing.mp3")).is_err());
+    }
+
+    #[test]
+    fn a_cover_keeps_the_tags_of_an_id3v1_only_mp3() {
+        let dir = scratch("id3v1");
+        let path = dir.join("old.mp3");
+        let track = crate::track::Track::from_samples(44100, 2, vec![0.1; 44100 * 2]);
+        crate::save::save(&track, &crate::edit::Edit::whole(44100), crate::save::Choice { kind: crate::save::Kind::Mp3, ..Default::default() }, &path, None).unwrap();
+        lofty::tag::TagType::Id3v2.remove_from_path(&path, lofty::config::WriteOptions::default()).unwrap();
+        let mut v1 = Tag::new(lofty::tag::TagType::Id3v1);
+        v1.set_title("Old Title".into());
+        v1.save_to_path(&path, lofty::config::WriteOptions::default()).unwrap();
+        assert_eq!(read(&path).unwrap().title, "Old Title");
+        write_cover(&path, &cover(png()).unwrap()).unwrap();
+        assert_eq!(read(&path).unwrap().title, "Old Title", "the new ID3v2 tag carries the ID3v1 fields");
+        assert_eq!(has_cover(&path), Ok(true));
     }
 
     #[test]

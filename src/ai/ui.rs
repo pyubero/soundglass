@@ -122,13 +122,14 @@ impl Ai {
     pub fn start_tool(&mut self, task: Task, track: Arc<crate::track::Track>, edit: Arc<crate::edit::Edit>, selection: Option<(u64, u64)>, s: &AiSettings, ctx: &egui::Context) {
         let Ok(model) = Ai::ready(task, s) else { return };
         let tune = tune_for(model, s);
+        let kind = if s.lossless { crate::save::Kind::Flac } else { crate::save::Kind::Vorbis };
         let source = track.path.clone();
         let (progress, cancel) = (Arc::new(AtomicU32::new(0)), Arc::new(AtomicBool::new(false)));
         let (tx, done) = std::sync::mpsc::channel();
         let (p, c, ctx) = (progress.clone(), cancel.clone(), ctx.clone());
         std::thread::spawn(move || {
             let report = |x: f32| p.store(x.to_bits(), Ordering::Relaxed);
-            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run_tool(task, model, &tune, &track, &edit, selection, &report, &c))).unwrap_or_else(|_| Err("the AI tool failed".into()));
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run_tool(task, model, &tune, &track, &edit, selection, kind, &report, &c))).unwrap_or_else(|_| Err("the AI tool failed".into()));
             let _ = tx.send(result);
             ctx.request_repaint();
         });
@@ -337,6 +338,12 @@ impl Ai {
                 }
             }
         }
+        ui.add_space(4.0);
+        ui.strong("Output");
+        ui.horizontal(|ui| {
+            ui.radio_value(&mut s.lossless, false, "Ogg Vorbis (q6)").on_hover_text("Small: about 6 MB for a 4-minute stem");
+            ui.radio_value(&mut s.lossless, true, "FLAC (lossless)").on_hover_text("About 50 MB for a 4-minute stem, for further editing");
+        });
         let installed = installed();
         egui::ScrollArea::vertical().max_height(520.0).show(ui, |ui| {
             for task in Task::ALL {
@@ -411,8 +418,8 @@ fn license_ui(ui: &mut egui::Ui, title: &str, l: &License, step: usize, count: u
 
 /// Runs a tool to the end (blocking): its output file, named after the track, next to it.
 /// With `selection` (edited frames), only that stretch: a clip for the files it writes, the
-/// track's own times for subtitles and beats.
-pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::track::Track, edit: &crate::edit::Edit, selection: Option<(u64, u64)>, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<Done, String> {
+/// track's own times for subtitles and beats. `kind`: the audio files' format.
+pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::track::Track, edit: &crate::edit::Edit, selection: Option<(u64, u64)>, kind: crate::save::Kind, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<Done, String> {
     let own = track.format.get().ok_or("the track has no audio")?.rate;
     if selection.is_some_and(|(a, b)| b.saturating_sub(a) < own as u64 / 2) {
         return Err("select at least half a second, or nothing for the whole track".into());
@@ -422,11 +429,11 @@ pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::tr
     let offset = selection.map_or(0, |s| s.0);
     match (task, tune) {
         (Task::Denoise, Tune::Denoise(t)) => {
-            let target = crate::save::reserve_named(&track.path, "denoised", "flac")?;
+            let target = crate::save::reserve_named(&track.path, "denoised", kind.ext())?;
             let result = (|| {
                 let channels = audio::planar(track, edit, denoise::RATE)?;
                 let clean = denoise::denoise(&model_path(model.file)?, channels, t.limit_db, &|p| progress(0.95 * p), cancel)?;
-                audio::save_flac(&clean, denoise::RATE, own, &target)
+                audio::save_audio(&clean, denoise::RATE, own, kind, &target)
             })();
             if result.is_err() {
                 let _ = std::fs::remove_file(&target);
@@ -443,8 +450,8 @@ pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::tr
                 let parts = stems::separate(&model_path(model.file)?, mix, t.overlap, &|p| progress(0.9 * p), cancel)?;
                 let mut written = Vec::new();
                 for ((name, part), _) in stems::NAMES.iter().zip(&parts).zip(t.write).filter(|(_, w)| *w) {
-                    let path = dir.join(format!("{name}.flac"));
-                    audio::save_flac(part, stems::RATE, own, &path)?;
+                    let path = dir.join(format!("{name}.{}", kind.ext()));
+                    audio::save_audio(part, stems::RATE, own, kind, &path)?;
                     written.push(path);
                 }
                 // The vocals, or the last one written (they're written in NAMES order).
@@ -494,7 +501,8 @@ pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::tr
                 };
                 found = beats::Beats { beats: back(&found.beats), downbeats: back(&found.downbeats) };
             }
-            let said = format!("Found {} beats and {} downbeats. The volume button's Metronome clicks along.", found.beats.len(), found.downbeats.len());
+            let tempo = beats::bpm(&found.beats, own).map(|b| format!(", ≈ {b} BPM")).unwrap_or_default();
+            let said = format!("Found {} beats{tempo}. Metronome on (volume button).", found.beats.len());
             *track.beats.lock().unwrap() = Some(Arc::new(found));
             Ok(Done::Said(said))
         }

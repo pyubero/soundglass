@@ -19,12 +19,13 @@ pub(super) fn planar(track: &Track, edit: &Edit, rate: u32) -> Result<Vec<Vec<f3
     if whole { Ok(out) } else { Err("the track isn't fully loaded".into()) }
 }
 
-/// Saves `channels` (at `rate`) to `target` as 24-bit FLAC at `keep_rate`, the original's rate.
-pub(super) fn save_flac(channels: &[Vec<f32>], rate: u32, keep_rate: u32, target: &Path) -> Result<(), String> {
+/// Saves `channels` (at `rate`) to `target` at `keep_rate`, the original's rate, as `kind`
+/// (24-bit FLAC or Ogg Vorbis q6).
+pub(super) fn save_audio(channels: &[Vec<f32>], rate: u32, keep_rate: u32, kind: crate::save::Kind, target: &Path) -> Result<(), String> {
     let frames = channels.iter().map(Vec::len).min().unwrap_or(0);
     let interleaved: Vec<f32> = (0..frames).flat_map(|i| channels.iter().map(move |c| c[i])).collect();
     let track = Track::from_samples(rate, channels.len(), interleaved);
-    let choice = crate::save::Choice { kind: crate::save::Kind::Flac, flac_bits: 24, rate: Some(keep_rate), ..Default::default() };
+    let choice = crate::save::Choice { kind, flac_bits: 24, vorbis_quality: 6, rate: Some(keep_rate), ..Default::default() };
     // Ok(false) only says the tags weren't copied: these files start without any.
     crate::save::save(&track, &Edit::whole(frames as u64), choice, target, None).map(drop)
 }

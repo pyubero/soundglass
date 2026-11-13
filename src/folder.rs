@@ -24,6 +24,17 @@ pub fn list_folder(path: &Path) -> Vec<PathBuf> {
     files
 }
 
+/// The one JPEG or PNG in `dir` (hidden ones left out), or None when there are none or several.
+pub fn lone_image(dir: &Path) -> Option<PathBuf> {
+    let image = |p: &PathBuf| {
+        let ext = p.extension().and_then(|e| e.to_str()).unwrap_or_default().to_ascii_lowercase();
+        ["jpg", "jpeg", "png"].contains(&ext.as_str()) && p.file_name().is_some_and(|n| !n.to_string_lossy().starts_with('.')) && p.is_file()
+    };
+    let mut images = std::fs::read_dir(dir).ok()?.filter_map(|e| Some(e.ok()?.path())).filter(image);
+    let first = images.next()?;
+    images.next().is_none().then_some(first)
+}
+
 /// The Folder panel's listing of `dir`: its subfolders and its audio files, each by name,
 /// hidden ones (".name") left out.
 pub fn list_dir(dir: &Path) -> std::io::Result<(Vec<PathBuf>, Vec<PathBuf>)> {
@@ -107,6 +118,22 @@ mod tests {
         let names: Vec<String> = list_folder(&dir.join("1 a.wav")).iter().map(|p| p.file_name().unwrap().to_string_lossy().into_owned()).collect();
         std::fs::remove_dir_all(&dir).unwrap();
         assert_eq!(names, ["1 a.wav", "2 b.flac", "10 b.MP3"]);
+    }
+
+    #[test]
+    fn one_image_only() {
+        let dir = std::env::temp_dir().join(format!("soundglass-test-{}-image", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        for f in ["a.mp3", "notes.txt", ".hidden.png"] {
+            std::fs::write(dir.join(f), b"").unwrap();
+        }
+        let none = lone_image(&dir);
+        std::fs::write(dir.join("Cover.JPG"), b"").unwrap();
+        let one = lone_image(&dir);
+        std::fs::write(dir.join("back.png"), b"").unwrap();
+        let two = lone_image(&dir);
+        std::fs::remove_dir_all(&dir).unwrap();
+        assert_eq!((none, one, two), (None, Some(dir.join("Cover.JPG")), None));
     }
 
     #[test]

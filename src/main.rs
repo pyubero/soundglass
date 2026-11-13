@@ -99,7 +99,7 @@ fn main() -> eframe::Result {
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_offer: None, cover_asked: Default::default(), rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), player, t0, timings, shown: false }))
     }))
 }
 
@@ -178,6 +178,8 @@ struct App {
     click_volume: f32,
     /// What the player was last sent for the Metronome: track, edit and beats, or None for off.
     sent_clicks: Option<Option<(usize, Option<usize>, usize)>>,
+    /// The last found beats seen (their Arc's address): new ones turn the Metronome on.
+    beats_seen: usize,
     /// Waits for Save As / Discard / Cancel while there are unsaved edits.
     pending: Option<Pending>,
     show_save: bool,
@@ -190,8 +192,14 @@ struct App {
     save_choice: save::Choice,
     /// Track Info's tag editor while it is open.
     tag_editor: Option<TagEditor>,
-    /// The running write of the tags into the file.
-    tag_job: Option<std::sync::mpsc::Receiver<Result<(), String>>>,
+    /// The running write of the tags (or a folder's cover): the notice to show, or why it failed.
+    tag_job: Option<std::sync::mpsc::Receiver<Result<String, String>>>,
+    /// The track (by address) last checked for a folder image to offer as its cover.
+    cover_checked: usize,
+    /// The cover being offered (or removed) while asking: from the Edit menu or the folder's lone image.
+    cover_offer: Option<CoverOffer>,
+    /// Folders already asked about this run, so Next doesn't ask again.
+    cover_asked: std::collections::HashSet<PathBuf>,
     /// File → Rename from Tags… while open: the pattern being edited, and the file's tags.
     rename: Option<(String, Result<tags::TagEdit, String>)>,
     identify: Option<Identify>,
@@ -244,6 +252,17 @@ struct Identify {
 enum IdentifyJob {
     Found(Result<Vec<identify::Match>, String>),
     Genre(Result<Option<String>, String>),
+}
+
+/// An image offered as the cover (or `Cover::Remove`), with its 256 px preview and the folder's tracks.
+struct CoverOffer {
+    /// The image file; empty when removing.
+    image: PathBuf,
+    cover: tags::Cover,
+    files: Vec<PathBuf>,
+    texture: Option<egui::TextureHandle>,
+    /// Picked from the Edit menu, so "This Track" is a choice too.
+    manual: bool,
 }
 
 /// Track Info's tag fields: the tags as the file has them, and as edited.
@@ -507,6 +526,7 @@ impl eframe::App for App {
         let mut toggle_edit = ctx.input_mut(|i| i.consume_shortcut(&edit_key));
         let open_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::O);
         let mut open_file = ctx.input_mut(|i| i.consume_shortcut(&open_key));
+        let (mut pick_cover, mut remove_cover) = (false, false);
         let mut open_recent = None;
         let info_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::I);
         let viewport = ctx.input(|i| i.viewport().clone());
@@ -590,6 +610,19 @@ impl eframe::App for App {
                             ui.close();
                         }
                     }
+                    ui.separator();
+                    // The write closes the tag editor, which would drop its unsaved edits.
+                    let why = if self.tag_job.is_some() { Some("saving tags…") } else if self.tag_editor.is_some() { Some("close the tag editor first") } else { None };
+                    let item = ui.add_enabled(why.is_none(), egui::Button::new("Add/Replace Album Cover…"));
+                    if item.on_disabled_hover_text(why.unwrap_or_default()).clicked() {
+                        pick_cover = true;
+                        ui.close();
+                    }
+                    let item = ui.add_enabled(why.is_none(), egui::Button::new("Remove Album Cover…"));
+                    if item.on_disabled_hover_text(why.unwrap_or_default()).clicked() {
+                        remove_cover = true;
+                        ui.close();
+                    }
                 });
                 ui.menu_button("Effects", |ui| self.effects_menu(ui, &mut actions));
                 ui.menu_button("View", |ui| {
@@ -646,7 +679,7 @@ impl eframe::App for App {
                     ui.menu_button("Practice", |ui| {
                         ui.checkbox(&mut self.looping, "Loop selection").on_hover_text("L");
                         let found = self.track.beats.lock().unwrap().is_some();
-                        ui.add_enabled(found, egui::Checkbox::new(&mut self.metronome, "Metronome")).on_hover_text("Clicks on the beats, louder on the first of each bar").on_disabled_hover_text("after Local AI → Find Beats");
+                        ui.add_enabled(found, egui::Checkbox::new(&mut self.metronome, "Metronome")).on_hover_text("Clicks on the found beats").on_disabled_hover_text("after Local AI → Find Beats");
                         if ui.checkbox(&mut self.show_spectrum, "Spectrogram").changed() {
                             ui.close();
                         }
@@ -732,7 +765,7 @@ impl eframe::App for App {
                 // The cover takes the width, but leaves room below for what was measured last frame.
                 let gap = 16.0 + 2.0 * ui.spacing().item_spacing.y;
                 let side = cover_side(ui.available_width(), ui.available_height(), self.controls_height, gap);
-                cover_art(ui, cover.as_ref(), side);
+                cover_art(ui, cover.as_ref(), side, &mut self.settings.cover_fit);
                 ui.add_space(16.0);
                 let controls = ui.scope(|ui| {
                     let title = tags.title.unwrap_or_else(|| self.track.path.file_stem().unwrap_or_default().to_string_lossy().into_owned());
@@ -777,6 +810,7 @@ impl eframe::App for App {
         self.unsaved_window(&ctx);
         self.save_window(&ctx);
         self.tags_confirm(&ctx);
+        self.cover_offer_modal(&ctx);
         self.follow_tags(&ctx);
         self.rename_window(&ctx);
         if let Some(task) = ai_tool {
@@ -792,14 +826,32 @@ impl eframe::App for App {
         if open_file && let Some(path) = rfd::FileDialog::new().add_filter("Audio", &folder::EXTENSIONS).pick_file() {
             self.open(path);
         }
+        let dir = self.track.path.parent().map(|d| d.to_path_buf()).unwrap_or_default();
+        if pick_cover && let Some(image) = rfd::FileDialog::new().add_filter("Image", &["jpg", "jpeg", "png"]).set_directory(dir).pick_file()
+            && let Err(e) = self.offer_cover(&ctx, image, true)
+        {
+            self.save_notice = Some((Err(e), ctx.input(|i| i.time)));
+        }
+        if remove_cover {
+            // The preview is the current track's own cover, if it shows one.
+            let texture = self.cover_texture(&ctx);
+            self.cover_offer = Some(CoverOffer { image: PathBuf::new(), cover: tags::Cover::Remove, files: folder::list_folder(&self.track.path), texture, manual: true });
+        }
         for action in actions {
             self.apply(action, pos, len);
         }
         // The Metronome follows the track, its edits and its beats.
         let beats = self.track.beats.lock().unwrap().clone();
+        if let Some(b) = &beats
+            && Arc::as_ptr(b) as usize != self.beats_seen
+        {
+            self.beats_seen = Arc::as_ptr(b) as usize;
+            self.metronome = true;
+            self.tag_bpm(b);
+        }
         let want = beats.as_ref().filter(|_| self.metronome).map(|b| (Arc::as_ptr(&self.track) as usize, self.history.as_ref().map(|h| Arc::as_ptr(h.current()) as usize), Arc::as_ptr(b) as usize));
         if self.sent_clicks != Some(want) && let Ok(p) = &self.player {
-            let clicks = beats.filter(|_| want.is_some()).map(|b| Arc::new(player::Clicks { beats: ai::edited_beats(&b.beats, &edit), downbeats: ai::edited_beats(&b.downbeats, &edit) }));
+            let clicks = beats.filter(|_| want.is_some()).map(|b| Arc::new(player::Clicks { beats: ai::edited_beats(&b.beats, &edit) }));
             p.send(Cmd::ClickVolume(volume_gain(self.click_volume)));
             p.send(Cmd::Clicks(clicks));
             self.sent_clicks = Some(want);
@@ -1082,13 +1134,13 @@ impl App {
                 }
                 Ok((dirs, files)) => {
                     for d in dirs {
-                        if ui.selectable_label(false, format!("{}/", name(d))).clicked() {
+                        if ui.selectable_label(false, format!("🗀 {}", name(d))).clicked() {
                             enter = Some(std::fs::canonicalize(d).unwrap_or_else(|_| d.clone()));
                         }
                     }
                     for f in files {
                         let current = *f == self.track.path;
-                        let row = ui.selectable_label(current, name(f));
+                        let row = ui.selectable_label(current, format!("♪ {}", name(f)));
                         if current && b.scrolled.as_ref() != Some(f) {
                             row.scroll_to_me(Some(egui::Align::Center));
                             b.scrolled = Some(f.clone());
@@ -1297,6 +1349,10 @@ impl App {
             return;
         }
         let path = std::fs::canonicalize(&path).unwrap_or(path);
+        // The Folder panel follows a file opened elsewhere (a tool's output, Recent, Open…).
+        if self.browse.as_ref().is_some_and(|b| Some(b.dir.as_path()) != path.parent()) {
+            self.browse = None;
+        }
         self.remember(&path);
         self.files = folder::list_folder(&path);
         self.next = None;
@@ -1705,13 +1761,131 @@ impl App {
             let (tx, rx) = std::sync::mpsc::channel();
             let (path, draft, notify) = (self.track.path.clone(), editor.draft.clone(), repaint(&self.ctx));
             std::thread::spawn(move || {
-                let _ = tx.send(tags::write_in_place(&path, &draft));
+                let _ = tx.send(tags::write_in_place(&path, &draft).map(|()| "Tags saved".into()));
                 notify();
             });
             (editor.confirm, self.tag_job) = (false, Some(rx));
         } else if cancel || modal.should_close() {
             editor.confirm = false;
         }
+    }
+
+    /// Asks about `image` as the cover of this track or its folder's tracks; `manual` when picked
+    /// from the Edit menu (this track or all), else the folder's lone image (all or not now).
+    fn offer_cover(&mut self, ctx: &egui::Context, image: PathBuf, manual: bool) -> Result<(), String> {
+        let bytes = std::fs::read(&image).map_err(|e| e.to_string())?;
+        let rgba = image::load_from_memory(&bytes).map_err(|_| "That image can't be read.")?.thumbnail(256, 256).to_rgba8();
+        let cover = tags::cover(bytes)?;
+        let size = [rgba.width() as usize, rgba.height() as usize];
+        let texture = ctx.load_texture("offered cover", egui::ColorImage::from_rgba_unmultiplied(size, &rgba), egui::TextureOptions::LINEAR);
+        self.cover_offer = Some(CoverOffer { image, cover, files: folder::list_folder(&self.track.path), texture: Some(texture), manual });
+        Ok(())
+    }
+
+    /// "Add album cover?" with the image, asked when a track without a cover opens
+    /// in a folder with exactly one JPEG or PNG, or from the Edit menu's cover items; the chosen
+    /// tracks are written on a thread, as the tag job.
+    fn cover_offer_modal(&mut self, ctx: &egui::Context) {
+        let key = Arc::as_ptr(&self.track) as usize;
+        if key != self.cover_checked && self.tag_editor.is_none() && self.tag_job.is_none() {
+            self.cover_checked = key;
+            let dir = self.track.path.parent().map(|d| d.to_path_buf()).unwrap_or_default();
+            // shortcut: one file's tags, the folder and the image (up to 10 MB) are read and decoded on the UI thread, once per track; move to a thread if a big image stalls a frame.
+            if !self.cover_asked.contains(&dir) && tags::has_cover(&self.track.path) == Ok(false) {
+                if let Some(image) = folder::lone_image(&dir) {
+                    // An unreadable image just isn't offered.
+                    let _ = self.offer_cover(ctx, image, false);
+                }
+            }
+        }
+        let Some(CoverOffer { image, cover, files, texture, manual }) = &self.cover_offer else { return };
+        let remove = matches!(cover, tags::Cover::Remove);
+        let name = image.file_name().unwrap_or_default().to_string_lossy().into_owned();
+        let n = files.len();
+        let what = if n == 1 { "this track".to_string() } else { format!("all {n} tracks in this folder") };
+        let (mut yes, mut one, mut no) = (false, false, false);
+        let modal = egui::Modal::new(egui::Id::unique("folder cover")).show(ctx, |ui| {
+            ui.set_max_width(320.0);
+            ui.heading(if remove { "Remove album cover" } else if *manual { "Album cover" } else { "Add album cover?" });
+            ui.add_space(4.0);
+            if let Some(texture) = texture {
+                ui.vertical_centered(|ui| {
+                    ui.add(egui::Image::from_texture(texture).max_size(egui::vec2(256.0, 256.0)).corner_radius(8.0).alt_text(if remove { "Current cover" } else { &name }));
+                });
+                ui.add_space(4.0);
+            }
+            if remove && n == 1 {
+                ui.label("Remove the cover from this track? The music itself isn't changed.");
+            } else if remove {
+                ui.label(format!("Remove the cover from this track only, or from {what}? The music itself isn't changed."));
+            } else if !*manual {
+                ui.label(format!("This track has no cover. Save {name} as the cover of {what}?"));
+                ui.label("Tracks that already have a cover get this one instead. The music itself isn't changed.");
+            } else if n == 1 {
+                ui.label(format!("Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed."));
+            } else {
+                ui.label(format!("Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed."));
+            }
+            ui.add_space(8.0);
+            ui.horizontal(|ui| match (*manual, n) {
+                (false, _) => {
+                    yes = ui.button("Add Cover").clicked();
+                    no = ui.button("Not Now").clicked();
+                }
+                (true, 1) => {
+                    yes = ui.button(if remove { "Remove Cover" } else { "Save Cover" }).clicked();
+                    no = ui.button("Cancel").clicked();
+                }
+                (true, _) => {
+                    yes = ui.button(format!("All {n} Tracks")).clicked();
+                    one = ui.button("This Track").clicked();
+                    no = ui.button("Cancel").clicked();
+                }
+            });
+        });
+        if !(yes || one || no || modal.should_close()) {
+            return;
+        }
+        let Some(CoverOffer { image, cover, mut files, manual, .. }) = self.cover_offer.take() else { return };
+        if !manual {
+            self.cover_asked.insert(image.parent().map(|d| d.to_path_buf()).unwrap_or_default());
+        }
+        if one {
+            files = vec![self.track.path.clone()];
+        }
+        if yes || one {
+            let (tx, rx) = std::sync::mpsc::channel();
+            let notify = repaint(&self.ctx);
+            let done_to = if matches!(cover, tags::Cover::Remove) { "removed from" } else { "added to" };
+            std::thread::spawn(move || {
+                let failed: Vec<String> = files.iter().filter(|f| tags::write_cover(f, &cover).is_err()).map(|f| f.file_name().unwrap_or_default().to_string_lossy().into_owned()).collect();
+                let done = files.len() - failed.len();
+                let _ = tx.send(match (done, failed.is_empty()) {
+                    (0, _) => Err(format!("The cover couldn't be written ({})", failed.join(", "))),
+                    (n, true) => Ok(format!("Cover {done_to} {n} track{}", if n == 1 { "" } else { "s" })),
+                    (n, false) => Ok(format!("Cover {done_to} {n} of {} tracks (not: {})", files.len(), failed.join(", "))),
+                });
+                notify();
+            });
+            self.tag_job = Some(rx);
+        }
+    }
+
+    /// After Find Beats: writes the found tempo as the file's BPM tag, unless it has one.
+    fn tag_bpm(&mut self, beats: &ai::Beats) {
+        // shortcut: skipped while the tag editor is open or tags are being written; queue it if that's missed.
+        let Some(rate) = self.track.format.get().map(|f| f.rate) else { return };
+        let Some(bpm) = ai::bpm(&beats.beats, rate) else { return };
+        if self.tag_editor.is_some() || self.tag_job.is_some() || !tags::read(&self.track.path).is_ok_and(|t| t.bpm.is_empty()) {
+            return;
+        }
+        let (tx, rx) = std::sync::mpsc::channel();
+        let (path, notify) = (self.track.path.clone(), repaint(&self.ctx));
+        std::thread::spawn(move || {
+            let _ = tx.send(tags::write_bpm(&path, bpm).map(|()| format!("BPM tag saved ({bpm})")));
+            notify();
+        });
+        self.tag_job = Some(rx);
     }
 
     /// Picks up the tag write: on success the track is read afresh under its tags, playing on.
@@ -1726,17 +1900,18 @@ impl App {
             Err(_) => Err("Writing the tags failed".into()),
         };
         self.tag_job = None;
-        let result = result.and_then(|()| self.relabel(self.track.path.clone()));
+        let result = result.and_then(|notice| self.relabel(self.track.path.clone()).map(|()| notice));
         match result {
-            Ok(()) => {
+            Ok(notice) => {
                 self.tag_editor = None;
-                self.save_notice = Some((Ok("Tags saved".into()), ctx.input(|i| i.time)));
+                // A track decoded ahead would show its old cover.
+                self.next = None;
+                self.save_notice = Some((Ok(notice), ctx.input(|i| i.time)));
             }
-            Err(e) => {
-                if let Some(editor) = &mut self.tag_editor {
-                    editor.error = Some(e);
-                }
-            }
+            Err(e) => match &mut self.tag_editor {
+                Some(editor) => editor.error = Some(e),
+                None => self.save_notice = Some((Err(e), ctx.input(|i| i.time))),
+            },
         }
     }
 
@@ -1993,16 +2168,41 @@ fn cover_side(width: f32, height: f32, controls: f32, gap: f32) -> f32 {
     (height - controls - gap).min(width).max(64.0).min(width)
 }
 
-/// The cover, fitted in a `side` × `side` square, or a placeholder note when there is none.
-fn cover_art(ui: &mut egui::Ui, cover: Option<&egui::TextureHandle>, side: f32) {
+/// The side the cover image is fitted into: the whole space, or at most 256 px.
+fn cover_fit_side(side: f32, fit: bool) -> f32 {
+    if fit { side } else { side.min(256.0) }
+}
+
+/// The cover in a `side` × `side` space (filling it when `fit`, else at most 256 px), with a
+/// corner button that flips `fit`; or a placeholder note when there is none.
+fn cover_art(ui: &mut egui::Ui, cover: Option<&egui::TextureHandle>, side: f32, fit: &mut bool) {
     let (rect, response) = ui.allocate_exact_size(egui::vec2(side, side), egui::Sense::hover());
     let painter = ui.painter_at(rect);
     match cover {
         Some(tex) => {
             let size = tex.size_vec2();
-            let fitted = egui::Rect::from_center_size(rect.center(), size * (side / size.x.max(size.y)));
+            let fitted = egui::Rect::from_center_size(rect.center(), size * (cover_fit_side(side, *fit) / size.x.max(size.y)));
             egui::Image::from_texture(tex).corner_radius(8.0).paint_at(ui, fitted);
             response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, true, "Album cover"));
+            let button = egui::Rect::from_min_max(rect.right_bottom() - egui::vec2(26.0, 26.0), rect.right_bottom() - egui::vec2(6.0, 6.0));
+            let tip = if *fit { "Cover at 256 px" } else { "Fit cover space" };
+            let click = ui.interact(button, egui::Id::unique("cover fit"), egui::Sense::click());
+            click.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, tip));
+            let visuals = ui.visuals();
+            painter.rect_filled(button, 4.0, visuals.extreme_bg_color.gamma_multiply(0.7));
+            let color = if click.hovered() { visuals.strong_text_color() } else { visuals.weak_text_color() };
+            // Two arrows on the diagonal: out to the corners to fit, in to the middle to shrink.
+            let (c, stroke) = (button.center(), egui::Stroke::new(1.5, color));
+            for dir in [egui::vec2(1.0, -1.0), egui::vec2(-1.0, 1.0)] {
+                let (inner, outer) = (c + dir * 1.5, c + dir * 6.0);
+                let (tip_at, back) = if *fit { (inner, dir) } else { (outer, -dir) };
+                painter.line_segment([inner, outer], stroke);
+                painter.line_segment([tip_at, tip_at + egui::vec2(back.x * 3.5, 0.0)], stroke);
+                painter.line_segment([tip_at, tip_at + egui::vec2(0.0, back.y * 3.5)], stroke);
+            }
+            if click.on_hover_text(tip).clicked() {
+                *fit = !*fit;
+            }
         }
         None => {
             let visuals = ui.visuals();
@@ -2198,7 +2398,9 @@ fn edit_panel(ui: &mut egui::Ui, view: &mut EditView, cache: &mut WaveCache, tra
             }
         });
     });
-    let size = egui::vec2(ui.available_width(), ui.available_height().max(40.0));
+    let zoomed = view.frames != 0;
+    let bar = if zoomed { SCROLLBAR + ui.spacing().item_spacing.y } else { 0.0 };
+    let size = egui::vec2(ui.available_width(), (ui.available_height() - bar).max(40.0));
     let (rect, response) = ui.allocate_exact_size(size, egui::Sense::click_and_drag());
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Slider, true, "Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along"));
     let seek = select(ui, &response, rect, (view.start, frames), &mut view.selection, &mut view.anchor);
@@ -2206,7 +2408,39 @@ fn edit_panel(ui: &mut egui::Ui, view: &mut EditView, cache: &mut WaveCache, tra
     let frames = if view.frames == 0 { len } else { view.frames };
     let cols = cache.columns(track, edit, view.start, frames, rect.width() as u64);
     draw_waveform(&ui.painter_at(rect), ui.visuals(), rect, cols, (view.start, frames), pos, view.selection);
+    if zoomed {
+        scrollbar(ui, view, len);
+    }
     seek
+}
+
+/// The Edit panel's scrollbar height.
+const SCROLLBAR: f32 = 10.0;
+
+/// Zoomed in, where `view` sits in the track `len`: drag the thumb or click the bar to move along.
+fn scrollbar(ui: &mut egui::Ui, view: &mut EditView, len: u64) {
+    let (rect, response) = ui.allocate_exact_size(egui::vec2(ui.available_width(), SCROLLBAR), egui::Sense::click_and_drag());
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::ScrollBar, true, "Waveform position"));
+    // Zoomed out to the whole track this frame (by the wheel): nothing to scroll.
+    if view.frames == 0 || len == 0 {
+        return;
+    }
+    let frames = view.frames.min(len);
+    let per_px = len as f64 / rect.width().max(1.0) as f64;
+    let start = if response.dragged() {
+        view.start as f64 + response.drag_delta().x as f64 * per_px
+    } else if response.clicked() && let Some(p) = response.interact_pointer_pos() {
+        (p.x - rect.left()) as f64 * per_px - frames as f64 / 2.0
+    } else {
+        view.start as f64
+    };
+    view.start = start.clamp(0.0, (len - frames) as f64) as u64;
+    let x = |f: u64| rect.left() + (f as f64 / per_px) as f32;
+    let (a, b) = (x(view.start), x(view.start + frames));
+    let thumb = egui::Rect::from_x_y_ranges(a..=b.max(a + 6.0), rect.y_range());
+    let painter = ui.painter_at(rect);
+    painter.rect_filled(rect, SCROLLBAR / 2.0, ui.visuals().extreme_bg_color);
+    painter.rect_filled(thumb, SCROLLBAR / 2.0, ui.style().interact(&response).bg_fill);
 }
 
 /// Keeps `view` inside the track `len` and, zoomed in, turns the page when the playhead `pos`
@@ -2554,7 +2788,7 @@ fn transport(ui: &mut egui::Ui, playing: bool, has_next: bool, volume: f32, metr
                 ui.add(egui::Slider::new(&mut v, 0.0..=1.0).show_value(false).text("Volume"));
                 match metronome {
                     Some(_) => {
-                        ui.checkbox(&mut on, "Metronome").on_hover_text("Clicks on the found beats, louder on the first of each bar");
+                        ui.checkbox(&mut on, "Metronome").on_hover_text("Clicks on the found beats");
                         ui.add_enabled(on, egui::Slider::new(&mut clicks, 0.0..=1.0).show_value(false).text("Clicks"));
                     }
                     None => drop(ui.add_enabled(false, egui::Checkbox::new(&mut false, "Metronome")).on_disabled_hover_text("after Local AI → Find Beats")),
@@ -2667,7 +2901,7 @@ pub fn ms(t: Instant) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{clock_ms, cover_side, display_pos, info_rows, marquee, push_recent, resize_for_panel, snap_speed, title, volume_gain, zoom_view};
+    use super::{clock_ms, cover_fit_side, cover_side, display_pos, info_rows, marquee, push_recent, resize_for_panel, snap_speed, title, volume_gain, zoom_view};
     use std::path::PathBuf;
 
     #[test]
@@ -2729,6 +2963,7 @@ mod tests {
         assert_eq!(cover_side(364.0, 680.0, 250.0, 22.0), 364.0, "narrow: limited by width");
         assert_eq!(cover_side(364.0, 300.0, 250.0, 22.0), 64.0, "tiny: smallest cover");
         assert_eq!(cover_side(40.0, 300.0, 250.0, 22.0), 40.0, "never wider than the window");
+        assert_eq!((cover_fit_side(400.0, false), cover_fit_side(180.0, false), cover_fit_side(400.0, true)), (256.0, 180.0, 400.0));
     }
 
     #[test]

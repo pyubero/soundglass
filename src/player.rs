@@ -39,14 +39,13 @@ pub enum Cmd {
     Clicks(Option<Arc<Clicks>>),
 }
 
-/// Beats and downbeats in the current track's (edited) frames, in order.
+/// Beats in the current track's (edited) frames, in order.
 #[derive(Debug, Default, PartialEq)]
 pub struct Clicks {
     pub beats: Vec<u64>,
-    pub downbeats: Vec<u64>,
 }
 
-/// A click: 25 ms of a decaying sine, higher and louder on downbeats.
+/// A click: 25 ms of a decaying sine, the same on every beat (the found downbeats aren't reliable).
 const CLICK_SECS: f64 = 0.025;
 
 /// Adds the clicks that sound during frames `pos..` to `stereo` (interleaved, two channels), at `gain`.
@@ -55,7 +54,7 @@ fn add_clicks(stereo: &mut [f32], pos: u64, clicks: &Clicks, rate: u32, gain: f3
     let end = pos + (stereo.len() / 2) as u64;
     let first = clicks.beats.partition_point(|&b| b + len <= pos);
     for &b in clicks.beats[first..].iter().take_while(|&&b| b < end) {
-        let (freq, amp) = if clicks.downbeats.binary_search(&b).is_ok() { (2000.0, 0.5) } else { (1500.0, 0.35) };
+        let (freq, amp) = (1500.0, 0.35);
         for f in b.max(pos)..(b + len).min(end) {
             let t = (f - b) as f64 / rate as f64;
             let v = gain * (amp * (std::f64::consts::TAU * freq * t).sin() * (-t / 0.006).exp()) as f32;
@@ -569,15 +568,15 @@ mod tests {
         let mut e = engine();
         let track = Track::from_samples(48000, 1, vec![0.0; 6000]);
         e.handle(Cmd::Load(track.clone()));
-        e.handle(Cmd::Clicks(Some(Arc::new(Clicks { beats: vec![500, 3000], downbeats: vec![3000] }))));
+        e.handle(Cmd::Clicks(Some(Arc::new(Clicks { beats: vec![500, 3000] }))));
         assert!(e.pull(4500));
         let l = left(&e, 4500);
         let loud = |a: usize, b: usize| l[a..b].iter().map(|x| x.abs()).fold(0f32, f32::max);
-        // Silence except 25 ms (1200 frames) after each beat, the downbeat louder.
+        // Silence except 25 ms (1200 frames) after each beat, every click alike.
         assert_eq!(loud(0, 500), 0.0);
         assert!(loud(500, 1700) > 0.2 && loud(500, 1700) < 0.36);
         assert_eq!(loud(1700, 3000), 0.0);
-        assert!(loud(3000, 4200) > 0.36);
+        assert!((loud(3000, 4200) - loud(500, 1700)).abs() < 1e-3);
         assert_eq!(e.input[1000 * 2], e.input[1000 * 2 + 1]);
         // Across two pulls, the click carries on where it was.
         e.handle(Cmd::Seek(0));
@@ -593,7 +592,7 @@ mod tests {
     fn song_and_clicks_have_their_own_volume() {
         let mut e = engine();
         e.handle(Cmd::Load(Track::from_samples(48000, 1, vec![0.5; 6000])));
-        e.handle(Cmd::Clicks(Some(Arc::new(Clicks { beats: vec![3000], downbeats: vec![] }))));
+        e.handle(Cmd::Clicks(Some(Arc::new(Clicks { beats: vec![3000] }))));
         let play = |e: &mut Engine| {
             e.handle(Cmd::Seek(0));
             assert!(e.pull(4500));
