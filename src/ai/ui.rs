@@ -366,6 +366,36 @@ pub(super) fn run_tool(task: Task, model: &Known, track: &crate::track::Track, e
             }
             result.map(|()| target)
         }
+        Task::Stems => {
+            let dir = reserve_dir(&track.path, "stems")?;
+            let result = (|| {
+                let mix = audio::planar(track, edit, stems::RATE)?;
+                let parts = stems::separate(&model_path(model.file)?, mix, &|p| progress(0.9 * p), cancel)?;
+                for (name, part) in stems::NAMES.iter().zip(&parts) {
+                    audio::save_flac(part, stems::RATE, own, &dir.join(format!("{name}.flac")))?;
+                }
+                Ok(dir.join("vocals.flac"))
+            })();
+            if result.is_err() {
+                let _ = std::fs::remove_dir_all(&dir);
+            }
+            result
+        }
         _ => Err("not built yet".into()),
     }
+}
+
+/// Creates the first free folder `<stem>-<what>` (then `-2`…) next to `source`, so nothing is overwritten.
+fn reserve_dir(source: &Path, what: &str) -> Result<PathBuf, String> {
+    let stem = source.file_stem().unwrap_or_default().to_string_lossy();
+    for n in 1.. {
+        let suffix = if n == 1 { String::new() } else { format!("-{n}") };
+        let dir = source.with_file_name(format!("{stem}-{what}{suffix}"));
+        match std::fs::create_dir(&dir) {
+            Ok(()) => return Ok(dir),
+            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
+            Err(e) => return Err(format!("can't make a folder next to the track ({e})")),
+        }
+    }
+    unreachable!()
 }

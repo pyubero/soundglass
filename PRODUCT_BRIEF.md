@@ -104,7 +104,7 @@ Everything here is behind View → Practice mode, which adds a Practice menu (Lo
 - **Chord recognition** Check if it is even possible. A first try (chroma, major/minor/7th templates, Viterbi) finds the main chords but not the changes: see [docs/CHORDS.md](docs/CHORDS.md). Built anyway, to be improved later: Spectrogram → Chords shows them in a bar along the top.
 
 ### Local AI for practice (optional download)
-- **Split into stems.** Vocals, drums, bass and the rest as separate files, for karaoke or practising along.
+- **Split into stems.** Vocals, drums, bass and the rest as separate files, for karaoke or practising along. Done: Local AI → Split into Stems (HTDemucs v4) writes the four stems into name-stems/ and opens the vocals.
 - **Melody to MIDI.** Turn a sung or played melody into a MIDI file.
 
 ### Our own engine: the Griffin–Lim modulator in Rust

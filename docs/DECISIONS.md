@@ -196,3 +196,7 @@
 - 2026-11-13 — a model's outputs are looked up by name with an error, never by indexing (a missing name panicked in ort)
 - 2026-11-13 — FLAC is saved without flacenc's fixed predictors (LPC, constant and verbatim only): flacenc 0.5.1's fixed path wrote a 33 MB frame for one ordinary 4096-frame stereo block (a Demucs stem), which symphonia skipped without an error; ffmpeg still read it
 - 2026-11-13 — Save's check reads lossless saves (WAV, FLAC) back frame for frame; lossy ones keep the 0.1 s allowance for encoder delay — the 0.1 s let the skipped 93 ms block through
+- 2026-11-13 — Split into Stems uses StemSplit's single-file HTDemucs v4 export with half-precision weights (166 MB, differs from fp32 by 5e-5; STFT inside the graph), not the four-model htdemucs_ft bag (1.26 GB, ~0.4 dB better); 7.8 s segments with a quarter overlap, cross-faded, and the mix scaled by its mono mean and deviation as Demucs' api.py does
+- 2026-11-13 — HTDemucs's weights come with Demucs' MIT licence but one model card says no explicit grant for the weights was found (accepted risk, as the conversions all state MIT)
+- 2026-11-13 — stems go into a new folder next to the track, name-stems/ (then -2…), as drums, bass, other and vocals.flac, and the vocals are opened; a failure removes the folder
+- 2026-11-13 — all four stems are held in memory, ~170 MB a minute (accepted; stream to the encoders if long tracks run out)

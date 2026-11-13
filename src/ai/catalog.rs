@@ -21,8 +21,10 @@ pub struct Known {
 
 const DEEPFILTERNET_LICENSE: License = License { project: "DeepFilterNet", spdx: "MIT OR Apache-2.0", url: "https://github.com/Rikorose/DeepFilterNet", text: include_str!("../../licenses/deepfilternet.txt") };
 
+const DEMUCS_LICENSE: License = License { project: "Demucs (HTDemucs v4)", spdx: "MIT", url: "https://github.com/facebookresearch/demucs", text: include_str!("../../licenses/demucs.txt") };
+
 /// In order of preference per task.
-pub const CATALOG: [Known; 1] = [Known {
+pub const CATALOG: [Known; 2] = [Known {
     file: "denoiser_model.onnx",
     label: "DeepFilterNet3 — speech, 48 kHz",
     task: Task::Denoise,
@@ -33,6 +35,16 @@ pub const CATALOG: [Known; 1] = [Known {
     data: &[],
     converted_by: Some("The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face."),
     licenses: &[DEEPFILTERNET_LICENSE],
+}, Known {
+    file: "htdemucs_fp16weights.onnx",
+    label: "HTDemucs v4 — drums, bass, other, vocals",
+    task: Task::Stems,
+    mb: 166,
+    sha256: "d05c269d0178d2a72ad484b10b11dd370193fc923201c3b27a99f848745db70a",
+    base: "https://huggingface.co/StemSplitio/htdemucs-onnx/resolve/d54ed9eb60e258ea82131c6ee14578628816456a",
+    data: &[],
+    converted_by: Some("The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face."),
+    licenses: &[DEMUCS_LICENSE],
 }];
 
 pub(super) fn models_dir() -> Result<PathBuf, String> {

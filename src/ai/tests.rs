@@ -144,3 +144,91 @@ fn denoise_album_track() {
     std::fs::remove_dir_all(&dir).unwrap();
     assert!(near, "{} vs {}", track.len(), back.len());
 }
+
+/// A temp copy of the album's first track, loaded; and its folder.
+fn album_copy(name: &str) -> (std::sync::Arc<crate::track::Track>, PathBuf) {
+    let album = std::env::current_dir().unwrap().join("1954-Louis Armstrong Plays W.C.Handy");
+    let src = crate::folder::list_dir(&album).unwrap().1.into_iter().next().expect("the test album");
+    let dir = temp(name);
+    std::fs::create_dir_all(&dir).unwrap();
+    let copy = dir.join("song.mp3");
+    std::fs::copy(&src, &copy).unwrap();
+    let track = crate::track::Track::load(copy, || {});
+    while !track.done() {
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    }
+    (track, dir)
+}
+
+fn installed_model(task: Task) -> &'static Known {
+    install_runtime();
+    let k = CATALOG.iter().find(|k| k.task == task).unwrap();
+    if !model_path(k.file).unwrap().is_file() {
+        download(k, &|_| {}, &AtomicBool::new(false)).unwrap();
+    }
+    k
+}
+
+/// Online, then the first 60 s of an album track: four stems that add back up to the mix.
+#[test]
+#[ignore]
+fn stems_add_up_to_the_mix() {
+    let k = installed_model(Task::Stems);
+    let (track, dir) = album_copy("stems");
+    let edit = crate::edit::Edit::whole(track.len()).crop(30 * 44_100, 90 * 44_100);
+    let t0 = std::time::Instant::now();
+    let vocals = ui::run_tool(Task::Stems, k, &track, &edit, &|_| {}, &AtomicBool::new(false)).unwrap();
+    eprintln!("60 s split in {:.1} s on the {}", t0.elapsed().as_secs_f32(), if on_gpu() { "GPU" } else { "CPU" });
+    assert_eq!(vocals, dir.join("song-stems").join("vocals.flac"));
+    let mix = audio::planar(&track, &edit, 44_100).unwrap();
+    let stems: Vec<Vec<Vec<f32>>> = stems::NAMES
+        .iter()
+        .map(|n| {
+            let t = crate::track::Track::load(dir.join("song-stems").join(format!("{n}.flac")), || {});
+            while !t.done() {
+                std::thread::sleep(std::time::Duration::from_millis(20));
+            }
+            audio::planar(&t, &crate::edit::Edit::whole(t.len()), 44_100).unwrap()
+        })
+        .collect();
+    let db = |x: f64| 10.0 * x.log10();
+    let (mut signal, mut residual, mut voc) = (0f64, 0f64, 0f64);
+    for c in 0..2 {
+        for i in 0..stems.iter().map(|s| s[c].len()).min().unwrap() {
+            let sum: f32 = stems.iter().map(|s| s[c][i]).sum();
+            signal += (mix[c][i] as f64).powi(2);
+            residual += ((mix[c][i] - sum) as f64).powi(2);
+            voc += (stems[3][c][i] as f64).powi(2);
+        }
+    }
+    eprintln!("mix − sum of stems: {:.1} dB below the mix; vocals {:.1} dB below the mix", db(signal / residual), db(signal / voc));
+    std::fs::remove_dir_all(&dir).unwrap();
+    assert!(db(signal / residual) > 15.0);
+}
+
+#[test]
+fn saved_results_keep_their_length() {
+    let dir = temp("save-flac");
+    std::fs::create_dir_all(&dir).unwrap();
+    let mut out = Vec::new();
+    for frames in [2_646_000usize, 100_000] {
+        let ch: Vec<Vec<f32>> = (0..2).map(|c| (0..frames).map(|i| ((i * (c + 3)) % 200) as f32 / 400.0).collect()).collect();
+        let clipped: Vec<Vec<f32>> = (0..2).map(|c| (0..frames).map(|i| 2.0 * (i as f32 * 0.01 * (c + 1) as f32).sin()).collect()).collect();
+        let path = dir.join(format!("{frames}-clipped.flac"));
+        audio::save_flac(&clipped, 44_100, 44_100, &path).unwrap();
+        let t = crate::track::Track::load(path, || {});
+        while !t.done() {
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+        out.push((frames as u64, t.len()));
+        let path = dir.join(format!("{frames}.flac"));
+        audio::save_flac(&ch, 44_100, 44_100, &path).unwrap();
+        let t = crate::track::Track::load(path, || {});
+        while !t.done() {
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+        out.push((frames as u64, t.len()));
+    }
+    std::fs::remove_dir_all(&dir).unwrap();
+    assert!(out.iter().all(|(a, b)| a == b), "{out:?}");
+}

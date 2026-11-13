@@ -9,6 +9,7 @@ mod audio;
 mod catalog;
 mod denoise;
 mod runtime;
+mod stems;
 mod ui;
 
 pub use catalog::*;
