@@ -90,7 +90,7 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 ### 9. Local AI (optional download)
 The runtime and model manager, as in lightview: Local AI → Download AI Runtime… and AI Models… (CPU, and NVIDIA's CUDA as a second download). Done. The tools, each a milestone: Remove noise (DeepFilterNet3), Transcribe speech (Whisper small, Parakeet TDT 0.6B v3 or Whisper large-v3-turbo, chosen in AI Models…), and for Practice mode Split into stems (HTDemucs), Melody to MIDI (Basic Pitch) and Find beats (Beat This!, which brings back the Metronome).
 - **Remove noise.** Clean background noise and hum from voice recordings. Done: Local AI → Remove Noise writes name-denoised.flac with DeepFilterNet3 and opens it.
-- **Transcribe speech.** Turn a talk or voice memo into text you can copy.
+- **Transcribe speech.** Turn a talk or voice memo into text you can copy. Done: Local AI → Transcribe Speech with Parakeet TDT 0.6B v3, Whisper small or Whisper large-v3-turbo (chosen in AI Models…), in a window with Copy and Save as Text….
 
 ## v2: Practice mode
 Everything here is behind View → Practice mode, which adds a Practice menu (Loop selection, Spectrogram) and turns on the tempo, key and chord analysis.

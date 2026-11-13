@@ -55,11 +55,15 @@ struct Job {
 pub(super) enum Done {
     Open(PathBuf),
     Said(String),
+    /// A transcript, shown to copy or save.
+    Text(String),
 }
 
 /// An AI tool running on its own thread.
 struct Run {
     task: Task,
+    /// The track it runs on.
+    source: PathBuf,
     progress: Arc<AtomicU32>,
     cancel: Arc<AtomicBool>,
     done: Receiver<Result<Done, String>>,
@@ -72,6 +76,8 @@ pub struct Ai {
     run: Option<Run>,
     /// A tool's outcome when nothing opens (a saved MIDI file, an error), shown until closed.
     run_error: Option<(Task, Result<String, String>)>,
+    /// Transcribe Speech's text, and the track it came from (for the .txt's name).
+    transcript: Option<(String, PathBuf)>,
     /// A licence being read: what for, and which of its licences.
     license: Option<(Download, usize)>,
     jobs: Vec<Job>,
@@ -113,6 +119,7 @@ impl Ai {
     /// Runs `task` on the edited track, on its own thread; the file it makes is opened when done.
     pub fn start_tool(&mut self, task: Task, track: Arc<crate::track::Track>, edit: Arc<crate::edit::Edit>, s: &AiSettings, ctx: &egui::Context) {
         let Ok(model) = Ai::ready(task, s) else { return };
+        let source = track.path.clone();
         let (progress, cancel) = (Arc::new(AtomicU32::new(0)), Arc::new(AtomicBool::new(false)));
         let (tx, done) = std::sync::mpsc::channel();
         let (p, c, ctx) = (progress.clone(), cancel.clone(), ctx.clone());
@@ -122,7 +129,7 @@ impl Ai {
             let _ = tx.send(result);
             ctx.request_repaint();
         });
-        (self.run, self.run_error) = (Some(Run { task, progress, cancel, done }), None);
+        (self.run, self.run_error) = (Some(Run { task, source, progress, cancel, done }), None);
     }
 
     /// The running tool's window; the file it made, once it's done.
@@ -145,6 +152,7 @@ impl Ai {
                     return Some(path);
                 }
                 Ok(Ok(Done::Said(m))) => (self.run, self.run_error) = (None, Some((run.task, Ok(m)))),
+                Ok(Ok(Done::Text(t))) => (self.transcript, self.run) = (Some((t, run.source.clone())), None),
                 Ok(Err(e)) => {
                     let task = run.task;
                     let cancelled = run.cancel.load(Ordering::Relaxed);
@@ -156,6 +164,7 @@ impl Ai {
                 Err(TryRecvError::Disconnected) => (self.run, self.run_error) = (None, Some((run.task, Err("the AI tool stopped".into())))),
             }
         }
+        self.transcript_window(ctx);
         if let Some((task, e)) = &self.run_error {
             let mut open = true;
             egui::Window::new(task.title()).open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| match e {
@@ -175,6 +184,41 @@ impl Ai {
             return Err("needs the AI runtime: Local AI → Download AI Runtime…");
         }
         choose(s.models.get(&task), task, &installed()).ok_or("needs a model: Local AI → AI Models…")
+    }
+
+    /// Transcribe Speech's result: the text to read or select, Copy, and Save as Text….
+    fn transcript_window(&mut self, ctx: &egui::Context) {
+        let Some((text, source)) = &mut self.transcript else { return };
+        let mut open = true;
+        let mut saved = None;
+        egui::Window::new("Transcript").open(&mut open).collapsible(false).default_size([480.0, 360.0]).show(ctx, |ui| {
+            egui::ScrollArea::vertical().max_height(360.0).show(ui, |ui| {
+                // Read-only but selectable: edits to the text are thrown away each frame.
+                let mut shown = text.as_str();
+                ui.add(egui::TextEdit::multiline(&mut shown).desired_width(f32::INFINITY));
+            });
+            ui.horizontal(|ui| {
+                if ui.button("Copy").clicked() {
+                    ctx.copy_text(text.clone());
+                }
+                if ui.button("Save as Text…").clicked() {
+                    let name = format!("{}.txt", source.file_stem().unwrap_or_default().to_string_lossy());
+                    let mut dialog = rfd::FileDialog::new().add_filter("Text", &["txt"]).set_file_name(name);
+                    if let Some(dir) = source.parent() {
+                        dialog = dialog.set_directory(dir);
+                    }
+                    if let Some(path) = dialog.save_file() {
+                        saved = Some(save_text(&path, text));
+                    }
+                }
+            });
+        });
+        if let Some(r) = saved {
+            self.run_error = Some((Task::Transcribe, r.map(|p| format!("Saved {}", p.file_name().unwrap_or_default().to_string_lossy()))));
+        }
+        if !open {
+            self.transcript = None;
+        }
     }
 
     /// The AI Models window, the licence prompt and the running tool; follows the downloads.
@@ -425,7 +469,20 @@ pub(super) fn run_tool(task: Task, model: &Known, track: &crate::track::Track, e
             *track.beats.lock().unwrap() = Some(Arc::new(found));
             Ok(Done::Said(said))
         }
-        _ => Err("not built yet".into()),
+        Task::Transcribe => {
+            let channels = audio::planar(track, edit, transcribe::RATE)?;
+            let mono: Vec<f32> = (0..channels[0].len()).map(|i| channels.iter().map(|c| c[i]).sum::<f32>() / channels.len() as f32).collect();
+            let path = |f: &str| model_path(f);
+            let text = match model.data {
+                [(dj, _), (features, _), (vocab, _)] => transcribe::parakeet(&path(model.file)?, &path(dj)?, &path(features)?, &path(vocab)?, &mono, progress, cancel)?,
+                [(decoder, _), (tokens, _)] => transcribe::whisper(&path(model.file)?, &path(decoder)?, &path(tokens)?, &mono, progress, cancel)?,
+                _ => return Err("not a transcription model".into()),
+            };
+            if text.trim().is_empty() {
+                return Err("no speech was found".into());
+            }
+            Ok(Done::Text(text))
+        }
     }
 }
 
@@ -442,4 +499,16 @@ fn reserve_dir(source: &Path, what: &str) -> Result<PathBuf, String> {
         }
     }
     unreachable!()
+}
+
+/// Writes `text` to `path` through a temporary file beside it, so a failed write leaves no half file.
+/// The system dialog has already asked before replacing an existing file.
+fn save_text(path: &Path, text: &str) -> Result<PathBuf, String> {
+    let name = path.file_name().ok_or("no file name")?.to_string_lossy();
+    let temp = path.with_file_name(format!(".{name}.soundglass-part"));
+    let result = std::fs::write(&temp, text.as_bytes()).and_then(|()| std::fs::rename(&temp, path)).map_err(|e| e.to_string());
+    if result.is_err() {
+        let _ = std::fs::remove_file(&temp);
+    }
+    result.map(|()| path.to_path_buf())
 }

@@ -332,7 +332,7 @@ fn beats_on_the_album() {
         let t0 = std::time::Instant::now();
         let said = match ui::run_tool(Task::Beats, k, &track, &edit, &|_| {}, &AtomicBool::new(false)).unwrap() {
             ui::Done::Said(s) => s,
-            ui::Done::Open(_) => unreachable!(),
+            other => panic!("{other:?}"),
         };
         let secs = t0.elapsed().as_secs_f32();
         let b = track.beats.lock().unwrap().clone().unwrap();
@@ -382,4 +382,37 @@ fn log_mel_matches_the_reference() {
     let diff = ours.iter().zip(&want).map(|(a, b)| (a - b).abs()).fold(0f32, f32::max);
     eprintln!("{} vs {} values, max diff {diff}", ours.len(), want.len());
     assert!(ours.len() == want.len() && diff < 1e-3);
+}
+
+/// By hand: SG_DUMP gets our Whisper mel filters, to compare with OpenAI's mel_filters.npz.
+#[test]
+#[ignore]
+fn dump_whisper_filters() {
+    let dir = PathBuf::from(std::env::var("SG_DUMP").unwrap());
+    for n in [80, 128] {
+        let f = transcribe::mel_filters(n);
+        std::fs::write(dir.join(format!("filters{n}.f32")), f.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>()).unwrap();
+    }
+}
+
+/// Online: each transcription model (or those whose file starts with SG_MODEL) on SG_WAV.
+#[test]
+#[ignore]
+fn transcribe_a_recording() {
+    install_runtime();
+    let wav = PathBuf::from(std::env::var("SG_WAV").unwrap());
+    let only = std::env::var("SG_MODEL").unwrap_or_default();
+    let track = crate::track::Track::load(wav, || {});
+    while !track.done() {
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    }
+    let edit = crate::edit::Edit::whole(track.len());
+    for k in CATALOG.iter().filter(|k| k.task == Task::Transcribe && k.file.starts_with(&only)) {
+        if !std::iter::once(k.file).chain(k.data.iter().map(|d| d.0)).all(|f| model_path(f).unwrap().is_file()) {
+            download(k, &|_| {}, &AtomicBool::new(false)).unwrap();
+        }
+        let t0 = std::time::Instant::now();
+        let done = ui::run_tool(Task::Transcribe, k, &track, &edit, &|_| {}, &AtomicBool::new(false));
+        eprintln!("{} ({:.1} s): {done:?}", k.file, t0.elapsed().as_secs_f32());
+    }
 }

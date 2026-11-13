@@ -102,6 +102,10 @@ The tools work on the track as edited and never change it: each writes a new fil
 - **Split into Stems** (Practice mode; HTDemucs v4, 166 MB): writes `drums.flac`, `bass.flac`, `other.flac` and `vocals.flac` into a new `name-stems` folder and opens the vocals, so Page Down and the Folder panel step through the others. About real time on the CPU (a 4-minute song takes about 5 minutes); much faster with GPU support. All four stems are held in memory, about 170 MB a minute of audio.
 - **Melody to MIDI** (Practice mode; Spotify's Basic Pitch, 0.2 MB): turns what's played or sung, several notes at once, into `name-melody.mid` (120 bpm, Electric Piano), with Basic Pitch's default thresholds and no pitch bends. A minute of audio takes about a second.
 - **Find Beats** (Practice mode; Beat This!, 191 MB): finds the beats and the first beat of each bar, shown as ticks along the bottom of the Spectrogram; then Practice → Metronome clicks on them while the track plays (louder on the first of each bar), through cuts, reversals and speed changes. A song takes 10–30 s on the CPU. Speech and free-time passages get no beats.
+- **Transcribe Speech** (three models; pick one in AI Models…): shows the track's words in a window, with Copy and Save as Text…. Long recordings are cut into pieces of at most 29 s at quiet moments; silent pieces are skipped. On a 12-thread CPU, for 164 s of a 1954 interview:
+  - Parakeet TDT 0.6B v3 (671 MB): 25 European languages, punctuated, the most accurate and fastest, 14 s. CC BY 4.0: by NVIDIA.
+  - Whisper small (375 MB): 99 languages, detected from the first piece with sound, 88 s.
+  - Whisper large-v3-turbo (1,037 MB): 99 languages, about as slow as small on the CPU; it may leave out capitals and punctuation.
 
 ## Install as the default audio player
 
@@ -118,3 +122,5 @@ To undo: delete `~/.local/bin/soundglass`, `~/.local/share/applications/soundgla
 GPL-3.0-or-later.
 
 Bundled libraries, built from source into the program: LAME (MP3 encoding, LGPL), libvorbis with the aoTuV and Lancer patches and libogg (Ogg Vorbis encoding, BSD-3-Clause). The Rust crates' licences are in `Cargo.lock`'s dependency list; all are GPL-3-compatible.
+
+The AI runtime and models are not part of soundglass: each is downloaded only on request, after its licence (embedded in `licenses/`) is shown and accepted. Speech recognition with Parakeet uses NVIDIA's Parakeet TDT 0.6B v3, licensed under CC BY 4.0 (https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), in istupakov's ONNX conversion, unchanged.

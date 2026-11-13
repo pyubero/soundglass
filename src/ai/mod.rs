@@ -12,6 +12,7 @@ mod denoise;
 mod midi;
 mod runtime;
 mod stems;
+mod transcribe;
 mod ui;
 
 pub use beats::{Beats, edited as edited_beats};

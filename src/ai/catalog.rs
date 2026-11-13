@@ -27,8 +27,12 @@ const BASIC_PITCH_LICENSE: License = License { project: "Basic Pitch (Spotify)",
 
 const BEAT_THIS_LICENSE: License = License { project: "Beat This! (JKU Linz)", spdx: "MIT", url: "https://github.com/CPJKU/beat_this", text: include_str!("../../licenses/beat-this.txt") };
 
+const WHISPER_LICENSE: License = License { project: "Whisper (OpenAI)", spdx: "MIT", url: "https://github.com/openai/whisper", text: include_str!("../../licenses/whisper.txt") };
+const PARAKEET_LICENSE: License = License { project: "NVIDIA Parakeet TDT 0.6B v3", spdx: "CC-BY-4.0", url: "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3", text: include_str!("../../licenses/parakeet.txt") };
+const SHERPA_WHISPER: &str = "The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.";
+
 /// In order of preference per task.
-pub const CATALOG: [Known; 4] = [Known {
+pub const CATALOG: [Known; 7] = [Known {
     file: "denoiser_model.onnx",
     label: "DeepFilterNet3 — speech, 48 kHz",
     task: Task::Denoise,
@@ -71,6 +75,46 @@ pub const CATALOG: [Known; 4] = [Known {
     data: &[("mel-filterbank.bin", "1ee975d96f44ccf2c3bfe37825c1c1f0b089f5703c7a12a84b1f0a3bce004533")],
     converted_by: Some("The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face."),
     licenses: &[BEAT_THIS_LICENSE],
+}, Known {
+    file: "small-encoder.int8.onnx",
+    label: "Whisper small — 99 languages",
+    task: Task::Transcribe,
+    mb: 375,
+    sha256: "4cbe7b22fa9026b843b60a68640c747de05bafb1a11b57edc0e66c232d9f33a9",
+    base: "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-small/resolve/8f3c18b358db4d1f2fc1eae49d75cd20989e4309",
+    data: &[
+        ("small-decoder.int8.onnx", "acad50b5c782696e91b55914cc5ab4f756f1532f76e22aa6fc615f39fb69a8ee"),
+        ("small-tokens.txt", "b34b360dbb493e781e479794586d661700670d65564001f23024971d1f2fa126"),
+    ],
+    converted_by: Some(SHERPA_WHISPER),
+    licenses: &[WHISPER_LICENSE],
+}, Known {
+    file: "encoder-model.int8.onnx",
+    label: "Parakeet TDT 0.6B v3 — 25 European languages, more accurate",
+    task: Task::Transcribe,
+    mb: 671,
+    sha256: "6139d2fa7e1b086097b277c7149725edbab89cc7c7ae64b23c741be4055aff09",
+    base: "https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx/resolve/8f23f0c03c8761650bdb5b40aaf3e40d2c15f1ce",
+    data: &[
+        ("decoder_joint-model.int8.onnx", "eea7483ee3d1a30375daedc8ed83e3960c91b098812127a0d99d1c8977667a70"),
+        ("nemo128.onnx", "a9fde1486ebfcc08f328d75ad4610c67835fea58c73ba57e3209a6f6cf019e9f"),
+        ("vocab.txt", "d58544679ea4bc6ac563d1f545eb7d474bd6cfa467f0a6e2c1dc1c7d37e3c35d"),
+    ],
+    converted_by: Some("The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face."),
+    licenses: &[PARAKEET_LICENSE],
+}, Known {
+    file: "turbo-encoder.int8.onnx",
+    label: "Whisper large-v3-turbo — 99 languages, best, slow on a CPU",
+    task: Task::Transcribe,
+    mb: 1037,
+    sha256: "b02dcdf54f348741e93fe732b67d933c8dcb6735655f710640143081db38878b",
+    base: "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-turbo/resolve/2ca6ff69fc878651b770880507669577ac41c2ff",
+    data: &[
+        ("turbo-decoder.int8.onnx", "20accd02388482eb3a46bd615631adfdc85e1eb2c7db9ea3f02a40ffe6b81547"),
+        ("turbo-tokens.txt", "b34b360dbb493e781e479794586d661700670d65564001f23024971d1f2fa126"),
+    ],
+    converted_by: Some(SHERPA_WHISPER),
+    licenses: &[WHISPER_LICENSE],
 }];
 
 pub(super) fn models_dir() -> Result<PathBuf, String> {

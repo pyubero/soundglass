@@ -210,3 +210,9 @@
 - 2026-11-13 — the Metronome clicks over the track at the found beats: a 25 ms decaying sine, 1.5 kHz at −9 dBFS, 2 kHz at −6 dBFS on downbeats, mixed into the player's input before WSOLA (so it follows speed changes) without allocating; Load and the gapless move turn it off, the UI sends it again for the new track
 - 2026-11-13 — Practice → Metronome is off at start and not saved, greyed out until Find Beats has run on the track; turning Practice mode off turns it off
 - 2026-11-13 — a click alone at a set tempo (no track) is not built
+- 2026-11-13 — Transcribe Speech offers three models, the user picks in AI Models…: Parakeet TDT 0.6B v3 (istupakov's int8 export, 671 MB, with its own feature graph), Whisper small and Whisper large-v3-turbo (sherpa-onnx's int8 exports, 375 MB and 1,037 MB); turbo is over the "hundreds of MB" aim (flagged to the user)
+- 2026-11-13 — Whisper's log-mel is ours (realfft; the filters match OpenAI's mel_filters.npz within 4e-9), padded as sherpa-onnx does; greedy decoding with sherpa's suppressed tokens and at most 224 tokens a piece; the language is detected once, from the first piece with sound
+- 2026-11-13 — Parakeet is decoded greedily as onnx-asr does (TDT durations, at most 10 tokens a step), each piece from a blank state
+- 2026-11-13 — long audio is cut into pieces of at most 29 s at the quietest 100 ms of each piece's last 5 s; pieces under 0.001 RMS are skipped (Whisper makes up words in silence); no timestamps
+- 2026-11-13 — the transcript is shown in a window with Copy and Save as Text… (the system's save dialog, written through a temp file and renamed), not written next to the track
+- 2026-11-13 — Whisper small runs at ~2× real time on the CPU, slower than Parakeet (accepted; IoBinding of the caches is the thing to try)
