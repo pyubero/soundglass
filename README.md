@@ -64,6 +64,33 @@ Reset puts all three back to normal. The last two use WSOLA, which can sound a l
 - File → Identify Track… (online, only when you click Look up) sends the file's Chromaprint fingerprint and length to AcoustID and lists the matches with their score; Use Match fetches the genre from MusicBrainz (sending only the recording's ID) and fills Track Info's tag editor, only the empty fields unless you untick that. Nothing is written until Save… there. It is greyed out until the build has an AcoustID key and a contact URL (`src/identify.rs`).
 - File → Rename from Tags… renames the current file from a pattern such as `{track} - {artist} - {title}` (also `{album}`, `{year}`, `{genre}`), with a preview. A missing tag is left out, and an existing file is never replaced.
 
+## Themes
+
+File → Settings… → Theme changes the colours and shapes of menus, panels, dialogs and buttons. The seek bar, the waveforms and the play buttons use the theme's colours too. A theme can't move, add or hide anything, and it doesn't change the fonts or the Spectrogram's colours (those are in its own settings).
+
+- **Theme files:** each theme is an `.xml` file in `~/.local/share/soundglass/themes` (Windows: `%APPDATA%\soundglass\data\themes`), which the Open themes folder button opens. The first time soundglass starts, it writes `dark.xml`, `light.xml` and `high-contrast.xml` there. Edit them, or copy one under a new name to make your own; a file's name is its name in the list. soundglass never overwrites or recreates these files, so edits and deletions stay. lightview's theme files work here too.
+- **Choosing a theme again** reloads its file, so you can edit it and look at the result without restarting.
+- **Follow system** (the default) uses `dark.xml` or `light.xml`, depending on the desktop's dark/light setting. On Linux it's read when soundglass starts, so after changing the desktop's setting, restart soundglass. When the desktop gives no preference, `dark.xml` is used.
+- **The base theme:** built into soundglass and identical to the original Light theme. Any key a file leaves out takes the base theme's value. A file that's missing or can't be read (bad XML, a wrong value, bigger than 64 KiB) is replaced by the whole base theme, and Settings says what's wrong and on which line.
+
+The three files set every key, so they work as templates. `mode` is `dark` or `light`: it decides which half of Follow system the theme can stand in for, and the shades of things themes don't set, such as shadows. Colours are `#rrggbb` or `#rrggbbaa`.
+
+```xml
+<theme mode="dark">  <!-- or "light" -->
+  <colors panel="#1b1b1b" window="#1b1b1b" border="#3c3c3c" field="#0a0a0a" text="#8c8c8c"
+          accent="#005c80" selected-text="#c0deff" hyperlink="#5aaaff" warn="#ff8f00" error="#ff0000"/>
+  <widget state="hovered" fill="#404040" text="#f5f5f5" border="#969696"/>
+  <!-- … one widget element for each of the five states … -->
+  <shape rounding="6" stroke="1" spacing="8,3" padding="4,1"/>
+</theme>
+```
+
+- `colors`: `panel` and `window` are the background of the menu bar and panels, and of dialogs and menus; `border` is the border of dialogs and menus; `field` is the background of text fields; `text` is labels and other text; `accent` and `selected-text` are selected items (and the played part of the waveform) and their text; `hyperlink`, `warn` and `error` are links, warnings and errors.
+- `widget`: `state` is `noninteractive` (separators, frames), `inactive`, `hovered`, `active` (pressed) or `open` (an open menu or list), one element per state; `fill`, `text` and `border` are that state's background, text and border.
+- `shape`: `rounding` is the corner radius of buttons, menus and dialogs, 0–16; `stroke` is the border width, 0.5–4 (set a `border` colour for `inactive` too, or its border stays invisible); `spacing` and `padding` are the space between items and inside buttons, `x,y`, each 0–24.
+
+Unknown elements and attributes are ignored.
+
 ## Install as the default audio player
 
 ```

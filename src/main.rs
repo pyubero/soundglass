@@ -9,6 +9,7 @@ mod loudness;
 mod player;
 mod save;
 mod settings;
+mod theme;
 mod spectrum;
 mod track;
 mod tags;
@@ -64,6 +65,17 @@ fn main() -> eframe::Result {
     let index = files.iter().position(|p| *p == path).unwrap_or(0);
     let opening = std::thread::spawn(move || Player::open(t0, timings, bench));
 
+    // winit reports the system theme on Windows only, so egui's fallback comes from the desktop portal,
+    // read while the window opens. shortcut: read once per start; watch the portal's SettingChanged to follow live.
+    #[cfg(target_os = "linux")]
+    {
+        let ctx = ctx.clone();
+        std::thread::spawn(move || if let Some(theme) = theme::system_theme() {
+            ctx.wait().options_mut(|o| o.fallback_theme = theme);
+            ctx.wait().request_repaint();
+        });
+    }
+
     let name = track.path.file_name().unwrap_or_default().to_string_lossy().into_owned();
     let settings = settings::load();
     let remembered = settings.window_size.filter(|_| settings.remember_window_size);
@@ -79,11 +91,13 @@ fn main() -> eframe::Result {
         let mut recent: Vec<PathBuf> = cc.storage.and_then(|s| s.get_string("recent")).unwrap_or_default().lines().map(PathBuf::from).collect();
         push_recent(&mut recent, &track.path);
         cc.egui_ctx.set_fonts(fonts());
+        theme::seed_folder();
+        let theme_error = theme::apply(&cc.egui_ctx, &settings.theme);
         let player = opening.join().unwrap_or_else(|_| Err("the sound device failed to open".into()));
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
         }
-        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, advanced: 0, ctx, cover: None, settings, volume: 1.0, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, player, t0, timings, shown: false }))
     }))
 }
 
@@ -136,6 +150,8 @@ struct App {
     /// The Custom… effect dialog's effect and value.
     custom_fx: Option<(Fx, f64)>,
     show_settings: bool,
+    /// Why the chosen theme didn't load, shown in Settings.
+    theme_error: Option<String>,
     show_info: bool,
     show_edit: bool,
     /// The Edit panel's height as last shown.
@@ -1199,6 +1215,27 @@ impl App {
                 ui.radio_value(&mut self.settings.show_waveform, false, "Line");
                 ui.radio_value(&mut self.settings.show_waveform, true, "Waveform");
             });
+            ui.horizontal(|ui| {
+                ui.label("Theme:");
+                let mut chosen = false;
+                egui::ComboBox::from_id_salt("theme").selected_text(theme::name(&self.settings.theme)).show_ui(ui, |ui| {
+                    // Read only while the list is open, so a theme just copied in shows up.
+                    for id in [theme::SYSTEM.to_string()].into_iter().chain(theme::user_themes()) {
+                        if ui.selectable_label(self.settings.theme == id, theme::name(&id)).clicked() {
+                            (self.settings.theme, chosen) = (id, true);
+                        }
+                    }
+                }).response.on_hover_text("Your own themes go in the themes folder. Choosing a theme again reloads its file.");
+                if chosen {
+                    self.theme_error = theme::apply(ctx, &self.settings.theme);
+                }
+                if ui.button("Open themes folder").clicked() {
+                    theme::open_folder();
+                }
+            });
+            if let Some(e) = &self.theme_error {
+                ui.colored_label(ui.visuals().error_fg_color, e);
+            }
             ui.checkbox(&mut self.settings.remember_window_size, "Remember window size");
             ui.weak("Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.");
         });

@@ -55,6 +55,8 @@ pub struct Settings {
     pub note_label_size: f32,
     /// How the Spectrogram is analysed and coloured.
     pub spectrum: crate::spectrum::Params,
+    /// `theme::SYSTEM`, a shipped theme's id, or the file name (without `.xml`) of a user theme.
+    pub theme: String,
 }
 
 impl Default for Settings {
@@ -74,6 +76,7 @@ impl Default for Settings {
             note_c_width: 2.0,
             note_label_size: 11.0,
             spectrum: Default::default(),
+            theme: crate::theme::SYSTEM.into(),
         }
     }
 }
@@ -107,6 +110,9 @@ impl Settings {
         self.note_c_width = if positive(self.note_c_width) { self.note_c_width.min(6.0) } else { d.note_c_width };
         self.note_label_size = if positive(self.note_label_size) { self.note_label_size.clamp(6.0, 24.0) } else { d.note_label_size };
         self.note_scale = self.note_scale.filter(|&k| k < 12);
+        if self.theme.is_empty() {
+            self.theme = d.theme.clone();
+        }
         if self.rename_pattern.is_empty() {
             self.rename_pattern = d.rename_pattern;
         }
@@ -145,6 +151,7 @@ mod tests {
                 low: 40.0,
                 map: crate::spectrum::ColourMap::BlueRed,
             },
+            theme: "high-contrast".into(),
         };
         let app_ron = |v: &str| ron::to_string(&HashMap::from([(KEY.to_string(), v.to_string())])).unwrap();
         assert_eq!(parse(&app_ron(&ron::to_string(&s).unwrap())), s);
@@ -155,9 +162,9 @@ mod tests {
         // Only some fields: the rest keep their defaults.
         let some = parse(&app_ron("(practice: true, spectrum: (fft: 8192))"));
         assert_eq!((some.practice, some.spectrum.fft, some.note_a4, some.spectrum.hop), (true, 8192, 440.0, crate::spectrum::Params::default().hop));
-        let bad = parse(&app_ron("(note_a4: 1000, info_width: -3, edit_height: 0, window_size: Some((700, -1)), note_scale: Some(12), note_label_size: 99, rename_pattern: \"\", spectrum: (fft: 3000, window: 99999))"));
+        let bad = parse(&app_ron("(note_a4: 1000, info_width: -3, edit_height: 0, window_size: Some((700, -1)), note_scale: Some(12), note_label_size: 99, rename_pattern: \"\", theme: \"\", spectrum: (fft: 3000, window: 99999))"));
         assert_eq!((bad.note_a4, bad.info_width, bad.edit_height, bad.window_size, bad.note_scale, bad.note_label_size), (480.0, INFO_WIDTH, EDIT_HEIGHT, None, None, 24.0));
-        assert_eq!(bad.rename_pattern, crate::tags::DEFAULT_PATTERN);
+        assert_eq!((bad.rename_pattern.as_str(), bad.theme.as_str()), (crate::tags::DEFAULT_PATTERN, crate::theme::SYSTEM));
         assert_eq!(bad.spectrum, crate::spectrum::Params { fft: 3000, window: 99999, ..Default::default() }.checked());
     }
 }
