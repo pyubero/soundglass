@@ -181,4 +181,5 @@
 - 2026-11-13 — Identify Track's online check and Clean up a music folder wait until an AcoustID key is available (user's choice)
 - 2026-11-13 — no Delete or Move to Trash: the app never deletes a file; lightview's Trash isn't carried over (user's choice)
 - 2026-11-13 — themes carried over from lightview: XML files in the data folder's themes/ (Dark, Light, High contrast written on first start, Follow system the default), parsed with roxmltree (new dependency: user's choice) — one file format for both apps
-- 2026-11-13 — no canvas keys in soundglass themes: everything it draws (seek bar, waveforms, play buttons) takes egui's visuals; lightview's canvas element is ignored if present
+- 2026-11-13 — no canvas keys in soundglass themes: everything it draws (seek bar, waveforms, play buttons) takes egui's visuals; lightview's canvas element is ignored if present — changed 2026-11-13: one key of its own after all, played (see below)
+- 2026-11-13 — themes get a played colour (<colors played>) for the seek bar's and waveforms' played part; left out, it's the file's own accent — accent was 1.6:1 against Light's panel, too faint (user's choice)

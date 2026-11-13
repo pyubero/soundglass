@@ -20,6 +20,8 @@ pub struct Theme {
     pub mode: egui::Theme,
     pub visuals: egui::Visuals,
     pub spacing: egui::Spacing,
+    /// The played part of the seek bar and waveforms, which egui's `Visuals` has no slot for.
+    pub played: Color32,
 }
 
 /// The name shown in Settings: the shipped themes by name, others by file name.
@@ -104,10 +106,13 @@ fn base() -> Theme {
 /// Applies the theme `id` to `ctx`, keeping the text sizes. A theme that fails to load is
 /// replaced by the base theme and the error is returned.
 pub fn apply(ctx: &egui::Context, id: &str) -> Option<String> {
-    let set = |slot, t: &Theme| ctx.style_mut_of(slot, |s| {
-        s.visuals = t.visuals.clone();
-        s.spacing = t.spacing.clone();
-    });
+    let set = |slot, t: &Theme| {
+        ctx.style_mut_of(slot, |s| {
+            s.visuals = t.visuals.clone();
+            s.spacing = t.spacing.clone();
+        });
+        ctx.data_mut(|d| d.insert_temp(played_id(slot), t.played));
+    };
     let or_base = |id| match load(id) {
         Ok(t) => (t, None),
         Err(e) => (base(), Some(e)),
@@ -127,6 +132,15 @@ pub fn apply(ctx: &egui::Context, id: &str) -> Option<String> {
     error
 }
 
+fn played_id(slot: egui::Theme) -> egui::Id {
+    egui::Id::unique(("theme-played", slot))
+}
+
+/// The theme's colour for the played part, for the dark or light slot `ctx` shows now.
+pub fn played(ctx: &egui::Context) -> Color32 {
+    ctx.data(|d| d.get_temp(played_id(ctx.theme()))).unwrap_or_else(|| ctx.global_style().visuals.selection.bg_fill)
+}
+
 /// A theme file: egui's defaults for its mode, then the base theme's values, then the file's.
 pub fn parse(xml: &str) -> Result<Theme, String> {
     let doc = roxmltree::Document::parse(xml).map_err(|e| e.to_string())?;
@@ -139,9 +153,14 @@ pub fn parse(xml: &str) -> Result<Theme, String> {
         Some("light") => egui::Theme::Light,
         Some(other) => return Err(format!("mode=\"{other}\": invalid value")),
     };
-    let mut t = Theme { mode, visuals: mode.default_visuals(), spacing: egui::Spacing::default() };
+    let mut t = Theme { mode, visuals: mode.default_visuals(), spacing: egui::Spacing::default(), played: Color32::TRANSPARENT };
     apply_elements(&roxmltree::Document::parse(BASE).expect("the base theme is XML"), &mut t)?;
+    // Not the base's: a file without it (lightview's) takes its own accent.
+    t.played = Color32::TRANSPARENT;
     apply_elements(&doc, &mut t)?;
+    if t.played == Color32::TRANSPARENT {
+        t.played = t.visuals.selection.bg_fill;
+    }
     Ok(t)
 }
 
@@ -165,6 +184,7 @@ fn apply_elements(doc: &roxmltree::Document, t: &mut Theme) -> Result<(), String
                 if let Some(c) = color("hyperlink")? { v.hyperlink_color = c; }
                 if let Some(c) = color("warn")? { v.warn_fg_color = c; }
                 if let Some(c) = color("error")? { v.error_fg_color = c; }
+                if let Some(c) = color("played")? { t.played = c; }
             }
             "widget" => {
                 let w = match node.attribute("state") {
@@ -250,8 +270,9 @@ mod tests {
     fn without_base(xml: &str) -> egui::Visuals {
         let doc = roxmltree::Document::parse(xml).unwrap();
         let mode = if doc.root_element().attribute("mode") == Some("light") { egui::Theme::Light } else { egui::Theme::Dark };
-        let mut t = Theme { mode, visuals: mode.default_visuals(), spacing: egui::Spacing::default() };
+        let mut t = Theme { mode, visuals: mode.default_visuals(), spacing: egui::Spacing::default(), played: Color32::TRANSPARENT };
         apply_elements(&doc, &mut t).unwrap();
+        assert_ne!(t.played, Color32::TRANSPARENT);
         t.visuals
     }
 
@@ -274,6 +295,10 @@ mod tests {
         assert_eq!(t.visuals.widgets.hovered.weak_bg_fill, Color32::from_rgba_unmultiplied(255, 0, 0, 128));
         assert_eq!(t.visuals.window_fill, base.visuals.window_fill);
         assert_eq!(t.visuals.widgets.inactive, base.visuals.widgets.inactive);
+        // Played is the exception: left out, it's the file's own accent.
+        let t = parse(r##"<theme><colors accent="#123456"/></theme>"##).unwrap();
+        assert_eq!(t.played, Color32::from_rgb(0x12, 0x34, 0x56));
+        assert_eq!(parse(r##"<theme><colors played="#abcdef"/></theme>"##).unwrap().played, Color32::from_rgb(0xab, 0xcd, 0xef));
     }
 
     #[test]
@@ -303,6 +328,7 @@ mod tests {
         assert!(apply(&ctx, "no such theme, surely").is_some());
         assert_eq!(ctx.theme(), egui::Theme::Light);
         assert_eq!(ctx.style_of(egui::Theme::Light).visuals, base().visuals);
+        assert_eq!(played(&ctx), base().played);
     }
 
     #[test]

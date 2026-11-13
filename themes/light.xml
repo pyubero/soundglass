@@ -1,7 +1,8 @@
 <!-- soundglass's Light theme. The built-in base theme is the original of this file. See dark.xml. -->
 <theme mode="light">
   <colors panel="#f8f8f8" window="#f8f8f8" border="#bebebe" field="#ffffff" text="#505050"
-          accent="#90d1ff" selected-text="#00537d" hyperlink="#009bff" warn="#ff6400" error="#ff0000"/>
+          accent="#90d1ff" selected-text="#00537d" hyperlink="#009bff" warn="#ff6400" error="#ff0000"
+          played="#1976d2"/>
   <widget state="noninteractive" fill="#f8f8f8" text="#505050" border="#bebebe"/>
   <widget state="inactive" fill="#e6e6e6" text="#3c3c3c" border="#e6e6e6"/>
   <widget state="hovered" fill="#dcdcdc" text="#000000" border="#696969"/>

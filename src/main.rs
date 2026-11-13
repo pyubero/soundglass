@@ -2035,7 +2035,7 @@ fn seek_bar(ui: &mut egui::Ui, pos: u64, len: u64, rate: u64, wave: Option<Wave>
         draw_waveform(&painter, visuals, rect, cache.columns(track, edit, 0, len, rect.width() as u64), (0, len), pos, selection);
     } else {
         painter.rect_filled(bar, 2.0, visuals.widgets.inactive.bg_fill);
-        painter.rect_filled(egui::Rect::from_min_max(bar.min, egui::pos2(x, bar.max.y)), 2.0, visuals.selection.bg_fill);
+        painter.rect_filled(egui::Rect::from_min_max(bar.min, egui::pos2(x, bar.max.y)), 2.0, theme::played(ui.ctx()));
         let knob = if response.hovered() || response.dragged() { 7.0 } else { 5.0 };
         // Not clipped to the bar's rect, so the knob can overhang its ends.
         ui.painter().circle_filled(egui::pos2(x, bar.center().y), knob, visuals.strong_text_color());
@@ -2085,10 +2085,10 @@ fn draw_waveform(painter: &egui::Painter, visuals: &egui::Visuals, rect: egui::R
         let shade = egui::Rect::from_x_y_ranges(x_of(a).max(rect.left())..=x_of(b).min(rect.right()), rect.y_range());
         painter.rect_filled(shade, 0.0, visuals.selection.bg_fill.gamma_multiply(0.35));
     }
-    let (mid, half, played) = (rect.center().y, rect.height() / 2.0, x_of(pos));
+    let (mid, half, played, played_color) = (rect.center().y, rect.height() / 2.0, x_of(pos), theme::played(painter.ctx()));
     for (c, &(lo, hi)) in cols.iter().enumerate() {
         let x = rect.left() + c as f32 + 0.5;
-        let color = if x < played { visuals.selection.bg_fill } else { visuals.text_color() };
+        let color = if x < played { played_color } else { visuals.text_color() };
         // At least one point tall, so silence still shows as a line.
         let (top, bottom) = ((mid - hi * half).min(mid - 0.5), (mid - lo * half).max(mid + 0.5));
         painter.line_segment([egui::pos2(x, top), egui::pos2(x, bottom)], egui::Stroke::new(1.0, color));

@@ -78,14 +78,15 @@ The three files set every key, so they work as templates. `mode` is `dark` or `l
 ```xml
 <theme mode="dark">  <!-- or "light" -->
   <colors panel="#1b1b1b" window="#1b1b1b" border="#3c3c3c" field="#0a0a0a" text="#8c8c8c"
-          accent="#005c80" selected-text="#c0deff" hyperlink="#5aaaff" warn="#ff8f00" error="#ff0000"/>
+          accent="#005c80" selected-text="#c0deff" hyperlink="#5aaaff" warn="#ff8f00" error="#ff0000"
+          played="#5aaaff"/>
   <widget state="hovered" fill="#404040" text="#f5f5f5" border="#969696"/>
   <!-- … one widget element for each of the five states … -->
   <shape rounding="6" stroke="1" spacing="8,3" padding="4,1"/>
 </theme>
 ```
 
-- `colors`: `panel` and `window` are the background of the menu bar and panels, and of dialogs and menus; `border` is the border of dialogs and menus; `field` is the background of text fields; `text` is labels and other text; `accent` and `selected-text` are selected items (and the played part of the waveform) and their text; `hyperlink`, `warn` and `error` are links, warnings and errors.
+- `colors`: `panel` and `window` are the background of the menu bar and panels, and of dialogs and menus; `border` is the border of dialogs and menus; `field` is the background of text fields; `text` is labels and other text; `accent` and `selected-text` are selected items and their text; `hyperlink`, `warn` and `error` are links, warnings and errors; `played` is the played part of the seek bar and the waveforms (left out, it's the file's own `accent`, not the base theme's, so lightview's themes still look as they did there).
 - `widget`: `state` is `noninteractive` (separators, frames), `inactive`, `hovered`, `active` (pressed) or `open` (an open menu or list), one element per state; `fill`, `text` and `border` are that state's background, text and border.
 - `shape`: `rounding` is the corner radius of buttons, menus and dialogs, 0–16; `stroke` is the border width, 0.5–4 (set a `border` colour for `inactive` too, or its border stays invisible); `spacing` and `padding` are the space between items and inside buttons, `x,y`, each 0–24.
 
