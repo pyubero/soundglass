@@ -78,7 +78,7 @@ pub struct SpeechTune {
 
 impl Default for SpeechTune {
     fn default() -> Self {
-        SpeechTune { language: String::new(), translate: false, silence_db: -60.0, time_marks: false }
+        SpeechTune { language: String::new(), translate: false, silence_db: -60.0, time_marks: true }
     }
 }
 
@@ -248,7 +248,7 @@ mod tests {
         assert_eq!(tune_for(midi, &s), Tune::Midi(MidiTune::default()));
         let speech = CATALOG.iter().find(|k| k.task == Task::Transcribe).unwrap();
         s.tune.insert(speech.file.into(), Tune::Speech(SpeechTune { language: " EN ".into(), silence_db: -200.0, ..Default::default() }));
-        assert_eq!(tune_for(speech, &s), Tune::Speech(SpeechTune { language: "en".into(), silence_db: -80.0, translate: false, time_marks: false }));
+        assert_eq!(tune_for(speech, &s), Tune::Speech(SpeechTune { language: "en".into(), silence_db: -80.0, translate: false, time_marks: true }));
         assert_eq!((note_name(21), note_name(60), note_name(108)), ("A0".to_string(), "C4".to_string(), "C8".to_string()));
     }
 }
