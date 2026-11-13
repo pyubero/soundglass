@@ -152,7 +152,9 @@ pub fn resample(track: &Track, edit: &Edit, rate: u32, speed: Option<Speed>) -> 
     let format = track.format.get().ok_or("the track has no audio")?;
     let channels = edit.channels(format.channels);
     let mut samples = Vec::with_capacity(edit.len() as usize * channels);
-    edit::read(track, edit, 0, edit.len(), |b| samples.extend_from_slice(b));
+    if !edit::read_all(track, edit, 0, edit.len(), |b| samples.extend_from_slice(b)) {
+        return Err("part of the track could not be read".into());
+    }
     let speed = speed.unwrap_or(Speed::NORMAL);
     if speed.stretches() {
         let mut w = Wsola::new(channels, format.rate);
@@ -190,7 +192,7 @@ pub fn resample(track: &Track, edit: &Edit, rate: u32, speed: Option<Speed>) -> 
 }
 
 /// Whether `a` (which may not exist yet) is the file at `b`.
-fn same_file(a: &Path, b: &Path) -> bool {
+pub(crate) fn same_file(a: &Path, b: &Path) -> bool {
     let canon = |p: &Path| -> Option<PathBuf> {
         std::fs::canonicalize(p).ok().or_else(|| Some(std::fs::canonicalize(p.parent()?).ok()?.join(p.file_name()?)))
     };
@@ -214,7 +216,7 @@ fn encode(track: &Track, edit: &Edit, choice: Choice, path: &Path) -> Result<(),
             let mut w = hound::WavWriter::create(path, spec).map_err(err)?;
             let scale = ((1u32 << (choice.wav_bits.min(24) - 1)) - 1) as f32;
             let mut result = Ok(());
-            ok &= edit::read(track, edit, 0, edit.len(), |block| {
+            ok &= edit::read_all(track, edit, 0, edit.len(), |block| {
                 for &x in block {
                     // shortcut: no dither when going down to 16/24 bits; add TPDF dither if quiet fades sound grainy.
                     let r = if float { w.write_sample(x) } else { w.write_sample((x.clamp(-1.0, 1.0) * scale).round() as i32) };
@@ -230,7 +232,7 @@ fn encode(track: &Track, edit: &Edit, choice: Choice, path: &Path) -> Result<(),
             let bits = choice.flac_bits;
             let scale = ((1u32 << (bits - 1)) - 1) as f32;
             let mut samples: Vec<i32> = Vec::with_capacity(edit.len() as usize * channels);
-            ok &= edit::read(track, edit, 0, edit.len(), |block| samples.extend(block.iter().map(|&x| (x.clamp(-1.0, 1.0) * scale).round() as i32)));
+            ok &= edit::read_all(track, edit, 0, edit.len(), |block| samples.extend(block.iter().map(|&x| (x.clamp(-1.0, 1.0) * scale).round() as i32)));
             let dbg = |e: &dyn std::fmt::Debug| format!("FLAC: {e:?}");
             use flacenc::error::Verify;
             let mut config = flacenc::config::Encoder::default();
@@ -268,7 +270,7 @@ fn encode(track: &Track, edit: &Edit, choice: Choice, path: &Path) -> Result<(),
             let mut out = Vec::new();
             let mut result = Ok(0);
             // Blocks of at most 4096 frames, to keep LAME's output buffer small.
-            ok &= edit::read(track, edit, 0, edit.len(), |block| {
+            ok &= edit::read_all(track, edit, 0, edit.len(), |block| {
                 for part in block.chunks(4096 * channels) {
                     out.reserve(mp3lame_encoder::max_required_buffer_size(part.len()));
                     let r = if channels == 1 { enc.encode_to_vec(MonoPcm(part), &mut out) } else { enc.encode_to_vec(InterleavedPcm(part), &mut out) };
@@ -300,7 +302,7 @@ fn encode(track: &Track, edit: &Edit, choice: Choice, path: &Path) -> Result<(),
             let mut enc = b.build().map_err(dbg)?;
             let mut planar = vec![Vec::new(); channels];
             let mut result = Ok(());
-            ok &= edit::read(track, edit, 0, edit.len(), |block| {
+            ok &= edit::read_all(track, edit, 0, edit.len(), |block| {
                 // libvorbis works best with blocks of about a thousand frames.
                 for part in block.chunks(1024 * channels) {
                     for (ch, plane) in planar.iter_mut().enumerate() {

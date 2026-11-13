@@ -272,7 +272,17 @@ impl History {
 /// Hands the interleaved samples of edited frames `a..b` to `sink` in blocks, with the gains,
 /// directions and mix applied, silence as zeros. It doesn't allocate, so the player calls it.
 /// False if part of it isn't decoded (or the track is busy), with what came before already handed over.
-pub fn read(track: &Track, edit: &Edit, a: u64, b: u64, mut sink: impl FnMut(&[f32])) -> bool {
+pub fn read(track: &Track, edit: &Edit, a: u64, b: u64, sink: impl FnMut(&[f32])) -> bool {
+    read_with(track, edit, a, b, sink, |pos| track.chunk_at(pos))
+}
+
+/// `read` for everything off the audio thread (save, AI tools): waits while the track is busy,
+/// so false means only that part of it isn't decoded.
+pub fn read_all(track: &Track, edit: &Edit, a: u64, b: u64, sink: impl FnMut(&[f32])) -> bool {
+    read_with(track, edit, a, b, sink, |pos| track.chunk_at_wait(pos))
+}
+
+fn read_with(track: &Track, edit: &Edit, a: u64, b: u64, mut sink: impl FnMut(&[f32]), fetch: impl Fn(u64) -> Option<(Arc<[f32]>, usize)>) -> bool {
     const BUF: usize = 8192;
     let src_ch = track.format.get().map_or(1, |f| f.channels);
     let out_ch = edit.channels(src_ch);
@@ -290,7 +300,7 @@ pub fn read(track: &Track, edit: &Edit, a: u64, b: u64, mut sink: impl FnMut(&[f
             } else {
                 let mut got = 0;
                 while got < n {
-                    let Some((chunk, offset)) = track.chunk_at(part.src + got as u64) else { return false };
+                    let Some((chunk, offset)) = fetch(part.src + got as u64) else { return false };
                     let k = (n - got).min(chunk.len() / src_ch - offset);
                     frames[got * src_ch..(got + k) * src_ch].copy_from_slice(&chunk[offset * src_ch..(offset + k) * src_ch]);
                     got += k;

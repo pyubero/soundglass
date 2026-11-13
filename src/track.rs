@@ -90,7 +90,8 @@ impl Track {
             let mut cur: Vec<f32> = Vec::new();
             let (mut peak, mut peak_frames) = ((f32::MAX, f32::MIN), 0);
             let on_meta = |tags, info, picture| t.set_meta(tags, info, picture, notify.clone());
-            let result = decode(&t.path.clone(), on_meta, |samples, channels, rate, expected| {
+            // A hostile file that panics the decoder must still end as an error, not "Decoding…" forever.
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| decode(&t.path.clone(), on_meta, |samples, channels, rate, expected| {
                 if let Some(n) = expected {
                     let _ = t.expected.set(n);
                 }
@@ -119,7 +120,8 @@ impl Track {
                     }
                 }
                 Ok(())
-            });
+            })))
+            .unwrap_or_else(|_| Err("this file can't be decoded".into()));
             if peak_frames > 0 {
                 t.peaks.lock().unwrap().push(peak);
             }
@@ -207,7 +209,7 @@ impl Track {
             let _ = t.chords.set(c.clone());
             t.analysing.store(true, Relaxed);
         }
-        *t.beats.lock().unwrap() = self.beats.lock().unwrap().clone();
+        *t.beats.lock().unwrap_or_else(|e| e.into_inner()) = self.beats.lock().unwrap_or_else(|e| e.into_inner()).clone();
         *t.chunks.lock().unwrap() = self.chunks.lock().unwrap().clone();
         *t.peaks.lock().unwrap() = self.peaks.lock().unwrap().clone();
         t.decoded.store(self.decoded(), Relaxed);
@@ -270,7 +272,16 @@ impl Track {
     /// The chunk holding frame `pos` and the frame's offset in it, or `None` while that part is
     /// still decoding or the list is locked. Never blocks, so the audio callback can call it.
     pub fn chunk_at(&self, pos: u64) -> Option<(Arc<[f32]>, usize)> {
-        let chunks = self.chunks.try_lock().ok()?;
+        self.find(&self.chunks.try_lock().ok()?, pos)
+    }
+
+    /// `chunk_at` for readers off the audio thread (save, AI tools): waits for the list instead of
+    /// missing it, so it is `None` only where nothing is decoded.
+    pub fn chunk_at_wait(&self, pos: u64) -> Option<(Arc<[f32]>, usize)> {
+        self.find(&self.chunks.lock().unwrap_or_else(|e| e.into_inner()), pos)
+    }
+
+    fn find(&self, chunks: &[Arc<[f32]>], pos: u64) -> Option<(Arc<[f32]>, usize)> {
         let chunk = chunks.get(pos as usize / CHUNK)?.clone();
         let channels = self.format.get()?.channels;
         let offset = pos as usize % CHUNK;
@@ -470,6 +481,47 @@ pub mod tests {
         assert!(Arc::ptr_eq(&track.chunk_at(0).unwrap().0, &fresh.chunk_at(0).unwrap().0));
         assert_eq!((fresh.decoded(), fresh.done()), (1000, true));
         assert_eq!(fresh.tags.get().and_then(|t| t.title.as_deref()), Some("New name"));
+    }
+
+    /// Runs `f` while another thread holds the chunk list for 100 ms, as the loudness pass,
+    /// Practice analysis and Identify briefly do.
+    fn while_busy(track: &Track, f: impl FnOnce()) {
+        let (tx, rx) = std::sync::mpsc::channel();
+        std::thread::scope(|s| {
+            s.spawn(|| {
+                let _held = track.chunks.lock().unwrap();
+                tx.send(()).unwrap();
+                std::thread::sleep(std::time::Duration::from_millis(100));
+            });
+            rx.recv().unwrap();
+            f();
+        });
+    }
+
+    #[test]
+    fn offline_readers_wait_for_a_busy_track() {
+        use crate::edit::{self, Edit};
+        let track = Track::from_samples(44100, 2, vec![0.25; 3 * CHUNK * 2]);
+        let edit = Edit::whole(track.len());
+        while_busy(&track, || {
+            assert!(!edit::read(&track, &edit, 0, edit.len(), |_| {}), "the callback's reader never waits");
+            let mut n = 0;
+            assert!(edit::read_all(&track, &edit, 0, edit.len(), |b| n += b.len()));
+            assert_eq!(n as u64, edit.len() * 2);
+        });
+        // A save that resamples reads the whole track too, instead of a shorter one.
+        let dir = std::env::temp_dir().join(format!("soundglass-test-{}-busy", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("48k.wav");
+        let choice = crate::save::Choice { kind: crate::save::Kind::Wav, rate: Some(48000), ..Default::default() };
+        while_busy(&track, || {
+            crate::save::save(&track, &edit, choice, &path, None).unwrap();
+        });
+        let mut frames = 0;
+        decode(&path, |_, _, _| {}, |s, c, _, _| Ok(frames += s.len() / c)).unwrap();
+        let want = edit.len() * 48000 / 44100;
+        assert!((frames as u64).abs_diff(want) <= 2, "{frames} frames, want {want}");
     }
 
     #[test]

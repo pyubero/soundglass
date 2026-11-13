@@ -466,7 +466,7 @@ pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::tr
             let target = crate::save::reserve_named(&track.path, "melody", "mid")?;
             let result = (|| {
                 let channels = audio::planar(track, edit, midi::RATE)?;
-                let mono: Vec<f32> = (0..channels[0].len()).map(|i| channels.iter().map(|c| c[i]).sum::<f32>() / channels.len() as f32).collect();
+                let mono = audio::mono(&channels);
                 let (frames, onsets) = midi::activations(&model_path(model.file)?, &mono, &|p| progress(0.9 * p), cancel)?;
                 let notes = midi::notes(&frames, &onsets, t);
                 if notes.is_empty() {
@@ -490,7 +490,7 @@ pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::tr
             let whole = crate::edit::Edit::whole(track.len());
             let channels = audio::planar(track, if selection.is_some() { edit } else { &whole }, beats::RATE)?;
             // The mean of the channels, as Beat This! downmixes.
-            let mono: Vec<f32> = (0..channels[0].len()).map(|i| channels.iter().map(|c| c[i]).sum::<f32>() / channels.len() as f32).collect();
+            let mono = audio::mono(&channels);
             let mut found = beats::track(&model_path(model.file)?, &model_path(model.data[0].0)?, mono, own, t.threshold, progress, cancel)?;
             if selection.is_some() {
                 let back = |v: &[u64]| {
@@ -503,12 +503,12 @@ pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::tr
             }
             let tempo = beats::bpm(&found.beats, own).map(|b| format!(", ≈ {b} BPM")).unwrap_or_default();
             let said = format!("Found {} beats{tempo}. Metronome on (volume button).", found.beats.len());
-            *track.beats.lock().unwrap() = Some(Arc::new(found));
+            *track.beats.lock().unwrap_or_else(|e| e.into_inner()) = Some(Arc::new(found));
             Ok(Done::Said(said))
         }
         (Task::Transcribe, Tune::Speech(t)) => {
             let channels = audio::planar(track, edit, transcribe::RATE)?;
-            let mono: Vec<f32> = (0..channels[0].len()).map(|i| channels.iter().map(|c| c[i]).sum::<f32>() / channels.len() as f32).collect();
+            let mono = audio::mono(&channels);
             let path = |f: &str| model_path(f);
             let cues = match model.data {
                 [(dj, _), (features, _), (vocab, _)] => transcribe::parakeet(&path(model.file)?, &path(dj)?, &path(features)?, &path(vocab)?, &mono, t.silence_db, progress, cancel)?,

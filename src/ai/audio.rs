@@ -11,12 +11,18 @@ pub(super) fn planar(track: &Track, edit: &Edit, rate: u32) -> Result<Vec<Vec<f3
     let (track, edit) = resampled.as_ref().map_or((track, edit), |(t, e)| (&**t, e));
     let channels = edit.channels(track.format.get().ok_or("the track has no audio")?.channels);
     let mut out = vec![Vec::with_capacity(edit.len() as usize); channels];
-    let whole = crate::edit::read(track, edit, 0, edit.len(), |block| {
+    let whole = crate::edit::read_all(track, edit, 0, edit.len(), |block| {
         for frame in block.chunks_exact(channels) {
             out.iter_mut().zip(frame).for_each(|(c, &x)| c.push(x));
         }
     });
     if whole { Ok(out) } else { Err("the track isn't fully loaded".into()) }
+}
+
+/// The mean of the channels, frame by frame.
+pub(super) fn mono(channels: &[Vec<f32>]) -> Vec<f32> {
+    let frames = channels.iter().map(Vec::len).min().unwrap_or(0);
+    (0..frames).map(|i| channels.iter().map(|c| c[i]).sum::<f32>() / channels.len() as f32).collect()
 }
 
 /// Saves `channels` (at `rate`) to `target` at `keep_rate`, the original's rate, as `kind`

@@ -678,7 +678,7 @@ impl eframe::App for App {
                 if self.settings.practice {
                     ui.menu_button("Practice", |ui| {
                         ui.checkbox(&mut self.looping, "Loop selection").on_hover_text("L");
-                        let found = self.track.beats.lock().unwrap().is_some();
+                        let found = self.track.beats.lock().unwrap_or_else(|e| e.into_inner()).is_some();
                         ui.add_enabled(found, egui::Checkbox::new(&mut self.metronome, "Metronome")).on_hover_text("Clicks on the found beats").on_disabled_hover_text("after Local AI → Find Beats");
                         if ui.checkbox(&mut self.show_spectrum, "Spectrogram").changed() {
                             ui.close();
@@ -784,7 +784,7 @@ impl eframe::App for App {
                         actions.push(Action::Seek(frame));
                     }
                     ui.add_space(8.0);
-                    let metronome = self.track.beats.lock().unwrap().is_some().then_some((self.metronome, self.click_volume));
+                    let metronome = self.track.beats.lock().unwrap_or_else(|e| e.into_inner()).is_some().then_some((self.metronome, self.click_volume));
                     actions.extend(transport(ui, playing, has_next, self.volume, metronome));
                 });
                 let height = controls.response.rect.height();
@@ -841,7 +841,7 @@ impl eframe::App for App {
             self.apply(action, pos, len);
         }
         // The Metronome follows the track, its edits and its beats.
-        let beats = self.track.beats.lock().unwrap().clone();
+        let beats = self.track.beats.lock().unwrap_or_else(|e| e.into_inner()).clone();
         if let Some(b) = &beats
             && Arc::as_ptr(b) as usize != self.beats_seen
         {
@@ -2705,7 +2705,7 @@ fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, selection: &mut Option
         chord_bar(&painter, rect, &x_of, s, track, edit);
     }
     // Found beats as ticks along the bottom, the first of each bar taller.
-    if let Some(b) = track.beats.lock().unwrap().clone() {
+    if let Some(b) = track.beats.lock().unwrap_or_else(|e| e.into_inner()).clone() {
         let down = ai::edited_beats(&b.downbeats, edit);
         for f in ai::edited_beats(&b.beats, edit) {
             let x = x_of(f);

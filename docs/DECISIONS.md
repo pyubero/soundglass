@@ -247,3 +247,6 @@
 - 2026-11-13 — the .deb and .msi are built by GitHub Actions on v* tags, as in lightview (user's choice); the .deb on ubuntu-22.04 for glibc 2.35, the .msi with WiX 5; the Windows installer's UpgradeCode fcb583ea-f665-4dde-bf30-ce898cbfe489 never changes
 - 2026-11-13 — the .wxs's extensions are checked against folder.rs's EXTENSIONS by a unit test, so the two can't drift
 - 2026-11-13 — licence texts for crates published without one are kept in licenses/crates/: vorbis_rs's from its repository; rusty-chromaprint has none anywhere (MIT in Cargo.toml, no copyright holder named), so the standard MIT text with "the rusty-chromaprint authors" is used — accepted
+- 2026-11-13 — readers off the audio thread (Save As/Copy, the AI tools' audio) use edit::read_all, which waits for the chunk list; only the player's callback uses edit::read, which never blocks — a missed try_lock had let a resampled save write a shorter file that still passed its check
+- 2026-11-13 — a panic in the decoder is caught on the decode thread and shown as "this file can't be decoded", with what was decoded kept — it had left the track on "Decoding…" forever
+- 2026-11-13 — Rename from Tags adds "_" to a Windows reserved name (CON, PRN, AUX, NUL, COM1–9, LPT1–9, any extension) on every platform, and allows a rename that only changes letter case when the disk sees it as the same file

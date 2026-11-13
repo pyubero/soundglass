@@ -236,29 +236,25 @@ pub fn download_runtime(progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<(
 }
 
 /// Downloads `url` to `dest`, keeping it only if its SHA-256 is `sha256`. `progress` gets
-/// 0–1 as it goes (when the server gives a length); `cancel` stops it. A `file://` URL is
-/// copied, for the tests.
+/// 0–1 as it goes (when the server gives a length); `cancel` stops it. In tests only, a
+/// `file://` URL is copied.
 pub(super) fn fetch(url: &str, sha256: &str, dest: &Path, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<(), String> {
     let result = (|| {
-        let (reader, len): (Box<dyn std::io::Read>, Option<u64>) = match url.strip_prefix("file://") {
-            Some(path) => {
-                let file = std::fs::File::open(path).map_err(|e| e.to_string())?;
-                let len = file.metadata().ok().map(|m| m.len());
-                (Box::new(file), len)
-            }
-            None => {
-                let agent: ureq::Agent = ureq::Agent::config_builder()
-                    .timeout_connect(Some(std::time::Duration::from_secs(30)))
-                    .timeout_per_read(Some(std::time::Duration::from_secs(60)))
-                    .user_agent(concat!("soundglass/", env!("CARGO_PKG_VERSION")))
-                    .build()
-                    .into();
-                let reply = agent.get(url).call().map_err(|e| format!("the download failed ({e})"))?;
-                let len = reply.body().content_length();
-                (Box::new(reply.into_body().into_reader()), len)
-            }
-        };
-        save_checked(reader, len, sha256, dest, progress, cancel)
+        #[cfg(test)]
+        if let Some(path) = url.strip_prefix("file://") {
+            let file = std::fs::File::open(path).map_err(|e| e.to_string())?;
+            let len = file.metadata().ok().map(|m| m.len());
+            return save_checked(file, len, sha256, dest, progress, cancel);
+        }
+        let agent: ureq::Agent = ureq::Agent::config_builder()
+            .timeout_connect(Some(std::time::Duration::from_secs(30)))
+            .timeout_per_read(Some(std::time::Duration::from_secs(60)))
+            .user_agent(concat!("soundglass/", env!("CARGO_PKG_VERSION")))
+            .build()
+            .into();
+        let reply = agent.get(url).call().map_err(|e| format!("the download failed ({e})"))?;
+        let len = reply.body().content_length();
+        save_checked(reply.into_body().into_reader(), len, sha256, dest, progress, cancel)
     })();
     if result.is_err() {
         let _ = std::fs::remove_file(dest);
@@ -314,7 +310,7 @@ pub(super) fn environment() -> Result<&'static ort::environment::Environment, St
             for name in CUDA_LIBS {
                 match unsafe { libloading::Library::new(dir.join(name)) } {
                     Ok(lib) => std::mem::forget(lib),
-                    Err(e) => *GPU_ERROR.lock().unwrap() = Some(format!("{name}: {e}")),
+                    Err(e) => *GPU_ERROR.lock().unwrap_or_else(|e| e.into_inner()) = Some(format!("{name}: {e}")),
                 }
             }
             GPU_LOADED.store(true, Ordering::Relaxed);
@@ -360,11 +356,11 @@ pub(super) fn session_with(path: &Path, threads: usize, gpu: bool) -> Result<ort
     })();
     match cuda {
         Ok(session) => {
-            *GPU_ERROR.lock().unwrap() = None;
+            *GPU_ERROR.lock().unwrap_or_else(|e| e.into_inner()) = None;
             Ok(session)
         }
         Err(e) => {
-            *GPU_ERROR.lock().unwrap() = Some(e);
+            *GPU_ERROR.lock().unwrap_or_else(|e| e.into_inner()) = Some(e);
             cpu()
         }
     }

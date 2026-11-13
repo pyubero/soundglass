@@ -237,6 +237,13 @@ pub fn file_name(pattern: &str, tags: &TagEdit, ext: &str) -> String {
     while clean.len() > 200 {
         clean.pop();
     }
+    // Windows can't make a file named CON, NUL, COM1… whatever its extension.
+    let base = clean.split('.').next().unwrap_or_default().trim_end();
+    let upper = base.to_ascii_uppercase();
+    let numbered = |prefix: &str| upper.len() == 4 && upper.starts_with(prefix) && matches!(upper.as_bytes()[3], b'1'..=b'9');
+    if ["CON", "PRN", "AUX", "NUL"].contains(&upper.as_str()) || numbered("COM") || numbered("LPT") {
+        clean.insert(base.len(), '_');
+    }
     if clean.is_empty() { clean } else { format!("{clean}.{ext}") }
 }
 
@@ -244,6 +251,11 @@ pub fn file_name(pattern: &str, tags: &TagEdit, ext: &str) -> String {
 pub fn rename(from: &Path, name: &str) -> Result<PathBuf, String> {
     let to = from.with_file_name(name);
     if to.exists() {
+        // On a disk that ignores case (Windows, macOS), a new name in other letters is the file itself.
+        let same_letters = from.file_name().is_some_and(|f| f.to_string_lossy().to_lowercase() == name.to_lowercase());
+        if same_letters && crate::save::same_file(&to, from) {
+            return std::fs::rename(from, &to).map(|()| to).map_err(|e| e.to_string());
+        }
         return Err("A file with that name already exists.".into());
     }
     // A hard link fails if the name was taken meanwhile; then the old name goes.
@@ -404,5 +416,34 @@ mod tests {
         assert_eq!((std::fs::read(&a).unwrap(), std::fs::read(&b).unwrap()), (b"a".to_vec(), b"b".to_vec()));
         let c = rename(&a, "c.mp3").unwrap();
         assert!(!a.exists() && std::fs::read(c).unwrap() == b"a");
+    }
+
+    #[test]
+    fn renames_to_other_letter_case_but_never_over_another_file() {
+        let dir = scratch("case");
+        let song = dir.join("song.mp3");
+        std::fs::write(&song, b"song").unwrap();
+        // On Windows "Song.mp3" already "exists" (it is this file): the case-only path.
+        let new = rename(&song, "Song.mp3").unwrap();
+        let names: Vec<String> = std::fs::read_dir(&dir).unwrap().map(|e| e.unwrap().file_name().to_string_lossy().into_owned()).collect();
+        assert_eq!((names, std::fs::read(new).unwrap()), (vec!["Song.mp3".to_string()], b"song".to_vec()));
+        // Where case matters (Linux), "Other.mp3" is someone else's file and stays.
+        if !dir.join("SONG.MP3").exists() {
+            std::fs::write(dir.join("other.mp3"), b"mine").unwrap();
+            std::fs::write(dir.join("Other.mp3"), b"theirs").unwrap();
+            assert!(rename(&dir.join("other.mp3"), "Other.mp3").is_err());
+            assert_eq!(std::fs::read(dir.join("Other.mp3")).unwrap(), b"theirs");
+        }
+    }
+
+    #[test]
+    fn reserved_windows_names_get_an_underscore() {
+        let title = |t: &str| file_name("{title}", &TagEdit { title: t.into(), ..TagEdit::default() }, "mp3");
+        assert_eq!(title("con"), "con_.mp3");
+        assert_eq!(title("NUL"), "NUL_.mp3");
+        assert_eq!(title("com7"), "com7_.mp3");
+        assert_eq!(title("Aux.live"), "Aux_.live.mp3");
+        assert_eq!(title("Concert"), "Concert.mp3");
+        assert_eq!(title("COM0"), "COM0.mp3");
     }
 }
