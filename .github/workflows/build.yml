@@ -1,0 +1,97 @@
+# Builds and tests soundglass for Linux and Windows. Pushing a tag like `v0.1.0` also publishes a
+# GitHub release with the Linux .deb and the Windows installer (.msi). Can also be run by
+# hand from the Actions tab (it then only keeps the files as workflow artifacts).
+name: build
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+# Tests and build scripts run third-party code, so only the job that publishes can write.
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    # The oldest supported distro: the binary needs this glibc (2.35) or newer.
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Check the tag matches Cargo.toml
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: test "${GITHUB_REF_NAME#v}" = "$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n 1)"
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
+      - name: Install ALSA headers (cpal)
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      - name: Check the dependencies for known vulnerabilities
+        run: |
+          cargo install cargo-audit --locked
+          cargo audit
+      - run: cargo test --release --locked
+      - run: cargo build --release --locked
+      - run: ./package-deb.sh
+      - name: Check the package installs
+        run: |
+          sudo apt-get install -y ./soundglass_*.deb
+          test -x /usr/bin/soundglass
+          test -f /usr/share/applications/soundglass.desktop
+          grep -q '^egui ' /usr/share/doc/soundglass/copyright
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: linux
+          path: soundglass_*.deb
+
+  windows:
+    runs-on: windows-latest
+    env:
+      # Static C runtime: soundglass.exe then runs without the Visual C++ redistributable.
+      RUSTFLAGS: -C target-feature=+crt-static
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
+      - run: cargo test --release --locked
+      - run: cargo build --release --locked
+      - name: Collect the licences
+        # Bash, because PowerShell's `>` re-encodes the text.
+        shell: bash
+        run: |
+          mkdir dist
+          python third-party-notices.py x86_64-pc-windows-msvc > dist/LICENSES.txt
+      - name: Build the installer
+        shell: pwsh
+        run: |
+          $version = (cargo metadata --no-deps --format-version 1 | ConvertFrom-Json).packages[0].version
+          Copy-Item target/release/soundglass.exe dist/
+          dotnet tool install --global wix --version 5.0.2
+          wix build packaging/windows/soundglass.wxs -arch x64 -d Version=$version -d Dist=dist -o "soundglass-$version-x64.msi"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: windows
+          path: soundglass-*-x64.msi
+
+  release:
+    # Waits for both, but Linux still ships if Windows fails: "Re-run failed jobs" adds the .msi later.
+    if: ${{ !cancelled() && startsWith(github.ref, 'refs/tags/v') && needs.linux.result == 'success' }}
+    needs: [linux, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          merge-multiple: true
+      - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
+        with:
+          generate_release_notes: true
+          files: |
+            soundglass_*.deb
+            soundglass-*-x64.msi

@@ -30,7 +30,7 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 ## v1: Player
 
 ### Packaging
-- **.deb and .msi.** Like lightview's `package-deb.sh` and WiX file: they install only the binary, the .desktop file and the icon; every user file (settings, recent files, themes, AI models) lives in the data folder, so the packages and `install.sh` behave the same.
+- **.deb and .msi.** Like lightview's `package-deb.sh` and WiX file: they install only the binary, the .desktop file and the icon; every user file (settings, recent files, themes, AI models) lives in the data folder, so the packages and `install.sh` behave the same. Done: `package-deb.sh`, `packaging/windows/soundglass.wxs` and `.github/workflows/build.yml` (awaiting the first run on GitHub).
 
 ### 1. Spike
 - **Play from the command line.** `app song.mp3` opens a window and plays. We measure the time to first sound.
@@ -83,9 +83,6 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 
 ### 8. Tidy up
 - **Identify track.** Make a Chromaprint fingerprint of the file (pure Rust, rusty-chromaprint), look it up online in AcoustID, then fill in the missing tags from MusicBrainz. Show the match and its score, and on request write the tags and rename the file. Only the fingerprint and the length are sent, and only when you run it. Free for non-commercial use, with one application key; at most 3 lookups per second (AcoustID) and 1 per second (MusicBrainz). Works on whole files, not clips. Done (awaiting the key and contact URL, then a check online): File → Identify Track… lists AcoustID's matches; Use Match adds the MusicBrainz genre and fills Track Info's tag editor, so Save… and Rename from Tags… do the writing.
-- **Clean up a music folder.** The same in one pass over a folder and all its subfolders: identify every file, show a list of proposed tags and new names to accept or skip, then apply. Files that aren't found are left alone. Ctrl+Z undoes the renames. About 1,000 files take 6 minutes at AcoustID's limit. Later: waits, like Identify Track, for an AcoustID key.
-- **Group duplicate songs.** Find copies of the same recording in a folder by how they sound, even in different formats or bitrates, and even when one copy is trimmed or starts later (peak-based matching like Olaf or Panako, written by us; it compares only your own files, so it needs no database), show the groups, and move each into its own folder. Nothing is deleted, and Ctrl+Z puts everything back.
-- **Use a local database (later, for power users).** Point Identify Track at your own AcoustID and MusicBrainz server built from their public data exports, so nothing goes online. Too big to ship with the app.
 
 ### 9. Local AI (optional download)
 The runtime and model manager, as in lightview: Local AI → Download AI Runtime… and AI Models… (CPU, and NVIDIA's CUDA as a second download). Done. The tools, each a milestone: Remove noise (DeepFilterNet3), Transcribe speech (Whisper small, Parakeet TDT 0.6B v3 or Whisper large-v3-turbo, chosen in AI Models…), and for Practice mode Split into stems (HTDemucs), Melody to MIDI (Basic Pitch) and Find beats (Beat This!, which brings back the Metronome).
@@ -111,7 +108,12 @@ In the Local AI menu with the others, whatever the mode.
 ### Our own engine: the Griffin–Lim modulator in Rust
 - **Build on the audio-tools Griffin–Lim modulator** to make a better, improved, faster version in pure Rust. Ideally it has two settings: Fast, for real time (frame by frame with a small look-ahead, like RTISI-LA), and Quality, slower and offline (more iterations, started from phase-vocoder phases). It replaces WSOLA where it sounds better. The ideas to start from are in [docs/TIME_STRETCH.md](docs/TIME_STRETCH.md), section 3.
 
+## v3: Remaining tidbits (possible)
+Proposed, not committed: moved here from v1 §8 Tidy up on 2026-11-13.
+- **Clean up a music folder.** Identify Track (v1 §8) in one pass over a folder and all its subfolders: identify every file, show a list of proposed tags and new names to accept or skip, then apply. Files that aren't found are left alone. Ctrl+Z undoes the renames. About 1,000 files take 6 minutes at AcoustID's limit. Later: waits, like Identify Track, for an AcoustID key.
+- **Group duplicate songs.** Find copies of the same recording in a folder by how they sound, even in different formats or bitrates, and even when one copy is trimmed or starts later (peak-based matching like Olaf or Panako, written by us; it compares only your own files, so it needs no database), show the groups, and move each into its own folder. Nothing is deleted, and Ctrl+Z puts everything back.
+- **Use a local database (later, for power users).** Point Identify Track at your own AcoustID and MusicBrainz server built from their public data exports, so nothing goes online. Too big to ship with the app.
+
 ## Open questions
-- Name.
 - Is simple microphone recording in scope (voice memos, tuner)?
 - Track identification: is rusty-chromaprint's output identical to the original Chromaprint, and what match score to accept automatically.

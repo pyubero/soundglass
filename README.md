@@ -110,7 +110,24 @@ The tools work on the selection in the Edit panel, or on the whole track when no
   - Whisper small (375 MB): 99 languages, detected from the first piece with sound, 88 s.
   - Whisper large-v3-turbo (1,037 MB): 99 languages, about as slow as small on the CPU; it may leave out capitals and punctuation.
 
-## Install as the default audio player
+## Install
+
+Each release on GitHub has a Linux package and a Windows installer. Both install only the program, its menu entry and its icon; settings, themes and AI models live in the data folder (`~/.local/share/soundglass/`, `%APPDATA%\soundglass\data\`), so removing the package keeps them.
+
+- Linux (Ubuntu 22.04, Debian 12 or newer): `sudo apt install ./soundglass_0.1.0_amd64.deb`, then pick soundglass as the default in System Settings → Default Applications if you like.
+- Windows 10 or 11: run `soundglass-0.1.0-x64.msi`, then choose soundglass in Settings → Default apps (Windows doesn't let an installer make itself the default).
+
+`./package-deb.sh` builds the .deb locally; the .msi is built on GitHub Actions (`.github/workflows/build.yml`).
+
+### Making a release
+
+1. Raise `version` in `Cargo.toml` and run `cargo build` so `Cargo.lock` follows.
+2. Add a `<release version="…" date="…"/>` line at the top of `soundglass.metainfo.xml`'s releases.
+3. Commit.
+4. Tag it `vX.Y.Z` (the same version) and push the tag: the workflow checks the tag matches `Cargo.toml`, runs the tests and `cargo audit`, builds both packages and publishes the release.
+5. Check the release page has the .deb and the .msi. If only the Windows job failed, "Re-run failed jobs" adds the .msi later.
+
+## Install from source as the default audio player
 
 ```
 ./install.sh
@@ -124,6 +141,6 @@ To undo: delete `~/.local/bin/soundglass`, `~/.local/share/applications/soundgla
 
 GPL-3.0-or-later.
 
-Bundled libraries, built from source into the program: LAME (MP3 encoding, LGPL), libvorbis with the aoTuV and Lancer patches and libogg (Ogg Vorbis encoding, BSD-3-Clause). The Rust crates' licences are in `Cargo.lock`'s dependency list; all are GPL-3-compatible.
+Bundled libraries, built from source into the program: LAME (MP3 encoding, LGPL), libvorbis with the aoTuV and Lancer patches and libogg (Ogg Vorbis encoding, BSD-3-Clause). `third-party-notices.py` gathers the licences of the fonts and of every Rust crate and bundled library; the packages carry its output (`/usr/share/doc/soundglass/copyright`, `LICENSES.txt` on Windows). All are GPL-3-compatible.
 
 The AI runtime and models are not part of soundglass: each is downloaded only on request, after its licence (embedded in `licenses/`) is shown and accepted. Speech recognition with Parakeet uses NVIDIA's Parakeet TDT 0.6B v3, licensed under CC BY 4.0 (https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), in istupakov's ONNX conversion, unchanged.

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.pyubero.soundglass</id>
+  <name>soundglass</name>
+  <summary>A small, fast audio player and quick editor</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <developer id="io.github.pyubero">
+    <name>Pablo Yubero</name>
+  </developer>
+  <description>
+    <p>
+      soundglass starts playing at once, moves through a folder without a gap, and keeps your
+      originals safe: edits are only written to a new file when you choose to save one.
+    </p>
+    <p>
+      It also edits tags and album covers, makes quick cuts, fades and loudness fixes, and offers
+      optional local AI tools that remove noise, split songs into stems and transcribe speech,
+      plus a practice mode with loops, a spectrogram, tempo, key and chords.
+    </p>
+  </description>
+  <launchable type="desktop-id">soundglass.desktop</launchable>
+  <url type="homepage">https://github.com/pyubero/soundglass</url>
+  <content_rating type="oars-1.1"/>
+  <provides>
+    <binary>soundglass</binary>
+  </provides>
+  <releases>
+    <release version="0.1.0" date="2026-11-13"/>
+  </releases>
+</component>

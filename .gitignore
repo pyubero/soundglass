@@ -8,3 +8,6 @@ CLAUDE.md
 *.m4a
 *.aiff
 /1954-Louis Armstrong Plays W.C.Handy/
+# Built packages.
+/soundglass_*.deb
+/soundglass-*.msi

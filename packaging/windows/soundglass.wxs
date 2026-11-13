@@ -1,0 +1,77 @@
+<!--
+  The Windows installer (WiX Toolset v5): soundglass into Program Files, a Start menu entry, and
+  registration as an audio player, so it shows up in Settings → Default apps (Windows doesn't let
+  an installer make itself the default). Built by .github/workflows/build.yml:
+    wix build packaging/windows/soundglass.wxs -arch x64 -d Version=0.1.0 -d Dist=dist -o soundglass.msi
+  `Dist` holds soundglass.exe and LICENSES.txt. The extensions are src/folder.rs's EXTENSIONS
+  (a test there fails if one is missing here).
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <!-- Keep the UpgradeCode forever: it's how a new version replaces an installed one. -->
+  <Package Name="soundglass" Manufacturer="Pablo Yubero" Version="$(var.Version)"
+           UpgradeCode="fcb583ea-f665-4dde-bf30-ce898cbfe489" Scope="perMachine">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of soundglass is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="soundglass">
+        <Component Id="App" Bitness="always64">
+          <File Id="SoundglassExe" Source="$(var.Dist)\soundglass.exe" KeyPath="yes" />
+          <File Source="$(var.Dist)\LICENSES.txt" />
+
+          <!-- How Windows opens an audio file with soundglass. -->
+          <RegistryValue Root="HKLM" Key="Software\Classes\soundglass.Audio" Value="Audio" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\soundglass.Audio\DefaultIcon" Value="&quot;[INSTALLFOLDER]soundglass.exe&quot;,0" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\soundglass.Audio\shell\open\command" Value="&quot;[INSTALLFOLDER]soundglass.exe&quot; &quot;%1&quot;" Type="string" />
+
+          <!-- Listed in "Open with" for each supported type… -->
+          <RegistryValue Root="HKLM" Key="Software\Classes\.mp3\OpenWithProgids" Name="soundglass.Audio" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.mp2\OpenWithProgids" Name="soundglass.Audio" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.mp1\OpenWithProgids" Name="soundglass.Audio" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.flac\OpenWithProgids" Name="soundglass.Audio" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.wav\OpenWithProgids" Name="soundglass.Audio" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.ogg\OpenWithProgids" Name="soundglass.Audio" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.oga\OpenWithProgids" Name="soundglass.Audio" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.m4a\OpenWithProgids" Name="soundglass.Audio" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.m4b\OpenWithProgids" Name="soundglass.Audio" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.aac\OpenWithProgids" Name="soundglass.Audio" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.aif\OpenWithProgids" Name="soundglass.Audio" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.aiff\OpenWithProgids" Name="soundglass.Audio" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.caf\OpenWithProgids" Name="soundglass.Audio" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.mka\OpenWithProgids" Name="soundglass.Audio" Value="" Type="string" />
+
+          <!-- …and as an app in Settings → Default apps. -->
+          <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities" Name="ApplicationName" Value="soundglass" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities" Name="ApplicationDescription" Value="A small, fast audio player and quick editor" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities\FileAssociations" Name=".mp3" Value="soundglass.Audio" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities\FileAssociations" Name=".mp2" Value="soundglass.Audio" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities\FileAssociations" Name=".mp1" Value="soundglass.Audio" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities\FileAssociations" Name=".flac" Value="soundglass.Audio" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities\FileAssociations" Name=".wav" Value="soundglass.Audio" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities\FileAssociations" Name=".ogg" Value="soundglass.Audio" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities\FileAssociations" Name=".oga" Value="soundglass.Audio" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities\FileAssociations" Name=".m4a" Value="soundglass.Audio" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities\FileAssociations" Name=".m4b" Value="soundglass.Audio" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities\FileAssociations" Name=".aac" Value="soundglass.Audio" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities\FileAssociations" Name=".aif" Value="soundglass.Audio" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities\FileAssociations" Name=".aiff" Value="soundglass.Audio" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities\FileAssociations" Name=".caf" Value="soundglass.Audio" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities\FileAssociations" Name=".mka" Value="soundglass.Audio" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\RegisteredApplications" Name="soundglass" Value="Software\soundglass\Capabilities" Type="string" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Component Id="StartMenu" Guid="*">
+        <Shortcut Id="StartMenuShortcut" Name="soundglass" Description="A small, fast audio player and quick editor" Target="[INSTALLFOLDER]soundglass.exe" WorkingDirectory="INSTALLFOLDER" />
+        <RegistryValue Root="HKLM" Key="Software\soundglass" Name="StartMenuShortcut" Value="1" Type="integer" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+    <Feature Id="Main">
+      <ComponentRef Id="App" />
+      <ComponentRef Id="StartMenu" />
+    </Feature>
+  </Package>
+</Wix>

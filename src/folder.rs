@@ -108,6 +108,16 @@ mod tests {
         assert_eq!(natural_cmp("photo", "photo1"), Ordering::Less);
     }
 
+    /// The Windows installer registers every extension the player opens (the .desktop file lists MIME types instead).
+    #[test]
+    fn installer_lists_every_extension() {
+        let wxs = include_str!("../packaging/windows/soundglass.wxs");
+        for e in EXTENSIONS {
+            assert!(wxs.contains(&format!(r#"Classes\.{e}\OpenWithProgids""#)), ".{e} missing from Open with in soundglass.wxs");
+            assert!(wxs.contains(&format!(r#"FileAssociations" Name=".{e}""#)), ".{e} missing from Default apps in soundglass.wxs");
+        }
+    }
+
     #[test]
     fn folder_filter_and_order() {
         let dir = std::env::temp_dir().join(format!("soundglass-folder-{}", std::process::id()));
