@@ -33,7 +33,7 @@ pub(super) struct Note {
 pub(super) fn activations(model: &Path, mono: &[f32], progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<(Vec<[f32; KEYS]>, Vec<[f32; KEYS]>), String> {
     use ort::value::Tensor;
     let err = |e: ort::Error| e.to_string();
-    let mut session = session(model)?;
+    let mut session = session_with(model, cores(), false)?;
     // Half an overlap of silence first, as inference.py does.
     let mut audio = vec![0f32; OVERLAP / 2];
     audio.extend_from_slice(mono);

@@ -331,20 +331,26 @@ pub(super) fn environment() -> Result<&'static ort::environment::Environment, St
 /// A session for the model file `path`: on the GPU when its build is loaded and the setting is
 /// on, falling back to the CPU (and saying why) if it can't be used.
 pub(super) fn session(path: &Path) -> Result<ort::session::Session, String> {
-    // One thread per physical core was ~10% faster than one per hardware thread in lightview.
-    // shortcut: assumes two hardware threads per core; read the real core count if that's wrong somewhere.
-    session_with(path, std::thread::available_parallelism().map_or(1, |n| (n.get() / 2).max(1)))
+    session_with(path, cores(), true)
 }
 
-/// `session` with `threads` CPU threads: small models run faster on few.
-pub(super) fn session_with(path: &Path, threads: usize) -> Result<ort::session::Session, String> {
+/// One thread per physical core was ~10% faster than one per hardware thread in lightview.
+/// shortcut: assumes two hardware threads per core; read the real core count if that's wrong somewhere.
+pub(super) fn cores() -> usize {
+    std::thread::available_parallelism().map_or(1, |n| (n.get() / 2).max(1))
+}
+
+/// A session on `threads` CPU threads, on the GPU only when `gpu` (and the setting) say so:
+/// on a GTX 1050 the small models (DeepFilterNet, Basic Pitch) and the int8 ones (Whisper,
+/// Parakeet) ran 2–3× slower on CUDA than on the CPU; HTDemucs and Beat This! 2.6–3× faster.
+pub(super) fn session_with(path: &Path, threads: usize, gpu: bool) -> Result<ort::session::Session, String> {
     let env = environment()?;
     let cpu = || -> Result<ort::session::Session, String> {
         let builder = ort::session::Session::builder(env).map_err(|e| e.to_string())?;
         let mut builder = builder.with_intra_threads(threads).map_err(|e| e.to_string())?;
         builder.commit_from_file(path).map_err(|e| e.to_string())
     };
-    if !(USE_GPU.load(Ordering::Relaxed) && GPU_LOADED.load(Ordering::Relaxed)) {
+    if !(gpu && USE_GPU.load(Ordering::Relaxed) && GPU_LOADED.load(Ordering::Relaxed)) {
         return cpu();
     }
     let cuda = (|| {

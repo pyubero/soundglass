@@ -139,7 +139,7 @@ impl Ai {
                 Err(TryRecvError::Empty) => {
                     let p = f32::from_bits(run.progress.load(Ordering::Relaxed));
                     egui::Window::new(run.task.title()).collapsible(false).resizable(false).show(ctx, |ui| {
-                        ui.label(if on_gpu() { "Running on the GPU…" } else { "Running on the CPU…" });
+                        ui.label(if on_gpu() && matches!(run.task, Task::Stems | Task::Beats) { "Running on the GPU…" } else { "Running on the CPU…" });
                         ui.add(egui::ProgressBar::new(p).desired_width(240.0).show_percentage());
                         if ui.button("Cancel").clicked() {
                             run.cancel.store(true, Ordering::Relaxed);
@@ -323,7 +323,7 @@ impl Ai {
                     self.download_button(ui, Download::Gpu, "Download GPU Support");
                 });
             } else {
-                if ui.checkbox(&mut s.use_gpu, "Use the GPU").changed() {
+                if ui.checkbox(&mut s.use_gpu, "Use the GPU").on_hover_text("For Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050; the other tools are faster on the CPU").changed() {
                     set_use_gpu(s.use_gpu);
                 }
                 if gpu_needs_restart() {

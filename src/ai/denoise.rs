@@ -26,7 +26,7 @@ pub(super) fn denoise(model: &Path, channels: Vec<Vec<f32>>, progress: &dyn Fn(f
 
 fn channel(model: &Path, mut input: Vec<f32>, done: &std::sync::atomic::AtomicUsize, cancel: &AtomicBool) -> Result<Vec<f32>, String> {
     use ort::value::Tensor;
-    let mut session = session_with(model, 2)?;
+    let mut session = session_with(model, 2, false)?;
     let states_len = session
         .inputs()
         .iter()

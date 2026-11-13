@@ -95,8 +95,8 @@ pub(super) fn whisper_mel(x: &[f32], filters: &[f32], n_mels: usize) -> (Vec<f32
 
 /// Whisper's text of `mono` (at `RATE`), the language detected from the first piece with sound.
 pub(super) fn whisper(encoder: &Path, decoder: &Path, tokens: &Path, mono: &[f32], progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<String, String> {
-    let mut enc = session(encoder)?;
-    let mut dec = session(decoder)?;
+    let mut enc = session_with(encoder, cores(), false)?;
+    let mut dec = session_with(decoder, cores(), false)?;
     let meta = enc.metadata().map_err(err)?;
     let get = |k: &str| meta.custom(k).ok_or_else(|| format!("the model has no {k}"));
     let num = |k: &str, max: i64| get(k)?.trim().parse::<i64>().ok().filter(|v| (0..=max).contains(v)).ok_or_else(|| format!("the model's {k} is out of range"));
@@ -235,9 +235,9 @@ pub(super) fn parakeet(encoder: &Path, decoder_joint: &Path, features: &Path, vo
     tokens.sort_by_key(|t| t.0);
     let vocab: Vec<String> = tokens.into_iter().map(|t| t.1).collect();
     let blank = vocab.iter().position(|t| t == "<blk>").ok_or("the vocabulary has no blank")?;
-    let mut pre = session(features)?;
-    let mut enc = session(encoder)?;
-    let mut dj = session(decoder_joint)?;
+    let mut pre = session_with(features, cores(), false)?;
+    let mut enc = session_with(encoder, cores(), false)?;
+    let mut dj = session_with(decoder_joint, cores(), false)?;
     let state_shape = |name: &str| -> Result<(usize, usize), String> {
         let s = dj.inputs().iter().find(|i| i.name() == name).and_then(|i| i.dtype().tensor_shape()).ok_or("the model isn't Parakeet TDT")?;
         let ok = |v: i64| (1..=4096).contains(&v);

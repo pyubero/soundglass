@@ -416,3 +416,33 @@ fn transcribe_a_recording() {
         eprintln!("{} ({:.1} s): {done:?}", k.file, t0.elapsed().as_secs_f32());
     }
 }
+
+/// Online (the runtime): a garbage or truncated model file is an error, not a crash.
+#[test]
+#[ignore]
+fn broken_models_are_errors() {
+    install_runtime();
+    let dir = temp("broken-model");
+    std::fs::create_dir_all(&dir).unwrap();
+    let garbage = dir.join("garbage.onnx");
+    std::fs::write(&garbage, b"not a model at all").unwrap();
+    let truncated = dir.join("truncated.onnx");
+    let real = std::fs::read(model_path("nmp.onnx").unwrap()).unwrap();
+    std::fs::write(&truncated, &real[..real.len() / 3]).unwrap();
+    let results = [session(&garbage).is_err(), session(&truncated).is_err()];
+    let midi = midi::activations(&garbage, &[0.0; 1000], &|_| {}, &AtomicBool::new(false)).is_err();
+    std::fs::remove_dir_all(&dir).unwrap();
+    assert_eq!(results, [true, true]);
+    assert!(midi);
+}
+
+/// Online, ~1.5 GB: `XDG_DATA_HOME=$PWD/target/aitest cargo test --release -- --ignored install_gpu`.
+#[test]
+#[ignore]
+fn install_gpu() {
+    assert!(data_dir().unwrap().starts_with(std::env::current_dir().unwrap().join("target")), "use a throwaway XDG_DATA_HOME");
+    if !gpu_installed() {
+        download_gpu(&|_| {}, &AtomicBool::new(false)).unwrap();
+    }
+    assert!(gpu_installed());
+}

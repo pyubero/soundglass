@@ -216,3 +216,4 @@
 - 2026-11-13 — long audio is cut into pieces of at most 29 s at the quietest 100 ms of each piece's last 5 s; pieces under 0.001 RMS are skipped (Whisper makes up words in silence); no timestamps
 - 2026-11-13 — the transcript is shown in a window with Copy and Save as Text… (the system's save dialog, written through a temp file and renamed), not written next to the track
 - 2026-11-13 — Whisper small runs at ~2× real time on the CPU, slower than Parakeet (accepted; IoBinding of the caches is the thing to try)
+- 2026-11-13 — with GPU support, only Split into Stems and Find Beats use CUDA: on a GTX 1050 they ran 2.6× (stems, 60 s in 28 s against 73 s) and 3× (beats) faster, while DeepFilterNet, Basic Pitch and the int8 Whisper and Parakeet models ran 2–3× slower than on the CPU; the results on the GPU matched the CPU's
