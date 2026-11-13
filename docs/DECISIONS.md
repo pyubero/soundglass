@@ -200,3 +200,7 @@
 - 2026-11-13 — HTDemucs's weights come with Demucs' MIT licence but one model card says no explicit grant for the weights was found (accepted risk, as the conversions all state MIT)
 - 2026-11-13 — stems go into a new folder next to the track, name-stems/ (then -2…), as drums, bass, other and vocals.flac, and the vocals are opened; a failure removes the folder
 - 2026-11-13 — all four stems are held in memory, ~170 MB a minute (accepted; stream to the encoders if long tracks run out)
+- 2026-11-13 — Melody to MIDI uses Spotify's own nmp.onnx from the basic-pitch repository at a fixed commit, with its windowing and note decoding ported to Rust at Basic Pitch's defaults (onset 0.5, frame 0.3, 127.7 ms, inferred onsets, melodia trick); no pitch bends, no settings
+- 2026-11-13 — the melodia trick's repeated whole-matrix argmax is one sort of the candidate frames, skipping those already cleared: the same notes, since values only drop to 0
+- 2026-11-13 — the MIDI file is name-melody.mid (named like the other results), format 0, 120 bpm, 220 ticks a beat, Electric Piano 1, as pretty_midi writes it; a written MIDI file is reported in the tool's window, not opened
+- 2026-11-13 — a hand-written Standard MIDI File writer (~40 lines), no MIDI crate

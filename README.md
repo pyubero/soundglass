@@ -100,6 +100,7 @@ The tools work on the track as edited and never change it: each writes a new fil
 
 - **Remove Noise** (DeepFilterNet3, 16 MB): cleans background noise from speech and writes `name-denoised.flac` at the track's sample rate. Made for voices; on music it can take away more than noise. On a 12-thread CPU it runs about 2.4× faster than real time for a stereo track.
 - **Split into Stems** (Practice mode; HTDemucs v4, 166 MB): writes `drums.flac`, `bass.flac`, `other.flac` and `vocals.flac` into a new `name-stems` folder and opens the vocals, so Page Down and the Folder panel step through the others. About real time on the CPU (a 4-minute song takes about 5 minutes); much faster with GPU support. All four stems are held in memory, about 170 MB a minute of audio.
+- **Melody to MIDI** (Practice mode; Spotify's Basic Pitch, 0.2 MB): turns what's played or sung, several notes at once, into `name-melody.mid` (120 bpm, Electric Piano), with Basic Pitch's default thresholds and no pitch bends. A minute of audio takes about a second.
 
 ## Install as the default audio player
 

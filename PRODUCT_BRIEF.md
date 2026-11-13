@@ -105,7 +105,7 @@ Everything here is behind View → Practice mode, which adds a Practice menu (Lo
 
 ### Local AI for practice (optional download)
 - **Split into stems.** Vocals, drums, bass and the rest as separate files, for karaoke or practising along. Done: Local AI → Split into Stems (HTDemucs v4) writes the four stems into name-stems/ and opens the vocals.
-- **Melody to MIDI.** Turn a sung or played melody into a MIDI file.
+- **Melody to MIDI.** Turn a sung or played melody into a MIDI file. Done: Local AI → Melody to MIDI (Basic Pitch) writes name-melody.mid next to the track.
 
 ### Our own engine: the Griffin–Lim modulator in Rust
 - **Build on the audio-tools Griffin–Lim modulator** to make a better, improved, faster version in pure Rust. Ideally it has two settings: Fast, for real time (frame by frame with a small look-ahead, like RTISI-LA), and Quality, slower and offline (more iterations, started from phase-vocoder phases). It replaces WSOLA where it sounds better. The ideas to start from are in [docs/TIME_STRETCH.md](docs/TIME_STRETCH.md), section 3.

@@ -63,8 +63,8 @@ struct Run {
 pub struct Ai {
     pub show_models: bool,
     run: Option<Run>,
-    /// A tool's error, shown in its window until closed.
-    run_error: Option<(Task, String)>,
+    /// A tool's outcome when nothing opens (a saved MIDI file, an error), shown until closed.
+    run_error: Option<(Task, Result<String, String>)>,
     /// A licence being read: what for, and which of its licences.
     license: Option<(Download, usize)>,
     jobs: Vec<Job>,
@@ -134,23 +134,30 @@ impl Ai {
                     ctx.request_repaint_after(std::time::Duration::from_millis(200));
                 }
                 Ok(Ok(path)) => {
+                    let task = run.task;
                     self.run = None;
-                    return Some(path);
+                    if crate::folder::is_audio(&path) {
+                        return Some(path);
+                    }
+                    self.run_error = Some((task, Ok(format!("Saved {}", path.file_name().unwrap_or_default().to_string_lossy()))));
                 }
                 Ok(Err(e)) => {
                     let task = run.task;
                     let cancelled = run.cancel.load(Ordering::Relaxed);
                     self.run = None;
                     if !cancelled {
-                        self.run_error = Some((task, e));
+                        self.run_error = Some((task, Err(e)));
                     }
                 }
-                Err(TryRecvError::Disconnected) => (self.run, self.run_error) = (None, Some((run.task, "the AI tool stopped".into()))),
+                Err(TryRecvError::Disconnected) => (self.run, self.run_error) = (None, Some((run.task, Err("the AI tool stopped".into())))),
             }
         }
         if let Some((task, e)) = &self.run_error {
             let mut open = true;
-            egui::Window::new(task.title()).open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| ui.colored_label(ui.visuals().error_fg_color, e));
+            egui::Window::new(task.title()).open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| match e {
+                Ok(m) => ui.label(m),
+                Err(e) => ui.colored_label(ui.visuals().error_fg_color, e),
+            });
             if !open {
                 self.run_error = None;
             }
@@ -380,6 +387,28 @@ pub(super) fn run_tool(task: Task, model: &Known, track: &crate::track::Track, e
                 let _ = std::fs::remove_dir_all(&dir);
             }
             result
+        }
+        Task::Midi => {
+            let target = crate::save::reserve_named(&track.path, "melody", "mid")?;
+            let result = (|| {
+                let channels = audio::planar(track, edit, midi::RATE)?;
+                let mono: Vec<f32> = (0..channels[0].len()).map(|i| channels.iter().map(|c| c[i]).sum::<f32>() / channels.len() as f32).collect();
+                let (frames, onsets) = midi::activations(&model_path(model.file)?, &mono, &|p| progress(0.9 * p), cancel)?;
+                let notes = midi::notes(&frames, &onsets);
+                if notes.is_empty() {
+                    return Err("no notes were found".to_string());
+                }
+                // Written beside it, then renamed over the reserved name.
+                let part = target.with_extension("mid.part");
+                std::fs::write(&part, midi::smf(&notes)).and_then(|()| std::fs::rename(&part, &target)).map_err(|e| {
+                    let _ = std::fs::remove_file(&part);
+                    e.to_string()
+                })
+            })();
+            if result.is_err() {
+                let _ = std::fs::remove_file(&target);
+            }
+            result.map(|()| target)
         }
         _ => Err("not built yet".into()),
     }

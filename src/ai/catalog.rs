@@ -23,8 +23,10 @@ const DEEPFILTERNET_LICENSE: License = License { project: "DeepFilterNet", spdx:
 
 const DEMUCS_LICENSE: License = License { project: "Demucs (HTDemucs v4)", spdx: "MIT", url: "https://github.com/facebookresearch/demucs", text: include_str!("../../licenses/demucs.txt") };
 
+const BASIC_PITCH_LICENSE: License = License { project: "Basic Pitch (Spotify)", spdx: "Apache-2.0", url: "https://github.com/spotify/basic-pitch", text: include_str!("../../licenses/basic-pitch.txt") };
+
 /// In order of preference per task.
-pub const CATALOG: [Known; 2] = [Known {
+pub const CATALOG: [Known; 3] = [Known {
     file: "denoiser_model.onnx",
     label: "DeepFilterNet3 — speech, 48 kHz",
     task: Task::Denoise,
@@ -45,6 +47,17 @@ pub const CATALOG: [Known; 2] = [Known {
     data: &[],
     converted_by: Some("The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face."),
     licenses: &[DEMUCS_LICENSE],
+}, Known {
+    file: "nmp.onnx",
+    label: "Basic Pitch — any instrument, several notes at once",
+    task: Task::Midi,
+    mb: 1,
+    sha256: "2c3c1d144bfa61ad236e92e169c13535c880469a12a047d4e73451f2c059a0ec",
+    // Spotify's own ONNX file, from the repository at a fixed commit.
+    base: "https://raw.githubusercontent.com/spotify/basic-pitch/dfb20ef559dff1792e11e022f3f0c7008c1dee6d/basic_pitch/saved_models/icassp_2022",
+    data: &[],
+    converted_by: None,
+    licenses: &[BASIC_PITCH_LICENSE],
 }];
 
 pub(super) fn models_dir() -> Result<PathBuf, String> {

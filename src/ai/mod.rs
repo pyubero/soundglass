@@ -8,6 +8,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 mod audio;
 mod catalog;
 mod denoise;
+mod midi;
 mod runtime;
 mod stems;
 mod ui;

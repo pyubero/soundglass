@@ -232,3 +232,82 @@ fn saved_results_keep_their_length() {
     std::fs::remove_dir_all(&dir).unwrap();
     assert!(out.iter().all(|(a, b)| a == b), "{out:?}");
 }
+
+#[test]
+fn notes_from_activations_and_midi_bytes() {
+    // Key 39 (C4) on from frame 10 to 40 with an onset at 10; key 43 too short (5 frames).
+    let mut frames = vec![[0f32; 88]; 100];
+    let mut onsets = vec![[0f32; 88]; 100];
+    (10..40).for_each(|t| frames[t][39] = 0.8);
+    (60..65).for_each(|t| frames[t][43] = 0.9);
+    onsets[10][39] = 0.9;
+    let notes = midi::notes(&frames, &onsets);
+    assert_eq!(notes.len(), 1, "{notes:?}");
+    let n = notes[0];
+    assert_eq!((n.start, n.end, n.key), (10, 40, 60));
+    assert!((n.amp - 0.8).abs() < 1e-6);
+    // A held note without an onset is still found, by the melodia trick.
+    let mut frames = vec![[0f32; 88]; 100];
+    (20..50).for_each(|t| frames[t][50] = 0.5);
+    let notes = midi::notes(&frames, &vec![[0f32; 88]; 100]);
+    assert_eq!(notes.iter().map(|n| n.key).collect::<Vec<_>>(), [71]);
+    let smf = midi::smf(&notes);
+    assert_eq!(&smf[..14], b"MThd\0\0\0\x06\0\0\0\x01\0\xDC");
+    let len = u32::from_be_bytes(smf[18..22].try_into().unwrap()) as usize;
+    assert_eq!(smf.len(), 22 + len);
+    assert_eq!(&smf[smf.len() - 3..], [0xFF, 0x2F, 0x00]);
+    assert!(smf.windows(2).any(|w| w == [0x90, 71]) && smf.windows(2).any(|w| w == [0x80, 71]));
+}
+
+/// Online: a synthesised tune of known notes comes back as those notes.
+#[test]
+#[ignore]
+fn midi_finds_a_played_tune() {
+    let k = installed_model(Task::Midi);
+    let tune = [60u8, 62, 64, 65, 67, 69, 71, 72];
+    let rate = midi::RATE as f32;
+    let mono: Vec<f32> = tune
+        .iter()
+        .flat_map(|&key| {
+            let f = 440.0 * 2f32.powf((key as f32 - 69.0) / 12.0);
+            (0..midi::RATE as usize / 2).map(move |i| {
+                let t = i as f32 / rate;
+                let env = (t * 40.0).min(1.0) * (-t * 3.0).exp();
+                env * (1..5).map(|h| (std::f32::consts::TAU * f * h as f32 * t).sin() / h as f32).sum::<f32>() * 0.3
+            })
+        })
+        .collect();
+    let (frames, onsets) = midi::activations(&model_path(k.file).unwrap(), &mono, &|_| {}, &AtomicBool::new(false)).unwrap();
+    let mut notes = midi::notes(&frames, &onsets);
+    notes.sort_by_key(|n| n.start);
+    eprintln!("{:?}", notes.iter().map(|n| (n.key, format!("{:.2}", n.start as f32 * 256.0 / rate))).collect::<Vec<_>>());
+    assert_eq!(frames.len(), (mono.len() as f64 / (midi_stride() as f64) * 142.0) as usize);
+    // Every note played, in order, at its time (an overtone or so may come with them).
+    let mut found = notes.iter();
+    for (i, key) in tune.iter().enumerate() {
+        let n = found.find(|n| n.key == *key).unwrap_or_else(|| panic!("{key} missing"));
+        assert!((n.start as f32 * 256.0 / rate - i as f32 * 0.5).abs() < 0.05);
+    }
+    assert!(notes.len() <= tune.len() + 2);
+}
+
+fn midi_stride() -> usize {
+    (22_050 * 2 - 256) - 30 * 256
+}
+
+/// Online: the whole tool on an album track; the MIDI file is checked by hand (ffprobe can't).
+#[test]
+#[ignore]
+fn midi_album_track() {
+    let k = installed_model(Task::Midi);
+    let (track, dir) = album_copy("midi");
+    let edit = crate::edit::Edit::whole(track.len()).crop(0, 60 * 44_100);
+    let t0 = std::time::Instant::now();
+    let out = ui::run_tool(Task::Midi, k, &track, &edit, &|_| {}, &AtomicBool::new(false)).unwrap();
+    eprintln!("60 s in {:.1} s, {} bytes", t0.elapsed().as_secs_f32(), std::fs::metadata(&out).unwrap().len());
+    assert_eq!(out, dir.join("song-melody.mid"));
+    if let Ok(keep) = std::env::var("SG_KEEP") {
+        std::fs::copy(&out, keep).unwrap();
+    }
+    std::fs::remove_dir_all(&dir).unwrap();
+}
