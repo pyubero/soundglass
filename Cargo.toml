@@ -6,10 +6,12 @@ description = "A small, fast audio player and quick editor"
 license = "GPL-3.0-or-later"
 
 [dependencies]
+# Already in the build (eframe's clipboard); File → Copy File puts a file list on it.
+arboard = { version = "3.7.0", default-features = false }
 base64 = "0.23.1"
 bpm-key = { version = "0.1.0", default-features = false }
 cpal = "0.18.2"
-eframe = { version = "0.37", default-features = false, features = ["glow", "wayland", "x11", "accesskit", "persistence"] }
+eframe = { version = "0.37", default-features = false, features = ["glow", "wayland", "x11", "accesskit", "persistence", "clipboard"] }
 flacenc = "0.5.1"
 hound = "3.5.1"
 image = { version = "0.25.10", default-features = false, features = ["jpeg", "png", "tiff", "webp", "bmp", "gif"] }

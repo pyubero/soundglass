@@ -103,7 +103,7 @@ fn main() -> eframe::Result {
             p.send(Cmd::Load(track.clone()));
             p.send(Cmd::Volume(volume_gain(volume)));
         }
-        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_found: None, cover_offer: None, cover_asked: Default::default(), rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_found: None, cover_offer: None, cover_asked: Default::default(), rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), file_clipboard: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -196,6 +196,8 @@ struct App {
     save_job: Option<(SaveResult, Arc<Edit>, PathBuf, bool)>,
     /// The last save's result and when it came, shown for a few seconds (errors until the next save).
     save_notice: Option<(Result<String, String>, f64)>,
+    /// Holds File → Copy File's clipboard: on Linux its contents go when it's dropped.
+    file_clipboard: Option<arboard::Clipboard>,
     /// Save As's last choice, kept while soundglass runs.
     save_choice: save::Choice,
     /// Track Info's tag editor while it is open.
@@ -577,6 +579,14 @@ impl eframe::App for App {
                     });
                     if ui.button(if cfg!(windows) { "Show in Explorer" } else { "Show in File Manager" }).clicked() {
                         folder::show_in_folder(&self.track.path);
+                        ui.close();
+                    }
+                    if ui.button("Copy Path").clicked() {
+                        ctx.copy_text(self.track.path.display().to_string());
+                        ui.close();
+                    }
+                    if ui.button("Copy File").on_hover_text("For pasting into a chat or a file manager").clicked() {
+                        self.copy_file(&ctx);
                         ui.close();
                     }
                     if ui.add_enabled(self.can_save_copy(), egui::Button::new("Save Copy").shortcut_text(ctx.format_shortcut(&copy_key))).on_hover_text("Saves the edits next to the original, in its format, as name-edited").clicked() {
@@ -2168,6 +2178,22 @@ impl App {
         if close {
             self.rename = None;
         }
+    }
+
+    /// Puts the current file on the clipboard as a file. From lightview.
+    // shortcut: GNOME Files may want x-special/gnome-copied-files, which arboard doesn't offer; add it if that's reported.
+    fn copy_file(&mut self, ctx: &egui::Context) {
+        let clipboard = match self.file_clipboard.take() {
+            Some(c) => Ok(c),
+            None => arboard::Clipboard::new(),
+        };
+        let result = clipboard.and_then(|mut c| {
+            let copied = c.set().file_list(&[&self.track.path]);
+            self.file_clipboard = Some(c);
+            copied
+        });
+        let notice = result.map(|()| "Copied the file".to_string()).map_err(|e| format!("Couldn't copy the file: {e}"));
+        self.save_notice = Some((notice, ctx.input(|i| i.time)));
     }
 
     /// Puts `path` first in Open Recent.
