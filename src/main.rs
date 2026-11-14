@@ -94,7 +94,11 @@ fn main() -> eframe::Result {
         let _ = ctx.set(cc.egui_ctx.clone());
         let mut recent: Vec<PathBuf> = cc.storage.and_then(|s| s.get_string("recent")).unwrap_or_default().lines().map(PathBuf::from).collect();
         push_recent(&mut recent, &track.path);
-        cc.egui_ctx.set_fonts(fonts());
+        cc.egui_ctx.set_fonts(fonts(None));
+        let egui_ctx = cc.egui_ctx.clone();
+        std::thread::spawn(move || if let Some(cjk) = cjk_font() {
+            egui_ctx.set_fonts(fonts(Some(Arc::new(cjk))));
+        });
         theme::seed_folder();
         let theme_error = theme::apply(&cc.egui_ctx, &settings.theme);
         settings::apply_font_size(&cc.egui_ctx, settings.font_size);
@@ -109,9 +113,8 @@ fn main() -> eframe::Result {
 }
 
 /// The UI's fonts, from lightview: Apache-2.0 and MIT only, since egui's default set isn't
-/// clearly GPL-compatible. shortcut: no CJK font, so Chinese/Japanese/Korean tags show as boxes;
-/// copy lightview's system CJK font lookup (`markup::read_cjk_font`) when that matters.
-fn fonts() -> egui::FontDefinitions {
+/// clearly GPL-compatible. The system's CJK font, once read, goes in before the icons.
+fn fonts(cjk: Option<Arc<egui::FontData>>) -> egui::FontDefinitions {
     use egui::{FontData, FontFamily, FontTweak};
     let mut fonts = egui::FontDefinitions::default();
     fonts.font_data.insert("Roboto".into(), Arc::new(FontData::from_static(include_bytes!("../fonts/Roboto-Regular.ttf"))));
@@ -121,7 +124,38 @@ fn fonts() -> egui::FontDefinitions {
     let family = |names: &[&str]| names.iter().map(|n| n.to_string()).collect::<Vec<_>>();
     fonts.families.insert(FontFamily::Proportional, family(&["Roboto", "emoji-icon-font"]));
     fonts.families.insert(FontFamily::Monospace, family(&["Droid Sans Mono", "Roboto", "emoji-icon-font"]));
+    if let Some(cjk) = cjk {
+        fonts.font_data.insert("cjk".into(), cjk);
+        fonts.families.values_mut().for_each(|f| f.insert(f.len() - 1, "cjk".into()));
+    }
     fonts
+}
+
+/// The system's font for Chinese, Japanese and Korean tags, in the Chinese style. Reads ~20 MB:
+/// call it off the UI thread. shortcut: one regional style for all three; pick by the tag's script if users notice.
+fn cjk_font() -> Option<egui::FontData> {
+    #[cfg(target_os = "linux")]
+    let (path, index) = {
+        let out = std::process::Command::new("fc-match").args(["-f", "%{file}\n%{index}\n%{lang}", "sans-serif:lang=zh-cn"]).output().ok()?;
+        parse_fc_match(&String::from_utf8_lossy(&out.stdout))?
+    };
+    // Every Windows 10/11 has it, whatever its language (lightview's choice).
+    #[cfg(windows)]
+    let (path, index) = (PathBuf::from(std::env::var_os("WINDIR")?).join("Fonts").join("msyh.ttc"), 0);
+    #[cfg(not(any(target_os = "linux", windows)))]
+    let (path, index): (PathBuf, u32) = return None;
+    let mut font = egui::FontData::from_owned(std::fs::read(path).ok()?);
+    font.index = index;
+    Some(font)
+}
+
+/// fc-match's file, face index and languages: the font only if it covers Chinese, since
+/// fontconfig answers with some font even when none does.
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+fn parse_fc_match(out: &str) -> Option<(PathBuf, u32)> {
+    let mut lines = out.lines();
+    let (file, index, langs) = (lines.next()?, lines.next()?.parse().ok()?, lines.next()?);
+    langs.split('|').any(|l| l == "zh-cn").then(|| (PathBuf::from(file), index))
 }
 
 /// Wakes the window, once it exists, from another thread.
@@ -3112,9 +3146,16 @@ pub fn ms(t: Instant) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{clock_ms, cover_fit_side, cover_side, display_pos, info_rows, marquee, neighbour, push_recent, resize_for_panel, shuffled, snap_speed, title, volume_gain, zoom_view};
+    use super::{parse_fc_match, clock_ms, cover_fit_side, cover_side, display_pos, info_rows, marquee, neighbour, push_recent, resize_for_panel, shuffled, snap_speed, title, volume_gain, zoom_view};
     use crate::settings::Order;
     use std::path::PathBuf;
+
+    #[test]
+    fn cjk_font_only_when_it_covers_chinese() {
+        assert_eq!(parse_fc_match("/f/NotoSansCJK.ttc\n1\nen|ja|zh-cn|zh-tw"), Some(("/f/NotoSansCJK.ttc".into(), 1)));
+        assert_eq!(parse_fc_match("/f/DejaVuSans.ttf\n0\nen|de|ru"), None);
+        assert_eq!(parse_fc_match(""), None);
+    }
 
     #[test]
     fn track_info_rows() {

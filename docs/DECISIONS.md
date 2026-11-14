@@ -264,3 +264,4 @@
 - 2026-11-14 — the UI thread does no file or image work for the folder-cover offer (now on a thread) and uploads at most 2 spectrogram tiles per frame — a backlog uploaded at once stalls the window
 - 2026-11-14 — a 10 s freeze after changing song couldn't be reproduced under gdb sampling (45 s, UI thread idle in 131 of 151 samples); the fixes above are by prioritising, not a found root cause — awaiting the user's retest
 - 2026-11-14 — Copy File via arboard's file list (text/uri-list on Linux, CF_HDROP on Windows), the Clipboard kept in App because Linux drops its contents with it; eframe's clipboard feature on, so text fields copy and paste with the system (user's choice)
+- 2026-11-14 — the system CJK font (fc-match on Linux, accepted only if its languages include zh-cn; msyh.ttc on Windows) is read on a thread at start and added before the icon font; one Chinese regional style for all CJK tags — no ab_glyph/skrifa dependency for a glyph check

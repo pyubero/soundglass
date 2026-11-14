@@ -59,6 +59,7 @@ Reset puts all three back to normal. The last two use WSOLA, which can sound a l
 
 ## Tags and names
 
+- Chinese, Japanese and Korean tags are drawn with the system's CJK font (on Linux the one fontconfig picks, such as Noto Sans CJK from `fonts-noto-cjk`; on Windows Microsoft YaHei), in the Chinese style; without one they show as boxes.
 - In Practice mode, Track Info shows the estimated tempo and key (Audio, after loading; the first 10 minutes are analysed). Tempo is counted as people tap along, so it can be an octave off.
 - In Track Info, Edit (in Tags) changes the title, artist, album, year, track, genre, BPM, key and cover; the estimate buttons (Practice mode) fill BPM and Key, and ½× / 2× halve or double the BPM. Save… asks first, then writes the tags into the file; the audio is checked unchanged before the file is replaced. Save As and Save Copy also take tag edits not yet saved.
 - Opening a track without a cover in a folder with exactly one image (JPEG, PNG, TIFF, WebP, BMP or GIF) asks whether to use that image as the cover of all the folder's tracks (replacing their covers); Add Cover (the dialog shows the image) writes it into each file the same checked way. Each folder is asked once per run.
