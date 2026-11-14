@@ -14,7 +14,7 @@ Needs Rust and the ALSA headers (`sudo apt install libasound2-dev` on Debian/Ubu
 cargo run --release -- song.mp3
 ```
 
-Without a file it asks for one. `--timings` prints the time to the window and to the first sound; `--bench` exits at the first sound.
+Without a file it opens an empty window with Open… (the menus that need a file are greyed out). `--timings` prints the time to the window and to the first sound; `--bench` exits at the first sound.
 
 ## Keys
 

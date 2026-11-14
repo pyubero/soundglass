@@ -49,22 +49,21 @@ fn main() -> eframe::Result {
             _ => path = Some(std::path::PathBuf::from(arg)),
         }
     }
-    // Started from the app menu, with no file: ask for one.
-    // shortcut: no empty window to open from; give App an Option<Track> if an empty start is wanted.
-    let Some(path) = path.or_else(|| rfd::FileDialog::new().add_filter("Audio", &folder::EXTENSIONS).pick_file()) else {
+    // Started from the app menu, with no file: an empty window with Open….
+    if bench && path.is_none() {
         eprintln!("usage: soundglass FILE [--timings | --bench]");
         std::process::exit(2);
-    };
-    let path = std::fs::canonicalize(&path).unwrap_or_else(|e| {
+    }
+    let path = path.map(|path| std::fs::canonicalize(&path).unwrap_or_else(|e| {
         eprintln!("soundglass: {}: {e}", path.display());
         std::process::exit(1);
-    });
+    }));
 
     // Decoding and opening the sound device overlap the window's OpenGL setup.
     let ctx: Arc<OnceLock<egui::Context>> = Arc::new(OnceLock::new());
-    let track = Track::load(path.clone(), repaint(&ctx));
-    let files = folder::list_folder(&path);
-    let index = files.iter().position(|p| *p == path).unwrap_or(0);
+    let track = path.as_ref().map_or_else(no_track, |path| Track::load(path.clone(), repaint(&ctx)));
+    let files = path.as_ref().map(|path| folder::list_folder(path)).unwrap_or_default();
+    let index = files.iter().position(|p| Some(p) == path.as_ref()).unwrap_or(0);
     let opening = std::thread::spawn(move || Player::open(t0, timings, bench));
 
     // winit reports the system theme on Windows only, so egui's fallback comes from the desktop portal,
@@ -78,7 +77,7 @@ fn main() -> eframe::Result {
         });
     }
 
-    let name = track.path.file_name().unwrap_or_default().to_string_lossy().into_owned();
+    let name = track.path.file_name().map_or_else(|| "soundglass".into(), |n| n.to_string_lossy().into_owned());
     let settings = settings::load();
     ai::set_use_gpu(settings.ai.use_gpu);
     let remembered = settings.window_size.filter(|_| settings.remember_window_size);
@@ -92,7 +91,9 @@ fn main() -> eframe::Result {
     eframe::run_native("soundglass", options, Box::new(move |cc| {
         let _ = ctx.set(cc.egui_ctx.clone());
         let mut recent: Vec<PathBuf> = cc.storage.and_then(|s| s.get_string("recent")).unwrap_or_default().lines().map(PathBuf::from).collect();
-        push_recent(&mut recent, &track.path);
+        if !track.path.as_os_str().is_empty() {
+            push_recent(&mut recent, &track.path);
+        }
         cc.egui_ctx.set_fonts(fonts(None));
         let egui_ctx = cc.egui_ctx.clone();
         std::thread::spawn(move || if let Some(cjk) = cjk_font() {
@@ -155,6 +156,11 @@ fn parse_fc_match(out: &str) -> Option<(PathBuf, u32)> {
     let mut lines = out.lines();
     let (file, index, langs) = (lines.next()?, lines.next()?.parse().ok()?, lines.next()?);
     langs.split('|').any(|l| l == "zh-cn").then(|| (PathBuf::from(file), index))
+}
+
+/// What the window shows with no file open: nothing to play, with no path.
+fn no_track() -> Arc<Track> {
+    Track::from_samples(48000, 2, Vec::new())
 }
 
 /// Wakes the window, once it exists, from another thread.
@@ -564,7 +570,8 @@ impl eframe::App for App {
         let save_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND | egui::Modifiers::SHIFT, egui::Key::S);
         let copy_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::S);
         // Ctrl+Shift+S first: Ctrl+S would match it too.
-        if ctx.input_mut(|i| i.consume_shortcut(&save_key)) && self.track.done() {
+        let loaded = self.has_track() && self.track.done();
+        if ctx.input_mut(|i| i.consume_shortcut(&save_key)) && loaded {
             self.show_save = true;
         }
         let mut save_copy = ctx.input_mut(|i| i.consume_shortcut(&copy_key));
@@ -605,7 +612,7 @@ impl eframe::App for App {
         }
 
         let rename_key = egui::KeyboardShortcut::new(egui::Modifiers::NONE, egui::Key::F2);
-        let why_not_rename = if !self.track.done() { Some("after loading") } else if self.tag_job.is_some() { Some("saving tags…") } else { None };
+        let why_not_rename = if !self.has_track() { Some("no file open") } else if !self.track.done() { Some("after loading") } else if self.tag_job.is_some() { Some("saving tags…") } else { None };
         if ctx.input_mut(|i| i.consume_shortcut(&rename_key)) && why_not_rename.is_none() && self.no_dialog(&ctx) {
             self.start_rename();
         }
@@ -634,15 +641,15 @@ impl eframe::App for App {
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
                     ui.separator();
-                    if ui.button(if cfg!(windows) { "Show in Explorer" } else { "Show in File Manager" }).clicked() {
+                    if ui.add_enabled(self.has_track(), egui::Button::new(if cfg!(windows) { "Show in Explorer" } else { "Show in File Manager" })).clicked() {
                         folder::show_in_folder(&self.track.path);
                         ui.close();
                     }
-                    if ui.button("Copy Path").clicked() {
+                    if ui.add_enabled(self.has_track(), egui::Button::new("Copy Path")).clicked() {
                         ctx.copy_text(self.track.path.display().to_string());
                         ui.close();
                     }
-                    if ui.button("Copy File").on_hover_text("For pasting into a chat or a file manager").clicked() {
+                    if ui.add_enabled(self.has_track(), egui::Button::new("Copy File")).on_hover_text("For pasting into a chat or a file manager").clicked() {
                         self.copy_file(&ctx);
                         ui.close();
                     }
@@ -650,7 +657,7 @@ impl eframe::App for App {
                         save_copy = true;
                         ui.close();
                     }
-                    if ui.add_enabled(self.track.done(), egui::Button::new("Save As…").shortcut_text(ctx.format_shortcut(&save_key))).clicked() {
+                    if ui.add_enabled(loaded, egui::Button::new("Save As…").shortcut_text(ctx.format_shortcut(&save_key))).clicked() {
                         self.show_save = true;
                         ui.close();
                     }
@@ -666,7 +673,7 @@ impl eframe::App for App {
                         self.rename = Some((self.settings.rename_pattern.clone(), tags::read(&self.track.path)));
                         ui.close();
                     }
-                    let why = if !identify::ready() { Some("not set up") } else if !self.track.done() { Some("after loading") } else { None };
+                    let why = if !identify::ready() { Some("not set up") } else { why_not_rename.filter(|&w| w != "saving tags…") };
                     let item = ui.add_enabled(why.is_none(), egui::Button::new("Identify Track…"));
                     if item.on_disabled_hover_text(why.unwrap_or_default()).clicked() {
                         self.identify = Some(Identify { path: self.track.path.clone(), found: None, pick: 0, only_empty: true, job: None });
@@ -700,7 +707,7 @@ impl eframe::App for App {
                     }
                     ui.separator();
                     // The write closes the tag editor, which would drop its unsaved edits.
-                    let why = if self.tag_job.is_some() { Some("saving tags…") } else if self.tag_editor.is_some() { Some("close the tag editor first") } else { None };
+                    let why = if !self.has_track() { Some("no file open") } else if self.tag_job.is_some() { Some("saving tags…") } else if self.tag_editor.is_some() { Some("close the tag editor first") } else { None };
                     let item = ui.add_enabled(why.is_none(), egui::Button::new("Add/Replace Album Cover…"));
                     if item.on_disabled_hover_text(why.unwrap_or_default()).clicked() {
                         pick_cover = true;
@@ -712,7 +719,7 @@ impl eframe::App for App {
                         ui.close();
                     }
                 });
-                ui.menu_button("Effects", |ui| self.effects_menu(ui, &mut actions));
+                ui.add_enabled_ui(self.has_track(), |ui| ui.menu_button("Effects", |ui| self.effects_menu(ui, &mut actions)));
                 ui.menu_button("View", |ui| {
                     let mut on = self.show_info;
                     if ui.add(egui::Checkbox::new(&mut on, "Track Info")).on_hover_text(ctx.format_shortcut(&info_key)).clicked() {
@@ -766,7 +773,7 @@ impl eframe::App for App {
                         ui.close();
                     }
                 });
-                ui.menu_button("Local AI", |ui| ai_tool = self.ai.menu_items(ui, &self.settings.ai, self.track.done(), self.edit_view.selection.is_some()));
+                ui.menu_button("Local AI", |ui| ai_tool = self.ai.menu_items(ui, &self.settings.ai, loaded, self.edit_view.selection.is_some()));
                 if self.settings.practice {
                     ui.menu_button("Practice", |ui| {
                         ui.checkbox(&mut self.looping, "Loop selection").on_hover_text("L");
@@ -825,7 +832,7 @@ impl eframe::App for App {
         if self.show_info {
             let size = std::fs::metadata(&self.track.path).map(|m| m.len()).ok();
             let panel = egui::Panel::left("info").resizable(true).size_range(240.0..=360.0).default_size(self.info_width).show(ui, |ui| {
-                let can_edit = if !self.track.done() { Err("after loading") } else if self.tag_job.is_some() { Err("saving tags…") } else { Ok(()) };
+                let can_edit = if !self.has_track() { Err("no file open") } else if !self.track.done() { Err("after loading") } else if self.tag_job.is_some() { Err("saving tags…") } else { Ok(()) };
                 info_panel(ui, &self.track, size, &mut self.tag_editor, can_edit, self.settings.practice)
             });
             match panel.inner {
@@ -853,6 +860,18 @@ impl eframe::App for App {
             }
         }
         egui::CentralPanel::default().show(ui, |ui| {
+            if !self.has_track() {
+                ui.vertical_centered(|ui| {
+                    ui.add_space(ui.available_height() / 3.0);
+                    ui.heading("No file open");
+                    ui.add_space(8.0);
+                    if ui.add(egui::Button::new("Open…").shortcut_text(ctx.format_shortcut(&open_key))).clicked() {
+                        open_file = true;
+                    }
+                    notice(ui, self.save_notice.as_ref(), Some(ui.input(|i| i.time)));
+                });
+                return;
+            }
             ui.vertical_centered(|ui| {
                 // The cover takes the width, but leaves room below for what was measured last frame.
                 let gap = 16.0 + 2.0 * ui.spacing().item_spacing.y;
@@ -1186,7 +1205,8 @@ impl App {
             }
         }
         // Decode ahead once this track is in memory, so Next and the gapless move are instant.
-        if self.track.done() && self.next.is_none() && let Some(index) = self.upcoming() {
+        // Never with no file: Repeat track would queue the empty track after itself forever.
+        if self.has_track() && self.track.done() && self.next.is_none() && let Some(index) = self.upcoming() {
             // Repeat track queues the same, already decoded track.
             let next = if index == self.index { self.track.clone() } else { Track::load_ahead(self.files[index].clone(), repaint(&self.ctx)) };
             p.send(Cmd::Queue(Some(next.clone())));
@@ -1261,7 +1281,9 @@ impl App {
     /// The Folder panel: `..`, the subfolders, then the audio files. A folder click browses
     /// there; returns the file clicked, to play.
     fn folder_panel(&mut self, ui: &mut egui::Ui) -> Option<PathBuf> {
-        let here = self.track.path.parent().map(PathBuf::from).unwrap_or_default();
+        // With no file open, the home folder.
+        let home = || std::env::var_os(if cfg!(windows) { "USERPROFILE" } else { "HOME" }).map(PathBuf::from).unwrap_or_default();
+        let here = self.track.path.parent().map(PathBuf::from).unwrap_or_else(home);
         let b = self.browse.get_or_insert_with(|| Browse::new(here));
         let name = |p: &std::path::Path| p.file_name().map_or_else(|| p.display().to_string(), |n| n.to_string_lossy().into_owned());
         ui.strong(name(&b.dir)).on_hover_text(b.dir.display().to_string());
@@ -1550,6 +1572,11 @@ impl App {
         self.forget_edits();
     }
 
+    /// A file is open (not the empty window).
+    fn has_track(&self) -> bool {
+        !self.track.path.as_os_str().is_empty()
+    }
+
     /// Starts afresh on a new track: no edits, no selection, the whole track in view.
     fn forget_edits(&mut self) {
         (self.history, self.edit_view, self.sent_region) = (None, EditView::default(), None);
@@ -1563,7 +1590,7 @@ impl App {
     fn change(&mut self, action: Action, pos: u64) {
         let Ok(p) = &self.player else { return };
         // Edits only once decoded, so they never point past the audio there is.
-        if !self.track.done() {
+        if !self.has_track() || !self.track.done() {
             return;
         }
         let history = self.history.get_or_insert_with(|| edit::History::new(Edit::whole(self.track.len())));
@@ -1791,7 +1818,8 @@ impl App {
     /// Practice → Spectrogram: its own window, closed with its ✕ or the menu. Returns what its keys
     /// and clicks asked for.
     fn spectrum_window(&mut self, ctx: &egui::Context, edit: &Arc<Edit>, pos: u64, len: u64, rate: u64, playing: bool) -> Vec<Action> {
-        if !self.show_spectrum {
+        // Hidden, not closed, with no file open.
+        if !self.show_spectrum || !self.has_track() {
             return Vec::new();
         }
         let name = self.track.path.file_name().unwrap_or_default().to_string_lossy();
@@ -1913,7 +1941,8 @@ impl App {
         let rate = self.track.format.get().map_or(0, |f| f.rate as u64);
         let length = (self.track.done() && rate > 0).then(|| clock(self.track.len(), rate));
         let mark = if self.dirty() { "• " } else { "" };
-        ctx.send_viewport_cmd(egui::ViewportCommand::Title(format!("{mark}{}", title(&name, length.as_deref(), &format))));
+        let text = if self.has_track() { format!("{mark}{}", title(&name, length.as_deref(), &format)) } else { "soundglass".into() };
+        ctx.send_viewport_cmd(egui::ViewportCommand::Title(text));
         self.titled = Some((Arc::as_ptr(&self.track) as usize, self.track.done(), self.dirty()));
     }
 
@@ -1962,7 +1991,7 @@ impl App {
     /// tracks are written on a thread, as the tag job.
     fn cover_offer_modal(&mut self, ctx: &egui::Context) {
         let key = Arc::as_ptr(&self.track) as usize;
-        if key != self.cover_checked && self.tag_editor.is_none() && self.tag_job.is_none() {
+        if key != self.cover_checked && self.has_track() && self.tag_editor.is_none() && self.tag_job.is_none() {
             self.cover_checked = key;
             let dir = self.track.path.parent().map(|d| d.to_path_buf()).unwrap_or_default();
             self.cover_found = None;
