@@ -3,6 +3,7 @@
 
 use std::cmp::Ordering;
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 
 /// What symphonia 0.6 decodes with the `all` feature. It has no Opus decoder, so no .opus.
 pub const EXTENSIONS: [&str; 14] = ["mp3", "mp2", "mp1", "flac", "wav", "ogg", "oga", "m4a", "m4b", "aac", "aif", "aiff", "caf", "mka"];
@@ -126,6 +127,64 @@ pub fn restore_trashed(path: &Path) -> Result<(), String> {
     trash::os_limited::restore_all([trash::TrashItem { name, ..item }]).map_err(|e| e.to_string())
 }
 
+/// What tells two versions of a file apart: when it was modified, and its length.
+pub type Stamp = (std::time::SystemTime, u64);
+
+pub fn stamp(path: &Path) -> Option<Stamp> {
+    let meta = std::fs::metadata(path).ok()?;
+    Some((meta.modified().ok()?, meta.len()))
+}
+
+/// Watches one file for changes made by other programs. From lightview.
+#[derive(Default)]
+struct Watch {
+    path: Option<PathBuf>,
+    /// The version last reported (or first seen), and the one seen at the previous check.
+    known: Option<Stamp>,
+    last: Option<Stamp>,
+}
+
+impl Watch {
+    /// One check of `now` (the path to watch), whose stamp is `current`: a change once it has
+    /// held for a whole interval, so a half-written file isn't reported. A file that's gone reports nothing.
+    fn step(&mut self, now: Option<PathBuf>, current: Option<Stamp>) -> Option<(PathBuf, Stamp)> {
+        if now != self.path {
+            (self.path, self.known, self.last) = (now, current, current);
+            return None;
+        }
+        let mut changed = None;
+        if let (Some(p), Some(new)) = (&self.path, current) {
+            if self.known.is_none() {
+                self.known = current;
+            } else if current != self.known && current == self.last {
+                self.known = current;
+                changed = Some((p.clone(), new));
+            }
+        }
+        self.last = current;
+        changed
+    }
+}
+
+/// Checks the path put in the returned slot every `interval` on its own thread, so a slow network
+/// folder can't hold up the window, and sends each change, calling `notify`. Ends with the slot.
+pub fn watch(notify: impl Fn() + Send + 'static, interval: std::time::Duration) -> (Arc<Mutex<Option<PathBuf>>>, std::sync::mpsc::Receiver<(PathBuf, Stamp)>) {
+    let (slot, (tx, rx)) = (Arc::new(Mutex::new(None)), std::sync::mpsc::channel());
+    let shared = Arc::clone(&slot);
+    std::thread::spawn(move || {
+        let mut watch = Watch::default();
+        while Arc::strong_count(&shared) > 1 {
+            std::thread::sleep(interval);
+            let now: Option<PathBuf> = shared.lock().ok().and_then(|p| p.clone());
+            let current = now.as_deref().and_then(stamp);
+            if let Some(change) = watch.step(now, current) && tx.send(change).is_ok() {
+                notify();
+            }
+        }
+    });
+    (slot, rx)
+}
+
 /// Opens a web page in the default browser.
 pub fn open_url(url: &str) {
     let program = if cfg!(windows) { "explorer" } else { "xdg-open" };
@@ -161,6 +220,23 @@ pub fn show_in_folder(path: &Path) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_change_is_reported_once_it_holds() {
+        let t = |s: u64| Some((std::time::UNIX_EPOCH + std::time::Duration::from_secs(s), 10));
+        let (mut w, p) = (Watch::default(), Some(PathBuf::from("/a.mp3")));
+        assert_eq!(w.step(p.clone(), t(1)), None);
+        assert_eq!(w.step(p.clone(), t(1)), None);
+        // Still being written: reported only when the next check sees the same.
+        assert_eq!(w.step(p.clone(), t(2)), None);
+        assert_eq!(w.step(p.clone(), t(3)), None);
+        assert_eq!(w.step(p.clone(), t(3)), Some(("/a.mp3".into(), t(3).unwrap())));
+        assert_eq!(w.step(p.clone(), t(3)), None);
+        // Gone, then another file: nothing.
+        assert_eq!(w.step(p.clone(), None), None);
+        assert_eq!(w.step(Some("/b.mp3".into()), t(9)), None);
+        assert_eq!(w.step(Some("/b.mp3".into()), t(9)), None);
+    }
 
     #[test]
     fn finds_trashed_file_with_hidden_extension() {

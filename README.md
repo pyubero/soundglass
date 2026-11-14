@@ -74,6 +74,7 @@ Reset puts all three back to normal. The last two use WSOLA, which can sound a l
 - File → Show in File Manager (Show in Explorer on Windows) opens the file manager with the current file selected, or just its folder if the file manager can't select files.
 - File → Copy Path copies the file's full path as text; Copy File puts the file itself on the clipboard, for pasting into a chat or a file manager (it stays there while soundglass runs).
 - File → Rename… (F2) renames the current file to a name you type (the extension starts unselected); it never replaces another file, and playback and edits carry on.
+- When another program changes the open file (re-tagging it, say), soundglass asks whether to reload it; Reload reads it again and carries on from the same place, dropping unsaved edits (it says so first). Its own tag and cover writes don't ask. The file is checked once a second.
 - File → Delete… asks first, then moves the current file to the system Trash and shows the next file in the folder, stopped (no file if it was the last). Edit → Undo (Ctrl+Z), once the current track's edits are all undone, brings back the files deleted this session, newest first.
 - File → Rename from Tags… renames the current file from a pattern such as `{track} - {artist} - {title}` (also `{album}`, `{year}`, `{genre}`), with a preview. A missing tag is left out, a name Windows reserves (`CON`, `NUL`, `COM1`…) gets a `_`, and an existing file is never replaced (changing only the letter case is fine).
 

@@ -104,11 +104,12 @@ fn main() -> eframe::Result {
         settings::apply_font_size(&cc.egui_ctx, settings.font_size);
         let player = opening.join().unwrap_or_else(|_| Err("the sound device failed to open".into()));
         let volume = settings.volume;
+        let (watched, changes) = folder::watch(repaint(&ctx), Duration::from_secs(1));
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
             p.send(Cmd::Volume(volume_gain(volume)));
         }
-        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_found: None, cover_offer: None, cover_asked: Default::default(), rename: None, rename_file: None, delete_prompt: false, deleted: Vec::new(), identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), file_clipboard: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_found: None, cover_offer: None, cover_asked: Default::default(), rename: None, rename_file: None, delete_prompt: false, deleted: Vec::new(), watched, changes, own_stamp: None, changed_prompt: false, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), file_clipboard: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -260,6 +261,12 @@ struct App {
     delete_prompt: bool,
     /// Files moved to the Trash this session, newest last; Ctrl+Z brings them back once the edits are undone.
     deleted: Vec<PathBuf>,
+    /// The file the watcher checks every second, its changes, the version soundglass itself last
+    /// wrote (not asked about), and the "changed on disk" question while it shows.
+    watched: Arc<std::sync::Mutex<Option<PathBuf>>>,
+    changes: std::sync::mpsc::Receiver<(PathBuf, folder::Stamp)>,
+    own_stamp: Option<folder::Stamp>,
+    changed_prompt: bool,
     identify: Option<Identify>,
     /// Local AI: the AI Models window, licence prompts and downloads.
     ai: ai::Ai,
@@ -532,6 +539,7 @@ impl eframe::App for App {
             }
         }
         self.follow_player();
+        self.follow_changes();
         if self.settings.practice {
             self.track.analyse(repaint(&self.ctx));
         }
@@ -946,6 +954,7 @@ impl eframe::App for App {
         self.rename_window(&ctx);
         self.rename_file_window(&ctx);
         self.delete_window(&ctx);
+        self.changed_window(&ctx, pos);
         if let Some(task) = ai_tool {
             self.ai.start_tool(task, self.track.clone(), edit.clone(), self.edit_view.selection, &self.settings.ai, &ctx);
         }
@@ -2143,6 +2152,7 @@ impl App {
             Err(_) => Err("Writing the tags failed".into()),
         };
         self.tag_job = None;
+        self.own_stamp = folder::stamp(&self.track.path);
         let result = result.and_then(|notice| self.relabel(self.track.path.clone()).map(|()| notice));
         match result {
             Ok(notice) => {
@@ -2415,6 +2425,58 @@ impl App {
             Ok(()) => self.open(path),
             Err(e) => self.save_notice = Some((Err(format!("Couldn't bring back {}: {e}", path.file_name().unwrap_or_default().to_string_lossy())), time)),
         }
+    }
+
+    /// Points the watcher at the current file and picks up its changes: one made by another program
+    /// asks whether to reload. Not while soundglass is writing the tags itself.
+    fn follow_changes(&mut self) {
+        if let Ok(mut w) = self.watched.lock() {
+            let now = self.has_track().then(|| self.track.path.clone());
+            if *w != now {
+                *w = now;
+            }
+        }
+        while let Ok((path, stamp)) = self.changes.try_recv() {
+            if path == self.track.path && self.tag_job.is_none() && self.own_stamp != Some(stamp) {
+                self.changed_prompt = true;
+            }
+        }
+    }
+
+    /// "Changed on disk. Reload it?"; Reload reads it again at the same place, dropping the edits.
+    fn changed_window(&mut self, ctx: &egui::Context, pos: u64) {
+        if !self.changed_prompt {
+            return;
+        }
+        let name = self.track.path.file_name().unwrap_or_default().to_string_lossy().into_owned();
+        let dirty = self.dirty();
+        let modal = egui::Modal::new(egui::Id::unique("changed")).show(ctx, |ui| {
+            ui.heading("File changed");
+            ui.label(format!("{name} was changed by another program. Reload it?"));
+            if dirty {
+                ui.label("Its unsaved edits will be lost.");
+            }
+            ui.add_space(6.0);
+            ui.horizontal(|ui| (ui.button("Reload").clicked(), ui.button("Keep current").clicked())).inner
+        });
+        let (reload, keep) = modal.inner;
+        if reload {
+            self.reload(pos);
+        }
+        if reload || keep || modal.should_close() {
+            self.changed_prompt = false;
+        }
+    }
+
+    /// Reads the current file again and goes on from `pos`, playing or not as before.
+    fn reload(&mut self, pos: u64) {
+        let Ok(p) = &self.player else { return };
+        let track = Track::load(self.track.path.clone(), repaint(&self.ctx));
+        p.send(Cmd::Load(track.clone()));
+        p.send(Cmd::Seek(pos));
+        // Repeat track queued the old version.
+        (self.track, self.next) = (track, None);
+        self.forget_edits();
     }
 
     /// A file dropped on the window plays (asking first about unsaved edits); a folder plays its first file.
