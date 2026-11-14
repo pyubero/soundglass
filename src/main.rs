@@ -14,6 +14,7 @@ mod theme;
 mod spectrum;
 mod track;
 mod tags;
+mod visual;
 mod tempo;
 mod wsola;
 
@@ -102,7 +103,7 @@ fn main() -> eframe::Result {
             p.send(Cmd::Load(track.clone()));
             p.send(Cmd::Volume(volume_gain(volume)));
         }
-        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_offer: None, cover_asked: Default::default(), rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_offer: None, cover_asked: Default::default(), rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), player, t0, timings, shown: false }))
     }))
 }
 
@@ -145,6 +146,8 @@ struct App {
     ctx: Arc<OnceLock<egui::Context>>,
     /// The cover texture and the track (by address) it belongs to.
     cover: Option<(usize, egui::TextureHandle)>,
+    /// The visualiser shown instead of the cover when `settings.visualiser`.
+    visual: visual::Visual,
     settings: settings::Settings,
     /// The volume slider's position, 0 to 1; see `volume_gain`.
     volume: f32,
@@ -497,7 +500,7 @@ impl eframe::App for App {
             let (pos, ago) = p.position();
             if playing { display_pos(pos, ago, rate, self.speed.source(), self.edit_view.selection, self.looping, len) } else { pos }
         });
-        if playing && (self.show_edit || self.show_spectrum || self.settings.show_waveform) {
+        if playing && (self.show_edit || self.show_spectrum || self.settings.show_waveform || self.settings.visualiser) {
             // About 30 fps: smooth enough for the playhead, cheaper than redrawing at the screen's rate (user's choice).
             ctx.request_repaint_after(Duration::from_millis(WAVE_REPAINT_MS));
         } else if playing {
@@ -699,7 +702,7 @@ impl eframe::App for App {
             });
         });
 
-        let cover = self.cover_texture(&ctx);
+        let cover = if self.settings.visualiser { Some(self.visual.frame(&ctx, &self.track, &edit, pos, rate, playing)) } else { self.cover_texture(&ctx) };
         let tags = self.track.tags.get().cloned().unwrap_or_default();
         let error = self.track.error.lock().unwrap().clone().or_else(|| self.player.as_ref().err().cloned());
         let has_next = self.neighbour(false).is_some();
@@ -776,7 +779,7 @@ impl eframe::App for App {
                 // The cover takes the width, but leaves room below for what was measured last frame.
                 let gap = 16.0 + 2.0 * ui.spacing().item_spacing.y;
                 let side = cover_side(ui.available_width(), ui.available_height(), self.controls_height, gap);
-                cover_art(ui, cover.as_ref(), side, &mut self.settings.cover_fit);
+                cover_art(ui, cover.as_ref(), side, &mut self.settings.cover_fit, &mut self.settings.visualiser);
                 ui.add_space(16.0);
                 let controls = ui.scope(|ui| {
                     let title = tags.title.unwrap_or_else(|| self.track.path.file_stem().unwrap_or_default().to_string_lossy().into_owned());
@@ -2217,32 +2220,39 @@ fn cover_fit_side(side: f32, fit: bool) -> f32 {
 
 /// The cover in a `side` × `side` space (filling it when `fit`, else at most 256 px), with a
 /// corner button that flips `fit`; or a placeholder note when there is none.
-fn cover_art(ui: &mut egui::Ui, cover: Option<&egui::TextureHandle>, side: f32, fit: &mut bool) {
+fn cover_art(ui: &mut egui::Ui, cover: Option<&egui::TextureHandle>, side: f32, fit: &mut bool, visual: &mut bool) {
     let (rect, response) = ui.allocate_exact_size(egui::vec2(side, side), egui::Sense::hover());
     let painter = ui.painter_at(rect);
+    // A small square button `n` places in from the bottom-right corner, drawn by `icon`.
+    let corner_button = |n: f32, id: &str, tip: &str, icon: &dyn Fn(egui::Pos2, egui::Stroke)| {
+        let br = rect.right_bottom() - egui::vec2(6.0 + 24.0 * n, 6.0);
+        let button = egui::Rect::from_min_max(br - egui::vec2(20.0, 20.0), br);
+        let click = ui.interact(button, egui::Id::unique(id), egui::Sense::click());
+        click.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, tip));
+        let visuals = ui.visuals();
+        painter.rect_filled(button, 4.0, visuals.extreme_bg_color.gamma_multiply(0.7));
+        let color = if click.hovered() { visuals.strong_text_color() } else { visuals.weak_text_color() };
+        icon(button.center(), egui::Stroke::new(1.5, color));
+        click.on_hover_text(tip).clicked()
+    };
     match cover {
         Some(tex) => {
             let size = tex.size_vec2();
             let fitted = egui::Rect::from_center_size(rect.center(), size * (cover_fit_side(side, *fit) / size.x.max(size.y)));
             egui::Image::from_texture(tex).corner_radius(8.0).paint_at(ui, fitted);
-            response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, true, "Album cover"));
-            let button = egui::Rect::from_min_max(rect.right_bottom() - egui::vec2(26.0, 26.0), rect.right_bottom() - egui::vec2(6.0, 6.0));
+            response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, true, if *visual { "Visualiser" } else { "Album cover" }));
             let tip = if *fit { "Cover at 256 px" } else { "Fit cover space" };
-            let click = ui.interact(button, egui::Id::unique("cover fit"), egui::Sense::click());
-            click.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, tip));
-            let visuals = ui.visuals();
-            painter.rect_filled(button, 4.0, visuals.extreme_bg_color.gamma_multiply(0.7));
-            let color = if click.hovered() { visuals.strong_text_color() } else { visuals.weak_text_color() };
             // Two arrows on the diagonal: out to the corners to fit, in to the middle to shrink.
-            let (c, stroke) = (button.center(), egui::Stroke::new(1.5, color));
-            for dir in [egui::vec2(1.0, -1.0), egui::vec2(-1.0, 1.0)] {
-                let (inner, outer) = (c + dir * 1.5, c + dir * 6.0);
-                let (tip_at, back) = if *fit { (inner, dir) } else { (outer, -dir) };
-                painter.line_segment([inner, outer], stroke);
-                painter.line_segment([tip_at, tip_at + egui::vec2(back.x * 3.5, 0.0)], stroke);
-                painter.line_segment([tip_at, tip_at + egui::vec2(0.0, back.y * 3.5)], stroke);
-            }
-            if click.on_hover_text(tip).clicked() {
+            let arrows = |c: egui::Pos2, stroke: egui::Stroke| {
+                for dir in [egui::vec2(1.0, -1.0), egui::vec2(-1.0, 1.0)] {
+                    let (inner, outer) = (c + dir * 1.5, c + dir * 6.0);
+                    let (tip_at, back) = if *fit { (inner, dir) } else { (outer, -dir) };
+                    painter.line_segment([inner, outer], stroke);
+                    painter.line_segment([tip_at, tip_at + egui::vec2(back.x * 3.5, 0.0)], stroke);
+                    painter.line_segment([tip_at, tip_at + egui::vec2(0.0, back.y * 3.5)], stroke);
+                }
+            };
+            if corner_button(0.0, "cover fit", tip, &arrows) {
                 *fit = !*fit;
             }
         }
@@ -2257,6 +2267,23 @@ fn cover_art(ui: &mut egui::Ui, cover: Option<&egui::TextureHandle>, side: f32, 
             painter.line_segment([c + egui::vec2(0.2 * u, -2.2 * u), c + egui::vec2(1.4 * u, -1.2 * u)], egui::Stroke::new(0.3 * u, color));
             response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, true, "No album cover"));
         }
+    }
+    // Shows the cover: a framed picture; shows the visualiser: three level bars.
+    let tip = if *visual { "Album cover" } else { "Visualiser" };
+    let icon = |c: egui::Pos2, stroke: egui::Stroke| {
+        if *visual {
+            painter.rect_stroke(egui::Rect::from_center_size(c, egui::vec2(12.0, 12.0)), 1.0, stroke, egui::StrokeKind::Middle);
+            painter.line_segment([c + egui::vec2(-6.0, 4.0), c + egui::vec2(-1.0, -1.0)], stroke);
+            painter.line_segment([c + egui::vec2(-1.0, -1.0), c + egui::vec2(6.0, 5.0)], stroke);
+        } else {
+            for (x, h) in [(-4.0, 4.0), (0.0, 8.0), (4.0, 6.0)] {
+                painter.line_segment([c + egui::vec2(x, 5.0), c + egui::vec2(x, 5.0 - h)], stroke);
+            }
+        }
+    };
+    let n = if cover.is_some() { 1.0 } else { 0.0 };
+    if corner_button(n, "cover visualiser", tip, &icon) {
+        *visual = !*visual;
     }
 }
 

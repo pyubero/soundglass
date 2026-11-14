@@ -59,6 +59,8 @@ pub struct Settings {
     pub theme: String,
     /// The cover fills its space; otherwise it is shown at most 256 px.
     pub cover_fit: bool,
+    /// The visualiser shows in place of the cover.
+    pub visualiser: bool,
     /// Local AI: the model each tool uses, and whether to use the GPU.
     pub ai: AiSettings,
     /// What plays when a track ends, and what Next and Previous move to.
@@ -115,6 +117,7 @@ impl Default for Settings {
             spectrum: Default::default(),
             theme: crate::theme::SYSTEM.into(),
             cover_fit: false,
+            visualiser: false,
             ai: AiSettings::default(),
             order: Order::InOrder,
             volume: 1.0,
@@ -183,6 +186,7 @@ mod tests {
             note_c_width: 3.0,
             note_label_size: 14.0,
             cover_fit: true,
+            visualiser: true,
             spectrum: crate::spectrum::Params {
                 fft: 8192,
                 window: 2048,
