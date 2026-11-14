@@ -29,7 +29,8 @@ pub(super) fn separate(model: &Path, mut mix: Vec<Vec<f32>>, overlap: f32, progr
     // torch's std is the unbiased one.
     let std = (mono.iter().map(|&x| (x as f64 - mean).powi(2)).sum::<f64>() / (total.max(2) - 1) as f64).sqrt() + 1e-8;
     let (mean, std) = (mean as f32, std as f32);
-    let mut session = session(model)?;
+    // HTDemucs ran 3.2× slower on WebGPU than on the CPU (GTX 1050, Vulkan), 2.6–3× faster on CUDA.
+    let mut session = session_with(model, cores(), cuda_loaded())?;
     let overlap = ((SEGMENT as f32 * overlap.clamp(0.1, 0.5)) as usize).max(1);
     let stride = SEGMENT - overlap;
     let fade: Vec<f32> = (0..SEGMENT).map(|i| ((i.min(SEGMENT - 1 - i) + 1) as f32 / overlap as f32).min(1.0)).collect();

@@ -68,6 +68,7 @@ fn two_file_download_is_all_or_nothing() {
 fn short_gpu_errors() {
     assert_eq!(short_error("blah blah CUDA failure 100: no CUDA-capable device ; GPU=0 ; host=x"), "CUDA failure 100: no CUDA-capable device");
     assert_eq!(short_error(&"x".repeat(200)).chars().count(), 161);
+    assert_eq!(short_error("onnxruntime ... adapter was false. Failed to get a WebGPU adapter ; x"), "Failed to get a WebGPU adapter");
 }
 
 /// Online: `XDG_DATA_HOME=target/aitest cargo test --release -- --ignored install_runtime`.
@@ -178,7 +179,7 @@ fn stems_add_up_to_the_mix() {
     let edit = crate::edit::Edit::whole(track.len()).crop(30 * 44_100, 90 * 44_100);
     let t0 = std::time::Instant::now();
     let done = ui::run_tool(Task::Stems, k, &tune_for(k, &Default::default()), &track, &edit, None, crate::save::Kind::Flac, &|_| {}, &AtomicBool::new(false)).unwrap();
-    eprintln!("60 s split in {:.1} s on the {}", t0.elapsed().as_secs_f32(), if on_gpu() { "GPU" } else { "CPU" });
+    eprintln!("60 s split in {:.1} s on the {}", t0.elapsed().as_secs_f32(), if on_gpu() && cuda_loaded() { "GPU" } else { "CPU" });
     assert_eq!(done, ui::Done::Open(dir.join("song-stems").join("vocals.flac")));
     let mix = audio::planar(&track, &edit, 44_100).unwrap();
     let stems: Vec<Vec<Vec<f32>>> = stems::NAMES
@@ -335,6 +336,7 @@ fn beats_on_the_album() {
             other => panic!("{other:?}"),
         };
         let secs = t0.elapsed().as_secs_f32();
+        eprintln!("on the {}{}", if on_gpu() { "GPU" } else { "CPU" }, gpu_error().map(|e| format!(" ({})", short_error(&e))).unwrap_or_default());
         let b = track.beats.lock().unwrap().clone().unwrap();
         let rate = track.format.get().unwrap().rate as f64;
         let bpm: Vec<f64> = b.beats.windows(2).map(|w| 60.0 * rate / (w[1] - w[0]) as f64).collect();
@@ -445,6 +447,18 @@ fn install_gpu() {
         download_gpu(&|_| {}, &AtomicBool::new(false)).unwrap();
     }
     assert!(gpu_installed());
+}
+
+/// Online, ~6 MB, then the GPU tools on it with CUDA absent:
+/// `XDG_DATA_HOME=$PWD/target/aitest-webgpu cargo test --release -- --ignored --test-threads 1 install_runtime install_webgpu beats_on_the_album stems_add_up`.
+#[test]
+#[ignore]
+fn install_webgpu() {
+    assert!(data_dir().unwrap().starts_with(std::env::current_dir().unwrap().join("target")), "use a throwaway XDG_DATA_HOME");
+    if !webgpu_installed() {
+        download_webgpu(&|_| {}, &AtomicBool::new(false)).unwrap();
+    }
+    assert!(webgpu_installed());
 }
 
 #[test]

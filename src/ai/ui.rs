@@ -12,6 +12,7 @@ use crate::i18n::{tr, trf};
 enum Download {
     Runtime,
     Gpu,
+    WebGpu,
     /// An index into `CATALOG`.
     Model(usize),
 }
@@ -21,6 +22,7 @@ impl Download {
         match self {
             Download::Runtime => tr("AI runtime (ONNX Runtime)"),
             Download::Gpu => tr("GPU support"),
+            Download::WebGpu => tr("GPU support (AMD, Intel and others)"),
             Download::Model(i) => tr(CATALOG[i].label),
         }
     }
@@ -29,6 +31,7 @@ impl Download {
         match self {
             Download::Runtime => std::slice::from_ref(&RUNTIME_LICENSE),
             Download::Gpu => &GPU_LICENSES,
+            Download::WebGpu => WEBGPU_LICENSES,
             Download::Model(i) => CATALOG[i].licenses,
         }
     }
@@ -37,6 +40,7 @@ impl Download {
         match self {
             Download::Runtime => None,
             Download::Gpu => Some(tr("Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).")),
+            Download::WebGpu => Some(tr("Downloaded from Microsoft (ONNX Runtime's WebGPU plugin, via its official PyPI package).")),
             Download::Model(i) => CATALOG[i].converted_by.map(tr),
         }
     }
@@ -152,7 +156,7 @@ impl Ai {
                 Err(TryRecvError::Empty) => {
                     let p = f32::from_bits(run.progress.load(Ordering::Relaxed));
                     egui::Window::new(run.task.title()).collapsible(false).resizable(false).show(ctx, |ui| {
-                        ui.label(if on_gpu() && matches!(run.task, Task::Stems | Task::Beats) { tr("Running on the GPU…") } else { tr("Running on the CPU…") });
+                        ui.label(if on_gpu() && (run.task == Task::Beats || run.task == Task::Stems && cuda_loaded()) { tr("Running on the GPU…") } else { tr("Running on the CPU…") });
                         ui.add(egui::ProgressBar::new(p).desired_width(240.0).show_percentage());
                         if ui.button(tr("Cancel")).clicked() {
                             run.cancel.store(true, Ordering::Relaxed);
@@ -271,6 +275,7 @@ impl Ai {
             let result = match what {
                 Download::Runtime => download_runtime(&report, &c),
                 Download::Gpu => download_gpu(&report, &c),
+                Download::WebGpu => download_webgpu(&report, &c),
                 Download::Model(i) => download(&CATALOG[i], &report, &c),
             };
             let _ = tx.send(result);
@@ -336,15 +341,27 @@ impl Ai {
                     ui.label(trf("Run the AI tools on the graphics card ({mb} MB, NVIDIA's CUDA libraries).", &[("mb", &GPU_DOWNLOAD_MB)]));
                     self.download_button(ui, Download::Gpu, tr("Download GPU Support"));
                 });
-            } else {
-                if ui.checkbox(&mut s.use_gpu, tr("Use the GPU")).on_hover_text(tr("For Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050; the other tools are faster on the CPU")).changed() {
-                    set_use_gpu(s.use_gpu);
-                }
-                if gpu_needs_restart() {
-                    ui.colored_label(ui.visuals().warn_fg_color, tr("Restart soundglass to start using the GPU."));
-                } else if let Some(e) = gpu_error().filter(|_| s.use_gpu) {
-                    ui.colored_label(ui.visuals().warn_fg_color, trf("The GPU couldn't be used, so the CPU is: {e}", &[("e", &short_error(&e))]));
-                }
+            }
+        }
+        // Needs the CPU runtime, which it runs beside.
+        if runtime {
+            ui.add_space(4.0);
+            ui.strong(tr("GPU (AMD, Intel and others, experimental)"));
+            if !webgpu_installed() {
+                ui.horizontal(|ui| {
+                    ui.label(trf("Any graphics card with Vulkan or Direct3D 12 ({mb} MB). A weak built-in one can be slower than the CPU.", &[("mb", &WEBGPU_DOWNLOAD_MB)]));
+                    self.download_button(ui, Download::WebGpu, tr("Download GPU Support"));
+                });
+            }
+        }
+        if gpu_installed() || webgpu_installed() {
+            if ui.checkbox(&mut s.use_gpu, tr("Use the GPU")).on_hover_text(tr("CUDA: Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050. WebGPU: Find Beats only, about 2× faster (Split into Stems was slower than the CPU). The other tools are faster on the CPU. With both installed, NVIDIA's is used")).changed() {
+                set_use_gpu(s.use_gpu);
+            }
+            if gpu_needs_restart() {
+                ui.colored_label(ui.visuals().warn_fg_color, tr("Restart soundglass to start using the GPU."));
+            } else if let Some(e) = gpu_error().filter(|_| s.use_gpu) {
+                ui.colored_label(ui.visuals().warn_fg_color, trf("The GPU couldn't be used, so the CPU is: {e}", &[("e", &short_error(&e))]));
             }
         }
         ui.add_space(4.0);

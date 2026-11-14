@@ -132,6 +132,69 @@ const NVIDIA_CUDNN_LICENSE: License = License { project: "NVIDIA cuDNN", spdx: "
 /// Shown one after the other before the GPU download.
 pub const GPU_LICENSES: [License; 3] = [RUNTIME_LICENSE, NVIDIA_CUDA_LICENSE, NVIDIA_CUDNN_LICENSE];
 
+/// Microsoft's ONNX Runtime WebGPU plugin: any graphics card with Vulkan (Linux) or Direct3D 12
+/// (Windows), running beside the CPU runtime (experimental). Installed into `<data>/webgpu`. From lightview.
+#[cfg(not(windows))]
+const WEBGPU_URL: &str = "https://files.pythonhosted.org/packages/e2/1d/ac0ccbe8bd6435b6e1946fea964790ffa3d73ee2513775e90958fd6b860e/onnxruntime_ep_webgpu-0.5.0-py3-none-manylinux_2_28_x86_64.whl";
+#[cfg(not(windows))]
+const WEBGPU_SHA256: &str = "b6baa3e223d9a679023388b1179e5597b6bc0d282ba72f2afe38d46ef37deeb4";
+#[cfg(windows)]
+const WEBGPU_URL: &str = "https://files.pythonhosted.org/packages/7e/36/9935a5b7851099da3da81d9e04f3021bcc61a5a1039e6c098cf08e5c6607/onnxruntime_ep_webgpu-0.5.0-py3-none-win_amd64.whl";
+#[cfg(windows)]
+const WEBGPU_SHA256: &str = "713b94e7b4ce5979a356e19b926ecba2c0d4ba24f857ef4bbb11c75c37cc5b61";
+/// The plugin first: it's what gets registered.
+const WEBGPU_FILES: &[&str] = if cfg!(windows) { &["onnxruntime_providers_webgpu.dll", "dxcompiler.dll"] } else { &["libonnxruntime_providers_webgpu.so"] };
+const WEBGPU_EP: &str = "WebGpuExecutionProvider";
+/// Download size of the plugin, for the dialog.
+pub const WEBGPU_DOWNLOAD_MB: u32 = if cfg!(windows) { 13 } else { 6 };
+
+const DAWN_LICENSE: License = License { project: "Dawn (WebGPU)", spdx: "BSD-3-Clause", url: "https://dawn.googlesource.com/dawn", text: include_str!("../../licenses/dawn.txt") };
+#[cfg(windows)]
+const DXC_LICENSE: License = License { project: "DirectX Shader Compiler", spdx: "NCSA", url: "https://github.com/microsoft/DirectXShaderCompiler", text: include_str!("../../licenses/directx-shader-compiler.txt") };
+/// Shown one after the other before the WebGPU download.
+#[cfg(not(windows))]
+pub const WEBGPU_LICENSES: &[License] = &[RUNTIME_LICENSE, DAWN_LICENSE];
+#[cfg(windows)]
+pub const WEBGPU_LICENSES: &[License] = &[RUNTIME_LICENSE, DAWN_LICENSE, DXC_LICENSE];
+
+fn webgpu_dir() -> Result<PathBuf, String> {
+    Ok(data_dir()?.join("webgpu"))
+}
+
+pub fn webgpu_installed() -> bool {
+    webgpu_dir().is_ok_and(|d| WEBGPU_FILES.iter().all(|f| d.join(f).is_file()))
+}
+
+/// Downloads and installs the WebGPU plugin (blocking), through a temporary folder like `download_gpu`.
+pub fn download_webgpu(progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<(), String> {
+    let dir = webgpu_dir()?;
+    let tmp = dir.with_extension("part");
+    let _ = std::fs::remove_dir_all(&tmp);
+    std::fs::create_dir_all(&tmp).map_err(|e| e.to_string())?;
+    let result = (|| {
+        let archive = tmp.join("download");
+        fetch(WEBGPU_URL, WEBGPU_SHA256, &archive, progress, cancel)?;
+        let members: Vec<String> = WEBGPU_FILES.iter().map(|f| format!("onnxruntime_ep_webgpu/{f}")).collect();
+        #[cfg(windows)]
+        unzip(&archive, &tmp, &members.iter().map(String::as_str).collect::<Vec<_>>())?;
+        #[cfg(not(windows))]
+        run(command("unzip").args(["-q", "-j", "-o"]).arg(&archive).args(&members).arg("-d").arg(&tmp))?;
+        std::fs::remove_file(&archive).map_err(|e| e.to_string())?;
+        if !WEBGPU_FILES.iter().all(|f| tmp.join(f).is_file()) {
+            return Err(tr("a GPU library was missing from the download").into());
+        }
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::rename(&tmp, &dir).map_err(|e| e.to_string())
+    })();
+    if result.is_err() {
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+    result
+}
+
+/// Whether the WebGPU plugin was registered when ONNX Runtime was loaded.
+pub(super) static WEBGPU_LOADED: AtomicBool = AtomicBool::new(false);
+
 fn gpu_dir() -> Result<PathBuf, String> {
     Ok(data_dir()?.join("gpu"))
 }
@@ -199,9 +262,10 @@ pub fn gpu_error() -> Option<String> {
     GPU_ERROR.lock().ok()?.clone()
 }
 
-/// ONNX Runtime's CUDA errors are long C++ traces; keep the "CUDA failure …" part.
+/// ONNX Runtime's CUDA and WebGPU errors are long C++ traces; keep the "CUDA failure …" part, or
+/// what follows a failed check ("… was false. Failed to get a WebGPU adapter …").
 pub fn short_error(e: &str) -> String {
-    let e = e.find("CUDA failure").map(|i| &e[i..]).unwrap_or(e);
+    let e = e.find("CUDA failure").map(|i| &e[i..]).or_else(|| e.rfind(" was false. ").map(|i| &e[i + 12..])).unwrap_or(e);
     let e = e.split(" ;").next().unwrap_or(e).trim();
     if e.chars().count() > 160 { format!("{}…", e.chars().take(160).collect::<String>()) } else { e.to_string() }
 }
@@ -212,7 +276,7 @@ static ENV_LOADED: AtomicBool = AtomicBool::new(false);
 
 /// The GPU support is installed but soundglass started with the CPU runtime: it needs a restart.
 pub fn gpu_needs_restart() -> bool {
-    ENV_LOADED.load(Ordering::Relaxed) && gpu_installed() && !GPU_LOADED.load(Ordering::Relaxed)
+    ENV_LOADED.load(Ordering::Relaxed) && (gpu_installed() && !GPU_LOADED.load(Ordering::Relaxed) || webgpu_installed() && !WEBGPU_LOADED.load(Ordering::Relaxed))
 }
 
 /// Downloads ONNX Runtime and installs just its library (blocking).
@@ -319,7 +383,14 @@ pub(super) fn environment() -> Result<&'static ort::environment::Environment, St
         } else {
             runtime_path()?
         };
-        ort::init_from(lib).map_err(|e| e.to_string())?.build().map_err(|e| e.to_string())
+        let env = ort::init_from(lib).map_err(|e| e.to_string())?.build().map_err(|e| e.to_string())?;
+        if webgpu_installed() {
+            match webgpu_dir().and_then(|d| env.register_ep_library("webgpu", d.join(WEBGPU_FILES[0])).map_err(|e| e.to_string())) {
+                Ok(()) => WEBGPU_LOADED.store(true, Ordering::Relaxed),
+                Err(e) => *GPU_ERROR.lock().unwrap_or_else(|e| e.into_inner()) = Some(e),
+            }
+        }
+        Ok(env)
     })
     .as_ref()
     .map_err(Clone::clone)
@@ -347,15 +418,22 @@ pub(super) fn session_with(path: &Path, threads: usize, gpu: bool) -> Result<ort
         let mut builder = builder.with_intra_threads(threads).map_err(|e| e.to_string())?;
         builder.commit_from_file(path).map_err(|e| e.to_string())
     };
-    if !(gpu && USE_GPU.load(Ordering::Relaxed) && GPU_LOADED.load(Ordering::Relaxed)) {
+    let (cuda, webgpu) = (GPU_LOADED.load(Ordering::Relaxed), WEBGPU_LOADED.load(Ordering::Relaxed));
+    if !(gpu && USE_GPU.load(Ordering::Relaxed) && (cuda || webgpu)) {
         return cpu();
     }
-    let cuda = (|| {
+    // CUDA when its build is loaded, else the WebGPU plugin's graphics card.
+    let on_gpu = (|| {
         let builder = ort::session::Session::builder(env).map_err(|e| e.to_string())?;
-        let mut builder = builder.with_execution_providers([ort::ep::CUDA::default().build().error_on_failure()]).map_err(|e| e.to_string())?;
+        let mut builder = if cuda {
+            builder.with_execution_providers([ort::ep::CUDA::default().build().error_on_failure()]).map_err(|e| e.to_string())?
+        } else {
+            let device = env.devices().find(|d| d.ep().is_ok_and(|ep| ep == WEBGPU_EP)).ok_or(tr("no graphics card with Vulkan or Direct3D 12 was found"))?;
+            builder.with_devices([device], None).map_err(|e| e.to_string())?
+        };
         builder.commit_from_file(path).map_err(|e| e.to_string())
     })();
-    match cuda {
+    match on_gpu {
         Ok(session) => {
             *GPU_ERROR.lock().unwrap_or_else(|e| e.into_inner()) = None;
             Ok(session)
@@ -367,9 +445,14 @@ pub(super) fn session_with(path: &Path, threads: usize, gpu: bool) -> Result<ort
     }
 }
 
+/// Whether ONNX Runtime was loaded as the CUDA build.
+pub(super) fn cuda_loaded() -> bool {
+    GPU_LOADED.load(Ordering::Relaxed)
+}
+
 /// Whether the last session runs on the GPU.
 pub fn on_gpu() -> bool {
-    GPU_LOADED.load(Ordering::Relaxed) && USE_GPU.load(Ordering::Relaxed) && gpu_error().is_none()
+    (GPU_LOADED.load(Ordering::Relaxed) || WEBGPU_LOADED.load(Ordering::Relaxed)) && USE_GPU.load(Ordering::Relaxed) && gpu_error().is_none()
 }
 
 /// A model's f32 output by name; an error, not a panic, when a model doesn't have it.
