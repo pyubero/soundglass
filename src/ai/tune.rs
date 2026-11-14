@@ -2,6 +2,7 @@
 //! preprocessing overrides. Every field falls back to its default and is clamped on use.
 use super::*;
 use eframe::egui;
+use crate::i18n::tr;
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -144,24 +145,24 @@ pub(super) fn tune_ui(ui: &mut egui::Ui, s: &mut crate::settings::AiSettings, mo
     egui::Grid::new(("tune", model.file)).num_columns(2).spacing([12.0, 6.0]).show(ui, |ui| {
         match &mut t {
             Tune::Denoise(d) => {
-                ui.label("Strength");
+                ui.label(tr("Strength"));
                 ui.horizontal(|ui| {
                     let mut full = d.limit_db == 0.0;
-                    if ui.checkbox(&mut full, "Full").changed() {
+                    if ui.checkbox(&mut full, tr("Full")).changed() {
                         d.limit_db = if full { 0.0 } else { 24.0 };
                     }
                     if !full {
-                        ui.add(egui::DragValue::new(&mut d.limit_db).range(6.0..=60.0).suffix(" dB at most"));
+                        ui.add(egui::DragValue::new(&mut d.limit_db).range(6.0..=60.0).suffix(tr(" dB at most")));
                     }
                 })
                 .response
-                .on_hover_text("Full takes away all the noise it finds; a limit keeps some, for a more natural sound");
+                .on_hover_text(tr("Full takes away all the noise it finds; a limit keeps some, for a more natural sound"));
             }
             Tune::Stems(st) => {
-                ui.label("Overlap");
-                ui.add(egui::Slider::new(&mut st.overlap, 0.1..=0.5).custom_formatter(|v, _| format!("{:.0} %", v * 100.0))).on_hover_text("More overlap between the 7.8 s segments: smoother joins, slower");
+                ui.label(tr("Overlap"));
+                ui.add(egui::Slider::new(&mut st.overlap, 0.1..=0.5).custom_formatter(|v, _| format!("{:.0} %", v * 100.0))).on_hover_text(tr("More overlap between the 7.8 s segments: smoother joins, slower"));
                 ui.end_row();
-                ui.label("Write");
+                ui.label(tr("Write"));
                 ui.horizontal(|ui| {
                     for (on, name) in st.write.iter_mut().zip(stems::NAMES) {
                         ui.checkbox(on, name);
@@ -169,49 +170,49 @@ pub(super) fn tune_ui(ui: &mut egui::Ui, s: &mut crate::settings::AiSettings, mo
                 });
             }
             Tune::Midi(m) => {
-                ui.label("Onset threshold");
-                ui.add(egui::Slider::new(&mut m.onset, 0.05..=0.95)).on_hover_text("Higher: fewer, surer notes start");
+                ui.label(tr("Onset threshold"));
+                ui.add(egui::Slider::new(&mut m.onset, 0.05..=0.95)).on_hover_text(tr("Higher: fewer, surer notes start"));
                 ui.end_row();
-                ui.label("Note threshold");
-                ui.add(egui::Slider::new(&mut m.frame, 0.05..=0.95)).on_hover_text("Higher: notes end sooner, quiet ones are left out");
+                ui.label(tr("Note threshold"));
+                ui.add(egui::Slider::new(&mut m.frame, 0.05..=0.95)).on_hover_text(tr("Higher: notes end sooner, quiet ones are left out"));
                 ui.end_row();
-                ui.label("Shortest note");
+                ui.label(tr("Shortest note"));
                 ui.add(egui::DragValue::new(&mut m.min_note_ms).range(30.0..=500.0).suffix(" ms"));
                 ui.end_row();
-                ui.label("Notes from");
+                ui.label(tr("Notes from"));
                 ui.horizontal(|ui| {
                     ui.add(egui::DragValue::new(&mut m.low).range(21..=108).custom_formatter(|v, _| note_name(v as u8)));
-                    ui.label("to");
+                    ui.label(tr("to"));
                     ui.add(egui::DragValue::new(&mut m.high).range(21..=108).custom_formatter(|v, _| note_name(v as u8)));
                 });
                 ui.end_row();
-                ui.label("Held notes");
-                ui.checkbox(&mut m.melodia, "Also find notes without a clear start").on_hover_text("Basic Pitch's melodia trick");
+                ui.label(tr("Held notes"));
+                ui.checkbox(&mut m.melodia, tr("Also find notes without a clear start")).on_hover_text(tr("Basic Pitch's melodia trick"));
                 ui.end_row();
-                ui.label("MIDI tempo");
-                ui.add(egui::DragValue::new(&mut m.tempo).range(40.0..=240.0).suffix(" bpm")).on_hover_text("Only how the file's beats are counted; the notes keep their times");
+                ui.label(tr("MIDI tempo"));
+                ui.add(egui::DragValue::new(&mut m.tempo).range(40.0..=240.0).suffix(" bpm")).on_hover_text(tr("Only how the file's beats are counted; the notes keep their times"));
             }
             Tune::Beats(b) => {
-                ui.label("Sensitivity");
-                ui.add(egui::Slider::new(&mut b.threshold, -3.0..=3.0)).on_hover_text("Lower finds more beats, also where the model is unsure");
+                ui.label(tr("Sensitivity"));
+                ui.add(egui::Slider::new(&mut b.threshold, -3.0..=3.0)).on_hover_text(tr("Lower finds more beats, also where the model is unsure"));
             }
             Tune::Speech(sp) => {
                 if whisper {
-                    ui.label("Language");
-                    ui.add(egui::TextEdit::singleline(&mut sp.language).hint_text("detect").desired_width(60.0)).on_hover_text("A code such as en, es, fr, de; empty to detect it from the first speech");
+                    ui.label(tr("Language"));
+                    ui.add(egui::TextEdit::singleline(&mut sp.language).hint_text("detect").desired_width(60.0)).on_hover_text(tr("A code such as en, es, fr, de; empty to detect it from the first speech"));
                     ui.end_row();
-                    ui.label("Task");
+                    ui.label(tr("Task"));
                     ui.horizontal(|ui| {
-                        ui.radio_value(&mut sp.translate, false, "Transcribe");
-                        ui.radio_value(&mut sp.translate, true, "Translate to English");
+                        ui.radio_value(&mut sp.translate, false, tr("Transcribe"));
+                        ui.radio_value(&mut sp.translate, true, tr("Translate to English"));
                     });
                     ui.end_row();
                 }
-                ui.label("Time marks");
-                ui.checkbox(&mut sp.time_marks, "As subtitles (.srt)").on_hover_text("Each stretch of speech with its start and end, to save as an .srt file");
+                ui.label(tr("Time marks"));
+                ui.checkbox(&mut sp.time_marks, tr("As subtitles (.srt)")).on_hover_text(tr("Each stretch of speech with its start and end, to save as an .srt file"));
                 ui.end_row();
-                ui.label("Skip quieter than");
-                ui.add(egui::DragValue::new(&mut sp.silence_db).range(-80.0..=-30.0).suffix(" dBFS")).on_hover_text("Silent pieces are left out, so nothing is made up there");
+                ui.label(tr("Skip quieter than"));
+                ui.add(egui::DragValue::new(&mut sp.silence_db).range(-80.0..=-30.0).suffix(" dBFS")).on_hover_text(tr("Silent pieces are left out, so nothing is made up there"));
             }
         }
         ui.end_row();
@@ -219,7 +220,7 @@ pub(super) fn tune_ui(ui: &mut egui::Ui, s: &mut crate::settings::AiSettings, mo
     if t != before {
         s.tune.insert(model.file.to_string(), t);
     }
-    if ui.add_enabled(s.tune.contains_key(model.file), egui::Button::new("Reset to defaults")).clicked() {
+    if ui.add_enabled(s.tune.contains_key(model.file), egui::Button::new(tr("Reset to defaults"))).clicked() {
         s.tune.remove(model.file);
     }
 }

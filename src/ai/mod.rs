@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 use std::sync::atomic::{AtomicBool, Ordering};
+use crate::i18n::tr;
 
 mod audio;
 mod beats;
@@ -41,11 +42,11 @@ impl Task {
 
     pub fn title(self) -> &'static str {
         match self {
-            Task::Denoise => "Remove Noise",
-            Task::Transcribe => "Transcribe Speech",
-            Task::Stems => "Split into Stems",
-            Task::Midi => "Melody to MIDI",
-            Task::Beats => "Find Beats",
+            Task::Denoise => tr("Remove Noise"),
+            Task::Transcribe => tr("Transcribe Speech"),
+            Task::Stems => tr("Split into Stems"),
+            Task::Midi => tr("Melody to MIDI"),
+            Task::Beats => tr("Find Beats"),
         }
     }
 }

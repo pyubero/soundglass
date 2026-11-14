@@ -79,6 +79,8 @@ pub struct Settings {
     pub default_size: [f32; 2],
     /// The first-start question about being the default player has been answered (or wasn't needed).
     pub default_asked: bool,
+    /// The interface's language; `None` until the first start picks the system's.
+    pub language: Option<crate::i18n::Language>,
     /// Keyboard shortcuts changed from their defaults, by `keys::id`; `None` removes one.
     pub shortcuts: Vec<(String, Option<eframe::egui::KeyboardShortcut>)>,
 }
@@ -138,6 +140,7 @@ impl Default for Settings {
             font_size: DEFAULT_FONT_SIZE,
             default_size: DEFAULT_SIZE,
             default_asked: false,
+            language: None,
             shortcuts: Vec::new(),
         }
     }
@@ -239,6 +242,7 @@ mod tests {
             font_size: 16.0,
             default_size: [500.0, 700.0],
             default_asked: true,
+            language: Some(crate::i18n::Language::English),
             shortcuts: vec![("Quit".into(), None), ("Open".into(), Some(eframe::egui::KeyboardShortcut::new(eframe::egui::Modifiers::ALT, eframe::egui::Key::O)))],
         };
         let app_ron = |v: &str| ron::to_string(&HashMap::from([(KEY.to_string(), v.to_string())])).unwrap();

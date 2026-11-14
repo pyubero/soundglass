@@ -2,6 +2,7 @@
 
 use eframe::egui::{self, Color32, CornerRadius, Vec2};
 use std::path::{Path, PathBuf};
+use crate::i18n::{tr, trf};
 
 /// The fallback for a missing key or a broken file: the Light template as shipped.
 const BASE: &str = include_str!("../themes/light.xml");
@@ -27,10 +28,10 @@ pub struct Theme {
 /// The name shown in Settings: the shipped themes by name, others by file name.
 pub fn name(id: &str) -> String {
     match id {
-        SYSTEM => "Follow system".into(),
-        "dark" => "Dark".into(),
-        "light" => "Light".into(),
-        "high-contrast" => "High contrast".into(),
+        SYSTEM => tr("Follow system").into(),
+        "dark" => tr("Dark").into(),
+        "light" => tr("Light").into(),
+        "high-contrast" => tr("High contrast").into(),
         _ => id.into(),
     }
 }
@@ -85,7 +86,7 @@ fn themes_in(dir: &Path) -> Vec<String> {
 
 /// Reads a theme from the folder by id.
 pub fn load(id: &str) -> Result<Theme, String> {
-    read(&dir().ok_or("no data folder")?, id)
+    read(&dir().ok_or(tr("no data folder"))?, id)
 }
 
 fn read(dir: &Path, id: &str) -> Result<Theme, String> {
@@ -93,7 +94,7 @@ fn read(dir: &Path, id: &str) -> Result<Theme, String> {
     let error = |e: std::io::Error| format!("{}: {e}", path.display());
     // A theme is any file a user downloaded: keep it small.
     if std::fs::metadata(&path).map_err(error)?.len() > MAX_BYTES {
-        return Err(format!("{}: bigger than 64 KiB", path.display()));
+        return Err(trf("{path}: bigger than 64 KiB", &[("path", &path.display())]));
     }
     parse(&std::fs::read_to_string(&path).map_err(error)?).map_err(|e| format!("{}: {e}", path.display()))
 }
@@ -146,12 +147,12 @@ pub fn parse(xml: &str) -> Result<Theme, String> {
     let doc = roxmltree::Document::parse(xml).map_err(|e| e.to_string())?;
     let root = doc.root_element();
     if root.tag_name().name() != "theme" {
-        return Err(format!("<{}>: invalid value", root.tag_name().name()));
+        return Err(trf("<{tag}>: invalid value", &[("tag", &root.tag_name().name())]));
     }
     let mode = match root.attribute("mode") {
         None | Some("dark") => egui::Theme::Dark,
         Some("light") => egui::Theme::Light,
-        Some(other) => return Err(format!("mode=\"{other}\": invalid value")),
+        Some(other) => return Err(trf("mode=\"{other}\": invalid value", &[("other", &other)])),
     };
     let mut t = Theme { mode, visuals: mode.default_visuals(), spacing: egui::Spacing::default(), played: Color32::TRANSPARENT };
     apply_elements(&roxmltree::Document::parse(BASE).expect("the base theme is XML"), &mut t)?;
@@ -167,7 +168,7 @@ pub fn parse(xml: &str) -> Result<Theme, String> {
 fn apply_elements(doc: &roxmltree::Document, t: &mut Theme) -> Result<(), String> {
     for node in doc.root_element().children().filter(|n| n.is_element()) {
         let line = doc.text_pos_at(node.range().start).row;
-        let bad = |key: &str, v: &str| format!("line {line}: {key}=\"{v}\": invalid value");
+        let bad = |key: &str, v: &str| trf("line {line}: {key}=\"{v}\": invalid value", &[("line", &line), ("key", &key), ("v", &v)]);
         let color = |key: &str| node.attribute(key).map(|v| parse_color(v).ok_or_else(|| bad(key, v))).transpose();
         let number = |key: &str, max: f32| node.attribute(key).map(|v| v.trim().parse::<f32>().ok().filter(|n| n.is_finite()).map(|n| n.clamp(0.0, max)).ok_or_else(|| bad(key, v))).transpose();
         let pair = |key: &str| node.attribute(key).map(|v| parse_pair(v).ok_or_else(|| bad(key, v))).transpose();

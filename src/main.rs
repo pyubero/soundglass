@@ -5,6 +5,7 @@ mod ai;
 mod chords;
 mod edit;
 mod folder;
+mod i18n;
 mod identify;
 mod keys;
 mod loudness;
@@ -29,6 +30,7 @@ use edit::Edit;
 use track::Track;
 use settings::Order;
 use keys::Command;
+use i18n::{tr, tr_key, trf};
 use ai::Task;
 
 /// Milliseconds between redraws while playing with a waveform shown.
@@ -79,7 +81,8 @@ fn main() -> eframe::Result {
     }
 
     let name = track.path.file_name().map_or_else(|| "soundglass".into(), |n| n.to_string_lossy().into_owned());
-    let settings = settings::load();
+    let mut settings = settings::load();
+    i18n::set(*settings.language.get_or_insert_with(i18n::system_language));
     ai::set_use_gpu(settings.ai.use_gpu);
     let remembered = settings.window_size.filter(|_| settings.remember_window_size);
     let viewport = egui::ViewportBuilder::default().with_title(&name).with_inner_size(remembered.unwrap_or(settings.default_size)).with_min_inner_size(settings::MIN_SIZE)
@@ -103,7 +106,7 @@ fn main() -> eframe::Result {
         theme::seed_folder();
         let theme_error = theme::apply(&cc.egui_ctx, &settings.theme);
         settings::apply_font_size(&cc.egui_ctx, settings.font_size);
-        let player = opening.join().unwrap_or_else(|_| Err("the sound device failed to open".into()));
+        let player = opening.join().unwrap_or_else(|_| Err(tr("the sound device failed to open").into()));
         let volume = settings.volume;
         let (watched, changes) = folder::watch(repaint(&ctx), Duration::from_secs(1));
         // Asked here and not by the package: a package runs as root, defaults are per user (lightview's way).
@@ -318,7 +321,7 @@ struct Browse {
 
 impl Browse {
     fn new(dir: PathBuf) -> Browse {
-        let listing = folder::list_dir(&dir).map_err(|e| format!("Can't read this folder: {e}"));
+        let listing = folder::list_dir(&dir).map_err(|e| trf("Can't read this folder: {e}", &[("e", &e)]));
         Browse { dir, listing, scrolled: None }
     }
 }
@@ -415,12 +418,12 @@ impl Fx {
     /// The Custom… dialog's title, unit, range, first value and a hint ("" for none).
     fn custom(self) -> (&'static str, &'static str, std::ops::RangeInclusive<f64>, f64, &'static str) {
         match self {
-            Fx::FadeIn(_) => ("Fade in", " s", 0.1..=600.0, 3.0, ""),
-            Fx::FadeOut(_) => ("Fade out", " s", 0.1..=600.0, 3.0, ""),
-            Fx::Gain(_) => ("Gain", " dB", -40.0..=40.0, 2.0, ""),
-            Fx::Peak(_) => ("Normalize peak", " dBFS", -40.0..=0.0, -1.0, "0 = max"),
-            Fx::Loudness(_) => ("Normalize loudness", " LUFS", -40.0..=-5.0, -14.0, "−14 streaming, −23 TV"),
-            _ => ("Trim silence below", " dB", -90.0..=-10.0, -60.0, "−60 silence, −40 hiss"),
+            Fx::FadeIn(_) => (tr("Fade in"), " s", 0.1..=600.0, 3.0, ""),
+            Fx::FadeOut(_) => (tr("Fade out"), " s", 0.1..=600.0, 3.0, ""),
+            Fx::Gain(_) => (tr("Gain"), " dB", -40.0..=40.0, 2.0, ""),
+            Fx::Peak(_) => (tr("Normalize peak"), " dBFS", -40.0..=0.0, -1.0, tr("0 = max")),
+            Fx::Loudness(_) => (tr("Normalize loudness"), " LUFS", -40.0..=-5.0, -14.0, tr("−14 streaming, −23 TV")),
+            _ => (tr("Trim silence below"), " dB", -90.0..=-10.0, -60.0, tr("−60 silence, −40 hiss")),
         }
     }
 
@@ -440,9 +443,9 @@ impl Fx {
 /// The presets the Effects menu offers.
 const FADES: [f64; 3] = [1.0, 3.0, 5.0];
 const GAINS: [f64; 6] = [-6.0, -3.0, -1.0, 1.0, 3.0, 6.0];
-const PEAKS: [(f64, &str); 2] = [(-1.0, "Peak near max"), (0.0, "Peak at max")];
-const LOUDNESS: [(f64, &str); 3] = [(-14.0, "As streaming"), (-16.0, "As podcasts"), (-23.0, "As TV")];
-const TRIMS: [(f64, &str); 3] = [(-60.0, "Silence"), (-50.0, "Faint noise"), (-40.0, "Hiss")];
+const PEAKS: [(f64, &str); 2] = [(-1.0, tr_key("Peak near max")), (0.0, tr_key("Peak at max"))];
+const LOUDNESS: [(f64, &str); 3] = [(-14.0, tr_key("As streaming")), (-16.0, tr_key("As podcasts")), (-23.0, tr_key("As TV"))];
+const TRIMS: [(f64, &str); 3] = [(-60.0, tr_key("Silence")), (-50.0, tr_key("Faint noise")), (-40.0, tr_key("Hiss"))];
 
 /// `x` with a real minus sign.
 fn signed(x: f64) -> String {
@@ -486,9 +489,9 @@ impl Knob {
 
     fn title(self) -> &'static str {
         match self {
-            Knob::Tape => "Change speed and pitch",
-            Knob::Tempo => "Pitch-preserved speed change",
-            Knob::Pitch => "Time-preserved pitch change",
+            Knob::Tape => tr("Change speed and pitch"),
+            Knob::Tempo => tr("Pitch-preserved speed change"),
+            Knob::Pitch => tr("Time-preserved pitch change"),
         }
     }
 
@@ -514,9 +517,12 @@ impl Knob {
 
     fn label(self, v: f64) -> String {
         match self {
-            Knob::Pitch if v == 0.0 => "0 (Normal)".into(),
-            Knob::Pitch => format!("{}{} semitone{}", if v > 0.0 { "+" } else { "−" }, v.abs(), if v.abs() == 1.0 { "" } else { "s" }),
-            _ if v == 1.0 => "1× (Normal)".into(),
+            Knob::Pitch if v == 0.0 => tr("0 (Normal)").into(),
+            Knob::Pitch => {
+                let (sign, n) = (if v > 0.0 { "+" } else { "−" }, v.abs());
+                if n == 1.0 { trf("{sign}{n} semitone", &[("sign", &sign), ("n", &n)]) } else { trf("{sign}{n} semitones", &[("sign", &sign), ("n", &n)]) }
+            }
+            _ if v == 1.0 => tr("1× (Normal)").into(),
             _ => format!("{v}×"),
         }
     }
@@ -627,10 +633,10 @@ impl eframe::App for App {
         if let Some(path) = ctx.input(|i| i.raw.dropped_files.first().map(|f| f.path().to_path_buf())) {
             self.open_dropped(path, &ctx);
         }
-        let why_not_rename = if !self.has_track() { Some("no file open") } else if !self.track.done() { Some("after loading") } else if self.tag_job.is_some() { Some("saving tags…") } else { None };
-        let why_not_identify = if !identify::ready() { Some("not set up") } else { why_not_rename.filter(|&w| w != "saving tags…") };
+        let why_not_rename = if !self.has_track() { Some(tr("no file open")) } else if !self.track.done() { Some(tr("after loading")) } else if self.tag_job.is_some() { Some(tr("saving tags…")) } else { None };
+        let why_not_identify = if !identify::ready() { Some(tr("not set up")) } else { why_not_rename.filter(|&w| w != "saving tags…") };
         // The write closes the tag editor, which would drop its unsaved edits.
-        let why_not_cover = if !self.has_track() { Some("no file open") } else if self.tag_job.is_some() { Some("saving tags…") } else if self.tag_editor.is_some() { Some("close the tag editor first") } else { None };
+        let why_not_cover = if !self.has_track() { Some(tr("no file open")) } else if self.tag_job.is_some() { Some(tr("saving tags…")) } else if self.tag_editor.is_some() { Some(tr("close the tag editor first")) } else { None };
         let beats_found = self.track.beats.lock().unwrap_or_else(|e| e.into_inner()).is_some();
 
         let mut ai_tool = None;
@@ -641,14 +647,14 @@ impl eframe::App for App {
                 ui.close();
             }
         };
-        let no_file = (!self.has_track()).then_some("no file open");
+        let no_file = (!self.has_track()).then_some(tr("no file open"));
         // No menu bar in full screen.
         (!fullscreen).then(|| egui::Panel::top("menu").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
-                ui.menu_button("File", |ui| {
-                    item(ui, &mut commands, "Open…", Command::Open, None);
+                ui.menu_button(tr("File"), |ui| {
+                    item(ui, &mut commands, tr("Open…"), Command::Open, None);
                     ui.add_enabled_ui(!self.recent.is_empty(), |ui| {
-                        ui.menu_button("Open Recent", |ui| {
+                        ui.menu_button(tr("Open Recent"), |ui| {
                             self.recent.retain(|p| p.exists());
                             for path in &self.recent {
                                 let name = path.file_name().unwrap_or_default().to_string_lossy();
@@ -659,54 +665,54 @@ impl eframe::App for App {
                             }
                         });
                     });
-                    item(ui, &mut commands, "Close", Command::Close, None);
+                    item(ui, &mut commands, tr("Close"), Command::Close, None);
                     ui.separator();
-                    item(ui, &mut commands, if cfg!(windows) { "Show in Explorer" } else { "Show in File Manager" }, Command::ShowInFolder, no_file);
-                    item(ui, &mut commands, "Copy Path", Command::CopyPath, no_file);
-                    item(ui, &mut commands, "Copy File", Command::CopyFile, no_file);
-                    let why = (!self.can_save_copy()).then_some("with unsaved edits, once loaded");
-                    item(ui, &mut commands, "Save Copy", Command::SaveCopy, why);
-                    item(ui, &mut commands, "Save As…", Command::SaveAs, (!loaded).then_some(no_file.unwrap_or("after loading")));
+                    item(ui, &mut commands, if cfg!(windows) { tr("Show in Explorer") } else { tr("Show in File Manager") }, Command::ShowInFolder, no_file);
+                    item(ui, &mut commands, tr("Copy Path"), Command::CopyPath, no_file);
+                    item(ui, &mut commands, tr("Copy File"), Command::CopyFile, no_file);
+                    let why = (!self.can_save_copy()).then_some(tr("with unsaved edits, once loaded"));
+                    item(ui, &mut commands, tr("Save Copy"), Command::SaveCopy, why);
+                    item(ui, &mut commands, tr("Save As…"), Command::SaveAs, (!loaded).then_some(no_file.unwrap_or(tr("after loading"))));
                     ui.separator();
-                    item(ui, &mut commands, "Rename…", Command::Rename, why_not_rename);
-                    item(ui, &mut commands, "Delete…", Command::Delete, no_file);
-                    item(ui, &mut commands, "Rename from Tags…", Command::RenameFromTags, why_not_rename);
-                    item(ui, &mut commands, "Identify Track…", Command::Identify, why_not_identify);
+                    item(ui, &mut commands, tr("Rename…"), Command::Rename, why_not_rename);
+                    item(ui, &mut commands, tr("Delete…"), Command::Delete, no_file);
+                    item(ui, &mut commands, tr("Rename from Tags…"), Command::RenameFromTags, why_not_rename);
+                    item(ui, &mut commands, tr("Identify Track…"), Command::Identify, why_not_identify);
                     ui.separator();
-                    item(ui, &mut commands, "Settings…", Command::Settings, None);
-                    item(ui, &mut commands, "Quit", Command::Quit, None);
+                    item(ui, &mut commands, tr("Settings…"), Command::Settings, None);
+                    item(ui, &mut commands, tr("Quit"), Command::Quit, None);
                 });
-                ui.menu_button("Edit", |ui| {
+                ui.menu_button(tr("Edit"), |ui| {
                     let (history, selected) = (self.history.as_ref(), self.edit_view.selection.is_some() && self.track.done());
                     let nothing = |on: bool, why| (!on).then_some(why);
-                    item(ui, &mut commands, "Undo", Command::Undo, nothing(history.is_some_and(|h| h.can_undo()) || !self.deleted.is_empty(), "nothing to undo"));
-                    item(ui, &mut commands, "Redo", Command::Redo, nothing(history.is_some_and(|h| h.can_redo()), "nothing to redo"));
+                    item(ui, &mut commands, tr("Undo"), Command::Undo, nothing(history.is_some_and(|h| h.can_undo()) || !self.deleted.is_empty(), tr("nothing to undo")));
+                    item(ui, &mut commands, tr("Redo"), Command::Redo, nothing(history.is_some_and(|h| h.can_redo()), tr("nothing to redo")));
                     ui.separator();
-                    for (label, command) in [("Cut out", Command::Cut), ("Crop", Command::Crop), ("Silence", Command::Silence)] {
-                        item(ui, &mut commands, label, command, nothing(selected, "select a part in the Edit panel"));
+                    for (label, command) in [(tr("Cut out"), Command::Cut), (tr("Crop"), Command::Crop), (tr("Silence"), Command::Silence)] {
+                        item(ui, &mut commands, label, command, nothing(selected, tr("select a part in the Edit panel")));
                     }
                     ui.separator();
-                    item(ui, &mut commands, "Add/Replace Album Cover…", Command::AddCover, why_not_cover);
-                    item(ui, &mut commands, "Remove Album Cover…", Command::RemoveCover, why_not_cover);
+                    item(ui, &mut commands, tr("Add/Replace Album Cover…"), Command::AddCover, why_not_cover);
+                    item(ui, &mut commands, tr("Remove Album Cover…"), Command::RemoveCover, why_not_cover);
                 });
-                ui.add_enabled_ui(self.has_track(), |ui| ui.menu_button("Effects", |ui| self.effects_menu(ui, &mut commands, &key_text)));
-                ui.menu_button("View", |ui| {
-                    for (on, label, command) in [(self.show_info, "Track Info", Command::TrackInfo), (self.show_folder, "Folder", Command::Folder), (self.show_edit, "Edit", Command::EditPanel)] {
+                ui.add_enabled_ui(self.has_track(), |ui| ui.menu_button(tr("Effects"), |ui| self.effects_menu(ui, &mut commands, &key_text)));
+                ui.menu_button(tr("View"), |ui| {
+                    for (on, label, command) in [(self.show_info, tr("Track Info"), Command::TrackInfo), (self.show_folder, tr("Folder"), Command::Folder), (self.show_edit, tr("Edit"), Command::EditPanel)] {
                         let mut on = on;
                         if ui.add(egui::Checkbox::new(&mut on, label)).on_hover_text(key_text(command)).clicked() {
                             commands.push(command);
                             ui.close();
                         }
                     }
-                    item(ui, &mut commands, "Full Screen", Command::FullScreen, None);
+                    item(ui, &mut commands, tr("Full Screen"), Command::FullScreen, None);
                     ui.separator();
                     let mut on = self.settings.practice;
-                    if ui.checkbox(&mut on, "Practice mode").on_hover_text("Tools for musicians: loops, the spectrogram, tempo, key and chords").clicked() {
+                    if ui.checkbox(&mut on, tr("Practice mode")).on_hover_text(tr("Tools for musicians: loops, the spectrogram, tempo, key and chords")).clicked() {
                         commands.push(Command::Practice);
                         ui.close();
                     }
                 });
-                ui.menu_button("Playback", |ui| {
+                ui.menu_button(tr("Playback"), |ui| {
                     for knob in Knob::ALL {
                         ui.menu_button(knob.title(), |ui| {
                             let now = knob.get(self.speed);
@@ -717,7 +723,7 @@ impl eframe::App for App {
                                 }
                             }
                             let custom = !knob.presets().iter().any(|v| (now - v).abs() < 1e-6);
-                            let label = if custom { format!("Custom ({})…", knob.label((now * 100.0).round() / 100.0)) } else { "Custom…".into() };
+                            let label = if custom { trf("Custom ({value})…", &[("value", &knob.label((now * 100.0).round() / 100.0))]) } else { tr("Custom…").into() };
                             if ui.radio(custom, label).on_hover_text(key_text(Command::CustomSpeed(knob))).clicked() {
                                 commands.push(Command::CustomSpeed(knob));
                                 ui.close();
@@ -725,23 +731,23 @@ impl eframe::App for App {
                         });
                     }
                     ui.separator();
-                    item(ui, &mut commands, "Reset", Command::ResetSpeed, (self.speed == wsola::Speed::NORMAL).then_some("already normal"));
+                    item(ui, &mut commands, tr("Reset"), Command::ResetSpeed, (self.speed == wsola::Speed::NORMAL).then_some(tr("already normal")));
                 });
-                ui.menu_button("Local AI", |ui| {
+                ui.menu_button(tr("Local AI"), |ui| {
                     let key = |task: Option<Task>| key_text(task.map_or(Command::AiModels, Command::Ai));
                     if let Some(task) = self.ai.menu_items(ui, &self.settings.ai, loaded, self.edit_view.selection.is_some(), &key) {
                         commands.push(Command::Ai(task));
                     }
                 });
                 if self.settings.practice {
-                    ui.menu_button("Practice", |ui| {
-                        ui.checkbox(&mut self.looping, "Loop selection").on_hover_text("L");
+                    ui.menu_button(tr("Practice"), |ui| {
+                        ui.checkbox(&mut self.looping, tr("Loop selection")).on_hover_text("L");
                         let mut on = self.metronome;
-                        if ui.add_enabled(beats_found, egui::Checkbox::new(&mut on, "Metronome")).on_hover_text(format!("Clicks on the found beats {}", key_text(Command::Metronome))).on_disabled_hover_text("after Local AI → Find Beats").clicked() {
+                        if ui.add_enabled(beats_found, egui::Checkbox::new(&mut on, tr("Metronome"))).on_hover_text(format!("Clicks on the found beats {}", key_text(Command::Metronome))).on_disabled_hover_text(tr("after Local AI → Find Beats")).clicked() {
                             commands.push(Command::Metronome);
                         }
                         let mut on = self.show_spectrum;
-                        if ui.checkbox(&mut on, "Spectrogram").on_hover_text(key_text(Command::Spectrogram)).clicked() {
+                        if ui.checkbox(&mut on, tr("Spectrogram")).on_hover_text(key_text(Command::Spectrogram)).clicked() {
                             commands.push(Command::Spectrogram);
                             ui.close();
                         }
@@ -841,7 +847,7 @@ impl eframe::App for App {
         if self.show_info {
             let size = std::fs::metadata(&self.track.path).map(|m| m.len()).ok();
             let panel = egui::Panel::left("info").resizable(true).size_range(240.0..=360.0).default_size(self.info_width).show(ui, |ui| {
-                let can_edit = if !self.has_track() { Err("no file open") } else if !self.track.done() { Err("after loading") } else if self.tag_job.is_some() { Err("saving tags…") } else { Ok(()) };
+                let can_edit = if !self.has_track() { Err(tr("no file open")) } else if !self.track.done() { Err(tr("after loading")) } else if self.tag_job.is_some() { Err(tr("saving tags…")) } else { Ok(()) };
                 info_panel(ui, &self.track, size, &mut self.tag_editor, can_edit, self.settings.practice)
             });
             match panel.inner {
@@ -872,9 +878,9 @@ impl eframe::App for App {
             if !self.has_track() {
                 ui.vertical_centered(|ui| {
                     ui.add_space(ui.available_height() / 3.0);
-                    ui.heading("No file open");
+                    ui.heading(tr("No file open"));
                     ui.add_space(8.0);
-                    if ui.add(egui::Button::new("Open…").shortcut_text(key_text(Command::Open))).clicked() {
+                    if ui.add(egui::Button::new(tr("Open…")).shortcut_text(key_text(Command::Open))).clicked() {
                         open_file = true;
                     }
                     notice(ui, self.save_notice.as_ref(), Some(ui.input(|i| i.time)));
@@ -948,11 +954,11 @@ impl eframe::App for App {
         if let Some(path) = open_recent {
             self.open(path);
         }
-        if open_file && let Some(path) = rfd::FileDialog::new().add_filter("Audio", &folder::EXTENSIONS).pick_file() {
+        if open_file && let Some(path) = rfd::FileDialog::new().add_filter(tr("Audio"), &folder::EXTENSIONS).pick_file() {
             self.open(path);
         }
         let dir = self.track.path.parent().map(|d| d.to_path_buf()).unwrap_or_default();
-        if pick_cover && let Some(image) = rfd::FileDialog::new().add_filter("Image", folder::IMAGE_EXTS).set_directory(dir).pick_file()
+        if pick_cover && let Some(image) = rfd::FileDialog::new().add_filter(tr("Image"), folder::IMAGE_EXTS).set_directory(dir).pick_file()
             && let Err(e) = self.offer_cover(&ctx, image, true)
         {
             self.save_notice = Some((Err(e), ctx.input(|i| i.time)));
@@ -1006,48 +1012,48 @@ fn info_rows(track: &Track, file_size: Option<u64>, practice: bool) -> [(&'stati
     let seconds = (track.done() && rate > 0).then(|| track.len() as f64 / rate as f64);
     let or = |v: String| if v.is_empty() { unknown() } else { v };
     let channels = format.map_or_else(unknown, |f| match f.channels {
-        1 => "1 (mono)".into(),
-        2 => "2 (stereo)".into(),
+        1 => tr("1 (mono)").into(),
+        2 => tr("2 (stereo)").into(),
         n => n.to_string(),
     });
     let bitrate = seconds.zip(file_size).filter(|(s, _)| *s > 0.0).map_or_else(unknown, |(s, b)| format!("{:.0} kb/s", b as f64 * 8.0 / s / 1000.0));
     let loudness = match (track.loudness.get(), track.done()) {
         (Some(l), _) if l.lufs.is_finite() => (format!("{:.1} LUFS", l.lufs), format!("{:.1} dBFS", l.peak_db)),
-        (Some(_), _) => ("silent".into(), "silent".into()),
-        (None, true) => ("measuring…".into(), "measuring…".into()),
-        (None, false) => ("after loading".into(), "after loading".into()),
+        (Some(_), _) => (tr("silent").into(), tr("silent").into()),
+        (None, true) => (tr("measuring…").into(), tr("measuring…").into()),
+        (None, false) => (tr("after loading").into(), tr("after loading").into()),
     };
     let (tempo, key) = match (track.tempo.get(), track.done()) {
         (Some(e), _) => (e.bpm.map_or_else(unknown, |b| format!("≈ {b:.0} BPM")), e.key.map_or_else(unknown, |k| format!("≈ {}", k.name()))),
-        (None, true) => ("measuring…".into(), "measuring…".into()),
-        (None, false) => ("after loading".into(), "after loading".into()),
+        (None, true) => (tr("measuring…").into(), tr("measuring…").into()),
+        (None, false) => (tr("after loading").into(), tr("after loading").into()),
     };
     let path = &track.path;
     let general = vec![
-        ("Name", path.file_name().unwrap_or_default().to_string_lossy().into_owned()),
-        ("Folder", path.parent().map_or_else(unknown, |p| p.display().to_string())),
-        ("Format", or(info.container)),
-        ("Codec", or(info.codec)),
-        ("File size", file_size.map_or_else(unknown, |b| format!("{:.1} MB", b as f64 / 1e6))),
-        ("Length", seconds.map_or_else(unknown, |_| clock(track.len(), rate))),
-        ("Bitrate", bitrate),
+        (tr_key("Name"), path.file_name().unwrap_or_default().to_string_lossy().into_owned()),
+        (tr_key("Folder"), path.parent().map_or_else(unknown, |p| p.display().to_string())),
+        (tr_key("Format"), or(info.container)),
+        (tr_key("Codec"), or(info.codec)),
+        (tr_key("File size"), file_size.map_or_else(unknown, |b| format!("{:.1} MB", b as f64 / 1e6))),
+        (tr_key("Length"), seconds.map_or_else(unknown, |_| clock(track.len(), rate))),
+        (tr_key("Bitrate"), bitrate),
     ];
     let mut audio = vec![
-        ("Sample rate", if rate > 0 { format!("{:.1} kHz", rate as f64 / 1000.0) } else { unknown() }),
-        ("Channels", channels),
-        ("Bit depth", info.bits.map_or_else(unknown, |b| format!("{b}-bit"))),
-        ("Loudness", loudness.0),
-        ("Peak", loudness.1),
+        (tr_key("Sample rate"), if rate > 0 { format!("{:.1} kHz", rate as f64 / 1000.0) } else { unknown() }),
+        (tr_key("Channels"), channels),
+        (tr_key("Bit depth"), info.bits.map_or_else(unknown, |b| format!("{b}-bit"))),
+        (tr_key("Loudness"), loudness.0),
+        (tr_key("Peak"), loudness.1),
     ];
     if practice {
-        audio.extend([("Tempo", tempo), ("Key", key)]);
+        audio.extend([(tr_key("Tempo"), tempo), (tr_key("Key"), key)]);
     }
     let tags = vec![
-        ("Title", tags.title.unwrap_or_else(unknown)),
-        ("Artist", tags.artist.unwrap_or_else(unknown)),
-        ("Album", tags.album.unwrap_or_else(unknown)),
+        (tr_key("Title"), tags.title.unwrap_or_else(unknown)),
+        (tr_key("Artist"), tags.artist.unwrap_or_else(unknown)),
+        (tr_key("Album"), tags.album.unwrap_or_else(unknown)),
     ];
-    [("General", general), ("Audio", audio), ("Tags", tags)]
+    [(tr_key("General"), general), (tr_key("Audio"), audio), (tr_key("Tags"), tags)]
 }
 
 /// Track Info's body, laid out like lightview's inspector: collapsing sections of two-column grids.
@@ -1064,53 +1070,53 @@ fn tag_fields(ui: &mut egui::Ui, editor: &mut Option<TagEditor>, estimate: tempo
     let mut click = None;
     egui::Grid::new("tag fields").num_columns(2).spacing([12.0, 6.0]).show(ui, |ui| {
         let d = &mut e.draft;
-        for (name, field) in [("Title", &mut d.title), ("Artist", &mut d.artist), ("Album", &mut d.album), ("Year", &mut d.year), ("Track", &mut d.track), ("Genre", &mut d.genre)] {
+        for (name, field) in [(tr("Title"), &mut d.title), (tr("Artist"), &mut d.artist), (tr("Album"), &mut d.album), (tr("Year"), &mut d.year), (tr("Track"), &mut d.track), (tr("Genre"), &mut d.genre)] {
             ui.label(name);
             ui.add(egui::TextEdit::singleline(field).desired_width(f32::INFINITY));
             ui.end_row();
         }
-        ui.label("BPM");
+        ui.label(tr("BPM"));
         ui.horizontal(|ui| {
             ui.add(egui::TextEdit::singleline(&mut d.bpm).desired_width(48.0));
             if let Some(bpm) = estimate.bpm
-                && ui.button(format!("≈ {bpm:.0}")).on_hover_text("Use the estimated tempo").clicked()
+                && ui.button(format!("≈ {bpm:.0}")).on_hover_text(tr("Use the estimated tempo")).clicked()
             {
                 d.bpm = format!("{bpm:.0}");
             }
             // Any estimate can be an octave off: a slow song counted at double time, or the reverse.
             let n = d.bpm.trim().parse::<u32>().ok().filter(|&n| n > 0);
-            if ui.add_enabled(n.is_some(), egui::Button::new("½×")).on_hover_text("Half the tempo").clicked() {
+            if ui.add_enabled(n.is_some(), egui::Button::new("½×")).on_hover_text(tr("Half the tempo")).clicked() {
                 d.bpm = n.unwrap_or(0).div_ceil(2).to_string();
             }
-            if ui.add_enabled(n.is_some(), egui::Button::new("2×")).on_hover_text("Double the tempo").clicked() {
+            if ui.add_enabled(n.is_some(), egui::Button::new("2×")).on_hover_text(tr("Double the tempo")).clicked() {
                 d.bpm = (n.unwrap_or(0) * 2).to_string();
             }
         });
         ui.end_row();
-        ui.label("Key");
+        ui.label(tr("Key"));
         ui.horizontal(|ui| {
             ui.add(egui::TextEdit::singleline(&mut d.key).desired_width(48.0));
             if let Some(key) = estimate.key
-                && ui.button(format!("≈ {}", key.short_name())).on_hover_text(format!("Use the estimated key, {}", key.name())).clicked()
+                && ui.button(format!("≈ {}", key.short_name())).on_hover_text(trf("Use the estimated key, {key}", &[("key", &key.name())])).clicked()
             {
                 d.key = key.short_name();
             }
         });
         ui.end_row();
-        ui.label("Cover");
+        ui.label(tr("Cover"));
         ui.horizontal(|ui| {
             ui.label(match d.cover {
-                tags::Cover::Keep => "as it is",
-                tags::Cover::Remove => "removed",
-                tags::Cover::New(_) => "new image",
+                tags::Cover::Keep => tr("as it is"),
+                tags::Cover::Remove => tr("removed"),
+                tags::Cover::New(_) => tr("new image"),
             });
-            if ui.button("Replace…").clicked() && let Some(path) = rfd::FileDialog::new().add_filter("Image", folder::IMAGE_EXTS).pick_file() {
+            if ui.button(tr("Replace…")).clicked() && let Some(path) = rfd::FileDialog::new().add_filter(tr("Image"), folder::IMAGE_EXTS).pick_file() {
                 match std::fs::read(&path).map_err(|e| e.to_string()).and_then(tags::cover) {
                     Ok(c) => (d.cover, e.error) = (c, None),
                     Err(err) => e.error = Some(err),
                 }
             }
-            if ui.button("Remove").clicked() {
+            if ui.button(tr("Remove")).clicked() {
                 d.cover = tags::Cover::Remove;
             }
         });
@@ -1121,10 +1127,10 @@ fn tag_fields(ui: &mut egui::Ui, editor: &mut Option<TagEditor>, estimate: tempo
     }
     let (changed, mut cancel) = (e.changes().is_some(), false);
     ui.horizontal(|ui| {
-        if ui.add_enabled(changed, egui::Button::new("Save…")).on_hover_text("Writes the tags into the file; the audio isn't changed").clicked() {
+        if ui.add_enabled(changed, egui::Button::new(tr("Save…"))).on_hover_text(tr("Writes the tags into the file; the audio isn't changed")).clicked() {
             click = Some(TagClick::Save);
         }
-        cancel = ui.button("Cancel").clicked();
+        cancel = ui.button(tr("Cancel")).clicked();
     });
     if cancel {
         *editor = None;
@@ -1138,13 +1144,13 @@ fn info_panel(ui: &mut egui::Ui, track: &Track, file_size: Option<u64>, editor: 
     // Fill the panel's width: shrinking to the content made it shrink with it (as in lightview).
     egui::ScrollArea::vertical().auto_shrink([false, true]).show(ui, |ui| {
         for (section, rows) in info_rows(track, file_size, practice) {
-            egui::CollapsingHeader::new(section).default_open(true).show(ui, |ui| {
+            egui::CollapsingHeader::new(tr(section)).default_open(true).show(ui, |ui| {
                 if section == "Tags" {
                     if editor.is_some() {
                         click = tag_fields(ui, editor, track.tempo.get().copied().filter(|_| practice).unwrap_or_default());
                         return;
                     }
-                    let edit = ui.add_enabled(can_edit.is_ok(), egui::Button::new("Edit"));
+                    let edit = ui.add_enabled(can_edit.is_ok(), egui::Button::new(tr("Edit")));
                     let edit = if let Err(why) = can_edit { edit.on_disabled_hover_text(why) } else { edit };
                     if edit.clicked() {
                         click = Some(TagClick::Edit);
@@ -1153,7 +1159,7 @@ fn info_panel(ui: &mut egui::Ui, track: &Track, file_size: Option<u64>, editor: 
                 egui::Grid::new(section).num_columns(2).spacing([12.0, 6.0]).show(ui, |ui| {
                     // Tags ends with every tag as the file has it.
                     let raw = if section == "Tags" { track.info.get().map(|i| i.raw.clone()).unwrap_or_default() } else { Vec::new() };
-                    for (name, value) in rows.into_iter().map(|(n, v)| (n.to_string(), v)).chain(raw) {
+                    for (name, value) in rows.into_iter().map(|(n, v)| (tr(n).to_string(), v)).chain(raw) {
                         ui.label(name);
                         ui.add(egui::Label::new(value).wrap());
                         ui.end_row();
@@ -1179,7 +1185,7 @@ type FoundCover = (PathBuf, tags::Cover, egui::ColorImage);
 /// Reads and checks `image` for the cover offer: the cover to write and a 256 px thumbnail.
 fn read_cover(image: &std::path::Path) -> Result<(tags::Cover, egui::ColorImage), String> {
     let bytes = std::fs::read(image).map_err(|e| e.to_string())?;
-    let rgba = image::load_from_memory(&bytes).map_err(|_| "That image can't be read.")?.thumbnail(256, 256).to_rgba8();
+    let rgba = image::load_from_memory(&bytes).map_err(|_| tr("That image can't be read."))?.thumbnail(256, 256).to_rgba8();
     let size = [rgba.width() as usize, rgba.height() as usize];
     Ok((tags::cover(bytes)?, egui::ColorImage::from_rgba_unmultiplied(size, &rgba)))
 }
@@ -1187,7 +1193,7 @@ fn read_cover(image: &std::path::Path) -> Result<(tags::Cover, egui::ColorImage)
 /// A name typed for a file: not empty, not `.` or `..`, and no folder separators.
 fn valid_file_name(name: &str) -> Result<(), String> {
     if name.trim().is_empty() || name == "." || name == ".." || name.contains(['/', '\\']) {
-        return Err("That isn't a valid file name.".into());
+        return Err(tr("That isn't a valid file name.").into());
     }
     Ok(())
 }
@@ -1305,7 +1311,7 @@ impl App {
         ui.separator();
         let (mut enter, mut play) = (None, None);
         egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
-            if let Some(parent) = b.dir.parent() && ui.selectable_label(false, "..").on_hover_text("Up one folder").clicked() {
+            if let Some(parent) = b.dir.parent() && ui.selectable_label(false, "..").on_hover_text(tr("Up one folder")).clicked() {
                 enter = Some(parent.to_path_buf());
             }
             match &b.listing {
@@ -1330,7 +1336,7 @@ impl App {
                         }
                     }
                     if dirs.is_empty() && files.is_empty() {
-                        ui.weak("No audio files or folders here");
+                        ui.weak(tr("No audio files or folders here"));
                     }
                 }
             }
@@ -1344,7 +1350,7 @@ impl App {
     fn speed_window(&mut self, ctx: &egui::Context) -> Option<wsola::Speed> {
         let (knob, mut draft) = self.custom_speed?;
         let (mut chosen, mut close) = (None, false);
-        let (step, range, decimals, unit) = if knob == Knob::Pitch { (PITCH_STEP, -12.0..=12.0, 1, " semitones") } else { (SPEED_STEP, 0.5..=2.0, 2, "×") };
+        let (step, range, decimals, unit) = if knob == Knob::Pitch { (PITCH_STEP, -12.0..=12.0, 1, tr(" semitones")) } else { (SPEED_STEP, 0.5..=2.0, 2, "×") };
         egui::Window::new(knob.title()).collapsible(false).resizable(false).show(ctx, |ui| {
             ui.horizontal(|ui| {
                 if ui.button("−").clicked() {
@@ -1356,11 +1362,11 @@ impl App {
                 }
             });
             ui.horizontal(|ui| {
-                if ui.button("OK").clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                if ui.button(tr("OK")).clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                     chosen = Some(knob.set(self.speed, knob.snap(draft)));
                     close = true;
                 }
-                if ui.button("Cancel").clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                if ui.button(tr("Cancel")).clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
                     close = true;
                 }
             });
@@ -1397,43 +1403,43 @@ impl App {
                 ui.close();
             }
         };
-        ui.weak(if selected { "On the selection" } else { "On the whole track" });
-        for (name, fade) in [("Fade in", Fx::FadeIn as fn(Option<f64>) -> Fx), ("Fade out", Fx::FadeOut)] {
+        ui.weak(if selected { tr("On the selection") } else { tr("On the whole track") });
+        for (name, fade) in [(tr("Fade in"), Fx::FadeIn as fn(Option<f64>) -> Fx), (tr("Fade out"), Fx::FadeOut)] {
             ui.menu_button(name, |ui| {
-                pick(ui, "Whole selection", Command::Fx(fade(None)));
+                pick(ui, tr("Whole selection"), Command::Fx(fade(None)));
                 for secs in FADES {
-                    pick(ui, &format!("{secs} s"), Command::Fx(fade(Some(secs))));
+                    pick(ui, &trf("{secs} s", &[("secs", &secs)]), Command::Fx(fade(Some(secs))));
                 }
-                pick(ui, "Custom…", Command::CustomFx(fade(None)));
+                pick(ui, tr("Custom…"), Command::CustomFx(fade(None)));
             });
         }
-        ui.menu_button("Gain", |ui| {
+        ui.menu_button(tr("Gain"), |ui| {
             for db in GAINS {
                 pick(ui, &format!("{}{} dB", if db > 0.0 { "+" } else { "" }, signed(db)), Command::Fx(Fx::Gain(db)));
             }
-            pick(ui, "Custom…", Command::CustomFx(Fx::Gain(0.0)));
+            pick(ui, tr("Custom…"), Command::CustomFx(Fx::Gain(0.0)));
         });
-        ui.menu_button("Normalize", |ui| {
+        ui.menu_button(tr("Normalize"), |ui| {
             for (db, name) in PEAKS {
-                pick(ui, &format!("{name} ({} dBFS)", signed(db)), Command::Fx(Fx::Peak(db)));
+                pick(ui, &format!("{} ({} dBFS)", tr(name), signed(db)), Command::Fx(Fx::Peak(db)));
             }
             for (lufs, name) in LOUDNESS {
-                pick(ui, &format!("{name} ({} LUFS)", signed(lufs)), Command::Fx(Fx::Loudness(lufs)));
+                pick(ui, &format!("{} ({} LUFS)", tr(name), signed(lufs)), Command::Fx(Fx::Loudness(lufs)));
             }
-            pick(ui, "Custom peak…", Command::CustomFx(Fx::Peak(0.0)));
-            pick(ui, "Custom loudness…", Command::CustomFx(Fx::Loudness(0.0)));
+            pick(ui, tr("Custom peak…"), Command::CustomFx(Fx::Peak(0.0)));
+            pick(ui, tr("Custom loudness…"), Command::CustomFx(Fx::Loudness(0.0)));
         });
-        ui.menu_button("Trim silence", |ui| {
+        ui.menu_button(tr("Trim silence"), |ui| {
             for (db, name) in TRIMS {
-                pick(ui, &format!("{name} ({} dB)", signed(db)), Command::Fx(Fx::Trim(db)));
+                pick(ui, &format!("{} ({} dB)", tr(name), signed(db)), Command::Fx(Fx::Trim(db)));
             }
-            pick(ui, "Custom…", Command::CustomFx(Fx::Trim(0.0)));
+            pick(ui, tr("Custom…"), Command::CustomFx(Fx::Trim(0.0)));
         });
-        pick(ui, "Reverse", Command::Fx(Fx::Reverse));
+        pick(ui, tr("Reverse"), Command::Fx(Fx::Reverse));
         ui.separator();
-        ui.menu_button("Channels", |ui| {
-            ui.weak("On the whole track");
-            for (label, fx) in [("Mono", Fx::Mono), ("Stereo", Fx::Stereo), ("Swap left and right", Fx::Swap)] {
+        ui.menu_button(tr("Channels"), |ui| {
+            ui.weak(tr("On the whole track"));
+            for (label, fx) in [(tr("Mono"), Fx::Mono), (tr("Stereo"), Fx::Stereo), (tr("Swap left and right"), Fx::Swap)] {
                 pick(ui, label, Command::Fx(fx));
             }
         });
@@ -1450,11 +1456,11 @@ impl App {
                 ui.weak(hint);
             }
             ui.horizontal(|ui| {
-                if ui.button("OK").clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                if ui.button(tr("OK")).clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                     chosen = Some(fx.with(draft));
                     close = true;
                 }
-                if ui.button("Cancel").clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                if ui.button(tr("Cancel")).clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
                     close = true;
                 }
             });
@@ -1465,14 +1471,14 @@ impl App {
 
     fn settings_window(&mut self, ctx: &egui::Context) {
         let mut open = self.show_settings;
-        egui::Window::new("Settings").open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
+        egui::Window::new(tr("Settings")).open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.label("Seek bar:");
-                ui.radio_value(&mut self.settings.show_waveform, false, "Line");
-                ui.radio_value(&mut self.settings.show_waveform, true, "Waveform");
+                ui.label(tr("Seek bar:"));
+                ui.radio_value(&mut self.settings.show_waveform, false, tr("Line"));
+                ui.radio_value(&mut self.settings.show_waveform, true, tr("Waveform"));
             });
             ui.horizontal(|ui| {
-                ui.label("Theme:");
+                ui.label(tr("Theme:"));
                 let mut chosen = false;
                 egui::ComboBox::from_id_salt("theme").selected_text(theme::name(&self.settings.theme)).show_ui(ui, |ui| {
                     // Read only while the list is open, so a theme just copied in shows up.
@@ -1481,11 +1487,11 @@ impl App {
                             (self.settings.theme, chosen) = (id, true);
                         }
                     }
-                }).response.on_hover_text("Your own themes go in the themes folder. Choosing a theme again reloads its file.");
+                }).response.on_hover_text(tr("Your own themes go in the themes folder. Choosing a theme again reloads its file."));
                 if chosen {
                     self.theme_error = theme::apply(ctx, &self.settings.theme);
                 }
-                if ui.button("Open themes folder").clicked() {
+                if ui.button(tr("Open themes folder")).clicked() {
                     theme::open_folder();
                 }
             });
@@ -1493,7 +1499,19 @@ impl App {
                 ui.colored_label(ui.visuals().error_fg_color, e);
             }
             ui.horizontal(|ui| {
-                ui.label("Font size:");
+                ui.label(tr("Language:"));
+                let current = self.settings.language.unwrap_or_default();
+                egui::ComboBox::from_id_salt("language").selected_text(current.name()).show_ui(ui, |ui| {
+                    for language in i18n::Language::ALL {
+                        if ui.selectable_label(current == language, language.name()).clicked() {
+                            self.settings.language = Some(language);
+                            i18n::set(language);
+                        }
+                    }
+                });
+            });
+            ui.horizontal(|ui| {
+                ui.label(tr("Font size:"));
                 egui::ComboBox::from_id_salt("font-size").selected_text(self.settings.font_size.to_string()).show_ui(ui, |ui| {
                     for size in settings::FONT_SIZES {
                         if ui.selectable_value(&mut self.settings.font_size, size, size.to_string()).clicked() {
@@ -1502,28 +1520,28 @@ impl App {
                     }
                 });
             });
-            ui.checkbox(&mut self.settings.remember_window_size, "Remember window size");
-            ui.weak("Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.");
+            ui.checkbox(&mut self.settings.remember_window_size, tr("Remember window size"));
+            ui.weak(tr("Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept."));
             ui.add_enabled_ui(!self.settings.remember_window_size, |ui| {
                 ui.horizontal(|ui| {
                     let [w, h] = &mut self.settings.default_size;
-                    ui.label("Window size:");
+                    ui.label(tr("Window size:"));
                     ui.add(egui::DragValue::new(w).range(settings::MIN_SIZE[0]..=7680.0));
                     ui.label("×");
                     ui.add(egui::DragValue::new(h).range(settings::MIN_SIZE[1]..=4320.0));
                 });
             });
-            if ui.button("Change Keyboard Shortcuts…").clicked() {
+            if ui.button(tr("Change Keyboard Shortcuts…")).clicked() {
                 self.show_shortcuts = true;
             }
             if folder::desktop_installed() {
                 ui.separator();
-                if ui.button("Make soundglass the default player").clicked() {
+                if ui.button(tr("Make soundglass the default player")).clicked() {
                     self.default_result = Some(folder::make_default());
                 }
                 if let Some(result) = &self.default_result {
                     ui.weak(match result {
-                        Ok(()) => "soundglass is now the default player",
+                        Ok(()) => tr("soundglass is now the default player"),
                         Err(e) => e,
                     });
                 }
@@ -1532,7 +1550,7 @@ impl App {
             ui.horizontal(|ui| {
                 ui.weak(format!("soundglass {}", env!("CARGO_PKG_VERSION")));
                 // Only opens the page: soundglass never checks on its own.
-                if ui.button("Check for updates").clicked() {
+                if ui.button(tr("Check for updates")).clicked() {
                     folder::open_url("https://github.com/pyubero/soundglass/releases");
                 }
             });
@@ -1647,7 +1665,7 @@ impl App {
                     Fx::FadeOut(secs) => Ok(cur.fade(secs.map_or(a, |s| b.saturating_sub(frames(s)).max(a)), b, true)),
                     Fx::Gain(db) => Ok(cur.gain(a, b, db as f32, db as f32)),
                     Fx::Peak(target) => match edit::peak(&self.track, &cur, a, b) {
-                        0.0 => Err("Nothing to normalize: it's silent"),
+                        0.0 => Err(tr("Nothing to normalize: it's silent")),
                         peak => {
                             let db = target as f32 - 20.0 * peak.log10();
                             Ok(cur.gain(a, b, db, db))
@@ -1655,12 +1673,12 @@ impl App {
                     },
                     Fx::Loudness(target) => match edit::loudness(&self.track, &cur, a, b) {
                         lufs if lufs.is_finite() => Ok(cur.gain(a, b, (target - lufs) as f32, (target - lufs) as f32)),
-                        _ => Err("Too short or too quiet to measure its loudness"),
+                        _ => Err(tr("Too short or too quiet to measure its loudness")),
                     },
                     Fx::Trim(db) => match edit::audible(&self.track, &cur, a, b, db as f32) {
                         Some((first, last)) if (first, last) != (a, b) => Ok(cur.cut(last, b).cut(a, first)),
-                        Some(_) => Err("No silence at the start or end to trim"),
-                        None => Err("It's all quieter than that; nothing trimmed"),
+                        Some(_) => Err(tr("No silence at the start or end to trim")),
+                        None => Err(tr("It's all quieter than that; nothing trimmed")),
                     },
                     Fx::Reverse => Ok(cur.reverse(a, b)),
                     Fx::Mono => Ok(cur.mono(src)),
@@ -1695,13 +1713,13 @@ impl App {
         }
         let (mut save, mut discard, mut cancel) = (false, false, false);
         let modal = egui::Modal::new(egui::Id::unique("unsaved")).show(ctx, |ui| {
-            ui.heading("Unsaved edits");
-            ui.label("This track has edits that aren't saved. The original file is never changed.");
+            ui.heading(tr("Unsaved edits"));
+            ui.label(tr("This track has edits that aren't saved. The original file is never changed."));
             ui.add_space(8.0);
             ui.horizontal(|ui| {
-                save = ui.button("Save As…").clicked();
-                discard = ui.button("Discard edits").clicked();
-                cancel = ui.button("Cancel").clicked();
+                save = ui.button(tr("Save As…")).clicked();
+                discard = ui.button(tr("Discard edits")).clicked();
+                cancel = ui.button(tr("Cancel")).clicked();
             });
         });
         if save {
@@ -1776,7 +1794,7 @@ impl App {
                 if *reserved {
                     let _ = std::fs::remove_file(target);
                 }
-                Err("Saving failed".into())
+                Err(tr("Saving failed").into())
             }
         };
         let name = target.file_name().unwrap_or_default().to_string_lossy().into_owned();
@@ -1784,7 +1802,7 @@ impl App {
             h.mark_saved(edit);
         }
         let ok = result.is_ok();
-        let message = result.map(|tags| if tags { format!("Saved {name}") } else { format!("Saved {name}, but the tags could not be copied") });
+        let message = result.map(|tags| if tags { trf("Saved {name}", &[("name", &name)]) } else { trf("Saved {name}, but the tags could not be copied", &[("name", &name)]) });
         (self.save_job, self.save_notice) = (None, Some((message, ctx.input(|i| i.time))));
         if ok && self.pending.is_some() {
             self.show_save = false;
@@ -1839,7 +1857,7 @@ impl App {
             return Vec::new();
         }
         let name = self.track.path.file_name().unwrap_or_default().to_string_lossy();
-        let builder = egui::ViewportBuilder::default().with_title(format!("Spectrogram — {name}")).with_inner_size([900.0, 400.0]);
+        let builder = egui::ViewportBuilder::default().with_title(trf("Spectrogram — {name}", &[("name", &name)])).with_inner_size([900.0, 400.0]);
         ctx.show_viewport_immediate(egui::ViewportId::from_hash_of("spectrum"), builder, |ui, _| {
             if ui.input(|i| i.viewport().close_requested()) {
                 self.show_spectrum = false;
@@ -1848,35 +1866,35 @@ impl App {
             let ctx = ui.ctx().clone();
             egui::Panel::top("spectrum-bar").show(ui, |ui| {
                 ui.horizontal(|ui| {
-                    let notes = ui.selectable_label(self.settings.spectrum_notes, "Notes").on_hover_text("Show or hide the note lines");
+                    let notes = ui.selectable_label(self.settings.spectrum_notes, tr("Notes")).on_hover_text(tr("Show or hide the note lines"));
                     if notes.clicked() {
                         self.settings.spectrum_notes = !self.settings.spectrum_notes;
                     }
-                    let chords = ui.selectable_label(self.settings.spectrum_chords, "Chords").on_hover_text("Show or hide the chords along the top");
+                    let chords = ui.selectable_label(self.settings.spectrum_chords, tr("Chords")).on_hover_text(tr("Show or hide the chords along the top"));
                     if chords.clicked() {
                         self.settings.spectrum_chords = !self.settings.spectrum_chords;
                     }
                     if let Some(key) = self.track.tempo.get().and_then(|e| e.key) {
                         let scale = tempo::major_scale(key);
                         let major = spectrum::KEYS[scale].0;
-                        let why = if key.is_minor() { format!("Show the notes of {major} major, which {} shares", key.name()) } else { format!("Show the notes of {major} major") };
-                        if ui.selectable_label(self.settings.note_scale == Some(scale), format!("Key ≈ {}", key.name())).on_hover_text(why).clicked() {
+                        let why = if key.is_minor() { trf("Show the notes of {major} major, which {key} shares", &[("major", &major), ("key", &key.name())]) } else { trf("Show the notes of {major} major", &[("major", &major)]) };
+                        if ui.selectable_label(self.settings.note_scale == Some(scale), trf("Key ≈ {key}", &[("key", &key.name())])).on_hover_text(why).clicked() {
                             (self.settings.note_scale, self.settings.spectrum_notes) = (Some(scale), true);
                         }
                     }
                     if let Some(hop) = self.spectrum.hop().filter(|h| *h != self.settings.spectrum.hop as u64) {
-                        ui.weak(format!("hop {hop} for this length")).on_hover_text("A long track: the hop is raised so the spectrogram fits in memory");
+                        ui.weak(trf("hop {hop} for this length", &[("hop", &hop)])).on_hover_text(tr("A long track: the hop is raised so the spectrogram fits in memory"));
                     }
-                    if ui.button("Fit").on_hover_text("Show the whole track and all frequencies").clicked() {
+                    if ui.button(tr("Fit")).on_hover_text(tr("Show the whole track and all frequencies")).clicked() {
                         (self.spectrum_view.start, self.spectrum_view.frames, self.spectrum.band) = (0, 0, [0.0, 1.0]);
                     }
-                    if ui.selectable_label(self.show_spectrum_settings, "Settings").clicked() {
+                    if ui.selectable_label(self.show_spectrum_settings, tr("Settings")).clicked() {
                         self.show_spectrum_settings = !self.show_spectrum_settings;
                     }
                 });
             });
             let mut open = self.show_spectrum_settings;
-            egui::Window::new("Spectrogram settings").open(&mut open).collapsible(false).resizable(false).show(&ctx, |ui| spectrum_settings(ui, &mut self.settings, rate));
+            egui::Window::new(tr("Spectrogram settings")).open(&mut open).collapsible(false).resizable(false).show(&ctx, |ui| spectrum_settings(ui, &mut self.settings, rate));
             self.show_spectrum_settings = open;
             let seek = egui::CentralPanel::default()
                 .show(ui, |ui| spectrum_panel(ui, &mut self.spectrum_view, &mut self.edit_view.selection, &mut self.spectrum, &self.settings, &self.track, edit, pos, len, rate, playing))
@@ -1894,26 +1912,26 @@ impl App {
         }
         let (mut open, mut pick) = (true, false);
         let busy = self.save_job.is_some();
-        egui::Window::new("Save As").open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
+        egui::Window::new(tr("Save As")).open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
             let rate = self.track.format.get().map_or(0, |f| f.rate);
             ui.add_enabled_ui(!busy, |ui| {
                 save_options(ui, &mut self.save_choice, rate);
                 if self.speed != wsola::Speed::NORMAL {
                     let mut apply = self.save_choice.speed.is_some();
-                    ui.checkbox(&mut apply, "Apply speed and pitch");
+                    ui.checkbox(&mut apply, tr("Apply speed and pitch"));
                     self.save_choice.speed = apply.then_some(self.speed);
                 }
             });
-            ui.weak("The original file is never changed.");
+            ui.weak(tr("The original file is never changed."));
             ui.add_space(4.0);
             if let Some((_, _, target, _)) = &self.save_job {
                 ui.horizontal(|ui| {
                     ui.spinner();
-                    ui.label(format!("Saving {}…", target.file_name().unwrap_or_default().to_string_lossy()));
+                    ui.label(trf("Saving {name}…", &[("name", &target.file_name().unwrap_or_default().to_string_lossy())]));
                 });
             } else {
                 notice(ui, self.save_notice.as_ref(), None);
-                pick = ui.button("Save…").clicked();
+                pick = ui.button(tr("Save…")).clicked();
             }
         });
         if pick {
@@ -1968,19 +1986,19 @@ impl App {
         let name = self.track.path.file_name().unwrap_or_default().to_string_lossy().into_owned();
         let (mut write, mut cancel) = (false, false);
         let modal = egui::Modal::new(egui::Id::unique("write tags")).show(ctx, |ui| {
-            ui.heading("Write tags");
-            ui.label(format!("Write the tags into {name}? The audio isn't changed."));
+            ui.heading(tr("Write tags"));
+            ui.label(trf("Write the tags into {name}? The audio isn't changed.", &[("name", &name)]));
             ui.add_space(8.0);
             ui.horizontal(|ui| {
-                write = ui.button("Write").clicked();
-                cancel = ui.button("Cancel").clicked();
+                write = ui.button(tr("Write")).clicked();
+                cancel = ui.button(tr("Cancel")).clicked();
             });
         });
         if write {
             let (tx, rx) = std::sync::mpsc::channel();
             let (path, draft, notify) = (self.track.path.clone(), editor.draft.clone(), repaint(&self.ctx));
             std::thread::spawn(move || {
-                let _ = tx.send(tags::write_in_place(&path, &draft).map(|()| "Tags saved".into()));
+                let _ = tx.send(tags::write_in_place(&path, &draft).map(|()| tr("Tags saved").into()));
                 notify();
             });
             (editor.confirm, self.tag_job) = (false, Some(rx));
@@ -2038,44 +2056,44 @@ impl App {
         let remove = matches!(cover, tags::Cover::Remove);
         let name = image.file_name().unwrap_or_default().to_string_lossy().into_owned();
         let n = files.len();
-        let what = if n == 1 { "this track".to_string() } else { format!("all {n} tracks in this folder") };
+        let what = if n == 1 { tr("this track").to_string() } else { trf("all {n} tracks in this folder", &[("n", &n)]) };
         let (mut yes, mut one, mut no) = (false, false, false);
         let modal = egui::Modal::new(egui::Id::unique("folder cover")).show(ctx, |ui| {
             ui.set_max_width(320.0);
-            ui.heading(if remove { "Remove album cover" } else if *manual { "Album cover" } else { "Add album cover?" });
+            ui.heading(if remove { tr("Remove album cover") } else if *manual { tr("Album cover") } else { tr("Add album cover?") });
             ui.add_space(4.0);
             if let Some(texture) = texture {
                 ui.vertical_centered(|ui| {
-                    ui.add(egui::Image::from_texture(texture).max_size(egui::vec2(256.0, 256.0)).corner_radius(8.0).alt_text(if remove { "Current cover" } else { &name }));
+                    ui.add(egui::Image::from_texture(texture).max_size(egui::vec2(256.0, 256.0)).corner_radius(8.0).alt_text(if remove { tr("Current cover") } else { &name }));
                 });
                 ui.add_space(4.0);
             }
             if remove && n == 1 {
-                ui.label("Remove the cover from this track? The music itself isn't changed.");
+                ui.label(tr("Remove the cover from this track? The music itself isn't changed."));
             } else if remove {
-                ui.label(format!("Remove the cover from this track only, or from {what}? The music itself isn't changed."));
+                ui.label(trf("Remove the cover from this track only, or from {what}? The music itself isn't changed.", &[("what", &what)]));
             } else if !*manual {
-                ui.label(format!("This track has no cover. Save {name} as the cover of {what}?"));
-                ui.label("Tracks that already have a cover get this one instead. The music itself isn't changed.");
+                ui.label(trf("This track has no cover. Save {name} as the cover of {what}?", &[("name", &name), ("what", &what)]));
+                ui.label(tr("Tracks that already have a cover get this one instead. The music itself isn't changed."));
             } else if n == 1 {
-                ui.label(format!("Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed."));
+                ui.label(trf("Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed.", &[("name", &name)]));
             } else {
-                ui.label(format!("Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed."));
+                ui.label(trf("Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed.", &[("name", &name), ("what", &what)]));
             }
             ui.add_space(8.0);
             ui.horizontal(|ui| match (*manual, n) {
                 (false, _) => {
-                    yes = ui.button("Add Cover").clicked();
-                    no = ui.button("Not Now").clicked();
+                    yes = ui.button(tr("Add Cover")).clicked();
+                    no = ui.button(tr("Not Now")).clicked();
                 }
                 (true, 1) => {
-                    yes = ui.button(if remove { "Remove Cover" } else { "Save Cover" }).clicked();
-                    no = ui.button("Cancel").clicked();
+                    yes = ui.button(if remove { tr("Remove Cover") } else { tr("Save Cover") }).clicked();
+                    no = ui.button(tr("Cancel")).clicked();
                 }
                 (true, _) => {
-                    yes = ui.button(format!("All {n} Tracks")).clicked();
-                    one = ui.button("This Track").clicked();
-                    no = ui.button("Cancel").clicked();
+                    yes = ui.button(trf("All {n} Tracks", &[("n", &n)])).clicked();
+                    one = ui.button(tr("This Track")).clicked();
+                    no = ui.button(tr("Cancel")).clicked();
                 }
             });
         });
@@ -2092,14 +2110,20 @@ impl App {
         if yes || one {
             let (tx, rx) = std::sync::mpsc::channel();
             let notify = repaint(&self.ctx);
-            let done_to = if matches!(cover, tags::Cover::Remove) { "removed from" } else { "added to" };
+            let removed = matches!(cover, tags::Cover::Remove);
             std::thread::spawn(move || {
                 let failed: Vec<String> = files.iter().filter(|f| tags::write_cover(f, &cover).is_err()).map(|f| f.file_name().unwrap_or_default().to_string_lossy().into_owned()).collect();
                 let done = files.len() - failed.len();
                 let _ = tx.send(match (done, failed.is_empty()) {
-                    (0, _) => Err(format!("The cover couldn't be written ({})", failed.join(", "))),
-                    (n, true) => Ok(format!("Cover {done_to} {n} track{}", if n == 1 { "" } else { "s" })),
-                    (n, false) => Ok(format!("Cover {done_to} {n} of {} tracks (not: {})", files.len(), failed.join(", "))),
+                    (0, _) => Err(trf("The cover couldn't be written ({failed})", &[("failed", &failed.join(", "))])),
+                    (1, true) if removed => Ok(tr("Cover removed from 1 track").into()),
+                    (1, true) => Ok(tr("Cover added to 1 track").into()),
+                    (n, true) if removed => Ok(trf("Cover removed from {n} tracks", &[("n", &n)])),
+                    (n, true) => Ok(trf("Cover added to {n} tracks", &[("n", &n)])),
+                    (n, false) => {
+                        let args: [(&str, &dyn std::fmt::Display); 3] = [("n", &n), ("total", &files.len()), ("failed", &failed.join(", "))];
+                        Ok(if removed { trf("Cover removed from {n} of {total} tracks (not: {failed})", &args) } else { trf("Cover added to {n} of {total} tracks (not: {failed})", &args) })
+                    }
                 });
                 notify();
             });
@@ -2118,7 +2142,7 @@ impl App {
         let (tx, rx) = std::sync::mpsc::channel();
         let (path, notify) = (self.track.path.clone(), repaint(&self.ctx));
         std::thread::spawn(move || {
-            let _ = tx.send(tags::write_bpm(&path, bpm).map(|()| format!("BPM tag saved ({bpm})")));
+            let _ = tx.send(tags::write_bpm(&path, bpm).map(|()| trf("BPM tag saved ({bpm})", &[("bpm", &bpm)])));
             notify();
         });
         self.tag_job = Some(rx);
@@ -2133,7 +2157,7 @@ impl App {
                 ctx.request_repaint_after(Duration::from_millis(100));
                 return;
             }
-            Err(_) => Err("Writing the tags failed".into()),
+            Err(_) => Err(tr("Writing the tags failed").into()),
         };
         self.tag_job = None;
         self.own_stamp = folder::stamp(&self.track.path);
@@ -2177,15 +2201,15 @@ impl App {
                 Ok(IdentifyJob::Found(found)) => (id.found, id.pick, id.job) = (Some(found), 0, None),
                 Ok(IdentifyJob::Genre(g)) => (genre, id.job) = (Some(g), None),
                 Err(std::sync::mpsc::TryRecvError::Empty) => {}
-                Err(std::sync::mpsc::TryRecvError::Disconnected) => (id.found, id.job) = (Some(Err("The lookup stopped.".into())), None),
+                Err(std::sync::mpsc::TryRecvError::Disconnected) => (id.found, id.job) = (Some(Err(tr("The lookup stopped.").into())), None),
             }
         }
         let busy = id.job.is_some();
         let saving = self.tag_job.is_some();
         let (mut look, mut take, mut close) = (false, false, false);
-        egui::Window::new("Identify Track").collapsible(false).resizable(false).show(ctx, |ui| {
+        egui::Window::new(tr("Identify Track")).collapsible(false).resizable(false).show(ctx, |ui| {
             ui.set_max_width(380.0);
-            ui.label("Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer.");
+            ui.label(tr("Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer."));
             ui.add_space(6.0);
             let mut found = 0;
             match &id.found {
@@ -2194,13 +2218,13 @@ impl App {
                     ui.colored_label(ui.visuals().error_fg_color, e);
                 }
                 Some(Ok(m)) if m.is_empty() => {
-                    ui.label("No match found.");
+                    ui.label(tr("No match found."));
                 }
                 Some(Ok(matches)) => {
                     found = matches.len();
                     for (i, m) in matches.iter().enumerate() {
                         ui.radio_value(&mut id.pick, i, format!("{:.0} %  {} — {}", m.score * 100.0, m.title, if m.artist.is_empty() { "?" } else { &m.artist }));
-                        let release = [m.album.clone(), m.year.clone(), if m.track.is_empty() { String::new() } else { format!("track {}", m.track) }];
+                        let release = [m.album.clone(), m.year.clone(), if m.track.is_empty() { String::new() } else { trf("track {n}", &[("n", &m.track)]) }];
                         let release: Vec<String> = release.into_iter().filter(|s| !s.is_empty()).collect();
                         if !release.is_empty() {
                             ui.indent(i, |ui| ui.weak(release.join(", ")));
@@ -2211,15 +2235,15 @@ impl App {
             if busy {
                 ui.horizontal(|ui| {
                     ui.spinner();
-                    ui.label(if id.found.is_some() { "Fetching the genre…" } else { "Looking up…" });
+                    ui.label(if id.found.is_some() { tr("Fetching the genre…") } else { tr("Looking up…") });
                 });
             }
-            ui.checkbox(&mut id.only_empty, "Only fill empty tags");
+            ui.checkbox(&mut id.only_empty, tr("Only fill empty tags"));
             ui.horizontal(|ui| {
-                look = ui.add_enabled(!busy, egui::Button::new("Look up")).clicked();
-                let item = ui.add_enabled(!busy && !saving && found > 0, egui::Button::new("Use Match")).on_hover_text("Fills Track Info's tag editor; Save… there writes the tags");
-                take = item.on_disabled_hover_text(if saving { "saving tags…" } else { "" }).clicked();
-                close = ui.button("Close").clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape));
+                look = ui.add_enabled(!busy, egui::Button::new(tr("Look up"))).clicked();
+                let item = ui.add_enabled(!busy && !saving && found > 0, egui::Button::new(tr("Use Match"))).on_hover_text(tr("Fills Track Info's tag editor; Save… there writes the tags"));
+                take = item.on_disabled_hover_text(if saving { tr("saving tags…") } else { "" }).clicked();
+                close = ui.button(tr("Close")).clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape));
             });
         });
         if look {
@@ -2277,29 +2301,29 @@ impl App {
         let path = self.track.path.clone();
         let ext = path.extension().map(|e| e.to_string_lossy().into_owned()).unwrap_or_default();
         let (mut go, mut close) = (None, false);
-        egui::Window::new("Rename from Tags").collapsible(false).resizable(false).show(ctx, |ui| {
+        egui::Window::new(tr("Rename from Tags")).collapsible(false).resizable(false).show(ctx, |ui| {
             ui.add(egui::TextEdit::singleline(pattern).desired_width(320.0));
             ui.weak(tags::PLACEHOLDERS.map(|p| format!("{{{p}}}")).join(" "));
             ui.add_space(4.0);
             let name = read.as_ref().map(|t| tags::file_name(pattern, t, &ext));
             let why: Option<String> = match &name {
                 Err(e) => Some(e.to_string()),
-                Ok(n) if n.is_empty() => Some("None of these tags is set.".into()),
-                Ok(n) if path.file_name().is_some_and(|f| f.to_string_lossy() == *n) => Some("It already has that name.".into()),
-                Ok(n) if path.with_file_name(n).exists() => Some("A file with that name already exists.".into()),
+                Ok(n) if n.is_empty() => Some(tr("None of these tags is set.").into()),
+                Ok(n) if path.file_name().is_some_and(|f| f.to_string_lossy() == *n) => Some(tr("It already has that name.").into()),
+                Ok(n) if path.with_file_name(n).exists() => Some(tr("A file with that name already exists.").into()),
                 Ok(_) => None,
             };
             if let Ok(n) = &name && !n.is_empty() {
-                ui.label(format!("→ {n}"));
+                ui.label(trf("→ {n}", &[("n", &n)]));
             }
             if let Some(why) = &why {
                 ui.colored_label(ui.visuals().warn_fg_color, why.as_str());
             }
             ui.horizontal(|ui| {
-                if ui.add_enabled(why.is_none(), egui::Button::new("Rename")).clicked() {
+                if ui.add_enabled(why.is_none(), egui::Button::new(tr("Rename"))).clicked() {
                     go = name.ok();
                 }
-                if ui.button("Cancel").clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                if ui.button(tr("Cancel")).clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
                     close = true;
                 }
             });
@@ -2336,7 +2360,7 @@ impl App {
             }
         }
         self.remember(&new);
-        self.save_notice = Some((Ok(format!("Renamed to {name}")), ctx.input(|i| i.time)));
+        self.save_notice = Some((Ok(trf("Renamed to {name}", &[("name", &name)])), ctx.input(|i| i.time)));
         Ok(())
     }
 
@@ -2348,14 +2372,14 @@ impl App {
         let name = self.track.path.file_name().unwrap_or_default().to_string_lossy().into_owned();
         let dirty = self.dirty();
         let modal = egui::Modal::new(egui::Id::unique("delete")).show(ctx, |ui| {
-            ui.heading("Delete file?");
-            ui.label(format!("{name} will be moved to the Trash."));
+            ui.heading(tr("Delete file?"));
+            ui.label(trf("{name} will be moved to the Trash.", &[("name", &name)]));
             if dirty {
-                ui.label("Its unsaved edits will be lost.");
+                ui.label(tr("Its unsaved edits will be lost."));
             }
             ui.add_space(6.0);
             ui.horizontal(|ui| {
-                let (accept, cancel) = (ui.button("Continue"), ui.button("Cancel"));
+                let (accept, cancel) = (ui.button(tr("Continue")), ui.button(tr("Cancel")));
                 if !cancel.has_focus() {
                     accept.request_focus();
                 }
@@ -2376,7 +2400,7 @@ impl App {
     fn delete_track(&mut self, ctx: &egui::Context) {
         let path = self.track.path.clone();
         if let Err(e) = trash::delete(&path) {
-            self.save_notice = Some((Err(format!("Couldn't delete the file: {e}")), ctx.input(|i| i.time)));
+            self.save_notice = Some((Err(trf("Couldn't delete the file: {e}", &[("e", &e)])), ctx.input(|i| i.time)));
             return;
         }
         self.files.retain(|p| *p != path);
@@ -2398,7 +2422,7 @@ impl App {
         if let Ok(p) = &self.player {
             p.send(Cmd::Pause);
         }
-        self.save_notice = Some((Ok("Moved to the Trash".into()), ctx.input(|i| i.time)));
+        self.save_notice = Some((Ok(tr("Moved to the Trash").into()), ctx.input(|i| i.time)));
     }
 
     /// Puts the last file moved to the Trash back and opens it.
@@ -2407,7 +2431,7 @@ impl App {
         let time = self.ctx.get().map_or(0.0, |c| c.input(|i| i.time));
         match folder::restore_trashed(&path) {
             Ok(()) => self.open(path),
-            Err(e) => self.save_notice = Some((Err(format!("Couldn't bring back {}: {e}", path.file_name().unwrap_or_default().to_string_lossy())), time)),
+            Err(e) => self.save_notice = Some((Err(trf("Couldn't bring back {name}: {e}", &[("name", &path.file_name().unwrap_or_default().to_string_lossy()), ("e", &e)])), time)),
         }
     }
 
@@ -2442,7 +2466,7 @@ impl App {
             return;
         }
         match keys::taken(&keys::shortcuts(&self.settings.shortcuts), sc, command) {
-            Some(other) => self.shortcut_error = Some(format!("{} is already used by {other}", ctx.format_shortcut(&sc))),
+            Some(other) => self.shortcut_error = Some(trf("{keys} is already used by {other}", &[("keys", &ctx.format_shortcut(&sc)), ("other", &other)])),
             None => self.set_shortcut(command, Some(sc)),
         }
     }
@@ -2462,8 +2486,8 @@ impl App {
         }
         let height = ctx.content_rect().height() * 0.6;
         let modal = egui::Modal::new(egui::Id::unique("shortcuts")).show(ctx, |ui| {
-            ui.heading("Keyboard Shortcuts");
-            ui.weak("Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed.");
+            ui.heading(tr("Keyboard Shortcuts"));
+            ui.weak(tr("Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed."));
             if let Some(e) = &self.shortcut_error {
                 ui.colored_label(ui.visuals().warn_fg_color, e);
             }
@@ -2471,21 +2495,21 @@ impl App {
             egui::ScrollArea::vertical().max_height(height).show(ui, |ui| {
                 for (menu, items) in keys::bindable_menus() {
                     ui.add_space(6.0);
-                    ui.strong(menu);
+                    ui.strong(tr(menu));
                     egui::Grid::new(("shortcuts", menu)).num_columns(3).striped(true).min_col_width(120.0).show(ui, |ui| {
                         for (command, name) in items {
                             ui.label(name);
                             let current: Vec<String> = keys.iter().filter(|(_, c)| *c == command).map(|(sc, _)| ui.ctx().format_shortcut(sc)).collect();
                             if self.recording == Some(command) {
-                                ui.strong("Press keys… (Esc to cancel)");
+                                ui.strong(tr("Press keys… (Esc to cancel)"));
                             } else {
                                 ui.label(current.join(", "));
                             }
                             ui.horizontal(|ui| {
-                                if ui.small_button("Change").clicked() {
+                                if ui.small_button(tr("Change")).clicked() {
                                     (self.recording, self.shortcut_error) = (Some(command), None);
                                 }
-                                if !current.is_empty() && ui.small_button("Remove").clicked() {
+                                if !current.is_empty() && ui.small_button(tr("Remove")).clicked() {
                                     self.set_shortcut(command, None);
                                 }
                             });
@@ -2496,10 +2520,10 @@ impl App {
             });
             ui.add_space(8.0);
             ui.horizontal(|ui| {
-                if ui.button("Reset All Shortcuts").clicked() {
+                if ui.button(tr("Reset All Shortcuts")).clicked() {
                     (self.settings.shortcuts, self.recording, self.shortcut_error) = (Vec::new(), None, None);
                 }
-                ui.button("Close").clicked()
+                ui.button(tr("Close")).clicked()
             })
             .inner
         });
@@ -2521,11 +2545,11 @@ impl App {
         }
         let Some(mut tick) = self.default_prompt else { return };
         let modal = egui::Modal::new(egui::Id::unique("default-player")).show(ctx, |ui| {
-            ui.heading("Welcome to soundglass");
+            ui.heading(tr("Welcome to soundglass"));
             ui.add_space(8.0);
-            ui.checkbox(&mut tick, "Make soundglass my default player");
+            ui.checkbox(&mut tick, tr("Make soundglass my default player"));
             ui.add_space(8.0);
-            ui.button("OK").clicked()
+            ui.button(tr("OK")).clicked()
         });
         self.default_prompt = Some(tick);
         if modal.inner || modal.should_close() {
@@ -2563,13 +2587,13 @@ impl App {
         let name = self.track.path.file_name().unwrap_or_default().to_string_lossy().into_owned();
         let dirty = self.dirty();
         let modal = egui::Modal::new(egui::Id::unique("changed")).show(ctx, |ui| {
-            ui.heading("File changed");
-            ui.label(format!("{name} was changed by another program. Reload it?"));
+            ui.heading(tr("File changed"));
+            ui.label(trf("{name} was changed by another program. Reload it?", &[("name", &name)]));
             if dirty {
-                ui.label("Its unsaved edits will be lost.");
+                ui.label(tr("Its unsaved edits will be lost."));
             }
             ui.add_space(6.0);
-            ui.horizontal(|ui| (ui.button("Reload").clicked(), ui.button("Keep current").clicked())).inner
+            ui.horizontal(|ui| (ui.button(tr("Reload")).clicked(), ui.button(tr("Keep current")).clicked())).inner
         });
         let (reload, keep) = modal.inner;
         if reload {
@@ -2595,11 +2619,11 @@ impl App {
     fn open_dropped(&mut self, path: PathBuf, ctx: &egui::Context) {
         let name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
         let found = if path.is_dir() {
-            folder::list_dir(&path).ok().and_then(|(_, files)| files.into_iter().next()).ok_or(format!("No audio files in {name}"))
+            folder::list_dir(&path).ok().and_then(|(_, files)| files.into_iter().next()).ok_or(trf("No audio files in {name}", &[("name", &name)]))
         } else if folder::is_audio(&path) {
             Ok(path)
         } else {
-            Err(format!("{name} isn't an audio file soundglass plays"))
+            Err(trf("{name} isn't an audio file soundglass plays", &[("name", &name)]))
         };
         match found {
             Ok(path) => self.open(path),
@@ -2617,7 +2641,7 @@ impl App {
         use egui::text::{CCursor, CCursorRange};
         let Some((mut name, fresh, error)) = self.rename_file.take() else { return };
         let modal = egui::Modal::new(egui::Id::unique("rename-file")).show(ctx, |ui| {
-            ui.heading("Rename");
+            ui.heading(tr("Rename"));
             ui.add_space(6.0);
             let mut edit = egui::TextEdit::singleline(&mut name).desired_width(320.0).show(ui);
             if fresh {
@@ -2631,7 +2655,7 @@ impl App {
                 ui.colored_label(ui.visuals().error_fg_color, e);
             }
             ui.add_space(6.0);
-            let (rename, cancel) = ui.horizontal(|ui| (ui.button("Rename").clicked(), ui.button("Cancel").clicked())).inner;
+            let (rename, cancel) = ui.horizontal(|ui| (ui.button(tr("Rename")).clicked(), ui.button(tr("Cancel")).clicked())).inner;
             (enter || rename, cancel)
         });
         let (accept, cancel) = modal.inner;
@@ -2658,7 +2682,7 @@ impl App {
             self.file_clipboard = Some(c);
             copied
         });
-        let notice = result.map(|()| "Copied the file".to_string()).map_err(|e| format!("Couldn't copy the file: {e}"));
+        let notice = result.map(|()| tr("Copied the file").to_string()).map_err(|e| trf("Couldn't copy the file: {e}", &[("e", &e)]));
         self.save_notice = Some((notice, ctx.input(|i| i.time)));
     }
 
@@ -2704,26 +2728,26 @@ fn save_options(ui: &mut egui::Ui, choice: &mut save::Choice, rate: u32) {
     });
     ui.horizontal(|ui| match choice.kind {
         save::Kind::Wav => {
-            for (bits, label) in [(16, "16-bit"), (24, "24-bit"), (32, "32-bit float")] {
+            for (bits, label) in [(16, tr("16-bit")), (24, tr("24-bit")), (32, tr("32-bit float"))] {
                 ui.radio_value(&mut choice.wav_bits, bits, label);
             }
         }
         save::Kind::Flac => {
-            for (bits, label) in [(16, "16-bit"), (24, "24-bit")] {
+            for (bits, label) in [(16, tr("16-bit")), (24, tr("24-bit"))] {
                 ui.radio_value(&mut choice.flac_bits, bits, label);
             }
         }
         save::Kind::Mp3 => {
             for kbps in [128, 192, 256, 320] {
-                ui.radio_value(&mut choice.mp3_kbps, kbps, format!("{kbps} kb/s"));
+                ui.radio_value(&mut choice.mp3_kbps, kbps, trf("{kbps} kb/s", &[("kbps", &kbps)]));
             }
         }
         save::Kind::Vorbis => {
-            ui.add(egui::Slider::new(&mut choice.vorbis_quality, 0..=10).text("quality"));
+            ui.add(egui::Slider::new(&mut choice.vorbis_quality, 0..=10).text(tr("quality")));
         }
     });
-    let same = format!("Same ({})", khz(rate));
-    egui::ComboBox::from_label("Sample rate").selected_text(choice.rate.map_or(same.clone(), khz)).show_ui(ui, |ui| {
+    let same = trf("Same ({rate})", &[("rate", &khz(rate))]);
+    egui::ComboBox::from_label(tr("Sample rate")).selected_text(choice.rate.map_or(same.clone(), khz)).show_ui(ui, |ui| {
         ui.selectable_value(&mut choice.rate, None, same);
         for r in RATES.into_iter().filter(|&r| r != rate) {
             ui.selectable_value(&mut choice.rate, Some(r), khz(r));
@@ -2764,8 +2788,8 @@ fn cover_art(ui: &mut egui::Ui, cover: Option<&egui::TextureHandle>, side: f32, 
             let size = tex.size_vec2();
             let fitted = egui::Rect::from_center_size(rect.center(), size * (cover_fit_side(side, *fit) / size.x.max(size.y)));
             egui::Image::from_texture(tex).corner_radius(8.0).paint_at(ui, fitted);
-            response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, true, if *visual { "Visualiser" } else { "Album cover" }));
-            let tip = if *fit { "Cover at 256 px" } else { "Fit cover space" };
+            response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, true, if *visual { tr("Visualiser") } else { tr("Album cover") }));
+            let tip = if *fit { tr("Cover at 256 px") } else { tr("Fit cover space") };
             // Two arrows on the diagonal: out to the corners to fit, in to the middle to shrink.
             let arrows = |c: egui::Pos2, stroke: egui::Stroke| {
                 for dir in [egui::vec2(1.0, -1.0), egui::vec2(-1.0, 1.0)] {
@@ -2789,11 +2813,11 @@ fn cover_art(ui: &mut egui::Ui, cover: Option<&egui::TextureHandle>, side: f32, 
             painter.circle_filled(c + egui::vec2(-0.6 * u, 1.6 * u), 0.9 * u, color);
             painter.line_segment([c + egui::vec2(0.2 * u, 1.6 * u), c + egui::vec2(0.2 * u, -2.2 * u)], egui::Stroke::new(0.3 * u, color));
             painter.line_segment([c + egui::vec2(0.2 * u, -2.2 * u), c + egui::vec2(1.4 * u, -1.2 * u)], egui::Stroke::new(0.3 * u, color));
-            response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, true, "No album cover"));
+            response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, true, tr("No album cover")));
         }
     }
     // Shows the cover: a framed picture; shows the visualiser: three level bars.
-    let tip = if *visual { "Album cover" } else { "Visualiser" };
+    let tip = if *visual { tr("Album cover") } else { tr("Visualiser") };
     let icon = |c: egui::Pos2, stroke: egui::Stroke| {
         if *visual {
             painter.rect_stroke(egui::Rect::from_center_size(c, egui::vec2(12.0, 12.0)), 1.0, stroke, egui::StrokeKind::Middle);
@@ -2856,7 +2880,7 @@ fn seek_bar(ui: &mut egui::Ui, pos: u64, len: u64, rate: u64, wave: Option<Wave>
     let height = if wave.is_some() { 48.0 } else { 18.0 };
     let (rect, response) = ui.allocate_exact_size(egui::vec2(ui.available_width(), height), egui::Sense::click_and_drag());
     let seconds = pos.checked_div(rate).unwrap_or(0) as f64;
-    response.widget_info(|| egui::WidgetInfo::slider(true, seconds, "Position, seconds"));
+    response.widget_info(|| egui::WidgetInfo::slider(true, seconds, tr("Position, seconds")));
     let visuals = ui.visuals();
     let fraction = (pos as f32 / len.max(1) as f32).min(1.0);
     let bar = egui::Rect::from_center_size(rect.center(), egui::vec2(rect.width(), 4.0));
@@ -2977,16 +3001,16 @@ fn edit_panel(ui: &mut egui::Ui, view: &mut EditView, cache: &mut WaveCache, tra
     ui.horizontal(|ui| {
         match view.selection {
             Some((a, b)) => ui.label(format!("{} – {} ({:.3} s)", clock_ms(a, rate), clock_ms(b, rate), (b - a) as f64 / rate.max(1) as f64)),
-            None => ui.weak("Drag on the waveform to select"),
+            None => ui.weak(tr("Drag on the waveform to select")),
         };
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.button("Fit").on_hover_text("Show the whole track").clicked() {
+            if ui.button(tr("Fit")).on_hover_text(tr("Show the whole track")).clicked() {
                 (view.start, view.frames) = (0, 0);
             }
-            if ui.button("+").on_hover_text("Zoom in (scroll; right-drag to move along)").clicked() {
+            if ui.button("+").on_hover_text(tr("Zoom in (scroll; right-drag to move along)")).clicked() {
                 (view.start, view.frames) = zoom_view(view.start, frames, len, 2.0, centre);
             }
-            if ui.button("−").on_hover_text("Zoom out").clicked() {
+            if ui.button("−").on_hover_text(tr("Zoom out")).clicked() {
                 (view.start, view.frames) = zoom_view(view.start, frames, len, 0.5, centre);
             }
         });
@@ -2995,7 +3019,7 @@ fn edit_panel(ui: &mut egui::Ui, view: &mut EditView, cache: &mut WaveCache, tra
     let bar = if zoomed { SCROLLBAR + ui.spacing().item_spacing.y } else { 0.0 };
     let size = egui::vec2(ui.available_width(), (ui.available_height() - bar).max(40.0));
     let (rect, response) = ui.allocate_exact_size(size, egui::Sense::click_and_drag());
-    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Slider, true, "Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along"));
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Slider, true, tr("Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along")));
     let seek = select(ui, &response, rect, (view.start, frames), &mut view.selection, &mut view.anchor);
     zoom_pan(ui, &response, rect, view, len, frames, true);
     let frames = if view.frames == 0 { len } else { view.frames };
@@ -3013,7 +3037,7 @@ const SCROLLBAR: f32 = 10.0;
 /// Zoomed in, where `view` sits in the track `len`: drag the thumb or click the bar to move along.
 fn scrollbar(ui: &mut egui::Ui, view: &mut EditView, len: u64) {
     let (rect, response) = ui.allocate_exact_size(egui::vec2(ui.available_width(), SCROLLBAR), egui::Sense::click_and_drag());
-    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::ScrollBar, true, "Waveform position"));
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::ScrollBar, true, tr("Waveform position")));
     // Zoomed out to the whole track this frame (by the wheel): nothing to scroll.
     if view.frames == 0 || len == 0 {
         return;
@@ -3106,47 +3130,47 @@ fn zoom_pan(ui: &egui::Ui, response: &egui::Response, rect: egui::Rect, view: &m
 fn spectrum_settings(ui: &mut egui::Ui, s: &mut settings::Settings, rate: u64) {
     let ms = |frames: usize| format!("{frames} ({:.1} ms)", frames as f64 * 1000.0 / rate.max(1) as f64);
     let p = &mut s.spectrum;
-    ui.strong("Analysis");
+    ui.strong(tr("Analysis"));
     egui::Grid::new("analysis").num_columns(2).show(ui, |ui| {
-        ui.label("FFT size");
+        ui.label(tr("FFT size"));
         egui::ComboBox::from_id_salt("fft").selected_text(ms(p.fft)).show_ui(ui, |ui| {
             for n in (9..=15).map(|b| 1usize << b) {
                 ui.selectable_value(&mut p.fft, n, ms(n));
             }
         });
         ui.end_row();
-        ui.label("Window size");
+        ui.label(tr("Window size"));
         egui::ComboBox::from_id_salt("window").selected_text(ms(p.window)).show_ui(ui, |ui| {
             for n in (8..=15).map(|b| 1usize << b).filter(|n| *n <= p.fft) {
                 ui.selectable_value(&mut p.window, n, ms(n));
             }
         });
         ui.end_row();
-        ui.label("Hop");
+        ui.label(tr("Hop"));
         egui::ComboBox::from_id_salt("hop").selected_text(ms(p.hop)).show_ui(ui, |ui| {
             for n in spectrum::HOPS {
                 ui.selectable_value(&mut p.hop, n, ms(n));
             }
         });
         ui.end_row();
-        ui.label("Window function");
+        ui.label(tr("Window function"));
         egui::ComboBox::from_id_salt("shape").selected_text(p.shape.name()).show_ui(ui, |ui| {
             for shape in spectrum::Shape::ALL {
                 ui.selectable_value(&mut p.shape, shape, shape.name());
             }
         });
         ui.end_row();
-        ui.label("Levels");
+        ui.label(tr("Levels"));
         ui.horizontal(|ui| {
             ui.add(egui::DragValue::new(&mut p.floor).range(-160.0..=-20.0).speed(0.5).suffix(" dB"));
-            ui.label("to");
+            ui.label(tr("to"));
             ui.add(egui::DragValue::new(&mut p.ceiling).range(-60.0..=6.0).speed(0.5).suffix(" dBFS"));
         });
         ui.end_row();
-        ui.label("Lowest frequency");
+        ui.label(tr("Lowest frequency"));
         ui.add(egui::DragValue::new(&mut p.low).range(10.0..=200.0).speed(0.5).suffix(" Hz"));
         ui.end_row();
-        ui.label("Colours");
+        ui.label(tr("Colours"));
         egui::ComboBox::from_id_salt("colours").selected_text(p.map.name()).show_ui(ui, |ui| {
             for map in spectrum::ColourMap::ALL {
                 ui.selectable_value(&mut p.map, map, map.name());
@@ -3154,32 +3178,32 @@ fn spectrum_settings(ui: &mut egui::Ui, s: &mut settings::Settings, rate: u64) {
         });
         ui.end_row();
     });
-    if ui.add_enabled(*p != spectrum::Params::default(), egui::Button::new("Reset to defaults")).clicked() {
+    if ui.add_enabled(*p != spectrum::Params::default(), egui::Button::new(tr("Reset to defaults"))).clicked() {
         *p = spectrum::Params::default();
     }
     *p = p.checked();
     ui.separator();
-    ui.strong("Notes");
+    ui.strong(tr("Notes"));
     ui.horizontal(|ui| {
-        ui.label("Tuning A4");
+        ui.label(tr("Tuning A4"));
         ui.add(egui::DragValue::new(&mut s.note_a4).range(400.0..=480.0).speed(0.1).suffix(" Hz"));
     });
     ui.horizontal(|ui| {
-        ui.radio_value(&mut s.note_solfege, false, "C D E");
-        ui.radio_value(&mut s.note_solfege, true, "Do Ré Mi");
+        ui.radio_value(&mut s.note_solfege, false, tr("C D E"));
+        ui.radio_value(&mut s.note_solfege, true, tr("Do Ré Mi"));
     });
     egui::Grid::new("notes").num_columns(2).show(ui, |ui| {
-        ui.label("Scale shown");
-        let scale = |k: Option<usize>| k.map_or("All notes".to_string(), |k| format!("{} major", spectrum::KEYS[k].0));
+        ui.label(tr("Scale shown"));
+        let scale = |k: Option<usize>| k.map_or(tr("All notes").to_string(), |k| trf("{key} major", &[("key", &spectrum::KEYS[k].0)]));
         egui::ComboBox::from_id_salt("scale").selected_text(scale(s.note_scale)).show_ui(ui, |ui| {
             for k in std::iter::once(None).chain((0..12).map(Some)) {
                 ui.selectable_value(&mut s.note_scale, k, scale(k));
             }
         });
         ui.end_row();
-        ui.label("Instrument range");
+        ui.label(tr("Instrument range"));
         let range = |i: spectrum::Instrument| match i.range() {
-            None => "None (whole range)".to_string(),
+            None => tr("None (whole range)").to_string(),
             Some(_) => {
                 let n = spectrum::notes(440.0, 1.0, f32::MAX, None, true, i);
                 let name = |n: Option<&spectrum::Note>| n.map_or(String::new(), |n| spectrum::note_name(n, false, true));
@@ -3195,22 +3219,22 @@ fn spectrum_settings(ui: &mut egui::Ui, s: &mut settings::Settings, rate: u64) {
     });
     ui.add_enabled_ui(s.note_scale.is_none(), |ui| {
         ui.horizontal(|ui| {
-            ui.radio_value(&mut s.note_flats, false, "Sharps (C#)");
-            ui.radio_value(&mut s.note_flats, true, "Flats (Db)");
+            ui.radio_value(&mut s.note_flats, false, tr("Sharps (C#)"));
+            ui.radio_value(&mut s.note_flats, true, tr("Flats (Db)"));
         })
         .response
-        .on_disabled_hover_text("The key spells its notes");
+        .on_disabled_hover_text(tr("The key spells its notes"));
     });
-    ui.checkbox(&mut s.note_octaves, "Octave numbers");
+    ui.checkbox(&mut s.note_octaves, tr("Octave numbers"));
     ui.separator();
-    for (colour, label) in [(&mut s.note_c_color, "Tonic lines (C for all notes)"), (&mut s.note_color, "Other lines")] {
+    for (colour, label) in [(&mut s.note_c_color, tr("Tonic lines (C for all notes)")), (&mut s.note_color, tr("Other lines"))] {
         ui.horizontal(|ui| {
             egui::color_picker::color_edit_button_srgba(ui, colour, egui::color_picker::Alpha::OnlyBlend);
             ui.label(label);
         });
     }
-    ui.add(egui::Slider::new(&mut s.note_c_width, 1.0..=6.0).text("Tonic line width"));
-    ui.add(egui::Slider::new(&mut s.note_label_size, 6.0..=24.0).text("Label size"));
+    ui.add(egui::Slider::new(&mut s.note_c_width, 1.0..=6.0).text(tr("Tonic line width")));
+    ui.add(egui::Slider::new(&mut s.note_label_size, 6.0..=24.0).text(tr("Label size")));
 }
 
 /// The spectrogram of edited frames shown in `view`, with note lines or frequency marks and the
@@ -3219,7 +3243,7 @@ fn spectrum_settings(ui: &mut egui::Ui, s: &mut settings::Settings, rate: u64) {
 fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, selection: &mut Option<(u64, u64)>, spectrogram: &mut spectrum::Spectrogram, s: &settings::Settings, track: &Arc<Track>, edit: &Arc<Edit>, pos: u64, len: u64, rate: u64, playing: bool) -> Option<u64> {
     let frames = follow(view, len, pos, playing);
     let (rect, response) = ui.allocate_exact_size(ui.available_size(), egui::Sense::click_and_drag());
-    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Slider, true, "Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around"));
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Slider, true, tr("Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around")));
     let seek = select(ui, &response, rect, (view.start, frames), selection, &mut view.anchor);
     zoom_pan(ui, &response, rect, view, len, frames, false);
     // Frequencies: Ctrl+wheel (or a pinch) zooms around the pointer, right-drag up and down moves.
@@ -3249,7 +3273,7 @@ fn spectrum_panel(ui: &mut egui::Ui, view: &mut EditView, selection: &mut Option
             painter.add(spectrum::mesh(texture.id(), x, slab, fft, rate as f32, y_of));
         }
     }
-    let status = if !track.done() { Some("Decoding…".to_string()) } else { spectrogram.progress().map(|done| format!("Computing… {:.0} %", done * 100.0)) };
+    let status = if !track.done() { Some(tr("Decoding…").to_string()) } else { spectrogram.progress().map(|done| format!("Computing… {:.0} %", done * 100.0)) };
     if let Some(text) = status {
         // Below the chord bar when it's shown (13 pt text plus 8).
         let top = if s.spectrum_chords { 25.0 } else { 4.0 };
@@ -3321,7 +3345,7 @@ fn chord_bar(painter: &egui::Painter, rect: egui::Rect, x_of: &dyn Fn(u64) -> f3
     let strip = egui::Rect::from_min_size(rect.left_top(), egui::vec2(rect.width(), font.size + 8.0));
     painter.rect_filled(strip, 0.0, egui::Color32::from_black_alpha(140));
     let Some(chords) = track.chords.get() else {
-        let text = if track.done() { "Chords: measuring…" } else { "Chords: after loading" };
+        let text = if track.done() { tr("Chords: measuring…") } else { tr("Chords: after loading") };
         painter.text(strip.left_center() + egui::vec2(6.0, 0.0), egui::Align2::LEFT_CENTER, text, font, egui::Color32::from_white_alpha(200));
         return;
     };
@@ -3360,9 +3384,9 @@ enum Icon {
 fn transport(ui: &mut egui::Ui, playing: bool, has_next: bool, volume: f32, metronome: Option<(bool, f32)>, order: Order) -> Vec<Action> {
     let (size, small, gap) = (56.0, 40.0, 16.0);
     let buttons = [
-        (Icon::Previous, "Previous", true, Action::Previous),
-        (if playing { Icon::Pause } else { Icon::Play }, if playing { "Pause" } else { "Play" }, true, Action::Toggle),
-        (Icon::Next, "Next", has_next, Action::Next),
+        (Icon::Previous, tr("Previous"), true, Action::Previous),
+        (if playing { Icon::Pause } else { Icon::Play }, if playing { tr("Pause") } else { tr("Play") }, true, Action::Toggle),
+        (Icon::Next, tr("Next"), has_next, Action::Next),
     ];
     let mut actions = Vec::new();
     ui.horizontal(|ui| {
@@ -3370,8 +3394,8 @@ fn transport(ui: &mut egui::Ui, playing: bool, has_next: bool, volume: f32, metr
         // The volume and play-order buttons are the same size, so play/pause stays centred.
         let row = 3.0 * size + 2.0 * gap + 2.0 * (small + gap);
         ui.add_space(((ui.available_width() - row) / 2.0).max(0.0));
-        let ticking = if metronome.is_some_and(|m| m.0) { ", metronome on" } else { "" };
-        let label = format!("Volume, {:.0} %{ticking}", volume * 100.0);
+        let percent = format!("{:.0}", volume * 100.0);
+        let label = if metronome.is_some_and(|m| m.0) { trf("Volume, {percent} %, metronome on", &[("percent", &percent)]) } else { trf("Volume, {percent} %", &[("percent", &percent)]) };
         let button = icon_button(ui, Icon::Volume { muted: volume == 0.0 }, &label, true, small);
         let mut v = volume;
         let (mut on, mut clicks) = metronome.unwrap_or_default();
@@ -3379,13 +3403,13 @@ fn transport(ui: &mut egui::Ui, playing: bool, has_next: bool, volume: f32, metr
             .align(egui::RectAlign::TOP)
             .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
             .show(|ui| {
-                ui.add(egui::Slider::new(&mut v, 0.0..=1.0).show_value(false).text("Volume"));
+                ui.add(egui::Slider::new(&mut v, 0.0..=1.0).show_value(false).text(tr("Volume")));
                 match metronome {
                     Some(_) => {
-                        ui.checkbox(&mut on, "Metronome").on_hover_text("Clicks on the found beats");
-                        ui.add_enabled(on, egui::Slider::new(&mut clicks, 0.0..=1.0).show_value(false).text("Clicks"));
+                        ui.checkbox(&mut on, tr("Metronome")).on_hover_text(tr("Clicks on the found beats"));
+                        ui.add_enabled(on, egui::Slider::new(&mut clicks, 0.0..=1.0).show_value(false).text(tr("Clicks")));
                     }
-                    None => drop(ui.add_enabled(false, egui::Checkbox::new(&mut false, "Metronome")).on_disabled_hover_text("after Local AI → Find Beats")),
+                    None => drop(ui.add_enabled(false, egui::Checkbox::new(&mut false, tr("Metronome"))).on_disabled_hover_text(tr("after Local AI → Find Beats"))),
                 }
             });
         if v != volume {
@@ -3405,11 +3429,11 @@ fn transport(ui: &mut egui::Ui, playing: bool, has_next: bool, volume: f32, metr
             }
         }
         let (name, then) = match order {
-            Order::InOrder => ("In order", Order::RepeatOne),
-            Order::RepeatOne => ("Repeat track", Order::Shuffle),
-            Order::Shuffle => ("Shuffle", Order::InOrder),
+            Order::InOrder => (tr("In order"), Order::RepeatOne),
+            Order::RepeatOne => (tr("Repeat track"), Order::Shuffle),
+            Order::Shuffle => (tr("Shuffle"), Order::InOrder),
         };
-        if icon_button(ui, Icon::Order(order), &format!("Play order, {name}"), true, small).on_hover_text(name).clicked() {
+        if icon_button(ui, Icon::Order(order), &trf("Play order, {name}", &[("name", &name)]), true, small).on_hover_text(name).clicked() {
             actions.push(Action::Order(then));
         }
     });

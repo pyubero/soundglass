@@ -6,6 +6,7 @@ use lofty::file::TaggedFileExt;
 use lofty::picture::{Picture, PictureType};
 use lofty::tag::{Accessor, ItemKey, Tag, TagExt};
 use std::path::{Path, PathBuf};
+use crate::i18n::{tr, trf};
 
 /// Largest cover accepted, in bytes.
 pub const COVER_MAX_BYTES: usize = 10_000_000;
@@ -38,11 +39,11 @@ pub struct TagEdit {
 /// The file's tags as editable fields. Err when lofty can't read (so can't write) the format.
 pub fn read(path: &Path) -> Result<TagEdit, String> {
     // A hostile file must not take soundglass down with it.
-    std::panic::catch_unwind(|| read_tags(path)).unwrap_or_else(|_| Err("This file's tags can't be read.".into()))
+    std::panic::catch_unwind(|| read_tags(path)).unwrap_or_else(|_| Err(tr("This file's tags can't be read.").into()))
 }
 
 fn read_tags(path: &Path) -> Result<TagEdit, String> {
-    let file = lofty::read_from_path(path).map_err(|e| format!("Can't write tags to this format ({e})"))?;
+    let file = lofty::read_from_path(path).map_err(|e| trf("Can't write tags to this format ({e})", &[("e", &e)]))?;
     let Some(tag) = file.primary_tag().or_else(|| file.first_tag()) else { return Ok(TagEdit::default()) };
     let text = |v: Option<std::borrow::Cow<str>>| v.map(|v| v.trim().to_string()).unwrap_or_default();
     Ok(TagEdit {
@@ -72,10 +73,10 @@ pub fn cover(bytes: Vec<u8>) -> Result<Cover, String> {
     use image::ImageFormat::{Jpeg, Png};
     let keep = matches!(image::guess_format(&bytes), Ok(Jpeg | Png));
     if keep && bytes.len() > COVER_MAX_BYTES {
-        return Err("The image is larger than 10 MB.".into());
+        return Err(tr("The image is larger than 10 MB.").into());
     }
     // A big TIFF scan is decoded whole; the image crate's default limits cap a hostile file's cost.
-    let img = image::load_from_memory(&bytes).map_err(|_| "That image can't be read.")?;
+    let img = image::load_from_memory(&bytes).map_err(|_| tr("That image can't be read."))?;
     let bytes = if keep {
         bytes
     } else {
@@ -84,7 +85,7 @@ pub fn cover(bytes: Vec<u8>) -> Result<Cover, String> {
         image::codecs::jpeg::JpegEncoder::new_with_quality(&mut out, 90).encode_image(&img.to_rgb8()).map_err(|e| e.to_string())?;
         out
     };
-    Picture::from_reader(&mut &bytes[..]).map_err(|_| "That image can't be used as a cover.")?;
+    Picture::from_reader(&mut &bytes[..]).map_err(|_| tr("That image can't be used as a cover."))?;
     Ok(Cover::New(bytes))
 }
 
@@ -162,11 +163,11 @@ pub fn has_cover(path: &Path) -> Result<bool, String> {
         let file = lofty::read_from_path(path).map_err(|e| e.to_string())?;
         Ok(file.tags().iter().any(|t| t.picture_count() > 0))
     };
-    std::panic::catch_unwind(count).unwrap_or_else(|_| Err("This file's tags can't be read.".into()))
+    std::panic::catch_unwind(count).unwrap_or_else(|_| Err(tr("This file's tags can't be read.").into()))
 }
 
 fn write_with(path: &Path, change: impl FnOnce(&mut Tag)) -> Result<(), String> {
-    let name = path.file_name().ok_or("no file name")?.to_string_lossy();
+    let name = path.file_name().ok_or(tr("no file name"))?.to_string_lossy();
     let ext = path.extension().map(|e| e.to_string_lossy()).unwrap_or_default();
     let temp = path.with_file_name(format!(".{name}.soundglass-part.{ext}"));
     // The edit only reads its captures, so nothing is left half-changed after a panic.
@@ -179,11 +180,11 @@ fn write_with(path: &Path, change: impl FnOnce(&mut Tag)) -> Result<(), String> 
         change(&mut tag);
         tag.save_to_path(&temp, lofty::config::WriteOptions::default()).map_err(|e| e.to_string())?;
         if audio(path)? != audio(&temp)? {
-            return Err("writing the tags would change the audio, so nothing was written".into());
+            return Err(tr("writing the tags would change the audio, so nothing was written").into());
         }
         std::fs::rename(&temp, path).map_err(|e| e.to_string())
     }))
-    .unwrap_or_else(|_| Err("the tag writer failed".into()));
+    .unwrap_or_else(|_| Err(tr("the tag writer failed").into()));
     if result.is_err() {
         let _ = std::fs::remove_file(&temp);
     }
@@ -268,7 +269,7 @@ pub fn rename(from: &Path, name: &str) -> Result<PathBuf, String> {
         if same_letters && crate::save::same_file(&to, from) {
             return std::fs::rename(from, &to).map(|()| to).map_err(|e| e.to_string());
         }
-        return Err("A file with that name already exists.".into());
+        return Err(tr("A file with that name already exists.").into());
     }
     // A hard link fails if the name was taken meanwhile; then the old name goes.
     match std::fs::hard_link(from, &to) {
@@ -278,7 +279,7 @@ pub fn rename(from: &Path, name: &str) -> Result<PathBuf, String> {
                 return Err(e.to_string());
             }
         }
-        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => return Err("A file with that name already exists.".into()),
+        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => return Err(tr("A file with that name already exists.").into()),
         // Disks without hard links (FAT, exFAT): checked above, so rename.
         Err(_) => std::fs::rename(from, &to).map_err(|e| e.to_string())?,
     }

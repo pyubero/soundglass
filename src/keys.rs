@@ -3,6 +3,7 @@
 
 use crate::ai::Task;
 use crate::{FADES, Fx, GAINS, Knob, LOUDNESS, PEAKS, TRIMS};
+use crate::i18n::{tr, tr_key, trf};
 use eframe::egui::{Key, KeyboardShortcut, Modifiers};
 
 /// A menu item, as a key can run it.
@@ -93,36 +94,36 @@ pub fn bindable_menus() -> Vec<(&'static str, Vec<(Command, String)>)> {
     use Command::*;
     let named = |items: &[(Command, &str)]| items.iter().map(|&(c, n)| (c, n.to_string())).collect::<Vec<_>>();
     let mut effects = Vec::new();
-    for (name, fade) in [("Fade in", crate::Fx::FadeIn as fn(Option<f64>) -> crate::Fx), ("Fade out", crate::Fx::FadeOut)] {
-        effects.push((Fx(fade(None)), format!("{name}: whole selection")));
-        effects.extend(FADES.map(|s| (Fx(fade(Some(s))), format!("{name}: {s} s"))));
-        effects.push((CustomFx(fade(None)), format!("{name}: custom…")));
+    for (name, fade) in [(tr("Fade in"), crate::Fx::FadeIn as fn(Option<f64>) -> crate::Fx), (tr("Fade out"), crate::Fx::FadeOut)] {
+        effects.push((Fx(fade(None)), trf("{name}: whole selection", &[("name", &name)])));
+        effects.extend(FADES.map(|s| (Fx(fade(Some(s))), trf("{name}: {s} s", &[("name", &name), ("s", &s)]))));
+        effects.push((CustomFx(fade(None)), trf("{name}: custom…", &[("name", &name)])));
     }
-    effects.extend(GAINS.map(|db| (Fx(crate::Fx::Gain(db)), format!("Gain: {}{} dB", if db > 0.0 { "+" } else { "" }, crate::signed(db)))));
-    effects.push((CustomFx(crate::Fx::Gain(0.0)), "Gain: custom…".into()));
-    effects.extend(PEAKS.map(|(db, n)| (Fx(crate::Fx::Peak(db)), format!("Normalize: {n} ({} dBFS)", crate::signed(db)))));
-    effects.extend(LOUDNESS.map(|(l, n)| (Fx(crate::Fx::Loudness(l)), format!("Normalize: {n} ({} LUFS)", crate::signed(l)))));
-    effects.push((CustomFx(crate::Fx::Peak(0.0)), "Normalize: custom peak…".into()));
-    effects.push((CustomFx(crate::Fx::Loudness(0.0)), "Normalize: custom loudness…".into()));
-    effects.extend(TRIMS.map(|(db, n)| (Fx(crate::Fx::Trim(db)), format!("Trim silence: {n} ({} dB)", crate::signed(db)))));
-    effects.push((CustomFx(crate::Fx::Trim(0.0)), "Trim silence: custom…".into()));
-    effects.extend(named(&[(Fx(crate::Fx::Reverse), "Reverse"), (Fx(crate::Fx::Mono), "Channels: mono"), (Fx(crate::Fx::Stereo), "Channels: stereo"), (Fx(crate::Fx::Swap), "Channels: swap left and right")]));
+    effects.extend(GAINS.map(|db| (Fx(crate::Fx::Gain(db)), trf("Gain: {db} dB", &[("db", &format!("{}{}", if db > 0.0 { "+" } else { "" }, crate::signed(db)))]))));
+    effects.push((CustomFx(crate::Fx::Gain(0.0)), tr("Gain: custom…").into()));
+    effects.extend(PEAKS.map(|(db, n)| (Fx(crate::Fx::Peak(db)), trf("Normalize: {name} ({db} dBFS)", &[("name", &tr(n)), ("db", &crate::signed(db))]))));
+    effects.extend(LOUDNESS.map(|(l, n)| (Fx(crate::Fx::Loudness(l)), trf("Normalize: {name} ({lufs} LUFS)", &[("name", &tr(n)), ("lufs", &crate::signed(l))]))));
+    effects.push((CustomFx(crate::Fx::Peak(0.0)), tr("Normalize: custom peak…").into()));
+    effects.push((CustomFx(crate::Fx::Loudness(0.0)), tr("Normalize: custom loudness…").into()));
+    effects.extend(TRIMS.map(|(db, n)| (Fx(crate::Fx::Trim(db)), trf("Trim silence: {name} ({db} dB)", &[("name", &tr(n)), ("db", &crate::signed(db))]))));
+    effects.push((CustomFx(crate::Fx::Trim(0.0)), tr("Trim silence: custom…").into()));
+    effects.extend(named(&[(Fx(crate::Fx::Reverse), tr("Reverse")), (Fx(crate::Fx::Mono), tr("Channels: mono")), (Fx(crate::Fx::Stereo), tr("Channels: stereo")), (Fx(crate::Fx::Swap), tr("Channels: swap left and right"))]));
     let mut playback = Vec::new();
     for knob in Knob::ALL {
         playback.extend(knob.presets().iter().map(|&v| (Speed(knob, v), format!("{}: {}", knob.title(), knob.label(v)))));
-        playback.push((CustomSpeed(knob), format!("{}: custom…", knob.title())));
+        playback.push((CustomSpeed(knob), trf("{name}: custom…", &[("name", &knob.title())])));
     }
-    playback.push((ResetSpeed, "Reset".into()));
+    playback.push((ResetSpeed, tr("Reset").into()));
     let mut ai: Vec<(Command, String)> = Task::ALL.iter().map(|&t| (Ai(t), t.title().to_string())).collect();
-    ai.push((AiModels, "AI Models…".into()));
+    ai.push((AiModels, tr("AI Models…").into()));
     vec![
-        ("File", named(&[(Open, "Open…"), (Close, "Close"), (ShowInFolder, if cfg!(windows) { "Show in Explorer" } else { "Show in File Manager" }), (CopyPath, "Copy Path"), (CopyFile, "Copy File"), (SaveCopy, "Save Copy"), (SaveAs, "Save As…"), (Rename, "Rename…"), (Delete, "Delete…"), (RenameFromTags, "Rename from Tags…"), (Identify, "Identify Track…"), (Settings, "Settings…"), (Quit, "Quit")])),
-        ("Edit", named(&[(Undo, "Undo"), (Redo, "Redo"), (Cut, "Cut out"), (Crop, "Crop"), (Silence, "Silence"), (AddCover, "Add/Replace Album Cover…"), (RemoveCover, "Remove Album Cover…")])),
-        ("Effects", effects),
-        ("View", named(&[(TrackInfo, "Track Info"), (Folder, "Folder"), (EditPanel, "Edit"), (FullScreen, "Full Screen"), (Practice, "Practice mode")])),
-        ("Playback", playback),
-        ("Local AI", ai),
-        ("Practice", named(&[(Metronome, "Metronome"), (Spectrogram, "Spectrogram")])),
+        (tr_key("File"), named(&[(Open, tr("Open…")), (Close, tr("Close")), (ShowInFolder, if cfg!(windows) { tr("Show in Explorer") } else { tr("Show in File Manager") }), (CopyPath, tr("Copy Path")), (CopyFile, tr("Copy File")), (SaveCopy, tr("Save Copy")), (SaveAs, tr("Save As…")), (Rename, tr("Rename…")), (Delete, tr("Delete…")), (RenameFromTags, tr("Rename from Tags…")), (Identify, tr("Identify Track…")), (Settings, tr("Settings…")), (Quit, tr("Quit"))])),
+        (tr_key("Edit"), named(&[(Undo, tr("Undo")), (Redo, tr("Redo")), (Cut, tr("Cut out")), (Crop, tr("Crop")), (Silence, tr("Silence")), (AddCover, tr("Add/Replace Album Cover…")), (RemoveCover, tr("Remove Album Cover…"))])),
+        (tr_key("Effects"), effects),
+        (tr_key("View"), named(&[(TrackInfo, tr("Track Info")), (Folder, tr("Folder")), (EditPanel, tr("Edit")), (FullScreen, tr("Full Screen")), (Practice, tr("Practice mode"))])),
+        (tr_key("Playback"), playback),
+        (tr_key("Local AI"), ai),
+        (tr_key("Practice"), named(&[(Metronome, tr("Metronome")), (Spectrogram, tr("Spectrogram"))])),
     ]
 }
 
@@ -145,7 +146,7 @@ pub fn shortcuts(changes: &[(String, Option<KeyboardShortcut>)]) -> Vec<(Keyboar
 /// Why `sc` can't be given to `command`: it's fixed, or the name of the command that has it.
 pub fn taken(keys: &[(KeyboardShortcut, Command)], sc: KeyboardShortcut, command: Command) -> Option<String> {
     if FIXED.contains(&sc) {
-        return Some("Space, ←, →, Page Up, Page Down, L, Esc, Enter and Ctrl+C/X/V".into());
+        return Some(tr("Space, ←, →, Page Up, Page Down, L, Esc, Enter and Ctrl+C/X/V").into());
     }
     let (_, other) = keys.iter().find(|(k, c)| *k == sc && *c != command)?;
     Some(bindable_menus().into_iter().flat_map(|(_, items)| items).find(|(c, _)| c == other).map_or_else(|| id(*other), |(_, name)| name))

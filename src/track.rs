@@ -9,6 +9,7 @@ use symphonia::core::formats::probe::Hint;
 use symphonia::core::formats::{FormatOptions, TrackType};
 use symphonia::core::io::MediaSourceStream;
 use symphonia::core::meta::{MetadataOptions, StandardTag, StandardVisualKey};
+use crate::i18n::{tr, trf};
 
 /// Frames per chunk: about 1.5 s at 44.1 kHz. The player reads whole chunks without copying the list.
 pub const CHUNK: usize = 65536;
@@ -129,7 +130,7 @@ impl Track {
                 let format = *t.format.get_or_init(|| Format { rate, channels });
                 // shortcut: a rate change mid-file (chained Ogg) plays at the first rate; resample per segment if it matters.
                 if format.channels != channels {
-                    return Err("the channel count changes mid-file".into());
+                    return Err(tr("the channel count changes mid-file").into());
                 }
                 // Only the decoder holds the track: nobody will play it, so stop.
                 if Arc::strong_count(&t) == 1 {
@@ -152,7 +153,7 @@ impl Track {
                 }
                 Ok(())
             })))
-            .unwrap_or_else(|_| Err("this file can't be decoded".into()));
+            .unwrap_or_else(|_| Err(tr("this file can't be decoded").into()));
             if peak_frames > 0 {
                 t.peaks.lock().unwrap().push(peak);
             }
@@ -351,7 +352,7 @@ pub fn decode(
     }
     let mut format = symphonia::default::get_probe()
         .probe(&hint, mss, FormatOptions::default(), MetadataOptions::default())
-        .map_err(|e| format!("not a supported audio file ({e})"))?;
+        .map_err(|e| trf("not a supported audio file ({e})", &[("e", &e)]))?;
     let (mut tags, mut picture) = (Tags::default(), None);
     let mut info = Info { container: format.format_info().long_name.to_string(), ..Info::default() };
     if let Some(rev) = format.metadata().skip_to_latest() {
@@ -370,9 +371,9 @@ pub fn decode(
         let front = visuals.iter().find(|v| v.usage == Some(StandardVisualKey::FrontCover)).or(visuals.first());
         picture = front.map(|v| v.data.clone());
     }
-    let track = format.default_track(TrackType::Audio).ok_or("no audio track")?;
+    let track = format.default_track(TrackType::Audio).ok_or(tr("no audio track"))?;
     let (track_id, expected) = (track.id, track.num_frames);
-    let params = track.codec_params.as_ref().and_then(|p| p.audio()).ok_or("no audio track")?;
+    let params = track.codec_params.as_ref().and_then(|p| p.audio()).ok_or(tr("no audio track"))?;
     let mut decoder = symphonia::default::get_codecs()
         .make_audio_decoder(params, &AudioDecoderOptions::default())
         .map_err(|e| e.to_string())?;

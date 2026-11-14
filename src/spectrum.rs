@@ -11,6 +11,7 @@ use realfft::RealToComplex;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering::Relaxed};
 use std::sync::mpsc::{Receiver, TryRecvError};
 use std::sync::Arc;
+use crate::i18n::tr;
 
 /// The window's shape.
 #[derive(Clone, Copy, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
@@ -26,10 +27,10 @@ impl Shape {
 
     pub fn name(self) -> &'static str {
         match self {
-            Shape::Hann => "Hann",
-            Shape::Hamming => "Hamming",
-            Shape::BlackmanHarris => "Blackman–Harris",
-            Shape::Rectangular => "Rectangular",
+            Shape::Hann => tr("Hann"),
+            Shape::Hamming => tr("Hamming"),
+            Shape::BlackmanHarris => tr("Blackman–Harris"),
+            Shape::Rectangular => tr("Rectangular"),
         }
     }
 
@@ -62,9 +63,9 @@ impl ColourMap {
 
     pub fn name(self) -> &'static str {
         match self {
-            ColourMap::Magma => "Magma",
-            ColourMap::Gray => "Gray",
-            ColourMap::BlueRed => "Blue to red",
+            ColourMap::Magma => tr("Magma"),
+            ColourMap::Gray => tr("Gray"),
+            ColourMap::BlueRed => tr("Blue to red"),
         }
     }
 
@@ -477,9 +478,9 @@ impl Instrument {
 
     pub fn name(self) -> &'static str {
         match self {
-            Instrument::None => "None",
-            Instrument::Trumpet => "Trumpet",
-            Instrument::TenorSax => "Tenor sax",
+            Instrument::None => tr("None"),
+            Instrument::Trumpet => tr("Trumpet"),
+            Instrument::TenorSax => tr("Tenor sax"),
         }
     }
 

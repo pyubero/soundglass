@@ -5,6 +5,7 @@ use eframe::egui;
 use std::sync::Arc;
 use std::sync::atomic::AtomicU32;
 use std::sync::mpsc::{Receiver, TryRecvError};
+use crate::i18n::{tr, trf};
 
 /// What a licence prompt is for.
 #[derive(Clone, Copy, PartialEq)]
@@ -18,9 +19,9 @@ enum Download {
 impl Download {
     fn title(self) -> &'static str {
         match self {
-            Download::Runtime => "AI runtime (ONNX Runtime)",
-            Download::Gpu => "GPU support",
-            Download::Model(i) => CATALOG[i].label,
+            Download::Runtime => tr("AI runtime (ONNX Runtime)"),
+            Download::Gpu => tr("GPU support"),
+            Download::Model(i) => tr(CATALOG[i].label),
         }
     }
 
@@ -35,8 +36,8 @@ impl Download {
     fn note(self) -> Option<&'static str> {
         match self {
             Download::Runtime => None,
-            Download::Gpu => Some("Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages)."),
-            Download::Model(i) => CATALOG[i].converted_by,
+            Download::Gpu => Some(tr("Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).")),
+            Download::Model(i) => CATALOG[i].converted_by.map(tr),
         }
     }
 }
@@ -95,7 +96,7 @@ impl Ai {
     /// With `selected`, the items say they work on the selection.
     /// Why `task` can't run now, if it can't.
     pub fn why_not(&self, task: Task, s: &AiSettings, loaded: bool) -> Option<&'static str> {
-        Ai::ready(task, s).err().or((!loaded).then_some("after loading")).or(self.run.is_some().then_some("another AI tool is running"))
+        Ai::ready(task, s).err().or((!loaded).then_some(tr("after loading"))).or(self.run.is_some().then_some(tr("another AI tool is running")))
     }
 
     /// The Local AI menu; `key` gives a task's shortcut text (`None`: AI Models…'s).
@@ -103,20 +104,20 @@ impl Ai {
         let mut chosen = None;
         for task in Task::ALL {
             let why = self.why_not(task, s, loaded);
-            let label = if selected { format!("{} (selection)", task.title()) } else { task.title().to_string() };
+            let label = if selected { trf("{task} (selection)", &[("task", &task.title())]) } else { task.title().to_string() };
             if ui.add_enabled(why.is_none(), egui::Button::new(label).shortcut_text(key(Some(task)))).on_disabled_hover_text(why.unwrap_or_default()).clicked() {
                 chosen = Some(task);
                 ui.close();
             }
         }
         ui.separator();
-        if ui.add(egui::Button::new("AI Models…").shortcut_text(key(None))).clicked() {
+        if ui.add(egui::Button::new(tr("AI Models…")).shortcut_text(key(None))).clicked() {
             self.show_models = true;
             ui.close();
         }
         if !runtime_installed() {
             let busy = self.busy(Download::Runtime).is_some();
-            if ui.add_enabled(!busy, egui::Button::new(format!("Download AI Runtime ({RUNTIME_DOWNLOAD_MB} MB)…"))).clicked() {
+            if ui.add_enabled(!busy, egui::Button::new(trf("Download AI Runtime ({mb} MB)…", &[("mb", &RUNTIME_DOWNLOAD_MB)]))).clicked() {
                 self.license = Some((Download::Runtime, 0));
                 ui.close();
             }
@@ -137,7 +138,7 @@ impl Ai {
         std::thread::spawn(move || {
             crate::track::background();
             let report = |x: f32| p.store(x.to_bits(), Ordering::Relaxed);
-            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run_tool(task, model, &tune, &track, &edit, selection, kind, &report, &c))).unwrap_or_else(|_| Err("the AI tool failed".into()));
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run_tool(task, model, &tune, &track, &edit, selection, kind, &report, &c))).unwrap_or_else(|_| Err(tr("the AI tool failed").into()));
             let _ = tx.send(result);
             ctx.request_repaint();
         });
@@ -151,9 +152,9 @@ impl Ai {
                 Err(TryRecvError::Empty) => {
                     let p = f32::from_bits(run.progress.load(Ordering::Relaxed));
                     egui::Window::new(run.task.title()).collapsible(false).resizable(false).show(ctx, |ui| {
-                        ui.label(if on_gpu() && matches!(run.task, Task::Stems | Task::Beats) { "Running on the GPU…" } else { "Running on the CPU…" });
+                        ui.label(if on_gpu() && matches!(run.task, Task::Stems | Task::Beats) { tr("Running on the GPU…") } else { tr("Running on the CPU…") });
                         ui.add(egui::ProgressBar::new(p).desired_width(240.0).show_percentage());
-                        if ui.button("Cancel").clicked() {
+                        if ui.button(tr("Cancel")).clicked() {
                             run.cancel.store(true, Ordering::Relaxed);
                         }
                     });
@@ -173,7 +174,7 @@ impl Ai {
                         self.run_error = Some((task, Err(e)));
                     }
                 }
-                Err(TryRecvError::Disconnected) => (self.run, self.run_error) = (None, Some((run.task, Err("the AI tool stopped".into())))),
+                Err(TryRecvError::Disconnected) => (self.run, self.run_error) = (None, Some((run.task, Err(tr("the AI tool stopped").into())))),
             }
         }
         self.transcript_window(ctx);
@@ -193,25 +194,25 @@ impl Ai {
     /// Whether `task` can run now: the runtime and a model for it installed.
     pub fn ready(task: Task, s: &AiSettings) -> Result<&'static Known, &'static str> {
         if !runtime_installed() {
-            return Err("needs the AI runtime: Local AI → Download AI Runtime…");
+            return Err(tr("needs the AI runtime: Local AI → Download AI Runtime…"));
         }
-        choose(s.models.get(&task), task, &installed()).ok_or("needs a model: Local AI → AI Models…")
+        choose(s.models.get(&task), task, &installed()).ok_or(tr("needs a model: Local AI → AI Models…"))
     }
 
     /// Transcribe Speech's result: the text to read or select, Copy, and Save as Text….
     fn transcript_window(&mut self, ctx: &egui::Context) {
         let Some((text, source, subtitles)) = &mut self.transcript else { return };
-        let (button, kind, ext) = if *subtitles { ("Save as Subtitles…", "Subtitles", "srt") } else { ("Save as Text…", "Text", "txt") };
+        let (button, kind, ext) = if *subtitles { (tr("Save as Subtitles…"), tr("Subtitles"), "srt") } else { (tr("Save as Text…"), tr("Text"), "txt") };
         let mut open = true;
         let mut saved = None;
-        egui::Window::new("Transcript").open(&mut open).collapsible(false).default_size([480.0, 360.0]).show(ctx, |ui| {
+        egui::Window::new(tr("Transcript")).open(&mut open).collapsible(false).default_size([480.0, 360.0]).show(ctx, |ui| {
             egui::ScrollArea::vertical().max_height(360.0).show(ui, |ui| {
                 // Read-only but selectable: edits to the text are thrown away each frame.
                 let mut shown = text.as_str();
                 ui.add(egui::TextEdit::multiline(&mut shown).desired_width(f32::INFINITY));
             });
             ui.horizontal(|ui| {
-                if ui.button("Copy").clicked() {
+                if ui.button(tr("Copy")).clicked() {
                     ctx.copy_text(text.clone());
                 }
                 if ui.button(button).clicked() {
@@ -227,7 +228,7 @@ impl Ai {
             });
         });
         if let Some(r) = saved {
-            self.run_error = Some((Task::Transcribe, r.map(|p| format!("Saved {}", p.file_name().unwrap_or_default().to_string_lossy()))));
+            self.run_error = Some((Task::Transcribe, r.map(|p| trf("Saved {name}", &[("name", &p.file_name().unwrap_or_default().to_string_lossy())]))));
         }
         if !open {
             self.transcript = None;
@@ -241,7 +242,7 @@ impl Ai {
         let made = self.run_window(ctx);
         if self.show_models {
             let mut open = true;
-            egui::Window::new("AI Models").open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| self.models_ui(ui, s));
+            egui::Window::new(tr("AI Models")).open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| self.models_ui(ui, s));
             self.show_models &= open;
         }
         if let Some((what, step)) = self.license {
@@ -285,11 +286,11 @@ impl Ai {
         self.jobs.retain(|j| match j.done.try_recv() {
             Err(TryRecvError::Empty) => true,
             Ok(r) => {
-                notice = Some(r.map(|()| format!("{} installed.", j.what.title())).map_err(|e| format!("{}: {e}", j.what.title())));
+                notice = Some(r.map(|()| trf("{what} installed.", &[("what", &j.what.title())])).map_err(|e| format!("{}: {e}", j.what.title())));
                 false
             }
             Err(TryRecvError::Disconnected) => {
-                notice = Some(Err(format!("{}: the download stopped.", j.what.title())));
+                notice = Some(Err(trf("{what}: the download stopped.", &[("what", &j.what.title())])));
                 false
             }
         });
@@ -307,7 +308,7 @@ impl Ai {
             Some(job) => {
                 let p = f32::from_bits(job.progress.load(Ordering::Relaxed));
                 ui.add(egui::ProgressBar::new(p).desired_width(120.0).show_percentage());
-                if ui.button("Cancel").clicked() {
+                if ui.button(tr("Cancel")).clicked() {
                     job.cancel.store(true, Ordering::Relaxed);
                 }
             }
@@ -323,34 +324,34 @@ impl Ai {
         let runtime = runtime_installed();
         if !runtime {
             ui.horizontal(|ui| {
-                ui.colored_label(ui.visuals().warn_fg_color, "The AI runtime isn't installed yet.");
-                self.download_button(ui, Download::Runtime, &format!("Download AI Runtime ({RUNTIME_DOWNLOAD_MB} MB)"));
+                ui.colored_label(ui.visuals().warn_fg_color, tr("The AI runtime isn't installed yet."));
+                self.download_button(ui, Download::Runtime, &trf("Download AI Runtime ({mb} MB)", &[("mb", &RUNTIME_DOWNLOAD_MB)]));
             });
         }
         if nvidia_driver() || gpu_installed() {
             ui.add_space(4.0);
-            ui.strong("GPU (NVIDIA)");
+            ui.strong(tr("GPU (NVIDIA)"));
             if !gpu_installed() {
                 ui.horizontal(|ui| {
-                    ui.label(format!("Run the AI tools on the graphics card ({GPU_DOWNLOAD_MB} MB, NVIDIA's CUDA libraries)."));
-                    self.download_button(ui, Download::Gpu, "Download GPU Support");
+                    ui.label(trf("Run the AI tools on the graphics card ({mb} MB, NVIDIA's CUDA libraries).", &[("mb", &GPU_DOWNLOAD_MB)]));
+                    self.download_button(ui, Download::Gpu, tr("Download GPU Support"));
                 });
             } else {
-                if ui.checkbox(&mut s.use_gpu, "Use the GPU").on_hover_text("For Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050; the other tools are faster on the CPU").changed() {
+                if ui.checkbox(&mut s.use_gpu, tr("Use the GPU")).on_hover_text(tr("For Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050; the other tools are faster on the CPU")).changed() {
                     set_use_gpu(s.use_gpu);
                 }
                 if gpu_needs_restart() {
-                    ui.colored_label(ui.visuals().warn_fg_color, "Restart soundglass to start using the GPU.");
+                    ui.colored_label(ui.visuals().warn_fg_color, tr("Restart soundglass to start using the GPU."));
                 } else if let Some(e) = gpu_error().filter(|_| s.use_gpu) {
-                    ui.colored_label(ui.visuals().warn_fg_color, format!("The GPU couldn't be used, so the CPU is: {}", short_error(&e)));
+                    ui.colored_label(ui.visuals().warn_fg_color, trf("The GPU couldn't be used, so the CPU is: {e}", &[("e", &short_error(&e))]));
                 }
             }
         }
         ui.add_space(4.0);
-        ui.strong("Output");
+        ui.strong(tr("Output"));
         ui.horizontal(|ui| {
-            ui.radio_value(&mut s.lossless, false, "Ogg Vorbis (q6)").on_hover_text("Small: about 6 MB for a 4-minute stem");
-            ui.radio_value(&mut s.lossless, true, "FLAC (lossless)").on_hover_text("About 50 MB for a 4-minute stem, for further editing");
+            ui.radio_value(&mut s.lossless, false, tr("Ogg Vorbis (q6)")).on_hover_text(tr("Small: about 6 MB for a 4-minute stem"));
+            ui.radio_value(&mut s.lossless, true, tr("FLAC (lossless)")).on_hover_text(tr("About 50 MB for a 4-minute stem, for further editing"));
         });
         let installed = installed();
         egui::ScrollArea::vertical().max_height(520.0).show(ui, |ui| {
@@ -360,24 +361,24 @@ impl Ai {
                 let models: Vec<&Known> = CATALOG.iter().filter(|k| k.task == task && installed.contains(&k.file)).collect();
                 if models.len() > 1 {
                     let current = choose(s.models.get(&task), task, &installed);
-                    egui::ComboBox::from_id_salt(("ai-model", task.title())).selected_text(current.map_or("", |k| k.label)).show_ui(ui, |ui| {
+                    egui::ComboBox::from_id_salt(("ai-model", task.title())).selected_text(current.map_or("", |k| tr(k.label))).show_ui(ui, |ui| {
                         for k in models {
-                            if ui.selectable_label(current.is_some_and(|c| c.file == k.file), k.label).clicked() {
+                            if ui.selectable_label(current.is_some_and(|c| c.file == k.file), tr(k.label)).clicked() {
                                 s.models.insert(task, k.file.to_string());
                             }
                         }
                     });
                 } else if let Some(k) = models.first() {
-                    ui.label(format!("{} (installed)", k.label));
+                    ui.label(trf("{model} (installed)", &[("model", &tr(k.label))]));
                 }
                 for k in CATALOG.iter().filter(|k| k.task == task && installed.contains(&k.file)) {
-                    egui::CollapsingHeader::new(format!("Settings: {}", k.label)).id_salt(("tune", k.file)).show(ui, |ui| super::tune::tune_ui(ui, s, k));
+                    egui::CollapsingHeader::new(trf("Settings: {model}", &[("model", &tr(k.label))])).id_salt(("tune", k.file)).show(ui, |ui| super::tune::tune_ui(ui, s, k));
                 }
                 egui::Grid::new(("catalog", task.title())).num_columns(3).spacing([16.0, 6.0]).show(ui, |ui| {
                     for (i, k) in CATALOG.iter().enumerate().filter(|(_, k)| k.task == task && !installed.contains(&k.file)) {
-                        ui.label(k.label);
+                        ui.label(tr(k.label));
                         ui.label(format!("{} MB", k.mb));
-                        ui.horizontal(|ui| self.download_button(ui, Download::Model(i), "Download"));
+                        ui.horizontal(|ui| self.download_button(ui, Download::Model(i), tr("Download")));
                         ui.end_row();
                     }
                 });
@@ -389,7 +390,7 @@ impl Ai {
             None => {}
         }
         ui.add_space(8.0);
-        if ui.button("Open models folder").clicked() {
+        if ui.button(tr("Open models folder")).clicked() {
             open_folder();
         }
     }
@@ -398,15 +399,15 @@ impl Ai {
 /// One licence of a download (`step` of `count`, from 0). Some(true) accepts it, Some(false) cancels.
 /// The text scrolls within the window's height, so the buttons stay on screen.
 fn license_ui(ui: &mut egui::Ui, title: &str, l: &License, step: usize, count: usize, note: Option<&str>) -> Option<bool> {
-    ui.heading(if count > 1 { format!("Licence ({} of {count}) — {title}", step + 1) } else { format!("Licence — {title}") });
-    ui.label("Please read and accept the licence before downloading.");
+    ui.heading(if count > 1 { trf("Licence ({n} of {count}) — {title}", &[("n", &(step + 1)), ("count", &count), ("title", &title)]) } else { trf("Licence — {title}", &[("title", &title)]) });
+    ui.label(tr("Please read and accept the licence before downloading."));
     if let Some(note) = note {
         ui.weak(note);
     }
     ui.add_space(6.0);
     ui.horizontal(|ui| {
         ui.strong(format!("{} — {}", l.project, l.spdx));
-        if ui.button("Open project page").clicked() {
+        if ui.button(tr("Open project page")).clicked() {
             open(l.url);
         }
     });
@@ -417,8 +418,8 @@ fn license_ui(ui: &mut egui::Ui, title: &str, l: &License, step: usize, count: u
     });
     ui.add_space(6.0);
     ui.horizontal(|ui| {
-        let accept = ui.button(if step + 1 < count { "Accept and Continue" } else { "Accept and Download" }).clicked();
-        let cancel = ui.button("Cancel").clicked();
+        let accept = ui.button(if step + 1 < count { tr("Accept and Continue") } else { tr("Accept and Download") }).clicked();
+        let cancel = ui.button(tr("Cancel")).clicked();
         accept.then_some(true).or(cancel.then_some(false))
     })
     .inner
@@ -428,9 +429,9 @@ fn license_ui(ui: &mut egui::Ui, title: &str, l: &License, step: usize, count: u
 /// With `selection` (edited frames), only that stretch: a clip for the files it writes, the
 /// track's own times for subtitles and beats. `kind`: the audio files' format.
 pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::track::Track, edit: &crate::edit::Edit, selection: Option<(u64, u64)>, kind: crate::save::Kind, progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<Done, String> {
-    let own = track.format.get().ok_or("the track has no audio")?.rate;
+    let own = track.format.get().ok_or(tr("the track has no audio"))?.rate;
     if selection.is_some_and(|(a, b)| b.saturating_sub(a) < own as u64 / 2) {
-        return Err("select at least half a second, or nothing for the whole track".into());
+        return Err(tr("select at least half a second, or nothing for the whole track").into());
     }
     let (full, clip) = (edit, selection.map(|(a, b)| edit.crop(a, b)));
     let edit = clip.as_ref().unwrap_or(full);
@@ -450,7 +451,7 @@ pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::tr
         }
         (Task::Stems, Tune::Stems(t)) => {
             if !t.write.contains(&true) {
-                return Err("choose at least one stem to write (AI Models → Settings)".into());
+                return Err(tr("choose at least one stem to write (AI Models → Settings)").into());
             }
             let dir = reserve_dir(&track.path, "stems")?;
             let result = (|| {
@@ -478,7 +479,7 @@ pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::tr
                 let (frames, onsets) = midi::activations(&model_path(model.file)?, &mono, &|p| progress(0.9 * p), cancel)?;
                 let notes = midi::notes(&frames, &onsets, t);
                 if notes.is_empty() {
-                    return Err("no notes were found".to_string());
+                    return Err(tr("no notes were found").to_string());
                 }
                 // Written beside it, then renamed over the reserved name.
                 let part = target.with_extension("mid.part");
@@ -490,7 +491,7 @@ pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::tr
             if result.is_err() {
                 let _ = std::fs::remove_file(&target);
             }
-            result.map(|()| Done::Said(format!("Saved {}", target.file_name().unwrap_or_default().to_string_lossy())))
+            result.map(|()| Done::Said(trf("Saved {name}", &[("name", &target.file_name().unwrap_or_default().to_string_lossy())])))
         }
         (Task::Beats, Tune::Beats(t)) => {
             // On the original, not the edits, so the beats can be mapped through them as they
@@ -509,8 +510,11 @@ pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::tr
                 };
                 found = beats::Beats { beats: back(&found.beats), downbeats: back(&found.downbeats) };
             }
-            let tempo = beats::bpm(&found.beats, own).map(|b| format!(", ≈ {b} BPM")).unwrap_or_default();
-            let said = format!("Found {} beats{tempo}. Metronome on (volume button).", found.beats.len());
+            let n = found.beats.len();
+            let said = match beats::bpm(&found.beats, own) {
+                Some(bpm) => trf("Found {n} beats, ≈ {bpm} BPM. Metronome on (volume button).", &[("n", &n), ("bpm", &bpm)]),
+                None => trf("Found {n} beats. Metronome on (volume button).", &[("n", &n)]),
+            };
             *track.beats.lock().unwrap_or_else(|e| e.into_inner()) = Some(Arc::new(found));
             Ok(Done::Said(said))
         }
@@ -521,15 +525,15 @@ pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::tr
             let cues = match model.data {
                 [(dj, _), (features, _), (vocab, _)] => transcribe::parakeet(&path(model.file)?, &path(dj)?, &path(features)?, &path(vocab)?, &mono, t.silence_db, progress, cancel)?,
                 [(decoder, _), (tokens, _)] => transcribe::whisper(&path(model.file)?, &path(decoder)?, &path(tokens)?, &mono, t, progress, cancel)?,
-                _ => return Err("not a transcription model".into()),
+                _ => return Err(tr("not a transcription model").into()),
             };
             if cues.is_empty() {
-                return Err("no speech was found".into());
+                return Err(tr("no speech was found").into());
             }
             let cues = transcribe::shifted(cues, offset as f64 / own as f64);
             Ok(Done::Text(if t.time_marks { transcribe::srt(&cues) } else { transcribe::plain(&cues) }, t.time_marks))
         }
-        _ => Err("the settings aren't for this tool".into()),
+        _ => Err(tr("the settings aren't for this tool").into()),
     }
 }
 
@@ -542,7 +546,7 @@ fn reserve_dir(source: &Path, what: &str) -> Result<PathBuf, String> {
         match std::fs::create_dir(&dir) {
             Ok(()) => return Ok(dir),
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
-            Err(e) => return Err(format!("can't make a folder next to the track ({e})")),
+            Err(e) => return Err(trf("can't make a folder next to the track ({e})", &[("e", &e)])),
         }
     }
     unreachable!()
@@ -551,7 +555,7 @@ fn reserve_dir(source: &Path, what: &str) -> Result<PathBuf, String> {
 /// Writes `text` to `path` through a temporary file beside it, so a failed write leaves no half file.
 /// The system dialog has already asked before replacing an existing file.
 fn save_text(path: &Path, text: &str) -> Result<PathBuf, String> {
-    let name = path.file_name().ok_or("no file name")?.to_string_lossy();
+    let name = path.file_name().ok_or(tr("no file name"))?.to_string_lossy();
     let temp = path.with_file_name(format!(".{name}.soundglass-part"));
     let result = std::fs::write(&temp, text.as_bytes()).and_then(|()| std::fs::rename(&temp, path)).map_err(|e| e.to_string());
     if result.is_err() {

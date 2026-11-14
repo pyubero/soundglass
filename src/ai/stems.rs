@@ -2,6 +2,7 @@
 //! inside: `mix` [1, 2, 343980] at 44.1 kHz in, `stems` [1, 4, 2, 343980] out. Run in
 //! overlapping segments, cross-faded, as StemSplit's infer.py and Demucs' apply_model do.
 use super::*;
+use crate::i18n::tr;
 
 pub const RATE: u32 = 44_100;
 /// The model's fixed segment, 7.8 s.
@@ -19,7 +20,7 @@ pub(super) fn separate(model: &Path, mut mix: Vec<Vec<f32>>, overlap: f32, progr
         mix.push(mix[0].clone());
     }
     if mix.len() != 2 {
-        return Err("Split into Stems takes mono or stereo tracks".into());
+        return Err(tr("Split into Stems takes mono or stereo tracks").into());
     }
     let total = mix[0].len();
     // As Demucs' api.py: the mix scaled by its mono mean and deviation, the stems scaled back.
@@ -51,7 +52,7 @@ pub(super) fn separate(model: &Path, mut mix: Vec<Vec<f32>>, overlap: f32, progr
         let outputs = session.run(ort::inputs!["mix" => Tensor::from_array(([1usize, 2, SEGMENT], input.clone())).map_err(err)?]).map_err(err)?;
         let (_, stems) = output(&outputs, "stems")?;
         if stems.len() != 4 * 2 * SEGMENT {
-            return Err("the model gave an unexpected output".into());
+            return Err(tr("the model gave an unexpected output").into());
         }
         for (s, stem) in out.iter_mut().enumerate() {
             for (c, ch) in stem.iter_mut().enumerate() {

@@ -3,20 +3,21 @@
 use super::*;
 use crate::edit::Edit;
 use crate::track::Track;
+use crate::i18n::tr;
 
 /// The edited track's channels at `rate`.
 pub(super) fn planar(track: &Track, edit: &Edit, rate: u32) -> Result<Vec<Vec<f32>>, String> {
-    let own = track.format.get().ok_or("the track has no audio")?.rate;
+    let own = track.format.get().ok_or(tr("the track has no audio"))?.rate;
     let resampled = if own != rate { Some(crate::save::resample(track, edit, rate, None)?) } else { None };
     let (track, edit) = resampled.as_ref().map_or((track, edit), |(t, e)| (&**t, e));
-    let channels = edit.channels(track.format.get().ok_or("the track has no audio")?.channels);
+    let channels = edit.channels(track.format.get().ok_or(tr("the track has no audio"))?.channels);
     let mut out = vec![Vec::with_capacity(edit.len() as usize); channels];
     let whole = crate::edit::read_all(track, edit, 0, edit.len(), |block| {
         for frame in block.chunks_exact(channels) {
             out.iter_mut().zip(frame).for_each(|(c, &x)| c.push(x));
         }
     });
-    if whole { Ok(out) } else { Err("the track isn't fully loaded".into()) }
+    if whole { Ok(out) } else { Err(tr("the track isn't fully loaded").into()) }
 }
 
 /// The mean of the channels, frame by frame.

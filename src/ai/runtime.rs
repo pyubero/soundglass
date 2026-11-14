@@ -1,6 +1,7 @@
 //! ONNX Runtime: downloaded on request, loaded the first time an AI tool runs (never at
 //! startup). Copied from lightview, with the same pinned files.
 use super::*;
+use crate::i18n::tr;
 
 /// Microsoft's CPU build of ONNX Runtime, the version `ort` (api-31) is made for.
 #[cfg(not(windows))]
@@ -173,7 +174,7 @@ pub fn download_gpu(progress: &dyn Fn(f32), cancel: &AtomicBool) -> Result<(), S
             std::fs::remove_file(&archive).map_err(|e| e.to_string())?;
         }
         if !CUDA_LIBS.iter().all(|l| tmp.join(l).is_file()) {
-            return Err("a GPU library was missing from the download".into());
+            return Err(tr("a GPU library was missing from the download").into());
         }
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::rename(&tmp, &dir).map_err(|e| e.to_string())

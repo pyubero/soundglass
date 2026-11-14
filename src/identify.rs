@@ -11,6 +11,7 @@ use serde_json::Value;
 
 use crate::tags::TagEdit;
 use crate::track::Track;
+use crate::i18n::{tr, trf};
 
 /// soundglass's AcoustID application key (acoustid.org/new-application); empty until registered.
 pub const ACOUSTID_KEY: &str = "";
@@ -45,10 +46,10 @@ pub struct Match {
 /// The compressed, base64 fingerprint (as fpcalc prints it) of the first two minutes, and the
 /// track's length in whole seconds.
 pub fn fingerprint(track: &Track) -> Result<(String, u32), String> {
-    let format = *track.format.get().ok_or("The file has no audio.")?;
+    let format = *track.format.get().ok_or(tr("The file has no audio."))?;
     let config = Configuration::preset_test2();
     let mut printer = Fingerprinter::new(&config);
-    printer.start(format.rate, format.channels as u32).map_err(|e| format!("Can't fingerprint this audio ({e:?})"))?;
+    printer.start(format.rate, format.channels as u32).map_err(|e| trf("Can't fingerprint this audio ({e})", &[("e", &format!("{e:?}"))]))?;
     let max = SECONDS * format.rate as usize * format.channels;
     let mut fed = 0;
     let mut buf = Vec::new();
@@ -64,7 +65,7 @@ pub fn fingerprint(track: &Track) -> Result<(String, u32), String> {
     }
     printer.finish();
     if printer.fingerprint().is_empty() {
-        return Err("The file is too short to identify.".into());
+        return Err(tr("The file is too short to identify.").into());
     }
     let compressed = FingerprintCompressor::from(&config).compress(printer.fingerprint());
     let secs = (track.len() / format.rate.max(1) as u64) as u32;
@@ -87,7 +88,7 @@ pub fn genre(id: &str) -> Result<Option<String>, String> {
     }
     wait_turn();
     let url = format!("https://musicbrainz.org/ws/2/recording/{id}?inc=genres&fmt=json");
-    let reply = agent().get(&url).call().map_err(|e| format!("MusicBrainz can't be reached ({e})"))?;
+    let reply = agent().get(&url).call().map_err(|e| trf("MusicBrainz can't be reached ({e})", &[("e", &e)]))?;
     Ok(top_genre(&read(reply)?))
 }
 
@@ -113,8 +114,8 @@ fn agent() -> ureq::Agent {
 
 /// The reply as JSON, at most `REPLY_LIMIT` bytes.
 fn read(mut reply: ureq::http::Response<ureq::Body>) -> Result<Value, String> {
-    let text = reply.body_mut().with_config().limit(REPLY_LIMIT).read_to_string().map_err(|e| format!("The reply couldn't be read ({e})"))?;
-    serde_json::from_str(&text).map_err(|_| "The reply wasn't understood.".to_string())
+    let text = reply.body_mut().with_config().limit(REPLY_LIMIT).read_to_string().map_err(|e| trf("The reply couldn't be read ({e})", &[("e", &e)]))?;
+    serde_json::from_str(&text).map_err(|_| tr("The reply wasn't understood.").to_string())
 }
 
 /// Keeps requests a second apart: AcoustID allows 3 a second, MusicBrainz 1.
@@ -130,8 +131,8 @@ fn wait_turn() {
 /// AcoustID's reply as matches: one per recording and release, best score first.
 fn matches(reply: &Value) -> Result<Vec<Match>, String> {
     if reply["status"] != "ok" {
-        let why = reply["error"]["message"].as_str().unwrap_or("unknown error");
-        return Err(format!("AcoustID: {why}"));
+        let why = reply["error"]["message"].as_str().unwrap_or(tr("unknown error"));
+        return Err(trf("AcoustID: {why}", &[("why", &why)]));
     }
     let text = |v: &Value| v.as_str().unwrap_or_default().trim().to_string();
     let mut out: Vec<Match> = Vec::new();

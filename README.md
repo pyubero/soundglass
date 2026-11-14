@@ -82,7 +82,7 @@ Reset puts all three back to normal. The last two use WSOLA, which can sound a l
 
 ## Settings
 
-File → Settings… has the seek bar's look (line or waveform), the theme, the interface's font size (10 to 20; the labels drawn on the Spectrogram and waveforms keep their own sizes), Remember window size, or else the size the window opens at (380 × 680 at first), Make soundglass the default player (Linux, for every type in `soundglass.desktop`), Change Keyboard Shortcuts… (every menu item, effect preset and speed preset can get a key, and the defaults can be changed or removed; Space, ←, →, Page Up/Down, L, Esc and Enter are fixed; changes are kept in the settings), and at the bottom the version and Check for updates, which opens the Releases page (soundglass never checks on its own). Ctrl+, opens it.
+File → Settings… has the language (English only for now; the texts are ready for translations, see `src/i18n.rs`), the seek bar's look (line or waveform), the theme, the interface's font size (10 to 20; the labels drawn on the Spectrogram and waveforms keep their own sizes), Remember window size, or else the size the window opens at (380 × 680 at first), Make soundglass the default player (Linux, for every type in `soundglass.desktop`), Change Keyboard Shortcuts… (every menu item, effect preset and speed preset can get a key, and the defaults can be changed or removed; Space, ←, →, Page Up/Down, L, Esc and Enter are fixed; changes are kept in the settings), and at the bottom the version and Check for updates, which opens the Releases page (soundglass never checks on its own). Ctrl+, opens it.
 
 ## Themes
 

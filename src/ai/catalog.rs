@@ -1,5 +1,6 @@
 //! The models soundglass knows: downloadable, pinned by revision and SHA-256, with their licences.
 use super::*;
+use crate::i18n::tr_key;
 
 /// A model soundglass knows by file name.
 pub struct Known {
@@ -29,33 +30,33 @@ const BEAT_THIS_LICENSE: License = License { project: "Beat This! (JKU Linz)", s
 
 const WHISPER_LICENSE: License = License { project: "Whisper (OpenAI)", spdx: "MIT", url: "https://github.com/openai/whisper", text: include_str!("../../licenses/whisper.txt") };
 const PARAKEET_LICENSE: License = License { project: "NVIDIA Parakeet TDT 0.6B v3", spdx: "CC-BY-4.0", url: "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3", text: include_str!("../../licenses/parakeet.txt") };
-const SHERPA_WHISPER: &str = "The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.";
+const SHERPA_WHISPER: &str = tr_key("The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.");
 
 /// In order of preference per task.
 pub const CATALOG: [Known; 7] = [Known {
     file: "denoiser_model.onnx",
-    label: "DeepFilterNet3 — speech, 48 kHz",
+    label: tr_key("DeepFilterNet3 — speech, 48 kHz"),
     task: Task::Denoise,
     mb: 16,
     sha256: "fe5eb64fa2e4154c83f8e4935e82871c850c154387ee892e0ab65fe179e7d8c9",
     // Pinned to a revision, so the file (and its checksum) can't change under us.
     base: "https://huggingface.co/kimtos-labs/denoiser-dfn3/resolve/888f33c41851d7168ae31c3637c323b9e2f3c2a4",
     data: &[],
-    converted_by: Some("The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face."),
+    converted_by: Some(tr_key("The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face.")),
     licenses: &[DEEPFILTERNET_LICENSE],
 }, Known {
     file: "htdemucs_fp16weights.onnx",
-    label: "HTDemucs v4 — drums, bass, other, vocals",
+    label: tr_key("HTDemucs v4 — drums, bass, other, vocals"),
     task: Task::Stems,
     mb: 166,
     sha256: "d05c269d0178d2a72ad484b10b11dd370193fc923201c3b27a99f848745db70a",
     base: "https://huggingface.co/StemSplitio/htdemucs-onnx/resolve/d54ed9eb60e258ea82131c6ee14578628816456a",
     data: &[],
-    converted_by: Some("The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face."),
+    converted_by: Some(tr_key("The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face.")),
     licenses: &[DEMUCS_LICENSE],
 }, Known {
     file: "nmp.onnx",
-    label: "Basic Pitch — any instrument, several notes at once",
+    label: tr_key("Basic Pitch — any instrument, several notes at once"),
     task: Task::Midi,
     mb: 1,
     sha256: "2c3c1d144bfa61ad236e92e169c13535c880469a12a047d4e73451f2c059a0ec",
@@ -66,18 +67,18 @@ pub const CATALOG: [Known; 7] = [Known {
     licenses: &[BASIC_PITCH_LICENSE],
 }, Known {
     file: "beat_this.onnx",
-    label: "Beat This! — beats and downbeats",
+    label: tr_key("Beat This! — beats and downbeats"),
     task: Task::Beats,
     mb: 191,
     sha256: "1337dc6c21257ed6b803418efc320df42b5d8eb296ef16648ef60457cd4b9e55",
     base: "https://huggingface.co/musetric/beat-this-onnx/resolve/25308706dda545c0d5950065bb0604ad71bcf1f5",
     // torchaudio's mel filterbank, for the front end.
     data: &[("mel-filterbank.bin", "1ee975d96f44ccf2c3bfe37825c1c1f0b089f5703c7a12a84b1f0a3bce004533")],
-    converted_by: Some("The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face."),
+    converted_by: Some(tr_key("The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face.")),
     licenses: &[BEAT_THIS_LICENSE],
 }, Known {
     file: "small-encoder.int8.onnx",
-    label: "Whisper small — 99 languages",
+    label: tr_key("Whisper small — 99 languages"),
     task: Task::Transcribe,
     mb: 375,
     sha256: "4cbe7b22fa9026b843b60a68640c747de05bafb1a11b57edc0e66c232d9f33a9",
@@ -90,7 +91,7 @@ pub const CATALOG: [Known; 7] = [Known {
     licenses: &[WHISPER_LICENSE],
 }, Known {
     file: "encoder-model.int8.onnx",
-    label: "Parakeet TDT 0.6B v3 — 25 European languages, more accurate",
+    label: tr_key("Parakeet TDT 0.6B v3 — 25 European languages, more accurate"),
     task: Task::Transcribe,
     mb: 671,
     sha256: "6139d2fa7e1b086097b277c7149725edbab89cc7c7ae64b23c741be4055aff09",
@@ -100,11 +101,11 @@ pub const CATALOG: [Known; 7] = [Known {
         ("nemo128.onnx", "a9fde1486ebfcc08f328d75ad4610c67835fea58c73ba57e3209a6f6cf019e9f"),
         ("vocab.txt", "d58544679ea4bc6ac563d1f545eb7d474bd6cfa467f0a6e2c1dc1c7d37e3c35d"),
     ],
-    converted_by: Some("The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face."),
+    converted_by: Some(tr_key("The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face.")),
     licenses: &[PARAKEET_LICENSE],
 }, Known {
     file: "turbo-encoder.int8.onnx",
-    label: "Whisper large-v3-turbo — 99 languages, best, slow on a CPU",
+    label: tr_key("Whisper large-v3-turbo — 99 languages, best, slow on a CPU"),
     task: Task::Transcribe,
     mb: 1037,
     sha256: "b02dcdf54f348741e93fe732b67d933c8dcb6735655f710640143081db38878b",

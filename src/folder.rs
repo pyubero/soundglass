@@ -4,6 +4,7 @@
 use std::cmp::Ordering;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+use crate::i18n::tr;
 
 /// What symphonia 0.6 decodes with the `all` feature. It has no Opus decoder, so no .opus.
 pub const EXTENSIONS: [&str; 14] = ["mp3", "mp2", "mp1", "flac", "wav", "ogg", "oga", "m4a", "m4b", "aac", "aif", "aiff", "caf", "mka"];
@@ -121,7 +122,7 @@ fn is_trashed_copy(item: &trash::TrashItem, path: &Path) -> bool {
 pub fn restore_trashed(path: &Path) -> Result<(), String> {
     let items = trash::os_limited::list().map_err(|e| e.to_string())?;
     let newest = items.into_iter().filter(|i| is_trashed_copy(i, path)).max_by_key(|i| i.time_deleted);
-    let item = newest.ok_or("It's no longer in the Trash.")?;
+    let item = newest.ok_or(tr("It's no longer in the Trash."))?;
     // The full name, or the file would come back without its extension.
     let name = path.file_name().unwrap_or_default().to_owned();
     trash::os_limited::restore_all([trash::TrashItem { name, ..item }]).map_err(|e| e.to_string())

@@ -7,6 +7,7 @@ use crate::tags::TagEdit;
 use crate::wsola::{Speed, Wsola};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use crate::i18n::{tr, trf};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Kind {
@@ -96,7 +97,7 @@ pub fn reserve_named(source: &Path, what: &str, ext: &str) -> Result<PathBuf, St
         match std::fs::File::options().write(true).create_new(true).open(&dest) {
             Ok(_) => return Ok(dest),
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
-            Err(e) => return Err(format!("can't save a copy next to the original ({e})")),
+            Err(e) => return Err(trf("can't save a copy next to the original ({e})", &[("e", &e)])),
         }
     }
     unreachable!()
@@ -123,9 +124,9 @@ pub fn copy_choice(source: &Path, codec: &str, bits: Option<u32>, last: Choice) 
 /// `draft` holds tag edits not yet written to the original, to put in the copy instead.
 pub fn save(track: &Track, edit: &Edit, choice: Choice, target: &Path, draft: Option<&TagEdit>) -> Result<bool, String> {
     if same_file(target, &track.path) {
-        return Err("That is the original file; choose another name. The original is never changed.".into());
+        return Err(tr("That is the original file; choose another name. The original is never changed.").into());
     }
-    let name = target.file_name().ok_or("no file name")?.to_string_lossy();
+    let name = target.file_name().ok_or(tr("no file name"))?.to_string_lossy();
     // Hidden, next to the target so the rename stays on one disk, with the real extension so it decodes.
     let temp = target.with_file_name(format!(".{name}.soundglass-part.{}", choice.kind.ext()));
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
@@ -139,7 +140,7 @@ pub fn save(track: &Track, edit: &Edit, choice: Choice, target: &Path, draft: Op
         std::fs::rename(&temp, target).map_err(|e| e.to_string())?;
         Ok(tags)
     }))
-    .unwrap_or_else(|_| Err("the encoder failed".into()));
+    .unwrap_or_else(|_| Err(tr("the encoder failed").into()));
     if result.is_err() {
         let _ = std::fs::remove_file(&temp);
     }
@@ -149,11 +150,11 @@ pub fn save(track: &Track, edit: &Edit, choice: Choice, target: &Path, draft: Op
 /// The edited track at another sample rate and with `speed` applied, as a track of its own with no edits.
 pub fn resample(track: &Track, edit: &Edit, rate: u32, speed: Option<Speed>) -> Result<(Arc<Track>, Edit), String> {
     use rubato::Resampler;
-    let format = track.format.get().ok_or("the track has no audio")?;
+    let format = track.format.get().ok_or(tr("the track has no audio"))?;
     let channels = edit.channels(format.channels);
     let mut samples = Vec::with_capacity(edit.len() as usize * channels);
     if !edit::read_all(track, edit, 0, edit.len(), |b| samples.extend_from_slice(b)) {
-        return Err("part of the track could not be read".into());
+        return Err(tr("part of the track could not be read").into());
     }
     let speed = speed.unwrap_or(Speed::NORMAL);
     if speed.stretches() {
@@ -200,7 +201,7 @@ pub(crate) fn same_file(a: &Path, b: &Path) -> bool {
 }
 
 fn encode(track: &Track, edit: &Edit, choice: Choice, path: &Path) -> Result<(), String> {
-    let format = track.format.get().ok_or("the track has no audio")?;
+    let format = track.format.get().ok_or(tr("the track has no audio"))?;
     let (channels, rate) = (edit.channels(format.channels), format.rate);
     let err = |e: hound::Error| e.to_string();
     let mut ok = true;
@@ -255,13 +256,13 @@ fn encode(track: &Track, edit: &Edit, choice: Choice, path: &Path) -> Result<(),
         Kind::Mp3 => {
             use mp3lame_encoder::{Builder, FlushGap, InterleavedPcm, MonoPcm};
             if channels > 2 {
-                return Err("MP3 holds mono or stereo only; save as FLAC or WAV instead".into());
+                return Err(tr("MP3 holds mono or stereo only; save as FLAC or WAV instead").into());
             }
             if !MP3_RATES.contains(&rate) {
-                return Err(format!("MP3 can't hold {:.1} kHz audio; save as FLAC or WAV instead", rate as f64 / 1000.0));
+                return Err(trf("MP3 can't hold {khz} kHz audio; save as FLAC or WAV instead", &[("khz", &format!("{:.1}", rate as f64 / 1000.0))]));
             }
             let dbg = |e: &dyn std::fmt::Debug| format!("MP3: {e:?}");
-            let mut b = Builder::new().ok_or("MP3: LAME failed to start")?;
+            let mut b = Builder::new().ok_or(tr("MP3: LAME failed to start"))?;
             b.set_num_channels(channels as u8).map_err(|e| dbg(&e))?;
             b.set_sample_rate(rate).map_err(|e| dbg(&e))?;
             b.set_brate(mp3_bitrate(choice.mp3_kbps)).map_err(|e| dbg(&e))?;
@@ -296,7 +297,7 @@ fn encode(track: &Track, edit: &Edit, choice: Choice, path: &Path) -> Result<(),
             use std::num::{NonZeroU8, NonZeroU32};
             let dbg = |e: vorbis_rs::VorbisError| format!("Ogg Vorbis: {e}");
             let file = std::io::BufWriter::new(std::fs::File::create(path).map_err(|e| e.to_string())?);
-            let (r, c) = (NonZeroU32::new(rate).ok_or("no sample rate")?, NonZeroU8::new(channels as u8).ok_or("no channels")?);
+            let (r, c) = (NonZeroU32::new(rate).ok_or(tr("no sample rate"))?, NonZeroU8::new(channels as u8).ok_or(tr("no channels"))?);
             let mut b = vorbis_rs::VorbisEncoderBuilder::new(r, c, file).map_err(dbg)?;
             b.bitrate_management_strategy(vorbis_rs::VorbisBitrateManagementStrategy::QualityVbr { target_quality: choice.vorbis_quality as f32 / 10.0 });
             let mut enc = b.build().map_err(dbg)?;
@@ -319,7 +320,7 @@ fn encode(track: &Track, edit: &Edit, choice: Choice, path: &Path) -> Result<(),
             enc.finish().map_err(dbg)?.flush().map_err(|e| e.to_string())?;
         }
     }
-    if ok { Ok(()) } else { Err("part of the track could not be read".into()) }
+    if ok { Ok(()) } else { Err(tr("part of the track could not be read").into()) }
 }
 
 fn mp3_bitrate(kbps: u32) -> mp3lame_encoder::Bitrate {
@@ -356,16 +357,16 @@ fn copy_tags(from: &Path, to: &Path, kind: Kind, draft: Option<&TagEdit>) -> boo
 /// give or take 0.1 s (lossy encoders pad the end).
 /// `exact`: a lossless format must read back frame for frame; a lossy one within 0.1 s (encoder delay).
 fn verify(path: &Path, track: &Track, edit: &Edit, exact: bool) -> Result<(), String> {
-    let want = track.format.get().copied().ok_or("the track has no audio")?;
+    let want = track.format.get().copied().ok_or(tr("the track has no audio"))?;
     let (mut frames, mut got) = (0u64, None);
     crate::track::decode(path, |_, _, _| {}, |samples, channels, rate, _| {
         got = Some((rate, channels));
         frames += (samples.len() / channels) as u64;
         Ok(())
     })
-    .map_err(|e| format!("the saved file doesn't read back ({e})"))?;
+    .map_err(|e| trf("the saved file doesn't read back ({e})", &[("e", &e)]))?;
     if got.is_some_and(|(r, c)| r != want.rate || c != edit.channels(want.channels)) || frames.abs_diff(edit.len()) > if exact { 0 } else { want.rate as u64 / 10 } {
-        return Err(format!("the saved file reads back wrong ({frames} frames, expected {})", edit.len()));
+        return Err(trf("the saved file reads back wrong ({frames} frames, expected {expected})", &[("frames", &frames), ("expected", &edit.len())]));
     }
     Ok(())
 }
