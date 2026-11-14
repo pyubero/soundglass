@@ -77,6 +77,8 @@ pub struct Settings {
     pub font_size: f32,
     /// The window's size at start while `remember_window_size` is off.
     pub default_size: [f32; 2],
+    /// The first-start question about being the default player has been answered (or wasn't needed).
+    pub default_asked: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -133,6 +135,7 @@ impl Default for Settings {
             volume: 1.0,
             font_size: DEFAULT_FONT_SIZE,
             default_size: DEFAULT_SIZE,
+            default_asked: false,
         }
     }
 }
@@ -232,6 +235,7 @@ mod tests {
             volume: 0.4,
             font_size: 16.0,
             default_size: [500.0, 700.0],
+            default_asked: true,
         };
         let app_ron = |v: &str| ron::to_string(&HashMap::from([(KEY.to_string(), v.to_string())])).unwrap();
         assert_eq!(parse(&app_ron(&ron::to_string(&s).unwrap())), s);

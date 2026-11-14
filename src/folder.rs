@@ -185,6 +185,32 @@ pub fn watch(notify: impl Fn() + Send + 'static, interval: std::time::Duration) 
     (slot, rx)
 }
 
+/// The desktop entry `xdg-mime` points at, which also lists the types soundglass plays (one source with install.sh).
+const DESKTOP_FILE: &str = "soundglass.desktop";
+const DESKTOP_ENTRY: &str = include_str!("../soundglass.desktop");
+
+/// The MimeType list of the desktop entry.
+fn mime_types() -> Vec<&'static str> {
+    DESKTOP_ENTRY.lines().find_map(|l| l.strip_prefix("MimeType=")).unwrap_or_default().split(';').filter(|t| !t.is_empty()).collect()
+}
+
+/// Linux, with a desktop entry for `xdg-mime` to point at (the .deb or install.sh put it there).
+/// Windows sets its defaults in its own Settings, so never there.
+pub fn desktop_installed() -> bool {
+    let home = std::env::var_os("HOME").map(|h| Path::new(&h).join(".local/share/applications").join(DESKTOP_FILE));
+    cfg!(target_os = "linux") && (Path::new("/usr/share/applications").join(DESKTOP_FILE).exists() || home.is_some_and(|p| p.exists()))
+}
+
+/// Whether soundglass already plays MP3s by default. Runs xdg-mime: off the UI thread.
+pub fn is_default() -> bool {
+    std::process::Command::new("xdg-mime").args(["query", "default", "audio/mpeg"]).output().is_ok_and(|o| String::from_utf8_lossy(&o.stdout).trim() == DESKTOP_FILE)
+}
+
+/// Makes soundglass this user's default for every type in its desktop entry.
+pub fn make_default() -> Result<(), String> {
+    crate::ai::run(std::process::Command::new("xdg-mime").args(["default", DESKTOP_FILE]).args(mime_types()))
+}
+
 /// Opens a web page in the default browser.
 pub fn open_url(url: &str) {
     let program = if cfg!(windows) { "explorer" } else { "xdg-open" };
@@ -220,6 +246,13 @@ pub fn show_in_folder(path: &Path) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn default_app_types_come_from_the_desktop_entry() {
+        let types = mime_types();
+        assert!(types.contains(&"audio/mpeg") && types.contains(&"audio/flac"), "{types:?}");
+        assert!(types.iter().all(|t| t.starts_with("audio/")));
+    }
 
     #[test]
     fn a_change_is_reported_once_it_holds() {

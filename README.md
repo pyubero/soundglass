@@ -80,7 +80,7 @@ Reset puts all three back to normal. The last two use WSOLA, which can sound a l
 
 ## Settings
 
-File → Settings… has the seek bar's look (line or waveform), the theme, the interface's font size (10 to 20; the labels drawn on the Spectrogram and waveforms keep their own sizes), Remember window size, or else the size the window opens at (380 × 680 at first), and at the bottom the version and Check for updates, which opens the Releases page (soundglass never checks on its own). Ctrl+, opens it.
+File → Settings… has the seek bar's look (line or waveform), the theme, the interface's font size (10 to 20; the labels drawn on the Spectrogram and waveforms keep their own sizes), Remember window size, or else the size the window opens at (380 × 680 at first), Make soundglass the default player (Linux, for every type in `soundglass.desktop`), and at the bottom the version and Check for updates, which opens the Releases page (soundglass never checks on its own). Ctrl+, opens it.
 
 ## Themes
 
@@ -129,7 +129,7 @@ The tools work on the selection in the Edit panel, or on the whole track when no
 
 Each release on GitHub has a Linux package and a Windows installer. Both install only the program, its menu entry and its icon; settings, themes and AI models live in the data folder (`~/.local/share/soundglass/`, `%APPDATA%\soundglass\data\`), so removing the package keeps them.
 
-- Linux (Ubuntu 22.04, Debian 12 or newer): `sudo apt install ./soundglass_0.1.0_amd64.deb`, then pick soundglass as the default in System Settings → Default Applications if you like.
+- Linux (Ubuntu 22.04, Debian 12 or newer): `sudo apt install ./soundglass_0.1.0_amd64.deb`. The first time it starts, it offers to become your default player (File → Settings… → Make soundglass the default player does it later).
 - Windows 10 or 11: run `soundglass-0.1.0-x64.msi`, then choose soundglass in Settings → Default apps (Windows doesn't let an installer make itself the default).
 
 `./package-deb.sh` builds the .deb locally; the .msi is built on GitHub Actions (`.github/workflows/build.yml`).

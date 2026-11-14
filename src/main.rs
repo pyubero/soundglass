@@ -105,11 +105,21 @@ fn main() -> eframe::Result {
         let player = opening.join().unwrap_or_else(|_| Err("the sound device failed to open".into()));
         let volume = settings.volume;
         let (watched, changes) = folder::watch(repaint(&ctx), Duration::from_secs(1));
+        // Asked here and not by the package: a package runs as root, defaults are per user (lightview's way).
+        let default_check = (!settings.default_asked && folder::desktop_installed()).then(|| {
+            let (tx, rx) = std::sync::mpsc::channel();
+            let notify = repaint(&ctx);
+            std::thread::spawn(move || {
+                let _ = tx.send(folder::is_default());
+                notify();
+            });
+            rx
+        });
         if let Ok(p) = &player {
             p.send(Cmd::Load(track.clone()));
             p.send(Cmd::Volume(volume_gain(volume)));
         }
-        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_found: None, cover_offer: None, cover_asked: Default::default(), rename: None, rename_file: None, delete_prompt: false, deleted: Vec::new(), watched, changes, own_stamp: None, changed_prompt: false, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), file_clipboard: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_found: None, cover_offer: None, cover_asked: Default::default(), rename: None, rename_file: None, delete_prompt: false, deleted: Vec::new(), watched, changes, own_stamp: None, changed_prompt: false, default_check, default_prompt: None, default_result: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), file_clipboard: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -267,6 +277,11 @@ struct App {
     changes: std::sync::mpsc::Receiver<(PathBuf, folder::Stamp)>,
     own_stamp: Option<folder::Stamp>,
     changed_prompt: bool,
+    /// First start: whether soundglass is the default player, being found out on a thread; then the
+    /// welcome question's tick while it shows; and the last Make default's outcome, for Settings.
+    default_check: Option<std::sync::mpsc::Receiver<bool>>,
+    default_prompt: Option<bool>,
+    default_result: Option<Result<(), String>>,
     identify: Option<Identify>,
     /// Local AI: the AI Models window, licence prompts and downloads.
     ai: ai::Ai,
@@ -955,6 +970,7 @@ impl eframe::App for App {
         self.rename_file_window(&ctx);
         self.delete_window(&ctx);
         self.changed_window(&ctx, pos);
+        self.default_window(&ctx);
         if let Some(task) = ai_tool {
             self.ai.start_tool(task, self.track.clone(), edit.clone(), self.edit_view.selection, &self.settings.ai, &ctx);
         }
@@ -1544,6 +1560,18 @@ impl App {
                     ui.add(egui::DragValue::new(h).range(settings::MIN_SIZE[1]..=4320.0));
                 });
             });
+            if folder::desktop_installed() {
+                ui.separator();
+                if ui.button("Make soundglass the default player").clicked() {
+                    self.default_result = Some(folder::make_default());
+                }
+                if let Some(result) = &self.default_result {
+                    ui.weak(match result {
+                        Ok(()) => "soundglass is now the default player",
+                        Err(e) => e,
+                    });
+                }
+            }
             ui.separator();
             ui.horizontal(|ui| {
                 ui.weak(format!("soundglass {}", env!("CARGO_PKG_VERSION")));
@@ -2424,6 +2452,37 @@ impl App {
         match folder::restore_trashed(&path) {
             Ok(()) => self.open(path),
             Err(e) => self.save_notice = Some((Err(format!("Couldn't bring back {}: {e}", path.file_name().unwrap_or_default().to_string_lossy())), time)),
+        }
+    }
+
+    /// First start, when soundglass isn't the default player yet: a welcome with "Make soundglass my
+    /// default player" ticked. Asked once; already the default, nothing is asked.
+    fn default_window(&mut self, ctx: &egui::Context) {
+        if let Some(is_default) = self.default_check.as_ref().and_then(|rx| rx.try_recv().ok()) {
+            self.default_check = None;
+            if is_default {
+                self.settings.default_asked = true;
+            } else {
+                self.default_prompt = Some(true);
+            }
+        }
+        let Some(mut tick) = self.default_prompt else { return };
+        let modal = egui::Modal::new(egui::Id::unique("default-player")).show(ctx, |ui| {
+            ui.heading("Welcome to soundglass");
+            ui.add_space(8.0);
+            ui.checkbox(&mut tick, "Make soundglass my default player");
+            ui.add_space(8.0);
+            ui.button("OK").clicked()
+        });
+        self.default_prompt = Some(tick);
+        if modal.inner || modal.should_close() {
+            (self.default_prompt, self.settings.default_asked) = (None, true);
+            if modal.inner && tick {
+                let result = folder::make_default();
+                // Settings is where a failure is shown.
+                self.show_settings = result.is_err();
+                self.default_result = Some(result);
+            }
         }
     }
 
