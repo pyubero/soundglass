@@ -176,6 +176,9 @@ impl Settings {
         if self.rename_pattern.is_empty() {
             self.rename_pattern = d.rename_pattern;
         }
+        if !FONT_SIZES.contains(&self.font_size) {
+            self.font_size = d.font_size;
+        }
         self.spectrum = self.spectrum.checked();
         self
     }
@@ -217,6 +220,7 @@ mod tests {
             ai: AiSettings { models: HashMap::from([(crate::ai::Task::Stems, "m.onnx".into())]), use_gpu: false, lossless: true, tune: HashMap::from([("nmp.onnx".to_string(), crate::ai::Tune::Beats(Default::default()))]) },
             order: Order::Shuffle,
             volume: 0.4,
+            font_size: 16.0,
         };
         let app_ron = |v: &str| ron::to_string(&HashMap::from([(KEY.to_string(), v.to_string())])).unwrap();
         assert_eq!(parse(&app_ron(&ron::to_string(&s).unwrap())), s);
@@ -227,9 +231,10 @@ mod tests {
         // Only some fields: the rest keep their defaults.
         let some = parse(&app_ron("(practice: true, spectrum: (fft: 8192))"));
         assert_eq!((some.practice, some.spectrum.fft, some.note_a4, some.spectrum.hop), (true, 8192, 440.0, crate::spectrum::Params::default().hop));
-        let bad = parse(&app_ron("(note_a4: 1000, info_width: -3, edit_height: 0, window_size: Some((700, -1)), note_scale: Some(12), note_label_size: 99, rename_pattern: \"\", theme: \"\", spectrum: (fft: 3000, window: 99999))"));
+        let bad = parse(&app_ron("(note_a4: 1000, info_width: -3, edit_height: 0, window_size: Some((700, -1)), note_scale: Some(12), note_label_size: 99, font_size: 99, rename_pattern: \"\", theme: \"\", spectrum: (fft: 3000, window: 99999))"));
         assert_eq!((bad.note_a4, bad.info_width, bad.edit_height, bad.window_size, bad.note_scale, bad.note_label_size), (480.0, INFO_WIDTH, EDIT_HEIGHT, None, None, 24.0));
         assert_eq!((bad.rename_pattern.as_str(), bad.theme.as_str()), (crate::tags::DEFAULT_PATTERN, crate::theme::SYSTEM));
+        assert_eq!(bad.font_size, DEFAULT_FONT_SIZE);
         assert_eq!(bad.spectrum, crate::spectrum::Params { fft: 3000, window: 99999, ..Default::default() }.checked());
     }
 }
