@@ -30,6 +30,8 @@ rusty-chromaprint = "0.3.0"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 sha2 = "0.11"
+# File → Delete… moves to the system Trash; Ctrl+Z restores from it (as lightview).
+trash = { version = "5.3.0", default-features = false, features = ["coinit_apartmentthreaded", "freedesktop"] }
 symphonia = { version = "0.6.1", features = ["all"] }
 ureq = "3.5.2"
 vorbis_rs = "0.5.6"

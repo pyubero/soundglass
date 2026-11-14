@@ -108,7 +108,7 @@ fn main() -> eframe::Result {
             p.send(Cmd::Load(track.clone()));
             p.send(Cmd::Volume(volume_gain(volume)));
         }
-        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_found: None, cover_offer: None, cover_asked: Default::default(), rename: None, rename_file: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), file_clipboard: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_found: None, cover_offer: None, cover_asked: Default::default(), rename: None, rename_file: None, delete_prompt: false, deleted: Vec::new(), identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), file_clipboard: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -256,6 +256,10 @@ struct App {
     rename: Option<(String, Result<tags::TagEdit, String>)>,
     /// File → Rename… while open: the name being typed, whether the window just opened, and the last error.
     rename_file: Option<(String, bool, Option<String>)>,
+    /// File → Delete…'s question is showing.
+    delete_prompt: bool,
+    /// Files moved to the Trash this session, newest last; Ctrl+Z brings them back once the edits are undone.
+    deleted: Vec<PathBuf>,
     identify: Option<Identify>,
     /// Local AI: the AI Models window, licence prompts and downloads.
     ai: ai::Ai,
@@ -668,6 +672,10 @@ impl eframe::App for App {
                         self.start_rename();
                         ui.close();
                     }
+                    if ui.add_enabled(self.has_track(), egui::Button::new("Delete…")).on_hover_text("Moves the file to the Trash; Edit → Undo brings it back").clicked() {
+                        self.delete_prompt = true;
+                        ui.close();
+                    }
                     let item = ui.add_enabled(why.is_none(), egui::Button::new("Rename from Tags…"));
                     if item.on_disabled_hover_text(why.unwrap_or_default()).clicked() {
                         self.rename = Some((self.settings.rename_pattern.clone(), tags::read(&self.track.path)));
@@ -690,7 +698,7 @@ impl eframe::App for App {
                 ui.menu_button("Edit", |ui| {
                     let (history, selected) = (self.history.as_ref(), self.edit_view.selection.is_some() && self.track.done());
                     let items = [
-                        ("Undo", &undo_key, history.is_some_and(|h| h.can_undo()), Action::Undo),
+                        ("Undo", &undo_key, history.is_some_and(|h| h.can_undo()) || !self.deleted.is_empty(), Action::Undo),
                         ("Redo", &redo_key, history.is_some_and(|h| h.can_redo()), Action::Redo),
                         ("Cut out", &cut_key, selected, Action::Cut),
                         ("Crop", &crop_key, selected, Action::Crop),
@@ -925,6 +933,7 @@ impl eframe::App for App {
         self.follow_tags(&ctx);
         self.rename_window(&ctx);
         self.rename_file_window(&ctx);
+        self.delete_window(&ctx);
         if let Some(task) = ai_tool {
             self.ai.start_tool(task, self.track.clone(), edit.clone(), self.edit_view.selection, &self.settings.ai, &ctx);
         }
@@ -1230,6 +1239,8 @@ impl App {
     fn apply(&mut self, action: Action, pos: u64, len: u64) {
         let Ok(p) = &self.player else { return };
         match action {
+            // Past the track's own edits, Undo brings back the last file moved to the Trash.
+            Action::Undo if !self.history.as_ref().is_some_and(|h| h.can_undo()) && !self.deleted.is_empty() => self.restore_deleted(),
             Action::Undo | Action::Redo | Action::Cut | Action::Crop | Action::Silence | Action::Fx(_) => self.change(action, pos),
             Action::Previous => self.previous(),
             Action::Next => {
@@ -2321,6 +2332,77 @@ impl App {
         self.remember(&new);
         self.save_notice = Some((Ok(format!("Renamed to {name}")), ctx.input(|i| i.time)));
         Ok(())
+    }
+
+    /// "Move to the Trash?"; Continue (or Enter) moves it and goes on to the next file, stopped.
+    fn delete_window(&mut self, ctx: &egui::Context) {
+        if !self.delete_prompt {
+            return;
+        }
+        let name = self.track.path.file_name().unwrap_or_default().to_string_lossy().into_owned();
+        let dirty = self.dirty();
+        let modal = egui::Modal::new(egui::Id::unique("delete")).show(ctx, |ui| {
+            ui.heading("Delete file?");
+            ui.label(format!("{name} will be moved to the Trash."));
+            if dirty {
+                ui.label("Its unsaved edits will be lost.");
+            }
+            ui.add_space(6.0);
+            ui.horizontal(|ui| {
+                let (accept, cancel) = (ui.button("Continue"), ui.button("Cancel"));
+                if !cancel.has_focus() {
+                    accept.request_focus();
+                }
+                (accept.clicked(), cancel.clicked())
+            }).inner
+        });
+        let (accept, cancel) = modal.inner;
+        if accept {
+            self.delete_track(ctx);
+        }
+        if accept || cancel || modal.should_close() {
+            self.delete_prompt = false;
+        }
+    }
+
+    /// Moves the current file to the Trash, then shows the next file in the folder (the previous one
+    /// at its end), stopped, or no file when it was the last.
+    fn delete_track(&mut self, ctx: &egui::Context) {
+        let path = self.track.path.clone();
+        if let Err(e) = trash::delete(&path) {
+            self.save_notice = Some((Err(format!("Couldn't delete the file: {e}")), ctx.input(|i| i.time)));
+            return;
+        }
+        self.files.retain(|p| *p != path);
+        self.recent.retain(|p| *p != path);
+        if let Some(b) = &mut self.browse {
+            *b = Browse::new(b.dir.clone());
+        }
+        self.deleted.push(path);
+        self.history = None;
+        self.next = None;
+        let Ok(p) = &self.player else { return };
+        if self.files.is_empty() {
+            (self.track, self.index) = (no_track(), 0);
+            p.send(Cmd::Load(self.track.clone()));
+            self.forget_edits();
+        } else {
+            self.go(self.index.min(self.files.len() - 1));
+        }
+        if let Ok(p) = &self.player {
+            p.send(Cmd::Pause);
+        }
+        self.save_notice = Some((Ok("Moved to the Trash".into()), ctx.input(|i| i.time)));
+    }
+
+    /// Puts the last file moved to the Trash back and opens it.
+    fn restore_deleted(&mut self) {
+        let Some(path) = self.deleted.pop() else { return };
+        let time = self.ctx.get().map_or(0.0, |c| c.input(|i| i.time));
+        match folder::restore_trashed(&path) {
+            Ok(()) => self.open(path),
+            Err(e) => self.save_notice = Some((Err(format!("Couldn't bring back {}: {e}", path.file_name().unwrap_or_default().to_string_lossy())), time)),
+        }
     }
 
     fn start_rename(&mut self) {

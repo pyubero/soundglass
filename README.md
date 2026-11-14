@@ -29,7 +29,7 @@ Without a file it opens an empty window with Open… (the menus that need a file
 - On the Spectrogram's toolbar, Chords shows a bar along the top with the chords (major, minor and 7ths) against the track's time; they follow the edits and the zoom, and are named like the note lines. It's a first try: it finds the main chords better than when they change (docs/CHORDS.md). Key ≈ … (once estimated) shows the detected key's scale (a minor key as its relative major). Notes shows lines at the notes' pitches (C thicker), named where they fit; Settings sets the tuning (A4), C D E or Do Ré Mi, sharps or flats, octave numbers, the scale shown (all notes or one of the 12 major scales, spelled as the key spells them), an instrument's range in concert pitch (trumpet E3–Bb5, tenor sax Ab2–Eb5), and the lines' look (colours for the tonic — C with all notes, the key's tonic with a scale — and the other lines, tonic width, label size). The spectrogram is worked out once per file (and again after an edit or an Analysis change), so zooming and panning are instant. Its Analysis part sets the FFT size, window size, hop (256, 512 or 1024 samples; raised for long files, sooner with big FFTs) — every FFT bin is kept and drawn, the window function, the level range, the lowest frequency and the colours, with Reset to defaults. All are remembered.
 - Esc: clear the selection
 - Delete: cut out the selection; Ctrl+T: crop to it; Ctrl+L: replace it with silence
-- Ctrl+Z: undo; Ctrl+Shift+Z or Ctrl+Y: redo
+- Ctrl+Z: undo (past the edits, it brings back a file deleted this session); Ctrl+Shift+Z or Ctrl+Y: redo
 - L (Practice mode): loop the selection on or off (otherwise playback stops at its end)
 - Ctrl+S: Save Copy — the edits next to the original, in its format, as `name-edited` (then `name-edited-2`…)
 - Ctrl+Shift+S: Save As (the original file is never changed), with the format, quality and sample rate, and whether to apply the speed and pitch
@@ -72,6 +72,7 @@ Reset puts all three back to normal. The last two use WSOLA, which can sound a l
 - File → Show in File Manager (Show in Explorer on Windows) opens the file manager with the current file selected, or just its folder if the file manager can't select files.
 - File → Copy Path copies the file's full path as text; Copy File puts the file itself on the clipboard, for pasting into a chat or a file manager (it stays there while soundglass runs).
 - File → Rename… (F2) renames the current file to a name you type (the extension starts unselected); it never replaces another file, and playback and edits carry on.
+- File → Delete… asks first, then moves the current file to the system Trash and shows the next file in the folder, stopped (no file if it was the last). Edit → Undo (Ctrl+Z), once the current track's edits are all undone, brings back the files deleted this session, newest first.
 - File → Rename from Tags… renames the current file from a pattern such as `{track} - {artist} - {title}` (also `{album}`, `{year}`, `{genre}`), with a preview. A missing tag is left out, a name Windows reserves (`CON`, `NUL`, `COM1`…) gets a `_`, and an existing file is never replaced (changing only the letter case is fine).
 
 ## Settings

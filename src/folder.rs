@@ -108,6 +108,24 @@ fn file_uri(path: &Path) -> String {
     format!("file://{}", percent_encode(path.as_os_str().as_bytes(), ESCAPED))
 }
 
+/// Whether a Trash item is `path`. When Windows hides known extensions, `item.name` has none,
+/// but `item.id` (like `$RAB12CD.mp3`) keeps it. From lightview.
+fn is_trashed_copy(item: &trash::TrashItem, path: &Path) -> bool {
+    let same_name = Some(item.name.as_os_str()) == path.file_name() || (Some(item.name.as_os_str()) == path.file_stem() && Path::new(&item.id).extension() == path.extension());
+    // Compared canonically, as `path` is: the Trash may spell the folder differently.
+    same_name && std::fs::canonicalize(&item.original_parent).is_ok_and(|p| Some(p.as_path()) == path.parent())
+}
+
+/// Puts a file back from the Trash, to the place it was deleted from. From lightview.
+pub fn restore_trashed(path: &Path) -> Result<(), String> {
+    let items = trash::os_limited::list().map_err(|e| e.to_string())?;
+    let newest = items.into_iter().filter(|i| is_trashed_copy(i, path)).max_by_key(|i| i.time_deleted);
+    let item = newest.ok_or("It's no longer in the Trash.")?;
+    // The full name, or the file would come back without its extension.
+    let name = path.file_name().unwrap_or_default().to_owned();
+    trash::os_limited::restore_all([trash::TrashItem { name, ..item }]).map_err(|e| e.to_string())
+}
+
 /// Opens a web page in the default browser.
 pub fn open_url(url: &str) {
     let program = if cfg!(windows) { "explorer" } else { "xdg-open" };
@@ -143,6 +161,35 @@ pub fn show_in_folder(path: &Path) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn finds_trashed_file_with_hidden_extension() {
+        let dir = std::fs::canonicalize(std::env::temp_dir()).unwrap();
+        let path = dir.join("song.mp3");
+        let item = |name: &str, id: &str| trash::TrashItem { id: id.into(), name: name.into(), original_parent: dir.clone(), time_deleted: 0 };
+        assert!(is_trashed_copy(&item("song.mp3", "/trash/info/song.mp3.trashinfo"), &path));
+        assert!(is_trashed_copy(&item("song", r"C:\$Recycle.Bin\S-1\$RAB12CD.mp3"), &path));
+        assert!(!is_trashed_copy(&item("song", r"C:\$Recycle.Bin\S-1\$RAB12CD.flac"), &path));
+        assert!(!is_trashed_copy(&item("other.mp3", "/trash/info/other.mp3.trashinfo"), &path));
+        assert!(!is_trashed_copy(&trash::TrashItem { original_parent: dir.join("elsewhere"), ..item("song.mp3", "x") }, &path));
+    }
+
+    // Uses a Trash under target/: `XDG_DATA_HOME=$PWD/target/trashtest cargo test --release -- --ignored trash_round_trip`.
+    #[test]
+    #[ignore]
+    fn trash_round_trip() {
+        let data = std::env::var("XDG_DATA_HOME").expect("set XDG_DATA_HOME to a folder under target/");
+        assert!(data.contains("/target/"), "XDG_DATA_HOME must be under target/");
+        std::fs::create_dir_all(&data).unwrap();
+        let path = std::fs::canonicalize(&data).unwrap().join(format!("soundglass-trash-{}.mp3", std::process::id()));
+        std::fs::write(&path, "audio").unwrap();
+        trash::delete(&path).unwrap();
+        assert!(!path.exists());
+        restore_trashed(&path).unwrap();
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "audio");
+        std::fs::remove_file(&path).unwrap();
+        assert!(restore_trashed(&path).is_err());
+    }
 
     #[test]
     fn natural_order() {
