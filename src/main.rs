@@ -103,7 +103,7 @@ fn main() -> eframe::Result {
             p.send(Cmd::Load(track.clone()));
             p.send(Cmd::Volume(volume_gain(volume)));
         }
-        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_offer: None, cover_asked: Default::default(), rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_found: None, cover_offer: None, cover_asked: Default::default(), rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), player, t0, timings, shown: false }))
     }))
 }
 
@@ -204,6 +204,8 @@ struct App {
     tag_job: Option<std::sync::mpsc::Receiver<Result<String, String>>>,
     /// The track (by address) last checked for a folder image to offer as its cover.
     cover_checked: usize,
+    /// The folder image found for that track, from the check's thread.
+    cover_found: Option<std::sync::mpsc::Receiver<FoundCover>>,
     /// The cover being offered (or removed) while asking: from the Edit menu or the folder's lone image.
     cover_offer: Option<CoverOffer>,
     /// Folders already asked about this run, so Next doesn't ask again.
@@ -1062,6 +1064,17 @@ fn resize_for_panel(mut size: [f32; 2], opening: bool, extent: f32, axis: usize)
 
 
 
+/// A folder image offered as the cover: its path, the cover to write and a thumbnail to show.
+type FoundCover = (PathBuf, tags::Cover, egui::ColorImage);
+
+/// Reads and checks `image` for the cover offer: the cover to write and a 256 px thumbnail.
+fn read_cover(image: &std::path::Path) -> Result<(tags::Cover, egui::ColorImage), String> {
+    let bytes = std::fs::read(image).map_err(|e| e.to_string())?;
+    let rgba = image::load_from_memory(&bytes).map_err(|_| "That image can't be read.")?.thumbnail(256, 256).to_rgba8();
+    let size = [rgba.width() as usize, rgba.height() as usize];
+    Ok((tags::cover(bytes)?, egui::ColorImage::from_rgba_unmultiplied(size, &rgba)))
+}
+
 /// How many files Open Recent lists.
 const RECENT_MAX: usize = 10;
 
@@ -1090,7 +1103,7 @@ impl App {
         // Decode ahead once this track is in memory, so Next and the gapless move are instant.
         if self.track.done() && self.next.is_none() && let Some(index) = self.upcoming() {
             // Repeat track queues the same, already decoded track.
-            let next = if index == self.index { self.track.clone() } else { Track::load(self.files[index].clone(), repaint(&self.ctx)) };
+            let next = if index == self.index { self.track.clone() } else { Track::load_ahead(self.files[index].clone(), repaint(&self.ctx)) };
             p.send(Cmd::Queue(Some(next.clone())));
             self.next = Some(next);
         }
@@ -1582,6 +1595,7 @@ impl App {
         let (written, path) = (edit.clone(), target.clone());
         let draft = self.tag_editor.as_ref().and_then(|e| e.changes()).cloned();
         std::thread::spawn(move || {
+            track::background();
             let result = save::save(&track, &written, choice, &path, draft.as_ref());
             if result.is_err() && reserved {
                 let _ = std::fs::remove_file(&path);
@@ -1818,13 +1832,14 @@ impl App {
     /// Asks about `image` as the cover of this track or its folder's tracks; `manual` when picked
     /// from the Edit menu (this track or all), else the folder's lone image (all or not now).
     fn offer_cover(&mut self, ctx: &egui::Context, image: PathBuf, manual: bool) -> Result<(), String> {
-        let bytes = std::fs::read(&image).map_err(|e| e.to_string())?;
-        let rgba = image::load_from_memory(&bytes).map_err(|_| "That image can't be read.")?.thumbnail(256, 256).to_rgba8();
-        let cover = tags::cover(bytes)?;
-        let size = [rgba.width() as usize, rgba.height() as usize];
-        let texture = ctx.load_texture("offered cover", egui::ColorImage::from_rgba_unmultiplied(size, &rgba), egui::TextureOptions::LINEAR);
-        self.cover_offer = Some(CoverOffer { image, cover, files: folder::list_folder(&self.track.path), texture: Some(texture), manual });
+        let (cover, thumbnail) = read_cover(&image)?;
+        self.show_cover_offer(ctx, (image, cover, thumbnail), manual);
         Ok(())
+    }
+
+    fn show_cover_offer(&mut self, ctx: &egui::Context, (image, cover, thumbnail): FoundCover, manual: bool) {
+        let texture = ctx.load_texture("offered cover", thumbnail, egui::TextureOptions::LINEAR);
+        self.cover_offer = Some(CoverOffer { image, cover, files: folder::list_folder(&self.track.path), texture: Some(texture), manual });
     }
 
     /// "Add album cover?" with the image, asked when a track without a cover opens
@@ -1835,13 +1850,29 @@ impl App {
         if key != self.cover_checked && self.tag_editor.is_none() && self.tag_job.is_none() {
             self.cover_checked = key;
             let dir = self.track.path.parent().map(|d| d.to_path_buf()).unwrap_or_default();
-            // shortcut: one file's tags, the folder and the image (up to 10 MB) are read and decoded on the UI thread, once per track; move to a thread if a big image stalls a frame.
-            if !self.cover_asked.contains(&dir) && tags::has_cover(&self.track.path) == Ok(false) {
-                if let Some(image) = folder::lone_image(&dir) {
+            self.cover_found = None;
+            if !self.cover_asked.contains(&dir) {
+                // The file's tags, the folder and the image (up to 10 MB) are read off the UI thread.
+                let (tx, rx) = std::sync::mpsc::channel();
+                let (path, notify) = (self.track.path.clone(), repaint(&self.ctx));
+                std::thread::spawn(move || {
+                    track::background();
                     // An unreadable image just isn't offered.
-                    let _ = self.offer_cover(ctx, image, false);
-                }
+                    let found = (tags::has_cover(&path) == Ok(false)).then(|| folder::lone_image(&dir)).flatten().and_then(|image| Some((image.clone(), read_cover(&image).ok()?)));
+                    if let Some((image, (cover, thumbnail))) = found {
+                        let _ = tx.send((image, cover, thumbnail));
+                        notify();
+                    }
+                });
+                self.cover_found = Some(rx);
             }
+        }
+        // Only for the track it was found for, and not over the tag editor or another offer.
+        if key == self.cover_checked && self.tag_editor.is_none() && self.tag_job.is_none() && self.cover_offer.is_none()
+            && let Some(found) = self.cover_found.as_ref().and_then(|rx| rx.try_recv().ok())
+        {
+            self.cover_found = None;
+            self.show_cover_offer(ctx, found, false);
         }
         let Some(CoverOffer { image, cover, files, texture, manual }) = &self.cover_offer else { return };
         let remove = matches!(cover, tags::Cover::Remove);
@@ -2034,6 +2065,7 @@ impl App {
             let (tx, rx) = std::sync::mpsc::channel();
             let (track, ctx) = (self.track.clone(), ctx.clone());
             std::thread::spawn(move || {
+                track::background();
                 let found = identify::fingerprint(&track).and_then(|(fp, secs)| identify::lookup(&fp, secs));
                 let _ = tx.send(IdentifyJob::Found(found));
                 ctx.request_repaint();

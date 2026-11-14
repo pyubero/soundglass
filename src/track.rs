@@ -51,6 +51,24 @@ pub struct Loudness {
 /// Largest cover side kept, in pixels; bigger embedded pictures are shrunk on load.
 const COVER_MAX: u32 = 512;
 
+/// Lowers the calling thread's priority, so the window and the sound come first: for work that
+/// can wait (loudness, decoding ahead, analyses, saving, AI tools).
+pub fn background() {
+    #[cfg(target_os = "linux")]
+    {
+        unsafe extern "C" {
+            fn setpriority(which: i32, who: u32, prio: i32) -> i32;
+        }
+        // On Linux, PRIO_PROCESS (0) with who = 0 sets the calling thread's nice value only (setpriority(2), BUGS).
+        unsafe { setpriority(0, 0, 10) };
+    }
+    #[cfg(windows)]
+    unsafe {
+        use windows_sys::Win32::System::Threading::{GetCurrentThread, SetThreadPriority, THREAD_PRIORITY_BELOW_NORMAL};
+        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
+    }
+}
+
 // shortcut: whole track in memory (~1.4 GB per hour at 48 kHz stereo); a RAM limit in Settings comes later (user's choice).
 pub struct Track {
     pub path: PathBuf,
@@ -83,10 +101,23 @@ pub struct Track {
 impl Track {
     /// Starts decoding `path` on its own thread; `notify` runs whenever more audio is ready.
     pub fn load(path: PathBuf, notify: impl Fn() + Send + Sync + 'static) -> Arc<Track> {
+        Track::start(path, notify, false)
+    }
+
+    /// `load` for the file after this one: decoded at low priority, since nothing plays it yet.
+    // shortcut: if Next moves to it before it's decoded, it finishes at low priority; raise it if that ever stutters.
+    pub fn load_ahead(path: PathBuf, notify: impl Fn() + Send + Sync + 'static) -> Arc<Track> {
+        Track::start(path, notify, true)
+    }
+
+    fn start(path: PathBuf, notify: impl Fn() + Send + Sync + 'static, ahead: bool) -> Arc<Track> {
         let notify = Arc::new(notify);
         let track = Arc::new(Track::empty(path));
         let t = track.clone();
         std::thread::spawn(move || {
+            if ahead {
+                background();
+            }
             let mut cur: Vec<f32> = Vec::new();
             let (mut peak, mut peak_frames) = ((f32::MAX, f32::MIN), 0);
             let on_meta = |tags, info, picture| t.set_meta(tags, info, picture, notify.clone());
@@ -137,6 +168,7 @@ impl Track {
             }
             t.done.store(true, Relaxed);
             notify();
+            background();
             if let Some(format) = t.format.get() {
                 let mut meter = crate::loudness::Meter::new(format.rate, format.channels);
                 let chunks = t.chunks.lock().unwrap().clone();
@@ -158,6 +190,7 @@ impl Track {
         }
         let t = self.clone();
         std::thread::spawn(move || {
+            background();
             let Some(format) = t.format.get() else { return };
             let mono = crate::tempo::mono(&t.chunks(), *format);
             // Only this thread holds the track: nobody will look at it.
@@ -182,6 +215,7 @@ impl Track {
         if let Some(data) = picture {
             let t = self.clone();
             std::thread::spawn(move || {
+                background();
                 if let Ok(img) = image::load_from_memory(&data) {
                     let rgba = img.thumbnail(COVER_MAX, COVER_MAX).to_rgba8();
                     let size = [rgba.width() as usize, rgba.height() as usize];
@@ -522,6 +556,24 @@ pub mod tests {
         decode(&path, |_, _, _| {}, |s, c, _, _| Ok(frames += s.len() / c)).unwrap();
         let want = edit.len() * 48000 / 44100;
         assert!((frames as u64).abs_diff(want) <= 2, "{frames} frames, want {want}");
+    }
+
+    /// This thread's nice value, from /proc (field 19 of stat, after the parenthesised name).
+    #[cfg(target_os = "linux")]
+    fn nice() -> i32 {
+        let stat = std::fs::read_to_string("/proc/thread-self/stat").unwrap();
+        stat.rsplit(')').next().unwrap().split_whitespace().nth(16).unwrap().parse().unwrap()
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn background_lowers_only_the_calling_thread() {
+        let before = nice();
+        assert_eq!(std::thread::spawn(|| {
+            background();
+            nice()
+        }).join().unwrap(), 10.max(before));
+        assert_eq!(nice(), before);
     }
 
     #[test]

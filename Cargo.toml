@@ -34,8 +34,8 @@ vorbis_rs = "0.5.6"
 roxmltree = "0.21"
 
 [target.'cfg(windows)'.dependencies]
-# Already in the dependency tree (winit); only for SetDllDirectoryW (GPU support).
-windows-sys = { version = "0.61", features = ["Win32_System_LibraryLoader"] }
+# Already in the dependency tree (winit); for SetDllDirectoryW (GPU support) and SetThreadPriority.
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_LibraryLoader", "Win32_System_Threading"] }
 
 # Unoptimised decoders are 10–50× slower; keep dependencies fast in debug builds.
 [profile.dev.package."*"]

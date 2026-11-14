@@ -262,6 +262,8 @@ pub fn mesh(texture: egui::TextureId, [left, right]: [f32; 2], (from, to): (usiz
     mesh
 }
 
+/// Finished tiles turned into textures per frame.
+const TILES_PER_FRAME: usize = 2;
 /// Mipmapped, so a zoomed-out picture is averaged rather than shimmering.
 const TEXTURE: egui::TextureOptions = egui::TextureOptions { mipmap_mode: Some(egui::TextureFilter::Linear), ..egui::TextureOptions::LINEAR };
 
@@ -328,6 +330,7 @@ impl Spectrogram {
             let (track, edit, ctx, hop) = (track.clone(), edit.clone(), ctx.clone(), self.hop);
             let (c, d) = (cancel.clone(), done.clone());
             std::thread::spawn(move || {
+                crate::track::background();
                 analyse(&track, &edit, params, hop, &c, &d, |tile, levels, columns| {
                     let _ = tx.send((tile, levels, columns));
                     ctx.request_repaint();
@@ -347,7 +350,12 @@ impl Spectrogram {
             self.colours = colours;
         }
         if let Some(job) = &self.job {
-            loop {
+            // A few tiles per frame: uploading a backlog at once would stall the window.
+            for n in 0.. {
+                if n == TILES_PER_FRAME {
+                    ctx.request_repaint();
+                    break;
+                }
                 match job.rx.try_recv() {
                     Ok((tile, levels, columns)) => {
                         let textures = slabs(self.rows)
