@@ -615,6 +615,18 @@ impl eframe::App for App {
             ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(!fullscreen));
         }
 
+        // The mouse's back and forward buttons, as lightview.
+        if self.no_dialog(&ctx) {
+            for (button, action) in [(egui::PointerButton::Extra1, Action::Previous), (egui::PointerButton::Extra2, Action::Next)] {
+                if ctx.input(|i| i.pointer.button_pressed(button)) {
+                    actions.push(action);
+                }
+            }
+        }
+        // shortcut: winit gets no dropped files on Wayland yet; it works on X11 and Windows.
+        if let Some(path) = ctx.input(|i| i.raw.dropped_files.first().map(|f| f.path().to_path_buf())) {
+            self.open_dropped(path, &ctx);
+        }
         let rename_key = egui::KeyboardShortcut::new(egui::Modifiers::NONE, egui::Key::F2);
         let why_not_rename = if !self.has_track() { Some("no file open") } else if !self.track.done() { Some("after loading") } else if self.tag_job.is_some() { Some("saving tags…") } else { None };
         if ctx.input_mut(|i| i.consume_shortcut(&rename_key)) && why_not_rename.is_none() && self.no_dialog(&ctx) {
@@ -2402,6 +2414,22 @@ impl App {
         match folder::restore_trashed(&path) {
             Ok(()) => self.open(path),
             Err(e) => self.save_notice = Some((Err(format!("Couldn't bring back {}: {e}", path.file_name().unwrap_or_default().to_string_lossy())), time)),
+        }
+    }
+
+    /// A file dropped on the window plays (asking first about unsaved edits); a folder plays its first file.
+    fn open_dropped(&mut self, path: PathBuf, ctx: &egui::Context) {
+        let name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
+        let found = if path.is_dir() {
+            folder::list_dir(&path).ok().and_then(|(_, files)| files.into_iter().next()).ok_or(format!("No audio files in {name}"))
+        } else if folder::is_audio(&path) {
+            Ok(path)
+        } else {
+            Err(format!("{name} isn't an audio file soundglass plays"))
+        };
+        match found {
+            Ok(path) => self.open(path),
+            Err(e) => self.save_notice = Some((Err(e), ctx.input(|i| i.time))),
         }
     }
 

@@ -20,6 +20,8 @@ Without a file it opens an empty window with Open… (the menus that need a file
 
 - Space: play/pause
 - Left / Right: back or forward 5 s
+- Mouse back / forward buttons: previous or next file
+- Drag a file or folder onto the window to play it (a folder plays its first audio file); this works on X11 and Windows, not yet on Wayland
 - Page Up / Page Down: previous or next file in the folder (in the shuffled order with Shuffle; the button right of Next cycles In order, Repeat track and Shuffle)
 - Ctrl+I: show or hide Track Info (on the left); Ctrl+B: show or hide the Folder panel (on the right), which lists `..`, the subfolders and the audio files by name (🗀 folders, ♪ tracks): click a folder to look inside it (playback carries on), click a file to play it. Each panel widens the window instead of squeezing the player
 - Ctrl+E: show or hide the Edit panel
