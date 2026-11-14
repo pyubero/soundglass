@@ -93,17 +93,24 @@ impl Ai {
     /// The Local AI menu: every tool, then AI Models… and, while it's missing, Download AI
     /// Runtime…. Returns a tool to run.
     /// With `selected`, the items say they work on the selection.
-    pub fn menu_items(&mut self, ui: &mut egui::Ui, s: &AiSettings, loaded: bool, selected: bool) -> Option<Task> {
+    /// Why `task` can't run now, if it can't.
+    pub fn why_not(&self, task: Task, s: &AiSettings, loaded: bool) -> Option<&'static str> {
+        Ai::ready(task, s).err().or((!loaded).then_some("after loading")).or(self.run.is_some().then_some("another AI tool is running"))
+    }
+
+    /// The Local AI menu; `key` gives a task's shortcut text (`None`: AI Models…'s).
+    pub fn menu_items(&mut self, ui: &mut egui::Ui, s: &AiSettings, loaded: bool, selected: bool, key: &dyn Fn(Option<Task>) -> String) -> Option<Task> {
         let mut chosen = None;
         for task in Task::ALL {
-            let why = Ai::ready(task, s).err().or((!loaded).then_some("after loading")).or(self.run.is_some().then_some("another AI tool is running"));
-            if ui.add_enabled(why.is_none(), egui::Button::new(if selected { format!("{} (selection)", task.title()) } else { task.title().to_string() })).on_disabled_hover_text(why.unwrap_or_default()).clicked() {
+            let why = self.why_not(task, s, loaded);
+            let label = if selected { format!("{} (selection)", task.title()) } else { task.title().to_string() };
+            if ui.add_enabled(why.is_none(), egui::Button::new(label).shortcut_text(key(Some(task)))).on_disabled_hover_text(why.unwrap_or_default()).clicked() {
                 chosen = Some(task);
                 ui.close();
             }
         }
         ui.separator();
-        if ui.button("AI Models…").clicked() {
+        if ui.add(egui::Button::new("AI Models…").shortcut_text(key(None))).clicked() {
             self.show_models = true;
             ui.close();
         }

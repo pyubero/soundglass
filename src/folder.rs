@@ -166,9 +166,12 @@ impl Watch {
     }
 }
 
+/// The path the watcher checks; it stops once the slot is dropped.
+pub type Watched = Arc<Mutex<Option<PathBuf>>>;
+
 /// Checks the path put in the returned slot every `interval` on its own thread, so a slow network
 /// folder can't hold up the window, and sends each change, calling `notify`. Ends with the slot.
-pub fn watch(notify: impl Fn() + Send + 'static, interval: std::time::Duration) -> (Arc<Mutex<Option<PathBuf>>>, std::sync::mpsc::Receiver<(PathBuf, Stamp)>) {
+pub fn watch(notify: impl Fn() + Send + 'static, interval: std::time::Duration) -> (Watched, std::sync::mpsc::Receiver<(PathBuf, Stamp)>) {
     let (slot, (tx, rx)) = (Arc::new(Mutex::new(None)), std::sync::mpsc::channel());
     let shared = Arc::clone(&slot);
     std::thread::spawn(move || {

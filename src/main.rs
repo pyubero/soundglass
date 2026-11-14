@@ -6,6 +6,7 @@ mod chords;
 mod edit;
 mod folder;
 mod identify;
+mod keys;
 mod loudness;
 mod player;
 mod save;
@@ -27,8 +28,8 @@ use std::time::{Duration, Instant};
 use edit::Edit;
 use track::Track;
 use settings::Order;
-
-/// The window's size when nothing is remembered: a vertical phone's shape, about 9:16.
+use keys::Command;
+use ai::Task;
 
 /// Milliseconds between redraws while playing with a waveform shown.
 const WAVE_REPAINT_MS: u64 = 33;
@@ -119,7 +120,7 @@ fn main() -> eframe::Result {
             p.send(Cmd::Load(track.clone()));
             p.send(Cmd::Volume(volume_gain(volume)));
         }
-        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_found: None, cover_offer: None, cover_asked: Default::default(), rename: None, rename_file: None, delete_prompt: false, deleted: Vec::new(), watched, changes, own_stamp: None, changed_prompt: false, default_check, default_prompt: None, default_result: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), file_clipboard: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_found: None, cover_offer: None, cover_asked: Default::default(), rename: None, rename_file: None, delete_prompt: false, deleted: Vec::new(), watched, changes, own_stamp: None, changed_prompt: false, default_check, default_prompt: None, default_result: None, show_shortcuts: false, recording: None, shortcut_error: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), file_clipboard: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -273,7 +274,7 @@ struct App {
     deleted: Vec<PathBuf>,
     /// The file the watcher checks every second, its changes, the version soundglass itself last
     /// wrote (not asked about), and the "changed on disk" question while it shows.
-    watched: Arc<std::sync::Mutex<Option<PathBuf>>>,
+    watched: folder::Watched,
     changes: std::sync::mpsc::Receiver<(PathBuf, folder::Stamp)>,
     own_stamp: Option<folder::Stamp>,
     changed_prompt: bool,
@@ -282,6 +283,10 @@ struct App {
     default_check: Option<std::sync::mpsc::Receiver<bool>>,
     default_prompt: Option<bool>,
     default_result: Option<Result<(), String>>,
+    /// Settings → Change Keyboard Shortcuts… is open; the command waiting for its new key; why the last key was refused.
+    show_shortcuts: bool,
+    recording: Option<Command>,
+    shortcut_error: Option<String>,
     identify: Option<Identify>,
     /// Local AI: the AI Models window, licence prompts and downloads.
     ai: ai::Ai,
@@ -386,7 +391,7 @@ enum Action {
 }
 
 /// A quick fix from the Effects menu, on the selection or, without one, the whole track.
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum Fx {
     /// Over this many seconds from the start, or the whole selection with `None`.
     FadeIn(Option<f64>),
@@ -469,7 +474,7 @@ fn snap_speed(x: f64) -> f64 {
 }
 
 /// One of Playback's three speed and pitch settings.
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum Knob {
     Tape,
     Tempo,
@@ -581,38 +586,25 @@ impl eframe::App for App {
         }
 
         let mut actions = Vec::new();
-        let shortcut = |m, k| egui::KeyboardShortcut::new(m, k);
-        let (undo_key, redo_key, redo_key2) = (shortcut(egui::Modifiers::COMMAND, egui::Key::Z), shortcut(egui::Modifiers::COMMAND | egui::Modifiers::SHIFT, egui::Key::Z), shortcut(egui::Modifiers::COMMAND, egui::Key::Y));
-        let (cut_key, crop_key, silence_key) = (shortcut(egui::Modifiers::NONE, egui::Key::Delete), shortcut(egui::Modifiers::COMMAND, egui::Key::T), shortcut(egui::Modifiers::COMMAND, egui::Key::L));
-        // Ctrl+Shift+Z first: Ctrl+Z would match it too, since a shortcut without Shift ignores Shift.
-        for (keys, action) in [(&[redo_key, redo_key2][..], Action::Redo), (&[undo_key], Action::Undo), (&[crop_key], Action::Crop), (&[silence_key], Action::Silence)] {
-            if keys.iter().any(|k| ctx.input_mut(|i| i.consume_shortcut(k))) {
-                actions.push(action);
-            }
-        }
+        let keys = keys::shortcuts(&self.settings.shortcuts);
+        let key_text = |c: Command| keys.iter().find(|(_, k)| *k == c).map(|(sc, _)| ctx.format_shortcut(sc)).unwrap_or_default();
+        // While Settings records a shortcut, the key goes there and nowhere else.
+        let mut commands = if self.recording.is_some() {
+            self.record_shortcut(&ctx);
+            Vec::new()
+        } else {
+            self.read_shortcuts(&ctx, &keys)
+        };
         self.player_keys(&ctx, pos, len, rate, &mut actions);
-        if self.no_dialog(&ctx) && ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Delete)) {
-            actions.push(Action::Cut);
-        }
-        let save_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND | egui::Modifiers::SHIFT, egui::Key::S);
-        let copy_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::S);
-        // Ctrl+Shift+S first: Ctrl+S would match it too.
         let loaded = self.has_track() && self.track.done();
-        if ctx.input_mut(|i| i.consume_shortcut(&save_key)) && loaded {
-            self.show_save = true;
-        }
-        let mut save_copy = ctx.input_mut(|i| i.consume_shortcut(&copy_key));
+        let mut save_copy = false;
         if ctx.input(|i| i.viewport().close_requested()) && self.dirty() {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             self.pending = Some(Pending::Quit);
         }
-        let edit_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::E);
-        let mut toggle_edit = ctx.input_mut(|i| i.consume_shortcut(&edit_key));
-        let open_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::O);
-        let mut open_file = ctx.input_mut(|i| i.consume_shortcut(&open_key));
+        let (mut toggle_edit, mut open_file, mut toggle_info, mut toggle_folder) = (false, false, false, false);
         let (mut pick_cover, mut remove_cover) = (false, false);
         let mut open_recent = None;
-        let info_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::I);
         let viewport = ctx.input(|i| i.viewport().clone());
         let resizable = !viewport.maximized.unwrap_or(false) && !viewport.fullscreen.unwrap_or(false);
         // Not `viewport.inner_rect`: it needs the window's position, which Wayland never gives,
@@ -621,22 +613,7 @@ impl eframe::App for App {
             let size = ctx.viewport_rect().size();
             self.window_size = Some([size.x, size.y]);
         }
-        let mut toggle_info = ctx.input_mut(|i| i.consume_shortcut(&info_key));
-        let folder_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::B);
-        let mut toggle_folder = ctx.input_mut(|i| i.consume_shortcut(&folder_key));
-        let settings_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Comma);
-        if ctx.input_mut(|i| i.consume_shortcut(&settings_key)) {
-            self.show_settings = true;
-        }
-        let (close_key, fullscreen_key) = (egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::W), egui::KeyboardShortcut::new(egui::Modifiers::NONE, egui::Key::F11));
-        // Close and Quit are the same in one window; Close is there for the key people expect.
-        if [egui::Key::Q, egui::Key::W].iter().any(|&k| ctx.input_mut(|i| i.consume_shortcut(&egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, k)))) {
-            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-        }
         let fullscreen = viewport.fullscreen.unwrap_or(false);
-        if ctx.input_mut(|i| i.consume_shortcut(&fullscreen_key)) {
-            ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(!fullscreen));
-        }
 
         // The mouse's back and forward buttons, as lightview.
         if self.no_dialog(&ctx) {
@@ -650,20 +627,26 @@ impl eframe::App for App {
         if let Some(path) = ctx.input(|i| i.raw.dropped_files.first().map(|f| f.path().to_path_buf())) {
             self.open_dropped(path, &ctx);
         }
-        let rename_key = egui::KeyboardShortcut::new(egui::Modifiers::NONE, egui::Key::F2);
         let why_not_rename = if !self.has_track() { Some("no file open") } else if !self.track.done() { Some("after loading") } else if self.tag_job.is_some() { Some("saving tags…") } else { None };
-        if ctx.input_mut(|i| i.consume_shortcut(&rename_key)) && why_not_rename.is_none() && self.no_dialog(&ctx) {
-            self.start_rename();
-        }
+        let why_not_identify = if !identify::ready() { Some("not set up") } else { why_not_rename.filter(|&w| w != "saving tags…") };
+        // The write closes the tag editor, which would drop its unsaved edits.
+        let why_not_cover = if !self.has_track() { Some("no file open") } else if self.tag_job.is_some() { Some("saving tags…") } else if self.tag_editor.is_some() { Some("close the tag editor first") } else { None };
+        let beats_found = self.track.beats.lock().unwrap_or_else(|e| e.into_inner()).is_some();
 
         let mut ai_tool = None;
+        // A menu item: greyed out with `why` on hover while it can't run; clicked, it runs `command`.
+        let item = |ui: &mut egui::Ui, commands: &mut Vec<Command>, label: &str, command: Command, why: Option<&str>| {
+            if ui.add_enabled(why.is_none(), egui::Button::new(label).shortcut_text(key_text(command))).on_disabled_hover_text(why.unwrap_or_default()).clicked() {
+                commands.push(command);
+                ui.close();
+            }
+        };
+        let no_file = (!self.has_track()).then_some("no file open");
         // No menu bar in full screen.
         (!fullscreen).then(|| egui::Panel::top("menu").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("File", |ui| {
-                    if ui.add(egui::Button::new("Open…").shortcut_text(ctx.format_shortcut(&open_key))).clicked() {
-                        open_file = true;
-                    }
+                    item(ui, &mut commands, "Open…", Command::Open, None);
                     ui.add_enabled_ui(!self.recent.is_empty(), |ui| {
                         ui.menu_button("Open Recent", |ui| {
                             self.recent.retain(|p| p.exists());
@@ -676,119 +659,50 @@ impl eframe::App for App {
                             }
                         });
                     });
-                    if ui.add(egui::Button::new("Close").shortcut_text(ctx.format_shortcut(&close_key))).clicked() {
-                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                    }
+                    item(ui, &mut commands, "Close", Command::Close, None);
                     ui.separator();
-                    if ui.add_enabled(self.has_track(), egui::Button::new(if cfg!(windows) { "Show in Explorer" } else { "Show in File Manager" })).clicked() {
-                        folder::show_in_folder(&self.track.path);
-                        ui.close();
-                    }
-                    if ui.add_enabled(self.has_track(), egui::Button::new("Copy Path")).clicked() {
-                        ctx.copy_text(self.track.path.display().to_string());
-                        ui.close();
-                    }
-                    if ui.add_enabled(self.has_track(), egui::Button::new("Copy File")).on_hover_text("For pasting into a chat or a file manager").clicked() {
-                        self.copy_file(&ctx);
-                        ui.close();
-                    }
-                    if ui.add_enabled(self.can_save_copy(), egui::Button::new("Save Copy").shortcut_text(ctx.format_shortcut(&copy_key))).on_hover_text("Saves the edits next to the original, in its format, as name-edited").clicked() {
-                        save_copy = true;
-                        ui.close();
-                    }
-                    if ui.add_enabled(loaded, egui::Button::new("Save As…").shortcut_text(ctx.format_shortcut(&save_key))).clicked() {
-                        self.show_save = true;
-                        ui.close();
-                    }
+                    item(ui, &mut commands, if cfg!(windows) { "Show in Explorer" } else { "Show in File Manager" }, Command::ShowInFolder, no_file);
+                    item(ui, &mut commands, "Copy Path", Command::CopyPath, no_file);
+                    item(ui, &mut commands, "Copy File", Command::CopyFile, no_file);
+                    let why = (!self.can_save_copy()).then_some("with unsaved edits, once loaded");
+                    item(ui, &mut commands, "Save Copy", Command::SaveCopy, why);
+                    item(ui, &mut commands, "Save As…", Command::SaveAs, (!loaded).then_some(no_file.unwrap_or("after loading")));
                     ui.separator();
-                    let why = why_not_rename;
-                    let item = ui.add_enabled(why.is_none(), egui::Button::new("Rename…").shortcut_text(ctx.format_shortcut(&rename_key)));
-                    if item.on_disabled_hover_text(why.unwrap_or_default()).clicked() {
-                        self.start_rename();
-                        ui.close();
-                    }
-                    if ui.add_enabled(self.has_track(), egui::Button::new("Delete…")).on_hover_text("Moves the file to the Trash; Edit → Undo brings it back").clicked() {
-                        self.delete_prompt = true;
-                        ui.close();
-                    }
-                    let item = ui.add_enabled(why.is_none(), egui::Button::new("Rename from Tags…"));
-                    if item.on_disabled_hover_text(why.unwrap_or_default()).clicked() {
-                        self.rename = Some((self.settings.rename_pattern.clone(), tags::read(&self.track.path)));
-                        ui.close();
-                    }
-                    let why = if !identify::ready() { Some("not set up") } else { why_not_rename.filter(|&w| w != "saving tags…") };
-                    let item = ui.add_enabled(why.is_none(), egui::Button::new("Identify Track…"));
-                    if item.on_disabled_hover_text(why.unwrap_or_default()).clicked() {
-                        self.identify = Some(Identify { path: self.track.path.clone(), found: None, pick: 0, only_empty: true, job: None });
-                        ui.close();
-                    }
+                    item(ui, &mut commands, "Rename…", Command::Rename, why_not_rename);
+                    item(ui, &mut commands, "Delete…", Command::Delete, no_file);
+                    item(ui, &mut commands, "Rename from Tags…", Command::RenameFromTags, why_not_rename);
+                    item(ui, &mut commands, "Identify Track…", Command::Identify, why_not_identify);
                     ui.separator();
-                    if ui.add(egui::Button::new("Settings…").shortcut_text(ctx.format_shortcut(&settings_key))).clicked() {
-                        self.show_settings = true;
-                    }
-                    if ui.add(egui::Button::new("Quit").shortcut_text(ctx.format_shortcut(&egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Q)))).clicked() {
-                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                    }
+                    item(ui, &mut commands, "Settings…", Command::Settings, None);
+                    item(ui, &mut commands, "Quit", Command::Quit, None);
                 });
                 ui.menu_button("Edit", |ui| {
                     let (history, selected) = (self.history.as_ref(), self.edit_view.selection.is_some() && self.track.done());
-                    let items = [
-                        ("Undo", &undo_key, history.is_some_and(|h| h.can_undo()) || !self.deleted.is_empty(), Action::Undo),
-                        ("Redo", &redo_key, history.is_some_and(|h| h.can_redo()), Action::Redo),
-                        ("Cut out", &cut_key, selected, Action::Cut),
-                        ("Crop", &crop_key, selected, Action::Crop),
-                        ("Silence", &silence_key, selected, Action::Silence),
-                    ];
-                    for (i, (label, key, enabled, action)) in items.into_iter().enumerate() {
-                        if i == 2 {
-                            ui.separator();
-                        }
-                        if ui.add_enabled(enabled, egui::Button::new(label).shortcut_text(ctx.format_shortcut(key))).clicked() {
-                            actions.push(action);
+                    let nothing = |on: bool, why| (!on).then_some(why);
+                    item(ui, &mut commands, "Undo", Command::Undo, nothing(history.is_some_and(|h| h.can_undo()) || !self.deleted.is_empty(), "nothing to undo"));
+                    item(ui, &mut commands, "Redo", Command::Redo, nothing(history.is_some_and(|h| h.can_redo()), "nothing to redo"));
+                    ui.separator();
+                    for (label, command) in [("Cut out", Command::Cut), ("Crop", Command::Crop), ("Silence", Command::Silence)] {
+                        item(ui, &mut commands, label, command, nothing(selected, "select a part in the Edit panel"));
+                    }
+                    ui.separator();
+                    item(ui, &mut commands, "Add/Replace Album Cover…", Command::AddCover, why_not_cover);
+                    item(ui, &mut commands, "Remove Album Cover…", Command::RemoveCover, why_not_cover);
+                });
+                ui.add_enabled_ui(self.has_track(), |ui| ui.menu_button("Effects", |ui| self.effects_menu(ui, &mut commands, &key_text)));
+                ui.menu_button("View", |ui| {
+                    for (on, label, command) in [(self.show_info, "Track Info", Command::TrackInfo), (self.show_folder, "Folder", Command::Folder), (self.show_edit, "Edit", Command::EditPanel)] {
+                        let mut on = on;
+                        if ui.add(egui::Checkbox::new(&mut on, label)).on_hover_text(key_text(command)).clicked() {
+                            commands.push(command);
                             ui.close();
                         }
                     }
+                    item(ui, &mut commands, "Full Screen", Command::FullScreen, None);
                     ui.separator();
-                    // The write closes the tag editor, which would drop its unsaved edits.
-                    let why = if !self.has_track() { Some("no file open") } else if self.tag_job.is_some() { Some("saving tags…") } else if self.tag_editor.is_some() { Some("close the tag editor first") } else { None };
-                    let item = ui.add_enabled(why.is_none(), egui::Button::new("Add/Replace Album Cover…"));
-                    if item.on_disabled_hover_text(why.unwrap_or_default()).clicked() {
-                        pick_cover = true;
-                        ui.close();
-                    }
-                    let item = ui.add_enabled(why.is_none(), egui::Button::new("Remove Album Cover…"));
-                    if item.on_disabled_hover_text(why.unwrap_or_default()).clicked() {
-                        remove_cover = true;
-                        ui.close();
-                    }
-                });
-                ui.add_enabled_ui(self.has_track(), |ui| ui.menu_button("Effects", |ui| self.effects_menu(ui, &mut actions)));
-                ui.menu_button("View", |ui| {
-                    let mut on = self.show_info;
-                    if ui.add(egui::Checkbox::new(&mut on, "Track Info")).on_hover_text(ctx.format_shortcut(&info_key)).clicked() {
-                        toggle_info = true;
-                        ui.close();
-                    }
-                    let mut on = self.show_folder;
-                    if ui.add(egui::Checkbox::new(&mut on, "Folder")).on_hover_text(ctx.format_shortcut(&folder_key)).clicked() {
-                        toggle_folder = true;
-                        ui.close();
-                    }
-                    let mut on = self.show_edit;
-                    if ui.add(egui::Checkbox::new(&mut on, "Edit")).on_hover_text(ctx.format_shortcut(&edit_key)).clicked() {
-                        toggle_edit = true;
-                        ui.close();
-                    }
-                    if ui.add(egui::Button::new("Full Screen").shortcut_text(ctx.format_shortcut(&fullscreen_key))).on_hover_text("Esc leaves it").clicked() {
-                        ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(true));
-                        ui.close();
-                    }
-                    ui.separator();
-                    if ui.checkbox(&mut self.settings.practice, "Practice mode").on_hover_text("Tools for musicians: loops, the spectrogram, tempo, key and chords").changed() {
-                        if !self.settings.practice {
-                            self.looping = false;
-                            self.show_spectrum = false;
-                        }
+                    let mut on = self.settings.practice;
+                    if ui.checkbox(&mut on, "Practice mode").on_hover_text("Tools for musicians: loops, the spectrogram, tempo, key and chords").clicked() {
+                        commands.push(Command::Practice);
                         ui.close();
                     }
                 });
@@ -797,38 +711,90 @@ impl eframe::App for App {
                         ui.menu_button(knob.title(), |ui| {
                             let now = knob.get(self.speed);
                             for &v in knob.presets() {
-                                if ui.radio((now - v).abs() < 1e-6, knob.label(v)).clicked() {
-                                    actions.push(Action::Speed(knob.set(self.speed, v)));
+                                if ui.radio((now - v).abs() < 1e-6, knob.label(v)).on_hover_text(key_text(Command::Speed(knob, v))).clicked() {
+                                    commands.push(Command::Speed(knob, v));
                                     ui.close();
                                 }
                             }
                             let custom = !knob.presets().iter().any(|v| (now - v).abs() < 1e-6);
                             let label = if custom { format!("Custom ({})…", knob.label((now * 100.0).round() / 100.0)) } else { "Custom…".into() };
-                            if ui.radio(custom, label).clicked() {
-                                self.custom_speed = Some((knob, now));
+                            if ui.radio(custom, label).on_hover_text(key_text(Command::CustomSpeed(knob))).clicked() {
+                                commands.push(Command::CustomSpeed(knob));
                                 ui.close();
                             }
                         });
                     }
                     ui.separator();
-                    if ui.add_enabled(self.speed != wsola::Speed::NORMAL, egui::Button::new("Reset")).clicked() {
-                        actions.push(Action::Speed(wsola::Speed::NORMAL));
-                        ui.close();
+                    item(ui, &mut commands, "Reset", Command::ResetSpeed, (self.speed == wsola::Speed::NORMAL).then_some("already normal"));
+                });
+                ui.menu_button("Local AI", |ui| {
+                    let key = |task: Option<Task>| key_text(task.map_or(Command::AiModels, Command::Ai));
+                    if let Some(task) = self.ai.menu_items(ui, &self.settings.ai, loaded, self.edit_view.selection.is_some(), &key) {
+                        commands.push(Command::Ai(task));
                     }
                 });
-                ui.menu_button("Local AI", |ui| ai_tool = self.ai.menu_items(ui, &self.settings.ai, loaded, self.edit_view.selection.is_some()));
                 if self.settings.practice {
                     ui.menu_button("Practice", |ui| {
                         ui.checkbox(&mut self.looping, "Loop selection").on_hover_text("L");
-                        let found = self.track.beats.lock().unwrap_or_else(|e| e.into_inner()).is_some();
-                        ui.add_enabled(found, egui::Checkbox::new(&mut self.metronome, "Metronome")).on_hover_text("Clicks on the found beats").on_disabled_hover_text("after Local AI → Find Beats");
-                        if ui.checkbox(&mut self.show_spectrum, "Spectrogram").changed() {
+                        let mut on = self.metronome;
+                        if ui.add_enabled(beats_found, egui::Checkbox::new(&mut on, "Metronome")).on_hover_text(format!("Clicks on the found beats {}", key_text(Command::Metronome))).on_disabled_hover_text("after Local AI → Find Beats").clicked() {
+                            commands.push(Command::Metronome);
+                        }
+                        let mut on = self.show_spectrum;
+                        if ui.checkbox(&mut on, "Spectrogram").on_hover_text(key_text(Command::Spectrogram)).clicked() {
+                            commands.push(Command::Spectrogram);
                             ui.close();
                         }
                     });
                 }
             });
         }));
+
+        // What the menus and keys asked for, each only while its menu item would be enabled.
+        for command in commands {
+            match command {
+                Command::Open => open_file = true,
+                Command::Close | Command::Quit => ctx.send_viewport_cmd(egui::ViewportCommand::Close),
+                Command::ShowInFolder if self.has_track() => folder::show_in_folder(&self.track.path),
+                Command::CopyPath if self.has_track() => ctx.copy_text(self.track.path.display().to_string()),
+                Command::CopyFile if self.has_track() => self.copy_file(&ctx),
+                Command::SaveCopy => save_copy = true,
+                Command::SaveAs if loaded => self.show_save = true,
+                Command::Rename if why_not_rename.is_none() => self.start_rename(),
+                Command::Delete if self.has_track() => self.delete_prompt = true,
+                Command::RenameFromTags if why_not_rename.is_none() => self.rename = Some((self.settings.rename_pattern.clone(), tags::read(&self.track.path))),
+                Command::Identify if why_not_identify.is_none() => self.identify = Some(Identify { path: self.track.path.clone(), found: None, pick: 0, only_empty: true, job: None }),
+                Command::Settings => self.show_settings = true,
+                Command::Undo => actions.push(Action::Undo),
+                Command::Redo => actions.push(Action::Redo),
+                Command::Cut => actions.push(Action::Cut),
+                Command::Crop => actions.push(Action::Crop),
+                Command::Silence => actions.push(Action::Silence),
+                Command::AddCover if why_not_cover.is_none() => pick_cover = true,
+                Command::RemoveCover if why_not_cover.is_none() => remove_cover = true,
+                Command::Fx(fx) if self.fx_enabled(fx) => actions.push(Action::Fx(fx)),
+                Command::CustomFx(fx) if loaded => self.custom_fx = Some((fx, fx.custom().3)),
+                Command::TrackInfo => toggle_info = true,
+                Command::Folder => toggle_folder = true,
+                Command::EditPanel => toggle_edit = true,
+                Command::FullScreen => ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(!fullscreen)),
+                Command::Practice => {
+                    self.settings.practice = !self.settings.practice;
+                    if !self.settings.practice {
+                        self.looping = false;
+                        self.show_spectrum = false;
+                    }
+                }
+                Command::Speed(knob, v) => actions.push(Action::Speed(knob.set(self.speed, v))),
+                Command::CustomSpeed(knob) => self.custom_speed = Some((knob, knob.get(self.speed))),
+                Command::ResetSpeed => actions.push(Action::Speed(wsola::Speed::NORMAL)),
+                Command::Ai(task) if self.ai.why_not(task, &self.settings.ai, loaded).is_none() => ai_tool = Some(task),
+                Command::AiModels => self.ai.show_models = true,
+                Command::Metronome if self.settings.practice && beats_found => self.metronome = !self.metronome,
+                Command::Spectrogram if self.settings.practice => self.show_spectrum = !self.show_spectrum,
+                _ => {}
+            }
+        }
 
         let cover = if self.settings.visualiser { Some(self.visual.frame(&ctx, &self.track, &edit, pos, rate, playing)) } else { self.cover_texture(&ctx) };
         let tags = self.track.tags.get().cloned().unwrap_or_default();
@@ -908,7 +874,7 @@ impl eframe::App for App {
                     ui.add_space(ui.available_height() / 3.0);
                     ui.heading("No file open");
                     ui.add_space(8.0);
-                    if ui.add(egui::Button::new("Open…").shortcut_text(ctx.format_shortcut(&open_key))).clicked() {
+                    if ui.add(egui::Button::new("Open…").shortcut_text(key_text(Command::Open))).clicked() {
                         open_file = true;
                     }
                     notice(ui, self.save_notice.as_ref(), Some(ui.input(|i| i.time)));
@@ -971,6 +937,7 @@ impl eframe::App for App {
         self.delete_window(&ctx);
         self.changed_window(&ctx, pos);
         self.default_window(&ctx);
+        self.shortcuts_window(&ctx);
         if let Some(task) = ai_tool {
             self.ai.start_tool(task, self.track.clone(), edit.clone(), self.edit_view.selection, &self.settings.ai, &ctx);
         }
@@ -1402,88 +1369,74 @@ impl App {
         chosen
     }
 
-    /// The Effects menu: presets, then Custom… in each submenu.
-    fn effects_menu(&mut self, ui: &mut egui::Ui, actions: &mut Vec<Action>) {
-        let (done, selected) = (self.track.done(), self.edit_view.selection.is_some());
+    /// Whether the effect `fx` can run now: decoded, "Whole selection" fades need a selection, and
+    /// Channels only offers what changes the track.
+    fn fx_enabled(&self, fx: Fx) -> bool {
         let out = self.edit().channels(self.track.format.get().map_or(1, |f| f.channels));
-        let (mut chosen, mut custom) = (None, None);
-        let pick = |ui: &mut egui::Ui, label: &str, enabled: bool| {
-            let clicked = ui.add_enabled(done && enabled, egui::Button::new(label)).clicked();
-            if clicked {
+        self.has_track() && self.track.done() && match fx {
+            Fx::FadeIn(None) | Fx::FadeOut(None) => self.edit_view.selection.is_some(),
+            Fx::Mono => out >= 2,
+            Fx::Stereo => out == 1,
+            Fx::Swap => out == 2,
+            _ => true,
+        }
+    }
+
+    /// The Effects menu: presets, then Custom… in each submenu.
+    fn effects_menu(&mut self, ui: &mut egui::Ui, commands: &mut Vec<Command>, key_text: &dyn Fn(Command) -> String) {
+        let selected = self.edit_view.selection.is_some();
+        let mut pick = |ui: &mut egui::Ui, label: &str, command: Command| {
+            let fx = match command {
+                Command::Fx(fx) | Command::CustomFx(fx) => fx,
+                _ => unreachable!("only effects here"),
+            };
+            // Custom… opens a dialog with the value, so it only needs the track decoded.
+            let enabled = if matches!(command, Command::CustomFx(_)) { self.has_track() && self.track.done() } else { self.fx_enabled(fx) };
+            if ui.add_enabled(enabled, egui::Button::new(label).shortcut_text(key_text(command))).clicked() {
+                commands.push(command);
                 ui.close();
             }
-            clicked
         };
         ui.weak(if selected { "On the selection" } else { "On the whole track" });
         for (name, fade) in [("Fade in", Fx::FadeIn as fn(Option<f64>) -> Fx), ("Fade out", Fx::FadeOut)] {
             ui.menu_button(name, |ui| {
-                if pick(ui, "Whole selection", selected) {
-                    chosen = Some(fade(None));
-                }
+                pick(ui, "Whole selection", Command::Fx(fade(None)));
                 for secs in FADES {
-                    if pick(ui, &format!("{secs} s"), true) {
-                        chosen = Some(fade(Some(secs)));
-                    }
+                    pick(ui, &format!("{secs} s"), Command::Fx(fade(Some(secs))));
                 }
-                if pick(ui, "Custom…", true) {
-                    custom = Some(fade(None));
-                }
+                pick(ui, "Custom…", Command::CustomFx(fade(None)));
             });
         }
         ui.menu_button("Gain", |ui| {
             for db in GAINS {
-                if pick(ui, &format!("{}{} dB", if db > 0.0 { "+" } else { "" }, signed(db)), true) {
-                    chosen = Some(Fx::Gain(db));
-                }
+                pick(ui, &format!("{}{} dB", if db > 0.0 { "+" } else { "" }, signed(db)), Command::Fx(Fx::Gain(db)));
             }
-            if pick(ui, "Custom…", true) {
-                custom = Some(Fx::Gain(0.0));
-            }
+            pick(ui, "Custom…", Command::CustomFx(Fx::Gain(0.0)));
         });
         ui.menu_button("Normalize", |ui| {
             for (db, name) in PEAKS {
-                if pick(ui, &format!("{name} ({} dBFS)", signed(db)), true) {
-                    chosen = Some(Fx::Peak(db));
-                }
+                pick(ui, &format!("{name} ({} dBFS)", signed(db)), Command::Fx(Fx::Peak(db)));
             }
             for (lufs, name) in LOUDNESS {
-                if pick(ui, &format!("{name} ({} LUFS)", signed(lufs)), true) {
-                    chosen = Some(Fx::Loudness(lufs));
-                }
+                pick(ui, &format!("{name} ({} LUFS)", signed(lufs)), Command::Fx(Fx::Loudness(lufs)));
             }
-            if pick(ui, "Custom peak…", true) {
-                custom = Some(Fx::Peak(0.0));
-            }
-            if pick(ui, "Custom loudness…", true) {
-                custom = Some(Fx::Loudness(0.0));
-            }
+            pick(ui, "Custom peak…", Command::CustomFx(Fx::Peak(0.0)));
+            pick(ui, "Custom loudness…", Command::CustomFx(Fx::Loudness(0.0)));
         });
         ui.menu_button("Trim silence", |ui| {
             for (db, name) in TRIMS {
-                if pick(ui, &format!("{name} ({} dB)", signed(db)), true) {
-                    chosen = Some(Fx::Trim(db));
-                }
+                pick(ui, &format!("{name} ({} dB)", signed(db)), Command::Fx(Fx::Trim(db)));
             }
-            if pick(ui, "Custom…", true) {
-                custom = Some(Fx::Trim(0.0));
-            }
+            pick(ui, "Custom…", Command::CustomFx(Fx::Trim(0.0)));
         });
-        if pick(ui, "Reverse", true) {
-            chosen = Some(Fx::Reverse);
-        }
+        pick(ui, "Reverse", Command::Fx(Fx::Reverse));
         ui.separator();
         ui.menu_button("Channels", |ui| {
             ui.weak("On the whole track");
-            for (label, enabled, fx) in [("Mono", out >= 2, Fx::Mono), ("Stereo", out == 1, Fx::Stereo), ("Swap left and right", out == 2, Fx::Swap)] {
-                if pick(ui, label, enabled) {
-                    chosen = Some(fx);
-                }
+            for (label, fx) in [("Mono", Fx::Mono), ("Stereo", Fx::Stereo), ("Swap left and right", Fx::Swap)] {
+                pick(ui, label, Command::Fx(fx));
             }
         });
-        actions.extend(chosen.map(Action::Fx));
-        if let Some(fx) = custom {
-            self.custom_fx = Some((fx, fx.custom().3));
-        }
     }
 
     /// The Custom… effect dialog; returns the effect when OK is pressed.
@@ -1560,6 +1513,9 @@ impl App {
                     ui.add(egui::DragValue::new(h).range(settings::MIN_SIZE[1]..=4320.0));
                 });
             });
+            if ui.button("Change Keyboard Shortcuts…").clicked() {
+                self.show_shortcuts = true;
+            }
             if folder::desktop_installed() {
                 ui.separator();
                 if ui.button("Make soundglass the default player").clicked() {
@@ -2452,6 +2408,103 @@ impl App {
         match folder::restore_trashed(&path) {
             Ok(()) => self.open(path),
             Err(e) => self.save_notice = Some((Err(format!("Couldn't bring back {}: {e}", path.file_name().unwrap_or_default().to_string_lossy())), time)),
+        }
+    }
+
+    /// The shortcuts pressed this frame. Keys without Ctrl, Alt or Shift only when no text field or
+    /// dialog wants them, and Undo and Redo belong to a text field while one has focus.
+    fn read_shortcuts(&self, ctx: &egui::Context, keys: &[(egui::KeyboardShortcut, Command)]) -> Vec<Command> {
+        let typing = ctx.egui_wants_keyboard_input();
+        let plain_ok = !typing && self.custom_speed.is_none() && self.custom_fx.is_none() && self.pending.is_none() && ctx.memory(|m| m.top_modal_layer().is_none());
+        ctx.input_mut(|i| {
+            keys.iter()
+                .filter(|(sc, c)| (plain_ok || !sc.modifiers.is_none()) && !(typing && matches!(c, Command::Undo | Command::Redo)) && i.consume_shortcut(sc))
+                .map(|(_, c)| *c)
+                .collect()
+        })
+    }
+
+    /// Change Keyboard Shortcuts…'s Change: the next key press, with its modifiers, becomes
+    /// `recording`'s shortcut unless it's taken; Esc cancels. Nothing else sees the key. From lightview.
+    fn record_shortcut(&mut self, ctx: &egui::Context) {
+        let Some(command) = self.recording else { return };
+        let pressed = ctx.input_mut(|i| {
+            let pressed = i.events.iter().find_map(|e| match e {
+                egui::Event::Key { key, pressed: true, modifiers, .. } => Some(egui::KeyboardShortcut::new(*modifiers, *key)),
+                _ => None,
+            });
+            i.events.retain(|e| !matches!(e, egui::Event::Key { .. } | egui::Event::Copy | egui::Event::Cut | egui::Event::Paste(_) | egui::Event::Text(_)));
+            pressed
+        });
+        let Some(sc) = pressed else { return };
+        self.recording = None;
+        if sc == egui::KeyboardShortcut::new(egui::Modifiers::NONE, egui::Key::Escape) {
+            return;
+        }
+        match keys::taken(&keys::shortcuts(&self.settings.shortcuts), sc, command) {
+            Some(other) => self.shortcut_error = Some(format!("{} is already used by {other}", ctx.format_shortcut(&sc))),
+            None => self.set_shortcut(command, Some(sc)),
+        }
+    }
+
+    /// Gives `command` the shortcut `sc`, or none.
+    fn set_shortcut(&mut self, command: Command, sc: Option<egui::KeyboardShortcut>) {
+        let id = keys::id(command);
+        self.settings.shortcuts.retain(|(n, _)| *n != id);
+        self.settings.shortcuts.push((id, sc));
+        self.shortcut_error = None;
+    }
+
+    /// Keyboard Shortcuts, over Settings: every menu command by menu, its keys, Change and Remove. From lightview.
+    fn shortcuts_window(&mut self, ctx: &egui::Context) {
+        if !self.show_shortcuts {
+            return;
+        }
+        let height = ctx.content_rect().height() * 0.6;
+        let modal = egui::Modal::new(egui::Id::unique("shortcuts")).show(ctx, |ui| {
+            ui.heading("Keyboard Shortcuts");
+            ui.weak("Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed.");
+            if let Some(e) = &self.shortcut_error {
+                ui.colored_label(ui.visuals().warn_fg_color, e);
+            }
+            let keys = keys::shortcuts(&self.settings.shortcuts);
+            egui::ScrollArea::vertical().max_height(height).show(ui, |ui| {
+                for (menu, items) in keys::bindable_menus() {
+                    ui.add_space(6.0);
+                    ui.strong(menu);
+                    egui::Grid::new(("shortcuts", menu)).num_columns(3).striped(true).min_col_width(120.0).show(ui, |ui| {
+                        for (command, name) in items {
+                            ui.label(name);
+                            let current: Vec<String> = keys.iter().filter(|(_, c)| *c == command).map(|(sc, _)| ui.ctx().format_shortcut(sc)).collect();
+                            if self.recording == Some(command) {
+                                ui.strong("Press keys… (Esc to cancel)");
+                            } else {
+                                ui.label(current.join(", "));
+                            }
+                            ui.horizontal(|ui| {
+                                if ui.small_button("Change").clicked() {
+                                    (self.recording, self.shortcut_error) = (Some(command), None);
+                                }
+                                if !current.is_empty() && ui.small_button("Remove").clicked() {
+                                    self.set_shortcut(command, None);
+                                }
+                            });
+                            ui.end_row();
+                        }
+                    });
+                }
+            });
+            ui.add_space(8.0);
+            ui.horizontal(|ui| {
+                if ui.button("Reset All Shortcuts").clicked() {
+                    (self.settings.shortcuts, self.recording, self.shortcut_error) = (Vec::new(), None, None);
+                }
+                ui.button("Close").clicked()
+            })
+            .inner
+        });
+        if modal.inner || modal.should_close() {
+            (self.show_shortcuts, self.recording, self.shortcut_error) = (false, None, None);
         }
     }
 
