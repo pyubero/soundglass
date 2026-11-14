@@ -71,6 +71,7 @@ Reset puts all three back to normal. The last two use WSOLA, which can sound a l
 - File → Identify Track… (online, only when you click Look up) sends the file's Chromaprint fingerprint and length to AcoustID and lists the matches with their score; Use Match fetches the genre from MusicBrainz (sending only the recording's ID) and fills Track Info's tag editor, only the empty fields unless you untick that. Nothing is written until Save… there. It is greyed out until the build has an AcoustID key and a contact URL (`src/identify.rs`).
 - File → Show in File Manager (Show in Explorer on Windows) opens the file manager with the current file selected, or just its folder if the file manager can't select files.
 - File → Copy Path copies the file's full path as text; Copy File puts the file itself on the clipboard, for pasting into a chat or a file manager (it stays there while soundglass runs).
+- File → Rename… (F2) renames the current file to a name you type (the extension starts unselected); it never replaces another file, and playback and edits carry on.
 - File → Rename from Tags… renames the current file from a pattern such as `{track} - {artist} - {title}` (also `{album}`, `{year}`, `{genre}`), with a preview. A missing tag is left out, a name Windows reserves (`CON`, `NUL`, `COM1`…) gets a `_`, and an existing file is never replaced (changing only the letter case is fine).
 
 ## Settings

@@ -107,7 +107,7 @@ fn main() -> eframe::Result {
             p.send(Cmd::Load(track.clone()));
             p.send(Cmd::Volume(volume_gain(volume)));
         }
-        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_found: None, cover_offer: None, cover_asked: Default::default(), rename: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), file_clipboard: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_found: None, cover_offer: None, cover_asked: Default::default(), rename: None, rename_file: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), file_clipboard: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -248,6 +248,8 @@ struct App {
     cover_asked: std::collections::HashSet<PathBuf>,
     /// File → Rename from Tags… while open: the pattern being edited, and the file's tags.
     rename: Option<(String, Result<tags::TagEdit, String>)>,
+    /// File → Rename… while open: the name being typed, whether the window just opened, and the last error.
+    rename_file: Option<(String, bool, Option<String>)>,
     identify: Option<Identify>,
     /// Local AI: the AI Models window, licence prompts and downloads.
     ai: ai::Ai,
@@ -602,6 +604,12 @@ impl eframe::App for App {
             ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(!fullscreen));
         }
 
+        let rename_key = egui::KeyboardShortcut::new(egui::Modifiers::NONE, egui::Key::F2);
+        let why_not_rename = if !self.track.done() { Some("after loading") } else if self.tag_job.is_some() { Some("saving tags…") } else { None };
+        if ctx.input_mut(|i| i.consume_shortcut(&rename_key)) && why_not_rename.is_none() && self.no_dialog(&ctx) {
+            self.start_rename();
+        }
+
         let mut ai_tool = None;
         // No menu bar in full screen.
         (!fullscreen).then(|| egui::Panel::top("menu").show(ui, |ui| {
@@ -647,7 +655,12 @@ impl eframe::App for App {
                         ui.close();
                     }
                     ui.separator();
-                    let why = if !self.track.done() { Some("after loading") } else if self.tag_job.is_some() { Some("saving tags…") } else { None };
+                    let why = why_not_rename;
+                    let item = ui.add_enabled(why.is_none(), egui::Button::new("Rename…").shortcut_text(ctx.format_shortcut(&rename_key)));
+                    if item.on_disabled_hover_text(why.unwrap_or_default()).clicked() {
+                        self.start_rename();
+                        ui.close();
+                    }
                     let item = ui.add_enabled(why.is_none(), egui::Button::new("Rename from Tags…"));
                     if item.on_disabled_hover_text(why.unwrap_or_default()).clicked() {
                         self.rename = Some((self.settings.rename_pattern.clone(), tags::read(&self.track.path)));
@@ -892,6 +905,7 @@ impl eframe::App for App {
         self.cover_offer_modal(&ctx);
         self.follow_tags(&ctx);
         self.rename_window(&ctx);
+        self.rename_file_window(&ctx);
         if let Some(task) = ai_tool {
             self.ai.start_tool(task, self.track.clone(), edit.clone(), self.edit_view.selection, &self.settings.ai, &ctx);
         }
@@ -1136,6 +1150,14 @@ fn read_cover(image: &std::path::Path) -> Result<(tags::Cover, egui::ColorImage)
     let rgba = image::load_from_memory(&bytes).map_err(|_| "That image can't be read.")?.thumbnail(256, 256).to_rgba8();
     let size = [rgba.width() as usize, rgba.height() as usize];
     Ok((tags::cover(bytes)?, egui::ColorImage::from_rgba_unmultiplied(size, &rgba)))
+}
+
+/// A name typed for a file: not empty, not `.` or `..`, and no folder separators.
+fn valid_file_name(name: &str) -> Result<(), String> {
+    if name.trim().is_empty() || name == "." || name == ".." || name.contains(['/', '\\']) {
+        return Err("That isn't a valid file name.".into());
+    }
+    Ok(())
 }
 
 /// How many files Open Recent lists.
@@ -2238,21 +2260,9 @@ impl App {
         });
         if let Some(name) = go {
             let pattern = pattern.clone();
-            match tags::rename(&path, &name).and_then(|new| self.relabel(new.clone()).map(|()| new)) {
-                Ok(new) => {
+            match self.rename_track(&name, ctx) {
+                Ok(()) => {
                     self.settings.rename_pattern = pattern;
-                    self.files = folder::list_folder(&new);
-                    self.index = self.files.iter().position(|p| *p == new).unwrap_or(0);
-                    if let Some(b) = &mut self.browse {
-                        *b = Browse::new(b.dir.clone());
-                    }
-                    for p in &mut self.recent {
-                        if *p == path {
-                            *p = new.clone();
-                        }
-                    }
-                    self.remember(&new);
-                    self.save_notice = Some((Ok(format!("Renamed to {name}")), ctx.input(|i| i.time)));
                     close = true;
                 }
                 Err(e) => self.save_notice = Some((Err(e), ctx.input(|i| i.time))),
@@ -2260,6 +2270,66 @@ impl App {
         }
         if close {
             self.rename = None;
+        }
+    }
+
+    /// Renames the current file to `name` in its folder, never replacing another file; playback
+    /// and edits carry on, and the folder, Open Recent and the Folder panel follow.
+    fn rename_track(&mut self, name: &str, ctx: &egui::Context) -> Result<(), String> {
+        let path = self.track.path.clone();
+        let new = tags::rename(&path, name)?;
+        self.relabel(new.clone())?;
+        self.files = folder::list_folder(&new);
+        self.index = self.files.iter().position(|p| *p == new).unwrap_or(0);
+        if let Some(b) = &mut self.browse {
+            *b = Browse::new(b.dir.clone());
+        }
+        for p in &mut self.recent {
+            if *p == path {
+                *p = new.clone();
+            }
+        }
+        self.remember(&new);
+        self.save_notice = Some((Ok(format!("Renamed to {name}")), ctx.input(|i| i.time)));
+        Ok(())
+    }
+
+    fn start_rename(&mut self) {
+        let name = self.track.path.file_name().unwrap_or_default().to_string_lossy().into_owned();
+        self.rename_file = Some((name, true, None));
+    }
+
+    /// File → Rename…: the name with only its stem selected; Enter or Rename applies it. From lightview.
+    fn rename_file_window(&mut self, ctx: &egui::Context) {
+        use egui::text::{CCursor, CCursorRange};
+        let Some((mut name, fresh, error)) = self.rename_file.take() else { return };
+        let modal = egui::Modal::new(egui::Id::unique("rename-file")).show(ctx, |ui| {
+            ui.heading("Rename");
+            ui.add_space(6.0);
+            let mut edit = egui::TextEdit::singleline(&mut name).desired_width(320.0).show(ui);
+            if fresh {
+                edit.response.request_focus();
+                let stem = name.rsplit_once('.').map_or(&name[..], |(stem, _)| stem).chars().count();
+                edit.state.cursor.set_char_range(Some(CCursorRange::two(CCursor::new(0), CCursor::new(stem))));
+                edit.state.store(ui.ctx(), edit.response.id);
+            }
+            let enter = edit.response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter));
+            if let Some(e) = &error {
+                ui.colored_label(ui.visuals().error_fg_color, e);
+            }
+            ui.add_space(6.0);
+            let (rename, cancel) = ui.horizontal(|ui| (ui.button("Rename").clicked(), ui.button("Cancel").clicked())).inner;
+            (enter || rename, cancel)
+        });
+        let (accept, cancel) = modal.inner;
+        if cancel || modal.should_close() {
+            return;
+        }
+        let unchanged = self.track.path.file_name().is_some_and(|f| f.to_string_lossy() == name);
+        if !accept {
+            self.rename_file = Some((name, false, error));
+        } else if !unchanged && let Err(e) = valid_file_name(&name).and_then(|()| self.rename_track(&name, ctx)) {
+            self.rename_file = Some((name, true, Some(e)));
         }
     }
 
@@ -3184,9 +3254,17 @@ pub fn ms(t: Instant) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_fc_match, clock_ms, cover_fit_side, cover_side, display_pos, info_rows, marquee, neighbour, push_recent, resize_for_panel, shuffled, snap_speed, title, volume_gain, zoom_view};
+    use super::{parse_fc_match, valid_file_name, clock_ms, cover_fit_side, cover_side, display_pos, info_rows, marquee, neighbour, push_recent, resize_for_panel, shuffled, snap_speed, title, volume_gain, zoom_view};
     use crate::settings::Order;
     use std::path::PathBuf;
+
+    #[test]
+    fn typed_file_names() {
+        assert!(valid_file_name("01 - Song.mp3").is_ok());
+        for bad in ["", "  ", ".", "..", "a/b.mp3", "a\\b.mp3"] {
+            assert!(valid_file_name(bad).is_err(), "{bad:?}");
+        }
+    }
 
     #[test]
     fn cjk_font_only_when_it_covers_chinese() {
