@@ -570,6 +570,10 @@ impl eframe::App for App {
                             }
                         });
                     });
+                    if ui.button(if cfg!(windows) { "Show in Explorer" } else { "Show in File Manager" }).clicked() {
+                        folder::show_in_folder(&self.track.path);
+                        ui.close();
+                    }
                     if ui.add_enabled(self.can_save_copy(), egui::Button::new("Save Copy").shortcut_text(ctx.format_shortcut(&copy_key))).on_hover_text("Saves the edits next to the original, in its format, as name-edited").clicked() {
                         save_copy = true;
                         ui.close();

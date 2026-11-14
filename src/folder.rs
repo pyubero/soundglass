@@ -99,6 +99,41 @@ pub fn natural_cmp(a: &str, b: &str) -> Ordering {
     }
 }
 
+/// `path` as a `file://` URI, escaped so that a comma can't split `dbus-send`'s array.
+#[cfg(target_os = "linux")]
+fn file_uri(path: &Path) -> String {
+    use percent_encoding::{NON_ALPHANUMERIC, percent_encode};
+    use std::os::unix::ffi::OsStrExt;
+    const ESCAPED: &percent_encoding::AsciiSet = &NON_ALPHANUMERIC.remove(b'/').remove(b'-').remove(b'_').remove(b'.').remove(b'~');
+    format!("file://{}", percent_encode(path.as_os_str().as_bytes(), ESCAPED))
+}
+
+/// Opens the file manager with `path` highlighted, or just its folder if the desktop can't do that.
+#[cfg(target_os = "linux")]
+pub fn show_in_folder(path: &Path) {
+    let (uri, dir) = (file_uri(path), path.parent().unwrap_or(Path::new("/")).to_path_buf());
+    std::thread::spawn(move || {
+        let call = ["--session", "--print-reply", "--dest=org.freedesktop.FileManager1", "/org/freedesktop/FileManager1", "org.freedesktop.FileManager1.ShowItems"];
+        let shown = std::process::Command::new("dbus-send").args(call).arg(format!("array:string:{uri}")).arg("string:").output();
+        if !shown.is_ok_and(|o| o.status.success()) {
+            drop(std::process::Command::new("xdg-open").arg(dir).spawn());
+        }
+    });
+}
+
+/// Opens Explorer with `path` highlighted. It takes `/select,` and the quoted path as one argument,
+/// which `Command::arg`'s own quoting would break, and doesn't understand `canonicalize`'s `\\?\` form.
+#[cfg(windows)]
+pub fn show_in_folder(path: &Path) {
+    use std::os::windows::process::CommandExt;
+    let path = path.to_string_lossy();
+    let path = match path.strip_prefix(r"\\?\UNC\") {
+        Some(share) => format!(r"\\{share}"),
+        None => path.strip_prefix(r"\\?\").unwrap_or(&path).to_string(),
+    };
+    drop(std::process::Command::new("explorer").raw_arg(format!("/select,\"{path}\"")).spawn());
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -167,5 +202,11 @@ mod tests {
         std::fs::remove_dir_all(&dir).unwrap();
         assert_eq!((names(dirs), names(files)), (vec!["sub 9".to_string(), "sub 10".into()], vec!["b2.flac".to_string(), "b10.mp3".into()]));
         assert!(list_dir(&dir).is_err());
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn uri_escapes_spaces_and_commas() {
+        assert_eq!(file_uri(Path::new("/a b/c,d.mp3")), "file:///a%20b/c%2Cd.mp3");
     }
 }

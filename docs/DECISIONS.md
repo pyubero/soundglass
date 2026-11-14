@@ -257,3 +257,4 @@
 - 2026-11-13 — a panic in the decoder is caught on the decode thread and shown as "this file can't be decoded", with what was decoded kept — it had left the track on "Decoding…" forever
 - 2026-11-13 — Rename from Tags adds "_" to a Windows reserved name (CON, PRN, AUX, NUL, COM1–9, LPT1–9, any extension) on every platform, and allows a rename that only changes letter case when the disk sees it as the same file
 - 2026-11-14 — covers may also be TIFF, WebP, BMP or GIF (image crate features, new crates all MIT/Apache/Zlib), converted to JPEG q90 at most 1000 px before embedding; JPEG/PNG embedded unchanged — players often show only JPEG/PNG (user's choice)
+- 2026-11-14 — File → Show in File Manager/Explorer, copied from lightview (FileManager1 D-Bus ShowItems, else xdg-open on the folder; explorer /select on Windows); percent-encoding made a direct dependency (already in the tree via rfd and ureq)

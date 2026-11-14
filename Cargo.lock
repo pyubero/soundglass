@@ -3435,6 +3435,7 @@ dependencies = [
  "lofty",
  "mp3lame-encoder",
  "ort",
+ "percent-encoding",
  "realfft",
  "rfd",
  "ron",

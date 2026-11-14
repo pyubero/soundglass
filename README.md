@@ -65,6 +65,7 @@ Reset puts all three back to normal. The last two use WSOLA, which can sound a l
 - The cover shows at most 256 px; the small button in its space's bottom-right corner makes it fill the space instead (and back), remembered across runs.
 - Edit → Add/Replace Album Cover… picks an image (the same formats; all but JPEG and PNG are saved as JPEG, at most 1000 px), shows it, and saves it as the cover of this track or of all the folder's tracks (Track Info's tag editor must be closed); Remove Album Cover… removes it from this track or all of them the same way.
 - File → Identify Track… (online, only when you click Look up) sends the file's Chromaprint fingerprint and length to AcoustID and lists the matches with their score; Use Match fetches the genre from MusicBrainz (sending only the recording's ID) and fills Track Info's tag editor, only the empty fields unless you untick that. Nothing is written until Save… there. It is greyed out until the build has an AcoustID key and a contact URL (`src/identify.rs`).
+- File → Show in File Manager (Show in Explorer on Windows) opens the file manager with the current file selected, or just its folder if the file manager can't select files.
 - File → Rename from Tags… renames the current file from a pattern such as `{track} - {artist} - {title}` (also `{album}`, `{year}`, `{genre}`), with a preview. A missing tag is left out, a name Windows reserves (`CON`, `NUL`, `COM1`…) gets a `_`, and an existing file is never replaced (changing only the letter case is fine).
 
 ## Themes

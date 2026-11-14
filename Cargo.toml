@@ -19,6 +19,7 @@ lofty = "0.25.5"
 mp3lame-encoder = "0.3.0"
 # ONNX Runtime itself is loaded at run time from the copy Local AI → Download AI Runtime… installs.
 ort = { version = "=2.0.0-rc.15", default-features = false, features = ["std", "load-dynamic", "api-31", "cuda"] }
+percent-encoding = "2.3"
 rfd = "0.18.0"
 realfft = "3.5.1"
 ron = "0.12"
