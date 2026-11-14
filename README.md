@@ -34,6 +34,7 @@ Without a file it asks for one. `--timings` prints the time to the window and to
 - Ctrl+S: Save Copy — the edits next to the original, in its format, as `name-edited` (then `name-edited-2`…)
 - Ctrl+Shift+S: Save As (the original file is never changed), with the format, quality and sample rate, and whether to apply the speed and pitch
 - Ctrl+O: open a file
+- Ctrl+,: Settings
 - Ctrl+Q: quit
 
 ## Effects
@@ -73,7 +74,7 @@ Reset puts all three back to normal. The last two use WSOLA, which can sound a l
 
 ## Settings
 
-File → Settings… has the seek bar's look (line or waveform), the theme, the interface's font size (10 to 20; the labels drawn on the Spectrogram and waveforms keep their own sizes) and Remember window size.
+File → Settings… has the seek bar's look (line or waveform), the theme, the interface's font size (10 to 20; the labels drawn on the Spectrogram and waveforms keep their own sizes), Remember window size, or else the size the window opens at (380 × 680 at first), and at the bottom the version and Check for updates, which opens the Releases page (soundglass never checks on its own). Ctrl+, opens it.
 
 ## Themes
 

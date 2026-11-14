@@ -12,6 +12,9 @@ pub const KEY: &str = "settings";
 pub const INFO_WIDTH: f32 = 320.0;
 /// The Edit panel's height when nothing is saved.
 pub const EDIT_HEIGHT: f32 = 160.0;
+/// The window's smallest size, and its size when nothing is remembered (phone-shaped).
+pub const MIN_SIZE: [f32; 2] = [260.0, 420.0];
+pub const DEFAULT_SIZE: [f32; 2] = [380.0, 680.0];
 /// The interface's font size choices and default, in points (lightview's).
 pub const FONT_SIZES: [f32; 8] = [10.0, 11.0, 12.0, 13.0, 14.0, 16.0, 18.0, 20.0];
 pub const DEFAULT_FONT_SIZE: f32 = 13.0;
@@ -72,6 +75,8 @@ pub struct Settings {
     pub volume: f32,
     /// The interface's font size in points, one of `FONT_SIZES`.
     pub font_size: f32,
+    /// The window's size at start while `remember_window_size` is off.
+    pub default_size: [f32; 2],
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -127,6 +132,7 @@ impl Default for Settings {
             order: Order::InOrder,
             volume: 1.0,
             font_size: DEFAULT_FONT_SIZE,
+            default_size: DEFAULT_SIZE,
         }
     }
 }
@@ -176,6 +182,10 @@ impl Settings {
         if self.rename_pattern.is_empty() {
             self.rename_pattern = d.rename_pattern;
         }
+        if !self.default_size.iter().all(|&n| positive(n)) {
+            self.default_size = d.default_size;
+        }
+        self.default_size = [self.default_size[0].max(MIN_SIZE[0]), self.default_size[1].max(MIN_SIZE[1])];
         if !FONT_SIZES.contains(&self.font_size) {
             self.font_size = d.font_size;
         }
@@ -221,6 +231,7 @@ mod tests {
             order: Order::Shuffle,
             volume: 0.4,
             font_size: 16.0,
+            default_size: [500.0, 700.0],
         };
         let app_ron = |v: &str| ron::to_string(&HashMap::from([(KEY.to_string(), v.to_string())])).unwrap();
         assert_eq!(parse(&app_ron(&ron::to_string(&s).unwrap())), s);
@@ -231,10 +242,10 @@ mod tests {
         // Only some fields: the rest keep their defaults.
         let some = parse(&app_ron("(practice: true, spectrum: (fft: 8192))"));
         assert_eq!((some.practice, some.spectrum.fft, some.note_a4, some.spectrum.hop), (true, 8192, 440.0, crate::spectrum::Params::default().hop));
-        let bad = parse(&app_ron("(note_a4: 1000, info_width: -3, edit_height: 0, window_size: Some((700, -1)), note_scale: Some(12), note_label_size: 99, font_size: 99, rename_pattern: \"\", theme: \"\", spectrum: (fft: 3000, window: 99999))"));
+        let bad = parse(&app_ron("(note_a4: 1000, info_width: -3, edit_height: 0, window_size: Some((700, -1)), note_scale: Some(12), note_label_size: 99, font_size: 99, default_size: (100, -1), rename_pattern: \"\", theme: \"\", spectrum: (fft: 3000, window: 99999))"));
         assert_eq!((bad.note_a4, bad.info_width, bad.edit_height, bad.window_size, bad.note_scale, bad.note_label_size), (480.0, INFO_WIDTH, EDIT_HEIGHT, None, None, 24.0));
         assert_eq!((bad.rename_pattern.as_str(), bad.theme.as_str()), (crate::tags::DEFAULT_PATTERN, crate::theme::SYSTEM));
-        assert_eq!(bad.font_size, DEFAULT_FONT_SIZE);
+        assert_eq!((bad.font_size, bad.default_size), (DEFAULT_FONT_SIZE, DEFAULT_SIZE));
         assert_eq!(bad.spectrum, crate::spectrum::Params { fft: 3000, window: 99999, ..Default::default() }.checked());
     }
 }

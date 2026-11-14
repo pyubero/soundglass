@@ -108,6 +108,12 @@ fn file_uri(path: &Path) -> String {
     format!("file://{}", percent_encode(path.as_os_str().as_bytes(), ESCAPED))
 }
 
+/// Opens a web page in the default browser.
+pub fn open_url(url: &str) {
+    let program = if cfg!(windows) { "explorer" } else { "xdg-open" };
+    drop(std::process::Command::new(program).arg(url).spawn());
+}
+
 /// Opens the file manager with `path` highlighted, or just its folder if the desktop can't do that.
 #[cfg(target_os = "linux")]
 pub fn show_in_folder(path: &Path) {

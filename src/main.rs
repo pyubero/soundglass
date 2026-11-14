@@ -29,7 +29,6 @@ use track::Track;
 use settings::Order;
 
 /// The window's size when nothing is remembered: a vertical phone's shape, about 9:16.
-const DEFAULT_SIZE: [f32; 2] = [380.0, 680.0];
 
 /// Milliseconds between redraws while playing with a waveform shown.
 const WAVE_REPAINT_MS: u64 = 33;
@@ -83,7 +82,7 @@ fn main() -> eframe::Result {
     let settings = settings::load();
     ai::set_use_gpu(settings.ai.use_gpu);
     let remembered = settings.window_size.filter(|_| settings.remember_window_size);
-    let viewport = egui::ViewportBuilder::default().with_title(&name).with_inner_size(remembered.unwrap_or(DEFAULT_SIZE)).with_min_inner_size([260.0, 420.0])
+    let viewport = egui::ViewportBuilder::default().with_title(&name).with_inner_size(remembered.unwrap_or(settings.default_size)).with_min_inner_size(settings::MIN_SIZE)
         .with_icon(eframe::icon_data::from_png_bytes(include_bytes!("../icon/soundglass-256.png")).unwrap());
     // soundglass keeps the window size itself (see `App::save`): eframe's own saving can't follow Track Info.
     let options = eframe::NativeOptions { viewport, persist_window: false, ..Default::default() };
@@ -589,6 +588,10 @@ impl eframe::App for App {
         let mut toggle_info = ctx.input_mut(|i| i.consume_shortcut(&info_key));
         let folder_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::B);
         let mut toggle_folder = ctx.input_mut(|i| i.consume_shortcut(&folder_key));
+        let settings_key = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Comma);
+        if ctx.input_mut(|i| i.consume_shortcut(&settings_key)) {
+            self.show_settings = true;
+        }
         if ctx.input_mut(|i| i.consume_shortcut(&egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Q))) {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
@@ -646,7 +649,7 @@ impl eframe::App for App {
                         ui.close();
                     }
                     ui.separator();
-                    if ui.button("Settings…").clicked() {
+                    if ui.add(egui::Button::new("Settings…").shortcut_text(ctx.format_shortcut(&settings_key))).clicked() {
                         self.show_settings = true;
                     }
                     if ui.add(egui::Button::new("Quit").shortcut_text(ctx.format_shortcut(&egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Q)))).clicked() {
@@ -1441,6 +1444,23 @@ impl App {
             });
             ui.checkbox(&mut self.settings.remember_window_size, "Remember window size");
             ui.weak("Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.");
+            ui.add_enabled_ui(!self.settings.remember_window_size, |ui| {
+                ui.horizontal(|ui| {
+                    let [w, h] = &mut self.settings.default_size;
+                    ui.label("Window size:");
+                    ui.add(egui::DragValue::new(w).range(settings::MIN_SIZE[0]..=7680.0));
+                    ui.label("×");
+                    ui.add(egui::DragValue::new(h).range(settings::MIN_SIZE[1]..=4320.0));
+                });
+            });
+            ui.separator();
+            ui.horizontal(|ui| {
+                ui.weak(format!("soundglass {}", env!("CARGO_PKG_VERSION")));
+                // Only opens the page: soundglass never checks on its own.
+                if ui.button("Check for updates").clicked() {
+                    folder::open_url("https://github.com/pyubero/soundglass/releases");
+                }
+            });
         });
         self.show_settings = open;
     }
