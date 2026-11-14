@@ -12,7 +12,7 @@ cpal = "0.18.2"
 eframe = { version = "0.37", default-features = false, features = ["glow", "wayland", "x11", "accesskit", "persistence"] }
 flacenc = "0.5.1"
 hound = "3.5.1"
-image = { version = "0.25.10", default-features = false, features = ["jpeg", "png"] }
+image = { version = "0.25.10", default-features = false, features = ["jpeg", "png", "tiff", "webp", "bmp", "gif"] }
 # Already in the build (winit); keeps the NVIDIA libraries loaded for ONNX Runtime's CUDA provider.
 libloading = "0.8"
 lofty = "0.25.5"

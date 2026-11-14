@@ -24,11 +24,14 @@ pub fn list_folder(path: &Path) -> Vec<PathBuf> {
     files
 }
 
-/// The one JPEG or PNG in `dir` (hidden ones left out), or None when there are none or several.
+/// Image files offered or accepted as covers; all but JPEG and PNG are converted to JPEG by `tags::cover`.
+pub const IMAGE_EXTS: &[&str] = &["jpg", "jpeg", "png", "tif", "tiff", "webp", "bmp", "gif"];
+
+/// The one image (`IMAGE_EXTS`) in `dir` (hidden ones left out), or None when there are none or several.
 pub fn lone_image(dir: &Path) -> Option<PathBuf> {
     let image = |p: &PathBuf| {
         let ext = p.extension().and_then(|e| e.to_str()).unwrap_or_default().to_ascii_lowercase();
-        ["jpg", "jpeg", "png"].contains(&ext.as_str()) && p.file_name().is_some_and(|n| !n.to_string_lossy().starts_with('.')) && p.is_file()
+        IMAGE_EXTS.contains(&ext.as_str()) && p.file_name().is_some_and(|n| !n.to_string_lossy().starts_with('.')) && p.is_file()
     };
     let mut images = std::fs::read_dir(dir).ok()?.filter_map(|e| Some(e.ok()?.path())).filter(image);
     let first = images.next()?;
@@ -142,8 +145,12 @@ mod tests {
         let one = lone_image(&dir);
         std::fs::write(dir.join("back.png"), b"").unwrap();
         let two = lone_image(&dir);
+        std::fs::remove_file(dir.join("Cover.JPG")).unwrap();
+        std::fs::remove_file(dir.join("back.png")).unwrap();
+        std::fs::write(dir.join("scan.TIF"), b"").unwrap();
+        let tif = lone_image(&dir);
         std::fs::remove_dir_all(&dir).unwrap();
-        assert_eq!((none, one, two), (None, Some(dir.join("Cover.JPG")), None));
+        assert_eq!((none, one, two, tif), (None, Some(dir.join("Cover.JPG")), None, Some(dir.join("scan.TIF"))));
     }
 
     #[test]

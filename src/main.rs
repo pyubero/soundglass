@@ -834,7 +834,7 @@ impl eframe::App for App {
             self.open(path);
         }
         let dir = self.track.path.parent().map(|d| d.to_path_buf()).unwrap_or_default();
-        if pick_cover && let Some(image) = rfd::FileDialog::new().add_filter("Image", &["jpg", "jpeg", "png"]).set_directory(dir).pick_file()
+        if pick_cover && let Some(image) = rfd::FileDialog::new().add_filter("Image", folder::IMAGE_EXTS).set_directory(dir).pick_file()
             && let Err(e) = self.offer_cover(&ctx, image, true)
         {
             self.save_notice = Some((Err(e), ctx.input(|i| i.time)));
@@ -986,7 +986,7 @@ fn tag_fields(ui: &mut egui::Ui, editor: &mut Option<TagEditor>, estimate: tempo
                 tags::Cover::Remove => "removed",
                 tags::Cover::New(_) => "new image",
             });
-            if ui.button("Replace…").clicked() && let Some(path) = rfd::FileDialog::new().add_filter("Image", &["jpg", "jpeg", "png"]).pick_file() {
+            if ui.button("Replace…").clicked() && let Some(path) = rfd::FileDialog::new().add_filter("Image", folder::IMAGE_EXTS).pick_file() {
                 match std::fs::read(&path).map_err(|e| e.to_string()).and_then(tags::cover) {
                     Ok(c) => (d.cover, e.error) = (c, None),
                     Err(err) => e.error = Some(err),
@@ -1821,7 +1821,7 @@ impl App {
     }
 
     /// "Add album cover?" with the image, asked when a track without a cover opens
-    /// in a folder with exactly one JPEG or PNG, or from the Edit menu's cover items; the chosen
+    /// in a folder with exactly one image (`folder::IMAGE_EXTS`), or from the Edit menu's cover items; the chosen
     /// tracks are written on a thread, as the tag job.
     fn cover_offer_modal(&mut self, ctx: &egui::Context) {
         let key = Arc::as_ptr(&self.track) as usize;

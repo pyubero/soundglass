@@ -15,7 +15,7 @@ pub enum Cover {
     #[default]
     Keep,
     Remove,
-    /// A JPEG or PNG, checked by `cover`.
+    /// A JPEG or PNG, checked (and converted to JPEG from other formats) by `cover`.
     New(Vec<u8>),
 }
 
@@ -66,13 +66,25 @@ pub fn basic(path: &Path) -> Option<crate::track::Tags> {
     Some(crate::track::Tags { title: some(t.title), artist: some(t.artist), album: some(t.album) })
 }
 
-/// A picked image as a new cover, if it is a JPEG or PNG that decodes and isn't too big.
+/// A picked image as a new cover, if it decodes: a JPEG or PNG as it is (up to 10 MB), any other
+/// format shrunk to 1000 px at most and converted to JPEG, since players often show only those two.
 pub fn cover(bytes: Vec<u8>) -> Result<Cover, String> {
-    if bytes.len() > COVER_MAX_BYTES {
+    use image::ImageFormat::{Jpeg, Png};
+    let keep = matches!(image::guess_format(&bytes), Ok(Jpeg | Png));
+    if keep && bytes.len() > COVER_MAX_BYTES {
         return Err("The image is larger than 10 MB.".into());
     }
-    image::load_from_memory(&bytes).map_err(|_| "That image can't be read.")?;
-    Picture::from_reader(&mut &bytes[..]).map_err(|_| "Only JPEG and PNG covers are supported.")?;
+    // A big TIFF scan is decoded whole; the image crate's default limits cap a hostile file's cost.
+    let img = image::load_from_memory(&bytes).map_err(|_| "That image can't be read.")?;
+    let bytes = if keep {
+        bytes
+    } else {
+        let img = if img.width() > 1000 || img.height() > 1000 { img.resize(1000, 1000, image::imageops::FilterType::Lanczos3) } else { img };
+        let mut out = Vec::new();
+        image::codecs::jpeg::JpegEncoder::new_with_quality(&mut out, 90).encode_image(&img.to_rgb8()).map_err(|e| e.to_string())?;
+        out
+    };
+    Picture::from_reader(&mut &bytes[..]).map_err(|_| "That image can't be used as a cover.")?;
     Ok(Cover::New(bytes))
 }
 
@@ -276,6 +288,20 @@ pub fn rename(from: &Path, name: &str) -> Result<PathBuf, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn covers_converted_or_kept() {
+        let encode = |w, h, format| {
+            let mut out = std::io::Cursor::new(Vec::new());
+            image::DynamicImage::new_rgb8(w, h).write_to(&mut out, format).unwrap();
+            out.into_inner()
+        };
+        let Ok(Cover::New(jpeg)) = cover(encode(2000, 1500, image::ImageFormat::Tiff)) else { panic!("TIFF refused") };
+        let img = image::load_from_memory(&jpeg).unwrap();
+        assert_eq!((image::guess_format(&jpeg).unwrap(), img.width(), img.height()), (image::ImageFormat::Jpeg, 1000, 750));
+        let png = encode(20, 10, image::ImageFormat::Png);
+        assert_eq!(cover(png.clone()), Ok(Cover::New(png)));
+    }
 
     fn scratch(name: &str) -> PathBuf {
         let dir = std::env::temp_dir().join(format!("soundglass-test-{}-tags-{name}", std::process::id()));
