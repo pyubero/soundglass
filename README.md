@@ -70,6 +70,10 @@ Reset puts all three back to normal. The last two use WSOLA, which can sound a l
 - File → Copy Path copies the file's full path as text; Copy File puts the file itself on the clipboard, for pasting into a chat or a file manager (it stays there while soundglass runs).
 - File → Rename from Tags… renames the current file from a pattern such as `{track} - {artist} - {title}` (also `{album}`, `{year}`, `{genre}`), with a preview. A missing tag is left out, a name Windows reserves (`CON`, `NUL`, `COM1`…) gets a `_`, and an existing file is never replaced (changing only the letter case is fine).
 
+## Settings
+
+File → Settings… has the seek bar's look (line or waveform), the theme, the interface's font size (10 to 20; the labels drawn on the Spectrogram and waveforms keep their own sizes) and Remember window size.
+
 ## Themes
 
 File → Settings… → Theme changes the colours and shapes of menus, panels, dialogs and buttons. The seek bar, the waveforms and the play buttons use the theme's colours too. A theme can't move, add or hide anything, and it doesn't change the fonts or the Spectrogram's colours (those are in its own settings).

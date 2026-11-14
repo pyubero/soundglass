@@ -12,6 +12,9 @@ pub const KEY: &str = "settings";
 pub const INFO_WIDTH: f32 = 320.0;
 /// The Edit panel's height when nothing is saved.
 pub const EDIT_HEIGHT: f32 = 160.0;
+/// The interface's font size choices and default, in points (lightview's).
+pub const FONT_SIZES: [f32; 8] = [10.0, 11.0, 12.0, 13.0, 14.0, 16.0, 18.0, 20.0];
+pub const DEFAULT_FONT_SIZE: f32 = 13.0;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -67,6 +70,8 @@ pub struct Settings {
     pub order: Order,
     /// The volume slider's position, 0 to 1.
     pub volume: f32,
+    /// The interface's font size in points, one of `FONT_SIZES`.
+    pub font_size: f32,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -121,6 +126,7 @@ impl Default for Settings {
             ai: AiSettings::default(),
             order: Order::InOrder,
             volume: 1.0,
+            font_size: DEFAULT_FONT_SIZE,
         }
     }
 }
@@ -128,6 +134,16 @@ impl Default for Settings {
 /// The note lines' colours when nothing is saved: C a warm amber at 60 %, the others white at 30 %.
 const NOTE_C_COLOR: Color32 = Color32::from_rgba_unmultiplied_const(255, 200, 90, 153);
 const NOTE_COLOR: Color32 = Color32::from_rgba_unmultiplied_const(255, 255, 255, 77);
+
+/// Scales every text style from egui's defaults, so calling it again never compounds. From lightview.
+pub fn apply_font_size(ctx: &eframe::egui::Context, size: f32) {
+    // The saved file can be edited by hand.
+    let factor = size.clamp(FONT_SIZES[0], FONT_SIZES[FONT_SIZES.len() - 1]) / DEFAULT_FONT_SIZE;
+    ctx.all_styles_mut(|style| {
+        style.text_styles = eframe::egui::style::default_text_styles();
+        style.text_styles.values_mut().for_each(|font| font.size *= factor);
+    });
+}
 
 /// Reads the settings straight from eframe's storage file, so the window size is known before
 /// the window is created; `App::save` writes them back through eframe. Anything missing or

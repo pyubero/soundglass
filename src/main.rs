@@ -97,6 +97,7 @@ fn main() -> eframe::Result {
         cc.egui_ctx.set_fonts(fonts());
         theme::seed_folder();
         let theme_error = theme::apply(&cc.egui_ctx, &settings.theme);
+        settings::apply_font_size(&cc.egui_ctx, settings.font_size);
         let player = opening.join().unwrap_or_else(|_| Err("the sound device failed to open".into()));
         let volume = settings.volume;
         if let Ok(p) = &player {
@@ -1394,6 +1395,16 @@ impl App {
             if let Some(e) = &self.theme_error {
                 ui.colored_label(ui.visuals().error_fg_color, e);
             }
+            ui.horizontal(|ui| {
+                ui.label("Font size:");
+                egui::ComboBox::from_id_salt("font-size").selected_text(self.settings.font_size.to_string()).show_ui(ui, |ui| {
+                    for size in settings::FONT_SIZES {
+                        if ui.selectable_value(&mut self.settings.font_size, size, size.to_string()).clicked() {
+                            settings::apply_font_size(ctx, size);
+                        }
+                    }
+                });
+            });
             ui.checkbox(&mut self.settings.remember_window_size, "Remember window size");
             ui.weak("Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.");
         });
