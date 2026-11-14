@@ -35,7 +35,8 @@ Without a file it asks for one. `--timings` prints the time to the window and to
 - Ctrl+Shift+S: Save As (the original file is never changed), with the format, quality and sample rate, and whether to apply the speed and pitch
 - Ctrl+O: open a file
 - Ctrl+,: Settings
-- Ctrl+Q: quit
+- F11: full screen, without the menu bar (Esc leaves it once there's no selection)
+- Ctrl+W or Ctrl+Q: close the window (asks first about unsaved edits)
 
 ## Effects
 

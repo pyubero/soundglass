@@ -592,12 +592,19 @@ impl eframe::App for App {
         if ctx.input_mut(|i| i.consume_shortcut(&settings_key)) {
             self.show_settings = true;
         }
-        if ctx.input_mut(|i| i.consume_shortcut(&egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Q))) {
+        let (close_key, fullscreen_key) = (egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::W), egui::KeyboardShortcut::new(egui::Modifiers::NONE, egui::Key::F11));
+        // Close and Quit are the same in one window; Close is there for the key people expect.
+        if [egui::Key::Q, egui::Key::W].iter().any(|&k| ctx.input_mut(|i| i.consume_shortcut(&egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, k)))) {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+        }
+        let fullscreen = viewport.fullscreen.unwrap_or(false);
+        if ctx.input_mut(|i| i.consume_shortcut(&fullscreen_key)) {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(!fullscreen));
         }
 
         let mut ai_tool = None;
-        egui::Panel::top("menu").show(ui, |ui| {
+        // No menu bar in full screen.
+        (!fullscreen).then(|| egui::Panel::top("menu").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("File", |ui| {
                     if ui.add(egui::Button::new("Open…").shortcut_text(ctx.format_shortcut(&open_key))).clicked() {
@@ -615,6 +622,10 @@ impl eframe::App for App {
                             }
                         });
                     });
+                    if ui.add(egui::Button::new("Close").shortcut_text(ctx.format_shortcut(&close_key))).clicked() {
+                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                    }
+                    ui.separator();
                     if ui.button(if cfg!(windows) { "Show in Explorer" } else { "Show in File Manager" }).clicked() {
                         folder::show_in_folder(&self.track.path);
                         ui.close();
@@ -705,6 +716,10 @@ impl eframe::App for App {
                         toggle_edit = true;
                         ui.close();
                     }
+                    if ui.add(egui::Button::new("Full Screen").shortcut_text(ctx.format_shortcut(&fullscreen_key))).on_hover_text("Esc leaves it").clicked() {
+                        ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(true));
+                        ui.close();
+                    }
                     ui.separator();
                     if ui.checkbox(&mut self.settings.practice, "Practice mode").on_hover_text("Tools for musicians: loops, the spectrogram, tempo, key and chords").changed() {
                         if !self.settings.practice {
@@ -750,7 +765,7 @@ impl eframe::App for App {
                     });
                 }
             });
-        });
+        }));
 
         let cover = if self.settings.visualiser { Some(self.visual.frame(&ctx, &self.track, &edit, pos, rate, playing)) } else { self.cover_texture(&ctx) };
         let tags = self.track.tags.get().cloned().unwrap_or_default();
@@ -1740,7 +1755,10 @@ impl App {
         if self.no_dialog(ctx) {
             let plain = |k| ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, k));
             if plain(egui::Key::Escape) {
-                self.edit_view.selection = None;
+                // The selection first, then full screen (this window's).
+                if self.edit_view.selection.take().is_none() && ctx.input(|i| i.viewport().fullscreen.unwrap_or(false)) {
+                    ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(false));
+                }
             }
             if plain(egui::Key::L) && self.settings.practice {
                 self.looping = !self.looping;
