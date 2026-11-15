@@ -45,6 +45,7 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 
 ### 2. Player
 - **Play, pause, seek.** Space to play/pause, click or arrow keys to jump.
+- **Media keys.** Play/pause, next and previous keys work even while another window is focused (MPRIS on Linux, System Media Transport Controls on Windows).
 - **Waveform overview.** The whole track drawn across the window; click anywhere to play from there.
 - **Previous/next in folder.** Page Up/Down moves through the folder's audio files, and the next one is decoded ahead so it starts at once.
 - **Gapless playback.** Albums that flow from track to track play without a gap.

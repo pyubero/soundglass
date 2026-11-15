@@ -9,6 +9,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 ### Added
 
 - MIDI files (`.mid`, `.midi`) play with a built-in piano, and Save As renders them to audio.
+- The keyboard's media keys (play/pause, next, previous) work, even while another window is focused.
 
 ### Fixed
 

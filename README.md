@@ -26,7 +26,8 @@ what each release brings, and [`PRODUCT_BRIEF.md`](docs/PRODUCT_BRIEF.md) has th
 ## Main features
 
 - **Sound at once.** Playback starts before the file is fully decoded, and Page Up / Page Down move
-  through the folder; the Folder panel browses the rest.
+  through the folder; the Folder panel browses the rest. The keyboard's media keys work too, even
+  from another window.
 - **Your originals stay safe.** Cut, crop, silence, fades, gain, normalize, trim silence and
   reverse, with full undo and redo; Save Copy and Save As write a new file. Deleting moves a file to
   the Trash, and Ctrl+Z brings it back.
