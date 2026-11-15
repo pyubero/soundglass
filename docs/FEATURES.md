@@ -118,7 +118,8 @@ stuttery on dense mixes ([`TIME_STRETCH.md`](TIME_STRETCH.md)). Save As can appl
   Look up) searches by name instead of fingerprint, with no key needed. The Title and Artist boxes start
   with the track's tags (the tag editor's unsaved ones if it is open), or the file name without its
   leading track number when there is no title tag; you can change them. An Album box (the album tag,
-  or the folder's name without a leading year) isn't sent: it only orders the list. MusicBrainz and
+  or the folder's name without a leading year) orders the list; only MusicBrainz receives it, as an
+  optional part of the query that lifts recordings on that album without dropping the others. MusicBrainz and
   Discogs fetch up to 100 matches and list first the ones on that album, then the higher score, then
   originals before reissues, compilations and unofficial releases, then the earliest year; Wikipedia
   keeps its search order. The window then works like Identify Track. MusicBrainz lists recordings with their score and fetches the genre for the pick.
@@ -320,7 +321,8 @@ soundglass collects nothing: no telemetry, no account. It goes online only when 
 
 - Identify Track… and Identify Album… (AcoustID and MusicBrainz), after you click Look up;
 - Fill Metadata From (Wikipedia, Discogs or MusicBrainz), which sends only the title and artist
-  you searched for (and the chosen match's ID), after you click Look up;
+  you searched for (and the album, to MusicBrainz only) and the chosen match's ID, after you click
+  Look up;
 - the AI runtime, GPU libraries and models, each after you accept its licence;
 - Check for updates, which only opens the Releases page in your browser.
 

@@ -76,7 +76,7 @@ impl Source {
     pub fn privacy(self) -> &'static str {
         match self {
             Self::AcoustId => tr("Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer."),
-            Self::MusicBrainz => tr("Sends the title and artist to MusicBrainz, and the chosen match's ID for its genre. Nothing else leaves this computer."),
+            Self::MusicBrainz => tr("Sends the title, artist and album to MusicBrainz, and the chosen match's ID for its genre. Nothing else leaves this computer."),
             Self::Discogs => tr("Sends the title and artist to Discogs, and the chosen release's ID for its track list. Nothing else leaves this computer."),
             Self::Wikipedia => tr("Sends the title and artist to English Wikipedia. Nothing else leaves this computer."),
         }
@@ -127,8 +127,8 @@ fn fold(s: &str) -> String {
     s.to_lowercase().chars().filter(|c| c.is_alphanumeric()).collect()
 }
 
-/// The matches for `title` by `artist`, most likely first (`rank`, but Wikipedia in search order;
-/// `album` isn't sent).
+/// The matches for `title` by `artist`, most likely first (`rank`, but Wikipedia in search order).
+/// `album` is sent only to MusicBrainz, as an optional part of the query.
 pub fn search(source: Source, title: &str, artist: &str, album: &str) -> Result<Vec<Match>, String> {
     let (title, artist) = (title.trim(), artist.trim());
     if title.is_empty() {
@@ -138,12 +138,7 @@ pub fn search(source: Source, title: &str, artist: &str, album: &str) -> Result<
     match source {
         Source::AcoustId => Ok(Vec::new()),
         Source::MusicBrainz => {
-            // Lucene phrases: a quote or backslash in them escaped.
-            let phrase = |s: &str| format!("\"{}\"", s.replace('\\', "\\\\").replace('"', "\\\""));
-            let mut q = format!("recording:{}", phrase(title));
-            if !artist.is_empty() {
-                q += &format!(" AND artist:{}", phrase(artist));
-            }
+            let q = mb_query(title, artist, album);
             // As many as MusicBrainz gives (~450 KB): the album often isn't among the first 25.
             let ask = || agent().get("https://musicbrainz.org/ws/2/recording").query("query", &q).query("limit", "100").query("fmt", "json").call();
             let reply = match ask() {
@@ -204,6 +199,22 @@ fn discogs_error(e: ureq::Error) -> String {
         ureq::Error::StatusCode(429) => tr("Discogs is busy; try again in a minute.").into(),
         e => trf("Discogs can't be reached ({e})", &[("e", &e)]),
     }
+}
+
+/// The Lucene query: the title and artist required, as phrases (a quote or backslash in them
+/// escaped); the album's words optional, so releases with them score higher but none are dropped.
+fn mb_query(title: &str, artist: &str, album: &str) -> String {
+    let phrase = |s: &str| format!("\"{}\"", s.replace('\\', "\\\\").replace('"', "\\\""));
+    let mut q = format!("+recording:{}", phrase(title));
+    if !artist.is_empty() {
+        q += &format!(" +artist:{}", phrase(artist));
+    }
+    // Letters and digits only: nothing in them is Lucene syntax.
+    let words: Vec<&str> = album.split(|c: char| !c.is_alphanumeric()).filter(|w| !w.is_empty()).collect();
+    if !words.is_empty() {
+        q += &format!(" release:({})", words.join(" "));
+    }
+    q
 }
 
 /// MusicBrainz's recording search as matches: one per recording and release.
@@ -788,6 +799,13 @@ mod tests {
         let mut scored = vec![Match { score: 0.5, year: "1950".into(), ..Match::default() }, Match { score: 0.9, year: "1990".into(), ..Match::default() }];
         rank(&mut scored, "", "");
         assert_eq!(scored[0].year, "1990");
+    }
+
+    #[test]
+    fn builds_musicbrainz_queries() {
+        assert_eq!(mb_query("St. Louis Blues", "Louis Armstrong", "Louis Armstrong Plays W.C.Handy"), "+recording:\"St. Louis Blues\" +artist:\"Louis Armstrong\" release:(Louis Armstrong Plays W C Handy)");
+        assert_eq!(mb_query("Say \"Hi\" \\o/", "", ""), "+recording:\"Say \\\"Hi\\\" \\\\o/\"");
+        assert_eq!(mb_query("x", "", "AND) OR (*:* -\"y"), "+recording:\"x\" release:(AND OR y)");
     }
 
     #[test]

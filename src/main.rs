@@ -342,7 +342,7 @@ struct Identify {
     /// What a name search looks for.
     title: String,
     artist: String,
-    /// Matches on it go first; it isn't sent.
+    /// Matches on it go first; sent only to MusicBrainz.
     album: String,
     /// The matches, or why there are none; `None` before Look up.
     found: Option<Result<Vec<identify::Match>, String>>,
@@ -2300,7 +2300,7 @@ impl App {
                     ui.add_enabled(!busy, egui::TextEdit::singleline(&mut id.artist));
                     ui.end_row();
                     ui.label(tr("Album:"));
-                    ui.add_enabled(!busy, egui::TextEdit::singleline(&mut id.album)).on_hover_text(tr("Matches on this album are listed first; it isn't sent"));
+                    ui.add_enabled(!busy, egui::TextEdit::singleline(&mut id.album)).on_hover_text(if source == identify::Source::MusicBrainz { tr("Matches on this album are listed first") } else { tr("Matches on this album are listed first; it isn't sent") });
                     ui.end_row();
                 });
                 ui.add_space(6.0);
