@@ -280,3 +280,4 @@
 - 2026-11-15 — releases covering equally many files are ranked by how near their track count (AcoustID's track_count) is to the folder's file count, so the album comes before an anthology that holds it
 - 2026-11-15 — identify.rs uses one shared ureq agent (connection kept between requests) with a 2 s connect budget: ureq splits that budget across the host's addresses, and with 10 s two unreachable IPv6 addresses cost 8 s per request on this machine
 - 2026-11-15 — Identify Album shows each edition's country and format from AcoustID's release (country, mediums' format; XE/XW spelled Europe/Worldwide, "2×CD" for several alike media) next to the year (user's choice)
+2026-11-15 — README is a front page in lightview's structure; the detail lives in docs/FEATURES.md and docs/MENUS.md, with docs/TRANSLATING.md and the brief moved to docs/PRODUCT_BRIEF.md; release steps stay in README.md — one place per kind of fact (user's choice)

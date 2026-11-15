@@ -2,163 +2,204 @@
   <img src="icon/soundglass.svg" width="128" alt="soundglass logo">
 </p>
 
+<p align="center">
+  <strong>Opening a song shouldn't feel like a loading screen.<br>
+  Trimming it shouldn't take a second app.</strong>
+</p>
+
 # soundglass
 
-A small, fast audio player for Linux, written in Rust. Open a file and hear it at once. See [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md) for where it is heading.
+A small, fast music player and quick editor for Linux and Windows, written in Rust. Open a file and
+hear it at once, move through a folder without waiting, and make quick fixes without risking your
+originals: edits are only ever written to a copy, when you choose to save one. It collects nothing:
+no telemetry, no account, and it never goes online on its own.
 
-## Build and run
+![soundglass playing a track](screenshots/screenshot-player.png)
 
-Needs Rust and the ALSA headers (`sudo apt install libasound2-dev` on Debian/Ubuntu).
+## Status
 
+soundglass is **in development**. The player (v1) is usable on Linux and Windows: playing,
+browsing a folder, quick edits and effects, speed and pitch, tags and the local AI tools. Practice
+mode (v2), the tools for musicians, is in progress. [`PRODUCT_BRIEF.md`](docs/PRODUCT_BRIEF.md)
+has the plan.
+
+## Main features
+
+- **Sound at once.** Playback starts before the file is fully decoded, and Page Up / Page Down move
+  through the folder; the Folder panel browses the rest.
+- **Your originals stay safe.** Cut, crop, silence, fades, gain, normalize, trim silence and
+  reverse, with full undo and redo; Save Copy and Save As write a new file. Deleting moves a file to
+  the Trash, and Ctrl+Z brings it back.
+- **Speed and pitch.** Slower or faster at the same pitch, or higher or lower at the same speed,
+  live while it plays.
+- **Tags and names.** Edit tags and covers, give a whole folder its cover, rename files from their
+  tags, and look a track or a whole album up on AcoustID and MusicBrainz (only when you ask).
+- **Practice mode.** A spectrogram with note lines and chords, loops, tempo and key estimates, and
+  a metronome on the beats.
+- **Local AI tools.** Remove noise, split a song into stems, turn a melody into MIDI, find the beats
+  and transcribe speech, all on your own computer and offline. Nothing is installed until you ask
+  for it ([AI tools](#ai-tools)).
+- **Private by design.** No telemetry, no account, and it never goes online on its own.
+- **Your keys, your colours.** Every menu item can get its own keyboard shortcut, the font size is
+  adjustable, and themes (including high contrast) are plain XML files.
+
+Every feature, and the supported formats, are described in [`FEATURES.md`](docs/FEATURES.md).
+
+## Screenshots
+
+The Spectrogram in Practice mode, with note lines and chords:
+
+![The Spectrogram window with note lines and the chord bar](screenshots/screenshot-spectrogram.png)
+
+## Installation
+
+soundglass runs on Linux, on both Wayland and X11. It has been developed and tested on Kubuntu with
+KDE Plasma; the Windows build is made and tested on GitHub Actions. Each release on GitHub has a Linux package and a Windows installer. Both
+install only the program, its menu entry and its icon; settings, themes and AI models live in the
+data folder (`~/.local/share/soundglass/`, `%APPDATA%\soundglass\data\`), so removing the package
+keeps them.
+
+### Ubuntu 22.04, Debian 12 or newer (64-bit Intel/AMD)
+
+1. Download the `.deb` file from the [Releases](../../releases) page.
+2. Install it: `sudo apt install ./soundglass_0.1.0_amd64.deb`, or double-click it.
+3. Open soundglass from your applications menu. The first time, it offers to become your default
+   player (File → Settings… → Make soundglass the default player does it later).
+
+To uninstall, run `sudo apt remove soundglass`.
+
+### Windows 10 or 11 (64-bit)
+
+Download `soundglass-0.1.0-x64.msi` from the [Releases](../../releases) page and run it. The
+installer isn't signed, so Windows may warn about it first: choose More info → Run anyway. Then
+choose soundglass in Settings → Default apps (Windows doesn't let an installer make itself the
+default).
+
+### From source (any other distribution)
+
+You need a [Rust toolchain](https://rustup.rs) and the ALSA headers (`sudo apt install
+libasound2-dev` on Debian/Ubuntu). From a checkout of this repository:
+
+```sh
+./install.sh
 ```
+
+This builds soundglass, copies it to `~/.local/bin`, adds `soundglass.desktop` to
+`~/.local/share/applications`, and **makes it the default** for MP3, FLAC, WAV, Ogg Vorbis,
+M4A/AAC, AIFF, CAF and Matroska audio. Opus is not supported yet.
+
+To undo it, delete `~/.local/bin/soundglass`, `~/.local/share/applications/soundglass.desktop` and
+`~/.local/share/icons/hicolor/scalable/apps/soundglass.svg`, then pick another default app in System
+Settings → Default Applications (or File Associations).
+
+To build without installing:
+
+```sh
+cargo build --release
+```
+
+## Usage
+
+```sh
+soundglass              # open an empty window
+soundglass song.mp3     # play a file
+```
+
+[`MENUS.md`](docs/MENUS.md) lists every menu item and shortcut.
+
+Settings are saved in `~/.local/share/soundglass/app.ron` (Windows: `%APPDATA%\soundglass\data\`).
+
+## AI tools
+
+Everything runs on your own computer, on the CPU or a GPU. Your audio is never uploaded: soundglass
+only goes online to download the runtime and models you ask for, and after that the AI tools work
+offline.
+
+The AI tools are in the Local AI menu. They need ONNX Runtime, installed with Local AI → Download AI
+Runtime…, and the model for the task, from Local AI → AI Models…. Each download is pinned by
+SHA-256 and starts only after you accept its licence. Models live in
+`~/.local/share/soundglass/models`.
+
+The tools work on the selection in the Edit panel, or on the whole track, and write a new file next
+to it:
+
+- **Remove Noise** (DeepFilterNet3, 16 MB): cleans background noise from speech.
+- **Split into Stems** (HTDemucs v4, 166 MB): drums, bass, other and vocals, each in its own file.
+- **Melody to MIDI** (Spotify's Basic Pitch, 0.2 MB): what's played or sung, as a MIDI file.
+- **Find Beats** (Beat This!, 191 MB): the beats and bars, for the Spectrogram and the Metronome.
+- **Transcribe Speech** (Parakeet TDT 0.6B v3, Whisper small or Whisper large-v3-turbo): the words,
+  as text or subtitles.
+
+GPU support is optional, and AI Models… offers two downloads:
+
+- **NVIDIA** (CUDA, about 1.5 GB): makes Split into Stems and Find Beats 2.6–3× faster on a GTX
+  1050.
+- **AMD, Intel and others** (WebGPU, about 6 MB on Linux and 13 MB on Windows; experimental): any
+  graphics card with Vulkan (Linux, needs `libvulkan1`) or Direct3D 12 (Windows). Only Find Beats
+  uses it. A weak built-in chip can be slower than the CPU, so switch Use the GPU off if it doesn't
+  help. With both installed, NVIDIA's is used.
+
+If the GPU can't be used, soundglass falls back to the CPU and shows why. Each tool's settings,
+speed and output are in [`FEATURES.md`](docs/FEATURES.md#ai-tools).
+
+## Development
+
+```sh
+cargo test                           # run the tests
 cargo run --release -- song.mp3
+soundglass --timings song.mp3        # print the time to the window and to the first sound
+soundglass --bench song.mp3          # the same, quitting at the first sound
 ```
 
-Without a file it opens an empty window with Open… (the menus that need a file are greyed out). `--timings` prints the time to the window and to the first sound; `--bench` exits at the first sound.
+`./package-deb.sh` builds the .deb locally; the .msi is built on GitHub Actions
+(`.github/workflows/build.yml`).
 
-## Keys
+Documents:
 
-The defaults; File → Settings… → Change Keyboard Shortcuts… changes them.
-
-- Space: play/pause
-- Left / Right: back or forward 5 s
-- Mouse back / forward buttons: previous or next file
-- Drag a file or folder onto the window to play it (a folder plays its first audio file); this works on X11 and Windows, not yet on Wayland
-- Page Up / Page Down: previous or next file in the folder (in the shuffled order with Shuffle; the button right of Next cycles In order, Repeat track and Shuffle)
-- Ctrl+I: show or hide Track Info (on the left); Ctrl+B: show or hide the Folder panel (on the right), which lists `..`, the subfolders and the audio files by name (🗀 folders, ♪ tracks): click a folder to look inside it (playback carries on), click a file to play it. Each panel widens the window instead of squeezing the player
-- Ctrl+E: show or hide the Edit panel
-- In the Edit panel: click to play from there, drag to select, Shift+click or Shift+drag to change the selection, scroll to zoom, right-drag (or scroll sideways) to move along
-- View → Practice mode (off by default) adds a Practice menu with the tools for musicians — Loop selection (L), the Spectrogram — and the tempo, key and chord estimates; with it off none of them is shown or worked out
-- Practice → Spectrogram opens it in its own window (log frequency, 20 Hz up): click to play from there, drag to select (the same selection as the Edit panel, so Loop works on it), scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around in both directions; Fit shows everything again. Space, L, Esc, ←/→ and PageUp/Down work there too
-- On the Spectrogram's toolbar, Chords shows a bar along the top with the chords (major, minor and 7ths) against the track's time; they follow the edits and the zoom, and are named like the note lines. It's a first try: it finds the main chords better than when they change (docs/CHORDS.md). Key ≈ … (once estimated) shows the detected key's scale (a minor key as its relative major). Notes shows lines at the notes' pitches (C thicker), named where they fit; Settings sets the tuning (A4), C D E or Do Ré Mi, sharps or flats, octave numbers, the scale shown (all notes or one of the 12 major scales, spelled as the key spells them), an instrument's range in concert pitch (trumpet E3–Bb5, tenor sax Ab2–Eb5), and the lines' look (colours for the tonic — C with all notes, the key's tonic with a scale — and the other lines, tonic width, label size). The spectrogram is worked out once per file (and again after an edit or an Analysis change), so zooming and panning are instant. Its Analysis part sets the FFT size, window size, hop (256, 512 or 1024 samples; raised for long files, sooner with big FFTs) — every FFT bin is kept and drawn, the window function, the level range, the lowest frequency and the colours, with Reset to defaults. All are remembered.
-- Esc: clear the selection
-- Delete: cut out the selection; Ctrl+T: crop to it; Ctrl+L: replace it with silence
-- Ctrl+Z: undo (past the edits, it brings back a file deleted this session); Ctrl+Shift+Z or Ctrl+Y: redo
-- L (Practice mode): loop the selection on or off (otherwise playback stops at its end)
-- Ctrl+S: Save Copy — the edits next to the original, in its format, as `name-edited` (then `name-edited-2`…)
-- Ctrl+Shift+S: Save As (the original file is never changed), with the format, quality and sample rate, and whether to apply the speed and pitch
-- Ctrl+O: open a file
-- Ctrl+,: Settings
-- F11: full screen, without the menu bar (Esc leaves it once there's no selection)
-- Ctrl+W or Ctrl+Q: close the window (asks first about unsaved edits)
-
-## Effects
-
-The Effects menu works on the selection, or on the whole track when nothing is selected. Each item has presets and a Custom… value, and every effect can be undone:
-
-- Fade in, Fade out: over the whole selection, or 1, 3 or 5 s from its start or end; the loudness changes evenly to the ear
-- Gain: up or down by a number of dB
-- Normalize: the peak near or at the maximum (−1 or 0 dBFS), or the loudness as streaming (−14 LUFS), as podcasts (−16) or as TV (−23)
-- Trim silence: removes what is quieter than a level at the start and end
-- Reverse: plays it backwards
-- Channels: mono, stereo or swap left and right (always the whole track)
-
-## Speed and pitch
-
-The Playback menu changes how it plays, live, and the settings combine:
-
-- Change speed and pitch: faster is also higher, like tape (0.5× to 2×)
-- Pitch-preserved speed change: slower or faster at the same pitch (0.5× to 2×)
-- Time-preserved pitch change: up or down by semitones at the same speed (−2 to +2, Custom… up to ±12 in steps of 0.1)
-
-Reset puts all three back to normal. The last two use WSOLA, which can sound a little echoey or stuttery on dense mixes. Save As can apply them to the file.
-
-## Tags and names
-
-- Chinese, Japanese and Korean tags are drawn with the system's CJK font (on Linux the one fontconfig picks, such as Noto Sans CJK from `fonts-noto-cjk`; on Windows Microsoft YaHei), in the Chinese style; without one they show as boxes.
-- In Practice mode, Track Info shows the estimated tempo and key (Audio, after loading; the first 10 minutes are analysed). Tempo is counted as people tap along, so it can be an octave off.
-- In Track Info, Edit (in Tags) changes the title, artist, album, year, track, genre, BPM, key and cover; the estimate buttons (Practice mode) fill BPM and Key, and ½× / 2× halve or double the BPM. Save… asks first, then writes the tags into the file; the audio is checked unchanged before the file is replaced. Save As and Save Copy also take tag edits not yet saved.
-- Opening a track without a cover in a folder with exactly one image (JPEG, PNG, TIFF, WebP, BMP or GIF) asks whether to use that image as the cover of all the folder's tracks (replacing their covers); Add Cover (the dialog shows the image) writes it into each file the same checked way. Each folder is asked once per run.
-- The cover shows at most 256 px; the small button in its space's bottom-right corner makes it fill the space instead (and back), remembered across runs.
-- The button next to it (also shown without a cover) swaps the cover for a visualiser: colour waves that follow the music under the playhead (bass for brightness and speed, treble for ripple size, a flash and a colour jump on a sudden bass hit). It freezes while paused and is remembered across runs.
-- Edit → Add/Replace Album Cover… picks an image (the same formats; all but JPEG and PNG are saved as JPEG, at most 1000 px), shows it, and saves it as the cover of this track or of all the folder's tracks (Track Info's tag editor must be closed); Remove Album Cover… removes it from this track or all of them the same way.
-- File → Identify Track… (online, only when you click Look up) sends the file's Chromaprint fingerprint and length to AcoustID and lists the matches with their score; Use Match fetches the genre from MusicBrainz (sending only the recording's ID) and fills Track Info's tag editor, only the empty fields unless you untick that. Nothing is written until Save… there. It is greyed out until you paste a free AcoustID application key (from acoustid.org/new-application) into Settings → AcoustID Settings.
-- File → Identify Album… looks up every file in the playing track's folder (one AcoustID request a second, with a progress bar and Cancel), suggests the releases most of them are on, and previews each file's new track number and title. Apply to All Tracks writes the album's tags into every matched file, Fill In All Tracks only fills empty tags, and Apply and Rename also renames each file with the Rename from Tags pattern. The genre comes from MusicBrainz, once for the album. Files not on the chosen album are left alone; there is no undo.
-- File → Show in File Manager (Show in Explorer on Windows) opens the file manager with the current file selected, or just its folder if the file manager can't select files.
-- File → Copy Path copies the file's full path as text; Copy File puts the file itself on the clipboard, for pasting into a chat or a file manager (it stays there while soundglass runs).
-- File → Rename… (F2) renames the current file to a name you type (the extension starts unselected); it never replaces another file, and playback and edits carry on.
-- When another program changes the open file (re-tagging it, say), soundglass asks whether to reload it; Reload reads it again and carries on from the same place, dropping unsaved edits (it says so first). Its own tag and cover writes don't ask. The file is checked once a second.
-- File → Delete… asks first, then moves the current file to the system Trash and shows the next file in the folder, stopped (no file if it was the last). Edit → Undo (Ctrl+Z), once the current track's edits are all undone, brings back the files deleted this session, newest first.
-- File → Rename from Tags… renames the current file from a pattern such as `{track} - {artist} - {title}` (also `{album}`, `{year}`, `{genre}`), with a preview. A missing tag is left out, a name Windows reserves (`CON`, `NUL`, `COM1`…) gets a `_`, and an existing file is never replaced (changing only the letter case is fine).
-
-## Settings
-
-File → Settings… has the language (English only for now; the texts are ready for translations, see `src/i18n.rs`), the seek bar's look (line or waveform), the theme, the interface's font size (10 to 20; the labels drawn on the Spectrogram and waveforms keep their own sizes), Remember window size, or else the size the window opens at (380 × 680 at first), Make soundglass the default player (Linux, for every type in `soundglass.desktop`), Change Keyboard Shortcuts… (every menu item, effect preset and speed preset can get a key, and the defaults can be changed or removed; Space, ←, →, Page Up/Down, L, Esc and Enter are fixed; changes are kept in the settings), and at the bottom the version and Check for updates, which opens the Releases page (soundglass never checks on its own). Ctrl+, opens it.
-
-## Themes
-
-File → Settings… → Theme changes the colours and shapes of menus, panels, dialogs and buttons. The seek bar, the waveforms and the play buttons use the theme's colours too. A theme can't move, add or hide anything, and it doesn't change the fonts or the Spectrogram's colours (those are in its own settings).
-
-- **Theme files:** each theme is an `.xml` file in `~/.local/share/soundglass/themes` (Windows: `%APPDATA%\soundglass\data\themes`), which the Open themes folder button opens. The first time soundglass starts, it writes `dark.xml`, `light.xml` and `high-contrast.xml` there. Edit them, or copy one under a new name to make your own; a file's name is its name in the list. soundglass never overwrites or recreates these files, so edits and deletions stay. lightview's theme files work here too.
-- **Choosing a theme again** reloads its file, so you can edit it and look at the result without restarting.
-- **Follow system** (the default) uses `dark.xml` or `light.xml`, depending on the desktop's dark/light setting. On Linux it's read when soundglass starts, so after changing the desktop's setting, restart soundglass. When the desktop gives no preference, `dark.xml` is used.
-- **The base theme:** built into soundglass and identical to the original Light theme. Any key a file leaves out takes the base theme's value. A file that's missing or can't be read (bad XML, a wrong value, bigger than 64 KiB) is replaced by the whole base theme, and Settings says what's wrong and on which line.
-
-The three files set every key, so they work as templates. `mode` is `dark` or `light`: it decides which half of Follow system the theme can stand in for, and the shades of things themes don't set, such as shadows. Colours are `#rrggbb` or `#rrggbbaa`.
-
-```xml
-<theme mode="dark">  <!-- or "light" -->
-  <colors panel="#1b1b1b" window="#1b1b1b" border="#3c3c3c" field="#0a0a0a" text="#8c8c8c"
-          accent="#005c80" selected-text="#c0deff" hyperlink="#5aaaff" warn="#ff8f00" error="#ff0000"
-          played="#5aaaff"/>
-  <widget state="hovered" fill="#404040" text="#f5f5f5" border="#969696"/>
-  <!-- … one widget element for each of the five states … -->
-  <shape rounding="6" stroke="1" spacing="8,3" padding="4,1"/>
-</theme>
-```
-
-- `colors`: `panel` and `window` are the background of the menu bar and panels, and of dialogs and menus; `border` is the border of dialogs and menus; `field` is the background of text fields; `text` is labels and other text; `accent` and `selected-text` are selected items and their text; `hyperlink`, `warn` and `error` are links, warnings and errors; `played` is the played part of the seek bar and the waveforms (left out, it's the file's own `accent`, not the base theme's, so lightview's themes still look as they did there).
-- `widget`: `state` is `noninteractive` (separators, frames), `inactive`, `hovered`, `active` (pressed) or `open` (an open menu or list), one element per state; `fill`, `text` and `border` are that state's background, text and border.
-- `shape`: `rounding` is the corner radius of buttons, menus and dialogs, 0–16; `stroke` is the border width, 0.5–4 (set a `border` colour for `inactive` too, or its border stays invisible); `spacing` and `padding` are the space between items and inside buttons, `x,y`, each 0–24.
-
-Unknown elements and attributes are ignored.
-
-## Local AI
-
-Nothing AI is shipped. Local AI → Download AI Runtime… installs ONNX Runtime 1.31.1 (11 MB on Linux, 83 MB on Windows) into the data folder's `lib/`, and AI Models… downloads the models into `models/`. Each download shows its licence first, is pinned by SHA-256 (a file that doesn't match is deleted) and is only made when you click. With an NVIDIA driver, AI Models… also offers GPU support: ONNX Runtime's CUDA 12 build and NVIDIA's libraries (about 1.5 GB, into `gpu/`); it takes effect after a restart. On a GTX 1050 it makes Split into Stems and Find Beats 2.6–3× faster; the other tools stay on the CPU, where they run faster. For other graphics cards (AMD, Intel; experimental), AI Models… offers ONNX Runtime's WebGPU plugin once the runtime is installed (6 MB on Linux, 13 MB on Windows, into `webgpu/`): it needs Vulkan on Linux (`libvulkan1`) or Direct3D 12 on Windows, only Find Beats uses it (about 2× faster on a GTX 1050; Split into Stems was 3× slower there than on the CPU, so it stays on the CPU), and a weak built-in chip can be slower than the CPU, so switch Use the GPU off if it doesn't help. With both installed, NVIDIA's is used; if the GPU can't be used, the CPU is, and AI Models… says why.
-
-The tools work on the selection in the Edit panel, or on the whole track when nothing is selected (the menu items then say "(selection)"); they read the track as edited and never change it, and each writes a new file next to it and opens it. Audio is written as Ogg Vorbis q6 (about 6 MB for 4 minutes); AI Models → Output → FLAC (lossless) writes 24-bit FLAC instead (about 50 MB), for further editing. With a selection, Remove Noise, Split into Stems and Melody to MIDI write just that stretch, while subtitles and found beats keep the track's times (beats found in a selection replace the earlier ones, so the Metronome clicks only there). A selection must be at least half a second. Each installed model has a few settings in AI Models (Settings: …), kept per model, with Reset to defaults: Remove Noise's strength (full, or at most 6–60 dB less noise), Split into Stems' overlap and which stems to write, Melody to MIDI's onset and note thresholds, shortest note, note range, held notes and the file's tempo, Find Beats' sensitivity, and for Transcribe Speech the level under which quiet parts are skipped, plus Whisper's language (a code such as en or es, empty to detect it), Translate to English, and Time marks (on by default), which gives the transcript as subtitles (.srt) to save with Save as Subtitles…: Parakeet times them from its words (cues end at a sentence end, a pause over 1 s, 7 s or 84 characters), Whisper small with its own segments; large-v3-turbo gives no times of its own, so its cues are whole pieces of up to 29 s.
-
-- **Remove Noise** (DeepFilterNet3, 16 MB): cleans background noise from speech and writes `name-denoised.ogg` at the track's sample rate. Made for voices; on music it can take away more than noise. On a 12-thread CPU it runs about 2.4× faster than real time for a stereo track.
-- **Split into Stems** (HTDemucs v4, 166 MB): writes `drums`, `bass`, `other` and `vocals.ogg` into a new `name-stems` folder and opens the vocals; the Folder panel moves to that folder, and Page Down steps through the others. About real time on the CPU (a 4-minute song takes about 5 minutes); much faster with GPU support. All four stems are held in memory, about 170 MB a minute of audio.
-- **Melody to MIDI** (Spotify's Basic Pitch, 0.2 MB): turns what's played or sung, several notes at once, into `name-melody.mid` (120 bpm, Electric Piano), with Basic Pitch's default thresholds and no pitch bends. A minute of audio takes about a second.
-- **Find Beats** (Beat This!, 191 MB): finds the beats and the first beat of each bar, shown as ticks along the bottom of the Spectrogram; it then turns on the Metronome (in the volume button's popup), which clicks on them while the track plays, every beat alike, with its own Clicks slider, through cuts, reversals and speed changes. Practice → Metronome is the same switch. When the file has no BPM tag, the tempo from the beats (the median gap between them) is written as one, with the same audio check as Write Tags. A song takes 10–30 s on the CPU. Speech and free-time passages get no beats.
-- **Transcribe Speech** (three models; pick one in AI Models…): shows the track's words in a window, with Copy and Save as Text…. Long recordings are cut into pieces of at most 29 s at quiet moments; silent pieces are skipped. On a 12-thread CPU, for 164 s of a 1954 interview:
-  - Parakeet TDT 0.6B v3 (671 MB): 25 European languages, punctuated, the most accurate and fastest, 14 s. CC BY 4.0: by NVIDIA.
-  - Whisper small (375 MB): 99 languages, detected from the first piece with sound, 88 s.
-  - Whisper large-v3-turbo (1,037 MB): 99 languages, about as slow as small on the CPU; it may leave out capitals and punctuation.
-
-## Install
-
-Each release on GitHub has a Linux package and a Windows installer. Both install only the program, its menu entry and its icon; settings, themes and AI models live in the data folder (`~/.local/share/soundglass/`, `%APPDATA%\soundglass\data\`), so removing the package keeps them.
-
-- Linux (Ubuntu 22.04, Debian 12 or newer): `sudo apt install ./soundglass_0.1.0_amd64.deb`. The first time it starts, it offers to become your default player (File → Settings… → Make soundglass the default player does it later).
-- Windows 10 or 11: run `soundglass-0.1.0-x64.msi`, then choose soundglass in Settings → Default apps (Windows doesn't let an installer make itself the default).
-
-`./package-deb.sh` builds the .deb locally; the .msi is built on GitHub Actions (`.github/workflows/build.yml`).
+- [`FEATURES.md`](docs/FEATURES.md): every feature, and the supported formats
+- [`MENUS.md`](docs/MENUS.md): every menu item and shortcut
+- [`PRODUCT_BRIEF.md`](docs/PRODUCT_BRIEF.md): goals, scope and milestones
+- [`DECISIONS.md`](docs/DECISIONS.md): the decision log
+- [`TIME_STRETCH.md`](docs/TIME_STRETCH.md): the study behind speed and pitch
+- [`BEAT_TRACKING.md`](docs/BEAT_TRACKING.md): the first beat tracker, results and ideas
+- [`CHORDS.md`](docs/CHORDS.md): the first chord recogniser, results and ideas
+- [`TRANSLATING.md`](docs/TRANSLATING.md): how to add a language
 
 ### Making a release
 
 1. Raise `version` in `Cargo.toml` and run `cargo build` so `Cargo.lock` follows.
 2. Add a `<release version="…" date="…"/>` line at the top of `soundglass.metainfo.xml`'s releases.
 3. Commit.
-4. Tag it `vX.Y.Z` (the same version) and push the tag: the workflow checks the tag matches `Cargo.toml`, runs the tests and `cargo audit`, builds both packages and publishes the release.
-5. Check the release page has the .deb and the .msi. If only the Windows job failed, "Re-run failed jobs" adds the .msi later.
+4. Tag it `vX.Y.Z` (the same version) and push the tag: the workflow checks the tag matches
+   `Cargo.toml`, runs the tests and `cargo audit`, builds both packages and publishes the release.
+5. Check the release page has the .deb and the .msi. If only the Windows job failed, "Re-run failed
+   jobs" adds the .msi later.
 
-## Install from source as the default audio player
+## Contributing
 
-```
-./install.sh
-```
+soundglass is still growing, along the plan in [`PRODUCT_BRIEF.md`](docs/PRODUCT_BRIEF.md). What
+helps most:
 
-This builds soundglass, copies it to `~/.local/bin`, adds `soundglass.desktop` to `~/.local/share/applications`, and makes it the default for MP3, FLAC, WAV, Ogg Vorbis, M4A/AAC, AIFF, CAF and Matroska audio. Opus is not supported yet.
+- **Bug reports.** Open an issue with the steps to reproduce it, the file type and your system
+  (Linux distribution and desktop, or Windows version). Bug fixes are welcome as pull requests.
+- **Translations.** See [`TRANSLATING.md`](docs/TRANSLATING.md).
 
-To undo: delete `~/.local/bin/soundglass`, `~/.local/share/applications/soundglass.desktop` and `~/.local/share/icons/hicolor/scalable/apps/soundglass.svg`, then pick another default app in System Settings → Default Applications (or File Associations).
+**Feature ideas** are welcome too, but please open an issue to discuss one before writing code for
+it: soundglass means to stay small, so a pull request that adds a feature may be declined, however
+well it's made.
 
 ## Licence
 
-GPL-3.0-or-later.
+soundglass is free software: you can redistribute it and/or modify it under the terms of the
+[GNU General Public License](LICENSE), version 3 or later. It comes with no warranty.
 
-Bundled libraries, built from source into the program: LAME (MP3 encoding, LGPL), libvorbis with the aoTuV and Lancer patches and libogg (Ogg Vorbis encoding, BSD-3-Clause). `third-party-notices.py` gathers the licences of the fonts and of every Rust crate and bundled library; the packages carry its output (`/usr/share/doc/soundglass/copyright`, `LICENSES.txt` on Windows). All are GPL-3-compatible.
+Bundled libraries, built from source into the program: LAME (MP3 encoding, LGPL), libvorbis with
+the aoTuV and Lancer patches and libogg (Ogg Vorbis encoding, BSD-3-Clause). The fonts are Apache-2.0
+and MIT licensed; see [`fonts/NOTICE.txt`](fonts/NOTICE.txt). `third-party-notices.py` gathers the
+licences of the fonts and of every Rust crate and bundled library; the packages carry its output
+(`/usr/share/doc/soundglass/copyright`, `LICENSES.txt` on Windows). All are GPL-3-compatible.
 
-The AI runtime and models are not part of soundglass: each is downloaded only on request, after its licence (embedded in `licenses/`) is shown and accepted. Speech recognition with Parakeet uses NVIDIA's Parakeet TDT 0.6B v3, licensed under CC BY 4.0 (https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), in istupakov's ONNX conversion, unchanged.
+The AI runtime and models are not part of soundglass: each is downloaded only on request, after its
+licence (embedded in [`licenses/`](licenses)) is shown and accepted. Speech recognition with
+Parakeet uses NVIDIA's Parakeet TDT 0.6B v3, licensed under CC BY 4.0
+(https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), in istupakov's ONNX conversion, unchanged.
