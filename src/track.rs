@@ -323,7 +323,9 @@ impl Track {
 
     fn push(&self, samples: Vec<f32>, channels: usize) {
         let frames = (samples.len() / channels) as u64;
-        self.chunks.lock().unwrap().push(samples.into());
+        // Copied into the Arc before locking: the audio callback only try_locks, and plays silence while it's held.
+        let chunk: Arc<[f32]> = samples.into();
+        self.chunks.lock().unwrap().push(chunk);
         self.decoded.fetch_add(frames, Relaxed);
     }
 

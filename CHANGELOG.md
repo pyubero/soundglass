@@ -14,6 +14,10 @@ versions follow [Semantic Versioning](https://semver.org/).
   commands, timings, slow or frozen frames, sound dropouts, errors and panics. It stays on your
   computer and is never sent anywhere; File → Show Log opens its folder.
 
+### Fixed
+
+- Short gaps in the sound during the first seconds of a file, while the rest of it was decoding.
+
 ## [1.0.0] - 2026-11-15
 
 The player (v1) is complete.
