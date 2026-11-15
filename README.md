@@ -18,10 +18,10 @@ no telemetry, no account, and it never goes online on its own.
 
 ## Status
 
-soundglass is **in development**. The player (v1) is usable on Linux and Windows: playing,
-browsing a folder, quick edits and effects, speed and pitch, tags and the local AI tools. Practice
-mode (v2), the tools for musicians, is in progress. [`PRODUCT_BRIEF.md`](docs/PRODUCT_BRIEF.md)
-has the plan.
+**0.1.0 is the first release** (2026-11-15). The player (v1) is usable on Linux and Windows:
+playing, browsing a folder, quick edits and effects, speed and pitch, tags and the local AI tools.
+Practice mode (v2), the tools for musicians, is in progress. [`CHANGELOG.md`](CHANGELOG.md) lists
+what each release brings, and [`PRODUCT_BRIEF.md`](docs/PRODUCT_BRIEF.md) has the plan.
 
 ## Main features
 
@@ -157,6 +157,7 @@ soundglass --bench song.mp3          # the same, quitting at the first sound
 
 Documents:
 
+- [`CHANGELOG.md`](CHANGELOG.md): what changed in each release
 - [`FEATURES.md`](docs/FEATURES.md): every feature, and the supported formats
 - [`MENUS.md`](docs/MENUS.md): every menu item and shortcut
 - [`PRODUCT_BRIEF.md`](docs/PRODUCT_BRIEF.md): goals, scope and milestones
@@ -170,11 +171,14 @@ Documents:
 
 1. Raise `version` in `Cargo.toml` and run `cargo build` so `Cargo.lock` follows.
 2. Add a `<release version="…" date="…"/>` line at the top of `soundglass.metainfo.xml`'s releases.
-3. Commit.
-4. Tag it `vX.Y.Z` (the same version) and push the tag: the workflow checks the tag matches
-   `Cargo.toml`, runs the tests and `cargo audit`, builds both packages and publishes the release.
-5. Check the release page has the .deb and the .msi. If only the Windows job failed, "Re-run failed
-   jobs" adds the .msi later.
+3. Add a `## [X.Y.Z] - YYYY-MM-DD` section at the top of `CHANGELOG.md` (and its link at the end):
+   it becomes the release page's notes.
+4. Commit.
+5. Tag it `vX.Y.Z` (the same version) and push the tag: the workflow checks that the tag matches
+   `Cargo.toml`, the metainfo and the changelog, runs the tests and `cargo audit`, builds both
+   packages and publishes the release with the changelog section as its notes.
+6. Check the release page has the .deb, the .msi and the notes. If only the Windows job failed,
+   "Re-run failed jobs" adds the .msi later.
 
 ## Contributing
 

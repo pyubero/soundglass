@@ -290,3 +290,6 @@
 - 2026-11-15 — no year hint from the year tag in the ranking — because the test album's tag holds the 1997 reissue year, not 1954
 - 2026-11-15 — Wikipedia's matches aren't ranked — because they are different songs, and earliest-first put a 1916 song above the searched one
 - 2026-11-15 — the Album box is sent to MusicBrainz as an optional clause (`+recording:"…" +artist:"…" release:(words)`, letters and digits only), which lifts the album's recordings without filtering; Discogs and Wikipedia still don't get it (user's choice)
+- 2026-11-15 — the GitHub release notes are the version's section of CHANGELOG.md, extracted by the release job, instead of GitHub's generated notes (user's choice)
+- 2026-11-15 — the release workflow refuses a tag whose version is missing from Cargo.toml, soundglass.metainfo.xml's releases or CHANGELOG.md, so the four can't drift apart
+- 2026-11-15 — accepted for 0.1.0: cargo audit warns that zbus, zbus_names, zvariant and zvariant_derive are unmaintained (RUSTSEC-2026-0370…0372, no fixed version); they come only through eframe's Linux accessibility (accesskit → AT-SPI over D-Bus), no vulnerability is reported, and dropping them would lose screen-reader support; revisit when egui/accesskit move off them

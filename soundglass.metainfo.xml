@@ -26,6 +26,10 @@
     <binary>soundglass</binary>
   </provides>
   <releases>
-    <release version="0.1.0" date="2026-11-13"/>
+    <release version="0.1.0" date="2026-11-15">
+      <description>
+        <p>The first release: player, quick editor, tags, Practice mode and optional local AI tools.</p>
+      </description>
+    </release>
   </releases>
 </component>

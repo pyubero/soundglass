@@ -1,6 +1,6 @@
 # Music app (working name) — Product Brief
 
-*Status: draft, 2026-11-11; split into v1 (player) and v2 (Practice mode) 2026-11-12.*
+*Status: draft, 2026-11-11; split into v1 (player) and v2 (Practice mode) 2026-11-12; v0.1.0 released 2026-11-15.*
 
 ## What it is
 A small, fast music player for Linux and Windows, written in Rust, with a quick editor: lightview for sound. Open a file and hear it at once, move through its folder, do the few small jobs people usually open Audacity for, and save the result to a copy.
