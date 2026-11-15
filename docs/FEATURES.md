@@ -130,6 +130,12 @@ stuttery on dense mixes ([`TIME_STRETCH.md`](TIME_STRETCH.md)). Save As can appl
   Discogs lists releases (country and format), and Use Match reads the chosen release's track list
   for the track's title and number. English Wikipedia lists song articles and reads their infobox
   (artist, album, year, genre, track number).
+- **Contribute to AcoustID?** After Use Match on a MusicBrainz match, soundglass asks whether to
+  contribute the track's fingerprint, so that AcoustID recognises the song for everyone. Contribute
+  looks the fingerprint up first and sends it, with its length, the MusicBrainz recording ID and
+  your AcoustID user key, only when AcoustID has no match at all for it; a notice says which
+  happened. Without the application key and user key in Settings, the prompt says so and offers
+  Add AcoustID User Key, which opens Settings; the prompt comes back when Settings closes.
 - **File → Rename…** (F2) renames the current file to a name you type (the extension starts
   unselected); it never replaces another file, and playback and edits carry on.
 - **File → Rename from Tags…** renames the current file from a pattern such as
@@ -260,7 +266,8 @@ File → Settings… (Ctrl+,) has:
 - Remember window size, or else the size the window opens at (380 × 680 at first);
 - Make soundglass the default player (Linux, for every type in `soundglass.desktop`);
 - Change Keyboard Shortcuts…;
-- AcoustID Settings (the key for Identify Track and Identify Album);
+- AcoustID Settings (the application key for Identify Track and Identify Album, and your user key
+  for contributing fingerprints);
 - at the bottom, the version and Check for updates, which opens the Releases page (soundglass never
   checks on its own).
 
@@ -327,6 +334,8 @@ soundglass collects nothing: no telemetry, no account. It goes online only when 
 - Fill Metadata From (Wikipedia, Discogs or MusicBrainz), which sends only the title and artist
   you searched for (and the album, to MusicBrainz only) and the chosen match's ID, after you click
   Look up;
+- Contribute to AcoustID, which looks the fingerprint up and, only if AcoustID doesn't know it,
+  sends it with its length, the MusicBrainz recording ID and your user key, after you click Contribute;
 - the AI runtime, GPU libraries and models, each after you accept its licence;
 - Check for updates, which only opens the Releases page in your browser.
 

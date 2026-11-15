@@ -6,6 +6,11 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- After Fill Metadata From → MusicBrainz, soundglass offers to contribute the track's fingerprint to
+  AcoustID when AcoustID doesn't know it yet (needs your AcoustID user key in Settings).
+
 ## [1.0.0] - 2026-11-15
 
 The player (v1) is complete.

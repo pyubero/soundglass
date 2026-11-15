@@ -43,7 +43,8 @@ The speed and pitch submenus have presets and Custom…; the one in use is marke
 - **Identify Album…** — as Identify Track… — looks up every file in the folder, then Apply to All
   Tracks, Fill In All Tracks or Apply and Rename.
 - **Fill Metadata From ▸** Wikipedia…, Discogs…, MusicBrainz… — the track is loaded — searches that
-  source for the title and artist (from the tags, or else the file name) and fills the tag editor.
+  source for the title and artist (from the tags, or else the file name) and fills the tag editor;
+  after a MusicBrainz match, it offers to contribute the fingerprint to AcoustID.
 - **Add/Replace Album Cover…** — a file is open, no tags are being saved and Track Info's tag editor
   is closed — picks an image and saves it as the cover of this track or of all the folder's tracks.
 - **Remove Album Cover…** — as Add/Replace — removes the cover from this track or all of them.

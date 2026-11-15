@@ -35,7 +35,7 @@ what each release brings, and [`PRODUCT_BRIEF.md`](docs/PRODUCT_BRIEF.md) has th
   live while it plays.
 - **Tags and names.** Edit tags and covers, give a whole folder its cover, rename files from their
   tags, and look a track or a whole album up on AcoustID and MusicBrainz, or a track by name on Wikipedia,
-  Discogs or MusicBrainz (only when you ask).
+  Discogs or MusicBrainz (only when you ask), and contribute fingerprints AcoustID doesn't know yet.
 - **Practice mode.** A spectrogram with note lines and chords, loops, tempo and key estimates, and
   a metronome on the beats.
 - **Local AI tools.** Remove noise, split a song into stems, turn a melody into MIDI, find the beats

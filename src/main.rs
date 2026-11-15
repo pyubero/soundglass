@@ -131,7 +131,7 @@ fn main() -> eframe::Result {
             p.send(Cmd::Load(track.clone()));
             p.send(Cmd::Volume(volume_gain(volume)));
         }
-        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_found: None, cover_offer: None, cover_asked: Default::default(), rename: None, rename_file: None, delete_prompt: false, deleted: Vec::new(), watched, changes, own_stamp: None, changed_prompt: false, default_check, default_prompt: None, default_result: None, show_shortcuts: false, recording: None, shortcut_error: None, identify: None, identify_album: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), file_clipboard: None, media_keys: media_keys::start(cc.egui_ctx.clone()), player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_found: None, cover_offer: None, cover_asked: Default::default(), rename: None, rename_file: None, delete_prompt: false, deleted: Vec::new(), watched, changes, own_stamp: None, changed_prompt: false, default_check, default_prompt: None, default_result: None, show_shortcuts: false, recording: None, shortcut_error: None, identify: None, identify_album: None, contribute: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), file_clipboard: None, media_keys: media_keys::start(cc.egui_ctx.clone()), player, t0, timings, shown: false }))
     }))
 }
 
@@ -300,6 +300,7 @@ struct App {
     shortcut_error: Option<String>,
     identify: Option<Identify>,
     identify_album: Option<IdentifyAlbum>,
+    contribute: Option<Contribute>,
     /// Local AI: the AI Models window, licence prompts and downloads.
     ai: ai::Ai,
     /// Height of everything below the cover, as measured last frame.
@@ -365,6 +366,18 @@ struct Identify {
 enum IdentifyJob {
     Found(Result<Vec<identify::Match>, String>),
     Picked(Box<identify::Match>),
+}
+
+/// After Use Match on a MusicBrainz match: the offer to send the file's fingerprint to AcoustID.
+struct Contribute {
+    /// The file it's for: it closes when another one plays.
+    path: PathBuf,
+    /// The MusicBrainz recording ID the fingerprint is linked to.
+    recording: String,
+    title: String,
+    artist: String,
+    /// The running lookup and submit: the notice to show, or why it failed.
+    job: Option<std::sync::mpsc::Receiver<Result<&'static str, String>>>,
 }
 
 /// Track → Identify Album…: every file of the folder looked up, then one release's tags written to all.
@@ -1020,6 +1033,7 @@ impl eframe::App for App {
         self.save_window(&ctx);
         self.tags_confirm(&ctx);
         self.cover_offer_modal(&ctx);
+        self.contribute_modal(&ctx);
         self.follow_tags(&ctx);
         self.rename_window(&ctx);
         self.identify_album_window(&ctx);
@@ -1633,6 +1647,16 @@ impl App {
                 ui.weak(tr("Identify Track needs one; it is free for non-commercial use."));
                 if ui.link(tr("Get a key")).clicked() {
                     folder::open_url(identify::KEY_PAGE);
+                }
+            });
+            ui.horizontal(|ui| {
+                ui.label(tr("User key:"));
+                ui.text_edit_singleline(&mut self.settings.acoustid_user_key);
+            });
+            ui.horizontal(|ui| {
+                ui.weak(tr("Only needed to contribute fingerprints to AcoustID."));
+                if ui.link(tr("Get your user key")).clicked() {
+                    folder::open_url(identify::USER_KEY_PAGE);
                 }
             });
             if folder::desktop_installed() {
@@ -2414,6 +2438,9 @@ impl App {
                 // Without a genre (unreachable, or none voted) the rest is still filled.
                 let draft = identify::fill(&base, &m, None, only_empty);
                 self.tag_editor = Some(TagEditor { read, draft, confirm: false, error: None });
+                if source == identify::Source::MusicBrainz && !m.recording.is_empty() {
+                    self.contribute = Some(Contribute { path: self.track.path.clone(), recording: m.recording, title: m.title, artist: m.artist, job: None });
+                }
                 self.identify = None;
                 true
             }
@@ -2421,6 +2448,83 @@ impl App {
                 self.save_notice = Some((Err(e), ctx.input(|i| i.time)));
                 false
             }
+        }
+    }
+
+    /// "Contribute to AcoustID?" after a MusicBrainz match was used. Contribute fingerprints the
+    /// track, looks it up, and submits it only when AcoustID has no match at all for it. Hidden
+    /// while Settings is open, so keys can be added there without losing the offer.
+    fn contribute_modal(&mut self, ctx: &egui::Context) {
+        let Some(c) = &mut self.contribute else { return };
+        if c.path != self.track.path {
+            self.contribute = None;
+            return;
+        }
+        if let Some(rx) = &c.job {
+            let done = match rx.try_recv() {
+                Ok(result) => Some(result.map(String::from)),
+                Err(std::sync::mpsc::TryRecvError::Empty) => None,
+                Err(std::sync::mpsc::TryRecvError::Disconnected) => Some(Err(tr("The lookup stopped.").into())),
+            };
+            if let Some(result) = done {
+                (self.contribute, self.save_notice) = (None, Some((result, ctx.input(|i| i.time))));
+                return;
+            }
+        }
+        if self.show_settings {
+            return;
+        }
+        let busy = c.job.is_some();
+        let (key, user) = (self.settings.acoustid_key.clone(), self.settings.acoustid_user_key.clone());
+        let keys = identify::ready(&key) && identify::ready(&user);
+        let (mut send, mut settings, mut no) = (false, false, false);
+        let modal = egui::Modal::new(egui::Id::unique("contribute")).show(ctx, |ui| {
+            ui.set_max_width(320.0);
+            ui.heading(tr("Contribute to AcoustID?"));
+            ui.add_space(4.0);
+            let artist = if c.artist.is_empty() { "?" } else { &c.artist };
+            ui.label(trf("Do you want to contribute this track's fingerprint to AcoustID? AcoustID will then recognise {title} — {artist} for everyone.", &[("title", &c.title), ("artist", &artist)]));
+            ui.weak(tr("Sends the fingerprint, its length and the MusicBrainz recording ID to AcoustID, with your user key. It is sent only if AcoustID doesn't know this fingerprint yet."));
+            if !keys {
+                ui.add_space(4.0);
+                ui.label(tr("Add your AcoustID application key and user key in Settings to contribute."));
+            }
+            ui.add_space(8.0);
+            if busy {
+                ui.horizontal(|ui| {
+                    ui.spinner();
+                    ui.label(tr("Looking up…"));
+                });
+            } else {
+                ui.horizontal(|ui| {
+                    if keys {
+                        send = ui.button(tr("Contribute")).clicked();
+                    } else {
+                        settings = ui.button(tr("Add AcoustID User Key")).clicked();
+                    }
+                    no = ui.button(tr("Not Now")).clicked();
+                });
+            }
+        });
+        if settings {
+            self.show_settings = true;
+        } else if send {
+            let (tx, rx) = std::sync::mpsc::channel();
+            let (track, recording, notify) = (self.track.clone(), c.recording.clone(), repaint(&self.ctx));
+            std::thread::spawn(move || {
+                track::background();
+                let result = identify::fingerprint(&track).and_then(|(fp, secs)| {
+                    if !identify::lookup_all(&key, &fp, secs)?.is_empty() {
+                        return Ok(tr("Already in AcoustID; nothing was sent."));
+                    }
+                    identify::submit(&key, &user, &fp, secs, &recording).map(|()| tr("Fingerprint sent to AcoustID; lookups find it once it's processed."))
+                });
+                let _ = tx.send(result);
+                notify();
+            });
+            c.job = Some(rx);
+        } else if no || (!busy && modal.should_close()) {
+            self.contribute = None;
         }
     }
 

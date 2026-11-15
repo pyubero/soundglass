@@ -18,6 +18,8 @@ use crate::i18n::{tr, trf};
 const CONTACT: &str = "https://github.com/pyubero/soundglass";
 /// Where a user registers the AcoustID application key that Settings asks for.
 pub const KEY_PAGE: &str = "https://acoustid.org/new-application";
+/// Where a logged-in user finds the AcoustID user key that contributing needs.
+pub const USER_KEY_PAGE: &str = "https://acoustid.org/api-key";
 
 /// Seconds of audio fingerprinted, as fpcalc does.
 const SECONDS: usize = 120;
@@ -567,6 +569,35 @@ fn agent() -> &'static ureq::Agent {
     })
 }
 
+/// Sends the fingerprint to AcoustID, linked to MusicBrainz recording `recording`, under the
+/// user's key `user`. AcoustID queues it; lookups find it once processed.
+pub fn submit(key: &str, user: &str, fingerprint: &str, secs: u32, recording: &str) -> Result<(), String> {
+    if recording.is_empty() || !recording.chars().all(|c| c.is_ascii_hexdigit() || c == '-') {
+        return Err(tr("This match has no MusicBrainz recording to link to.").into());
+    }
+    wait_turn();
+    let form = [
+        ("client", key.trim()),
+        ("clientversion", env!("CARGO_PKG_VERSION")),
+        ("user", user.trim()),
+        ("duration.0", &secs.to_string()),
+        ("fingerprint.0", fingerprint),
+        ("mbid.0", recording),
+        ("format", "json"),
+    ];
+    let reply = agent().post("https://api.acoustid.org/v2/submit").send_form(form).map_err(|e| trf("AcoustID can't be reached ({e})", &[("e", &e)]))?;
+    submitted(&read(reply)?)
+}
+
+/// Whether AcoustID took the submission.
+fn submitted(reply: &Value) -> Result<(), String> {
+    if reply["status"] == "ok" {
+        return Ok(());
+    }
+    let why = reply["error"]["message"].as_str().unwrap_or(tr("unknown error"));
+    Err(trf("AcoustID: {why}", &[("why", &why)]))
+}
+
 /// The reply as JSON, at most `REPLY_LIMIT` bytes.
 fn read(mut reply: ureq::http::Response<ureq::Body>) -> Result<Value, String> {
     let text = reply.body_mut().with_config().limit(REPLY_LIMIT).read_to_string().map_err(|e| trf("The reply couldn't be read ({e})", &[("e", &e)]))?;
@@ -771,6 +802,16 @@ mod tests {
     fn genre_ids_are_checked_before_going_into_a_url() {
         assert_eq!(genre("../../x?y"), Ok(None));
         assert_eq!(genre(""), Ok(None));
+    }
+
+    #[test]
+    fn submissions_need_a_recording_and_an_ok() {
+        // Refused before anything is sent.
+        assert!(submit("k", "u", "fp", 100, "").is_err());
+        assert!(submit("k", "u", "fp", 100, "x&mbid.1=y").is_err());
+        assert_eq!(submitted(&json!({"status": "ok", "submissions": [{"index": "0", "id": 1, "status": "pending"}]})), Ok(()));
+        assert_eq!(submitted(&json!({"status": "error", "error": {"code": 6, "message": "invalid user API key"}})), Err("AcoustID: invalid user API key".into()));
+        assert_eq!(submitted(&json!("junk")), Err("AcoustID: unknown error".into()));
     }
 
     #[test]

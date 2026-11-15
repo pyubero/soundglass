@@ -85,6 +85,8 @@ pub struct Settings {
     pub shortcuts: Vec<(String, Option<eframe::egui::KeyboardShortcut>)>,
     /// The user's AcoustID application key, for Identify Track; empty turns it off.
     pub acoustid_key: String,
+    /// The user's own AcoustID user key, for contributing fingerprints; empty turns it off.
+    pub acoustid_user_key: String,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -145,6 +147,7 @@ impl Default for Settings {
             language: None,
             shortcuts: Vec::new(),
             acoustid_key: String::new(),
+            acoustid_user_key: String::new(),
         }
     }
 }
@@ -250,6 +253,7 @@ mod tests {
             language: Some(crate::i18n::Language::English),
             shortcuts: vec![("Quit".into(), None), ("Open".into(), Some(eframe::egui::KeyboardShortcut::new(eframe::egui::Modifiers::ALT, eframe::egui::Key::O)))],
             acoustid_key: "abc123".into(),
+            acoustid_user_key: "u456".into(),
         };
         let app_ron = |v: &str| ron::to_string(&HashMap::from([(KEY.to_string(), v.to_string())])).unwrap();
         assert_eq!(parse(&app_ron(&ron::to_string(&s).unwrap())), s);
