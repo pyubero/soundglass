@@ -1,13 +1,15 @@
 # Music app (working name) — Product Brief
 
-*Status: draft, 2026-11-11; split into v1 (player) and v2 (Practice mode) 2026-11-12; v0.1.0 released 2026-11-15.*
+*Status: draft, 2026-11-11; split into v1 (player) and v2 (Practice mode) 2026-11-12; v0.1.0 released 2026-11-15; regrouped into v1–v4 2026-11-15.*
 
 ## What it is
 A small, fast music player for Linux and Windows, written in Rust, with a quick editor: lightview for sound. Open a file and hear it at once, move through its folder, do the few small jobs people usually open Audacity for, and save the result to a copy.
 
-It comes in two parts:
-- **v1, the player:** playing, browsing a folder, tags, quick edits and fixes, a few AI tools for cleaning up audio.
+It comes in four parts:
+- **v1, the player:** playing, browsing a folder, tags, quick edits and fixes, a few AI tools for cleaning up audio, MIDI files played with a basic piano.
 - **v2, Practice mode:** tools for musicians and musicology that dig into a track: loops, the spectrogram with notes, tempo, key, chords, a metronome, stems. They are switched on with View → Practice mode, which is off by default; with it off they are neither shown nor worked out.
+- **v3, our own models and engines:** better chord recognition, beat tracking, notes to MIDI and time-stretching, built or trained by us.
+- **v4, a music library (very tentative):** a library, m3u playlists, recommendations, and tidying up a whole collection.
 
 ## Goals
 1. **Fast.** The window appears in under 200 ms, sound starts before the whole file is decoded, and the waveform fills in as it loads.
@@ -17,7 +19,7 @@ It comes in two parts:
 
 ## Not doing
 - Multitrack mixing, effect chains, VST/LV2 plugins, MIDI editing
-- A music library database, playlists or streaming services (browsing the folders on disk is in)
+- Streaming services; a library database and playlists only as the very tentative v4 (browsing the folders on disk is in)
 - Recording studio features (simple recording is an open question)
 - Identifying a clip recorded from the microphone, Shazam-style: there is no open database of commercial music to match against
 
@@ -90,6 +92,10 @@ The runtime and model manager, as in lightview: Local AI → Download AI Runtime
 - **Remove noise.** Clean background noise and hum from voice recordings. Done: Local AI → Remove Noise writes name-denoised.flac with DeepFilterNet3 and opens it.
 - **Transcribe speech.** Turn a talk or voice memo into text you can copy. Done: Local AI → Transcribe Speech with Parakeet TDT 0.6B v3, Whisper small or Whisper large-v3-turbo (chosen in AI Models…), in a window with Copy and Save as Text….
 
+### 10. MIDI files
+- **Play MIDI.** Open and play .mid and .midi files like audio files (Open, the Folder panel, Page Up/Down, default app) with a built-in basic piano sound. No MIDI editing.
+- **Save MIDI as audio.** Save As renders a MIDI file to WAV, FLAC, MP3 or Ogg Vorbis.
+
 ## v2: Practice mode
 Everything here is behind View → Practice mode, which adds a Practice menu (Loop selection, Spectrogram) and turns on the tempo, key and chord analysis.
 
@@ -98,23 +104,33 @@ Everything here is behind View → Practice mode, which adds a Practice menu (Lo
 - **Spectrogram.** See frequencies over time, to spot hum, clicks or where notes are. This shows the spectrogram first in a separate panel where we can zoom in/out and right click and drag for panning. Done: Practice → Spectrogram, its own window with a log frequency axis, click to seek, with note lines and their settings on its toolbar.
 - **BPM and key.** Estimate the tempo and musical key of the track. Done with the bpm-key crate: shown in Track Info, offered in its tag editor (with ½× / 2×), and Key ≈ … on the Spectrogram toolbar sets Scale shown.
 - DONT IMPLEMENT **Markers with notes.** Drop named markers (chorus, solo) and jump between them; they can be saved next to the file. Only if there is an automatic way of doing this.
-- **Metronome.** A click at a set tempo, alone or over the track, with the song's tempo by default and on the right spots, beware of swing. Done (over the track): Local AI → Find Beats (Beat This!) finds the beats, the volume popup's Metronome (or Practice → Metronome) clicks on them with its own volume; a click alone at a set tempo is not built. Before that: a first try (Ellis dynamic-programming beat tracker on bpm-key's onset envelope) placed the clicks too badly on the test album; it waits until we improve the beat tracking ourselves; the attempt and its results are in [docs/BEAT_TRACKING.md](docs/BEAT_TRACKING.md).
-- **Chord recognition** Check if it is even possible. A first try (chroma, major/minor/7th templates, Viterbi) finds the main chords but not the changes: see [docs/CHORDS.md](docs/CHORDS.md). Built anyway, to be improved later: Spectrogram → Chords shows them in a bar along the top.
+- **Metronome.** A click at a set tempo, alone or over the track, with the song's tempo by default and on the right spots, beware of swing. Done (over the track): Local AI → Find Beats (Beat This!) finds the beats, the volume popup's Metronome (or Practice → Metronome) clicks on them with its own volume; a click alone at a set tempo is not built. Before that: a first try (Ellis dynamic-programming beat tracker on bpm-key's onset envelope) placed the clicks too badly on the test album; it waits for our own beat tracker in v3; the attempt and its results are in [docs/BEAT_TRACKING.md](docs/BEAT_TRACKING.md).
+- **Chord recognition** Check if it is even possible. A first try (chroma, major/minor/7th templates, Viterbi) finds the main chords but not the changes: see [docs/CHORDS.md](docs/CHORDS.md). Built anyway, to be improved in v3: Spectrogram → Chords shows them in a bar along the top.
 
 ### Local AI for practice (optional download)
 In the Local AI menu with the others, whatever the mode.
 - **Split into stems.** Vocals, drums, bass and the rest as separate files, for karaoke or practising along. Done: Local AI → Split into Stems (HTDemucs v4) writes the four stems into name-stems/ and opens the vocals.
 - **Melody to MIDI.** Turn a sung or played melody into a MIDI file. Done: Local AI → Melody to MIDI (Basic Pitch) writes name-melody.mid next to the track.
 
+## v3: Our own models and engines (proposed)
+Proposed, not committed. Our own versions of the Practice tools whose first tries fall short, written by us or trained by us.
+- **Better chord recognition.** Find the changes, not only the main chords, starting from the ideas in [docs/CHORDS.md](docs/CHORDS.md).
+- **Our own beat tracker.** Beats placed well enough for the Metronome without the Beat This! download, swing included, and a click alone at a set tempo; the first try and the ideas are in [docs/BEAT_TRACKING.md](docs/BEAT_TRACKING.md).
+- **Notes and melody to MIDI.** Our own model that turns a recording, chords included, into notes and a MIDI file, better than Basic Pitch.
+
 ### Our own engine: the Griffin–Lim modulator in Rust
 - **Build on the audio-tools Griffin–Lim modulator** to make a better, improved, faster version in pure Rust. Ideally it has two settings: Fast, for real time (frame by frame with a small look-ahead, like RTISI-LA), and Quality, slower and offline (more iterations, started from phase-vocoder phases). It replaces WSOLA where it sounds better. The ideas to start from are in [docs/TIME_STRETCH.md](docs/TIME_STRETCH.md), section 3.
 
-## v3: Remaining tidbits (possible)
-Proposed, not committed: moved here from v1 §8 Tidy up on 2026-11-13.
+## v4: Music library (very tentative)
+Not committed: only if the player and Practice mode are done and it still fits "small".
+- **Manage a library.** Collect the music folders into one library to browse by artist, album and genre.
+- **Playlists.** Open, make and save m3u playlists.
+- **Music recommendations.** Suggest what to play next from your own files, worked out locally.
 - **Clean up a music folder.** Identify Track (v1 §8) in one pass over a folder and all its subfolders: identify every file, show a list of proposed tags and new names to accept or skip, then apply. Files that aren't found are left alone. Ctrl+Z undoes the renames. About 1,000 files take 6 minutes at AcoustID's limit. Later: waits, like Identify Track, for an AcoustID key.
 - **Group duplicate songs.** Find copies of the same recording in a folder by how they sound, even in different formats or bitrates, and even when one copy is trimmed or starts later (peak-based matching like Olaf or Panako, written by us; it compares only your own files, so it needs no database), show the groups, and move each into its own folder. Nothing is deleted, and Ctrl+Z puts everything back.
 - **Use a local database (later, for power users).** Point Identify Track at your own AcoustID and MusicBrainz server built from their public data exports, so nothing goes online. Too big to ship with the app.
 
 ## Open questions
 - Is simple microphone recording in scope (voice memos, tuner)?
+- MIDI's piano sound: our own small synthesizer, or a SoundFont player crate with a bundled piano (a new dependency, to approve).
 - Track identification: is rusty-chromaprint's output identical to the original Chromaprint, and what match score to accept automatically.

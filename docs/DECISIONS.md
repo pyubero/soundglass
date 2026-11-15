@@ -90,7 +90,7 @@
 - 2026-11-11 — Playback has three items: Change speed and pitch (tape style, the resampler), Pitch-preserved speed change and Time-preserved pitch change (WSOLA, then the resampler for pitch); they combine (user's choice)
 - 2026-11-11 — pitch presets are −2, −1, 0, +1, +2 semitones, Custom… from −12 to +12 in 0.1 steps (user's choice)
 - 2026-11-11 — Save As's "Apply speed and pitch" is off by default, so saving keeps the audio unless asked
-- 2026-11-11 — a last milestone 10 builds on the audio-tools Griffin–Lim modulator: better, faster, pure Rust, with a Fast (real-time) and a Quality (offline) setting (user's choice)
+- 2026-11-11 — a last milestone 10 builds on the audio-tools Griffin–Lim modulator: better, faster, pure Rust, with a Fast (real-time) and a Quality (offline) setting (user's choice) — changed 2026-11-15: it moves to v3, our own models and engines
 - 2026-11-11 — Playback → Reset puts speed, tempo and pitch back to normal at once, greyed out when they already are (user's choice)
 - 2026-11-11 — milestone 6 does Edit tags and Rename from tags first, Split into tracks in its own plan next; Join files and Convert a folder are not done (user's choice)
 - 2026-11-11 — tags are edited in Track Info's Tags section, with lofty (already in the tree) (user's choice)
@@ -243,7 +243,7 @@
 - 2026-11-13 — the Metronome clicks every found beat alike — Beat This!'s downbeats were too often wrong to hear (user's choice); they still show as the Spectrogram's taller ticks
 - 2026-11-13 — finishing Find Beats turns the Metronome on, and writes the beats' tempo (median gap, whole BPM) as the file's BPM tag when it has none, without asking, through the same verified in-place write as Write Tags (user's choice); skipped while the tag editor is open or another tag write runs
 - 2026-11-13 — the app ships as soundglass; soundview (a Rust audio-visualizer app and crate by nickbp), lightwave (LightWave 3D, crate taken), overtone (a music programming environment) and sonora (two music players, a popular audio crate) were taken; lightbeat was free but not chosen (user's choice)
-- 2026-11-13 — Clean up a music folder, Group duplicate songs and Use a local database move from v1 §8 to a possible v3 (remaining tidbits), not committed (user's choice)
+- 2026-11-13 — Clean up a music folder, Group duplicate songs and Use a local database move from v1 §8 to a possible v3 (remaining tidbits), not committed (user's choice) — changed 2026-11-15: they move to the tentative v4 library
 - 2026-11-13 — the .deb and .msi are built by GitHub Actions on v* tags, as in lightview (user's choice); the .deb on ubuntu-22.04 for glibc 2.35, the .msi with WiX 5; the Windows installer's UpgradeCode fcb583ea-f665-4dde-bf30-ce898cbfe489 never changes
 - 2026-11-13 — the .wxs's extensions are checked against folder.rs's EXTENSIONS by a unit test, so the two can't drift
 - 2026-11-13 — licence texts for crates published without one are kept in licenses/crates/: vorbis_rs's from its repository; rusty-chromaprint has none anywhere (MIT in Cargo.toml, no copyright holder named), so the standard MIT text with "the rusty-chromaprint authors" is used — accepted
@@ -293,3 +293,6 @@
 - 2026-11-15 — the GitHub release notes are the version's section of CHANGELOG.md, extracted by the release job, instead of GitHub's generated notes (user's choice)
 - 2026-11-15 — the release workflow refuses a tag whose version is missing from Cargo.toml, soundglass.metainfo.xml's releases or CHANGELOG.md, so the four can't drift apart
 - 2026-11-15 — accepted for 0.1.0: cargo audit warns that zbus, zbus_names, zvariant and zvariant_derive are unmaintained (RUSTSEC-2026-0370…0372, no fixed version); they come only through eframe's Linux accessibility (accesskit → AT-SPI over D-Bus), no vulnerability is reported, and dropping them would lose screen-reader support; revisit when egui/accesskit move off them
+- 2026-11-15 — roadmap regrouped: v1 the everyday player and tools, v2 every Practice-mode tool for musicians, v3 our own models and engines (chords, beat tracking, notes to MIDI, Griffin–Lim), v4 a very tentative music library (user's choice)
+- 2026-11-15 — v1 gets MIDI files: play .mid/.midi with a basic piano sound and render them to audio in Save As; no MIDI editing (user's choice)
+- 2026-11-15 — Clean up a music folder, Group duplicate songs and Use a local database move from v3 to the tentative v4 library, with a library, m3u playlists and recommendations (user's choice)
