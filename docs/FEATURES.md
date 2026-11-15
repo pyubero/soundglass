@@ -117,8 +117,11 @@ stuttery on dense mixes ([`TIME_STRETCH.md`](TIME_STRETCH.md)). Save As can appl
 - **Track → Fill Metadata From → Wikipedia… / Discogs… / MusicBrainz…** (online, only when you click
   Look up) searches by name instead of fingerprint, with no key needed. The Title and Artist boxes start
   with the track's tags (the tag editor's unsaved ones if it is open), or the file name without its
-  leading track number when there is no title tag; you can change them. The window then works like
-  Identify Track. MusicBrainz lists recordings with their score and fetches the genre for the pick.
+  leading track number when there is no title tag; you can change them. An Album box (the album tag,
+  or the folder's name without a leading year) isn't sent: it only orders the list. MusicBrainz and
+  Discogs fetch up to 100 matches and list first the ones on that album, then the higher score, then
+  originals before reissues, compilations and unofficial releases, then the earliest year; Wikipedia
+  keeps its search order. The window then works like Identify Track. MusicBrainz lists recordings with their score and fetches the genre for the pick.
   Discogs lists releases (country and format), and Use Match reads the chosen release's track list
   for the track's title and number. English Wikipedia lists song articles and reads their infobox
   (artist, album, year, genre, track number).

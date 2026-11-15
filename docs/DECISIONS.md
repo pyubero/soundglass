@@ -286,3 +286,6 @@
 - 2026-11-15 — Discogs is searched without a token (user's choice); accepted risk: Discogs documents its search as needing auth (it answers without one today, 25 requests a minute), so it may start refusing, shown as "Discogs now asks for a token"
 - 2026-11-15 — Wikipedia is read from the song article's infobox wikitext, not Wikidata (user's choice); English Wikipedia only (the infobox field names are English)
 - 2026-11-15 — the name search starts from the title and artist tags, else the file name less a leading track number, in editable boxes (user's choice)
+- 2026-11-15 — name searches fetch 100 matches (MusicBrainz ~450 KB) and rank them on the computer: on the Album box's album (compared without the artist's name), then score, then originals before reissues/compilations/unofficial, then earliest year; the album isn't sent — on "St. Louis Blues" the album was MusicBrainz's 86th recording and Discogs's 28th release
+- 2026-11-15 — no year hint from the year tag in the ranking — because the test album's tag holds the 1997 reissue year, not 1954
+- 2026-11-15 — Wikipedia's matches aren't ranked — because they are different songs, and earliest-first put a 1916 song above the searched one

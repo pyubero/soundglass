@@ -342,6 +342,8 @@ struct Identify {
     /// What a name search looks for.
     title: String,
     artist: String,
+    /// Matches on it go first; it isn't sent.
+    album: String,
     /// The matches, or why there are none; `None` before Look up.
     found: Option<Result<Vec<identify::Match>, String>>,
     pick: usize,
@@ -818,12 +820,12 @@ impl eframe::App for App {
                 Command::Rename if why_not_rename.is_none() => self.start_rename(),
                 Command::Delete if self.has_track() => self.delete_prompt = true,
                 Command::RenameFromTags if why_not_rename.is_none() => self.rename = Some((self.settings.rename_pattern.clone(), tags::read(&self.track.path))),
-                Command::Identify if why_not_identify.is_none() => self.identify = Some(Identify { source: identify::Source::AcoustId, path: self.track.path.clone(), title: String::new(), artist: String::new(), found: None, pick: 0, only_empty: true, job: None }),
+                Command::Identify if why_not_identify.is_none() => self.identify = Some(Identify { source: identify::Source::AcoustId, path: self.track.path.clone(), title: String::new(), artist: String::new(), album: String::new(), found: None, pick: 0, only_empty: true, job: None }),
                 Command::Fill(source) if why_not_fill.is_none() => {
                     // The tag editor's unsaved title and artist count as the tags.
                     let tags = self.tag_editor.as_ref().map(|e| e.draft.clone()).or_else(|| tags::read(&self.track.path).ok());
-                    let (title, artist) = identify::query(tags.as_ref(), &self.track.path);
-                    self.identify = Some(Identify { source, path: self.track.path.clone(), title, artist, found: None, pick: 0, only_empty: true, job: None });
+                    let (title, artist, album) = identify::query(tags.as_ref(), &self.track.path);
+                    self.identify = Some(Identify { source, path: self.track.path.clone(), title, artist, album, found: None, pick: 0, only_empty: true, job: None });
                 }
                 Command::IdentifyAlbum if why_not_identify.is_none() && self.identify_album.is_none() => {
                     let files = folder::list_folder(&self.track.path);
@@ -2297,6 +2299,9 @@ impl App {
                     ui.label(tr("Artist:"));
                     ui.add_enabled(!busy, egui::TextEdit::singleline(&mut id.artist));
                     ui.end_row();
+                    ui.label(tr("Album:"));
+                    ui.add_enabled(!busy, egui::TextEdit::singleline(&mut id.album)).on_hover_text(tr("Matches on this album are listed first; it isn't sent"));
+                    ui.end_row();
                 });
                 ui.add_space(6.0);
             }
@@ -2343,12 +2348,12 @@ impl App {
         if look {
             let (tx, rx) = std::sync::mpsc::channel();
             let (track, ctx, key) = (self.track.clone(), ctx.clone(), self.settings.acoustid_key.clone());
-            let (title, artist) = (id.title.clone(), id.artist.clone());
+            let (title, artist, album) = (id.title.clone(), id.artist.clone(), id.album.clone());
             std::thread::spawn(move || {
                 track::background();
                 let found = match source {
                     identify::Source::AcoustId => identify::fingerprint(&track).and_then(|(fp, secs)| identify::lookup(&key, &fp, secs)),
-                    _ => identify::search(source, &title, &artist),
+                    _ => identify::search(source, &title, &artist, &album),
                 };
                 let _ = tx.send(IdentifyJob::Found(found));
                 ctx.request_repaint();

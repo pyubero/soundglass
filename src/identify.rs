@@ -50,6 +50,8 @@ pub struct Match {
     pub track: String,
     /// Filled by `complete`, or by the search when the source has it.
     pub genre: String,
+    /// A reissue, compilation or unofficial release: listed after the originals.
+    pub secondary: bool,
 }
 
 /// Where Identify Track's window looks: AcoustID by fingerprint, the rest by title and artist.
@@ -86,21 +88,48 @@ impl Source {
     }
 }
 
-/// What to search for: the title and artist tags; without a title tag, the file's name less a
-/// leading track number ("01 - ", "03-", "7. ") and with underscores as spaces.
-pub fn query(tags: Option<&TagEdit>, path: &std::path::Path) -> (String, String) {
-    let artist = tags.map(|t| t.artist.trim().to_string()).unwrap_or_default();
-    if let Some(t) = tags.filter(|t| !t.title.trim().is_empty()) {
-        return (t.title.trim().to_string(), artist);
-    }
-    let stem = path.file_stem().map(|s| s.to_string_lossy().replace('_', " ")).unwrap_or_default();
-    let rest = stem.trim_start_matches(|c: char| c.is_ascii_digit());
-    let title = if rest.len() < stem.len() && rest.starts_with([' ', '-', '.']) { rest.trim_start_matches([' ', '-', '.']) } else { &stem };
-    (title.trim().to_string(), artist)
+/// What to search for: the title and artist tags, and the album the matches on it go first for.
+/// Without a title tag, the file's name less a leading track number ("01 - ", "03-", "7. ");
+/// without an album tag, the folder's name less a leading year ("1954-").
+pub fn query(tags: Option<&TagEdit>, path: &std::path::Path) -> (String, String, String) {
+    let tag = |f: fn(&TagEdit) -> &String| tags.map(|t| f(t).trim().to_string()).filter(|s| !s.is_empty());
+    let name = |p: Option<&std::ffi::OsStr>| unnumbered(&p.map(|s| s.to_string_lossy()).unwrap_or_default());
+    let title = tag(|t| &t.title).unwrap_or_else(|| name(path.file_stem()));
+    let album = tag(|t| &t.album).unwrap_or_else(|| name(path.parent().and_then(|p| p.file_name())));
+    (title, tag(|t| &t.artist).unwrap_or_default(), album)
 }
 
-/// The matches for `title` by `artist`, best first.
-pub fn search(source: Source, title: &str, artist: &str) -> Result<Vec<Match>, String> {
+/// A file or folder name less a leading number and its separator, underscores as spaces.
+fn unnumbered(name: &str) -> String {
+    let name = name.replace('_', " ");
+    let rest = name.trim_start_matches(|c: char| c.is_ascii_digit());
+    let out = if rest.len() < name.len() && rest.starts_with([' ', '-', '.']) { rest.trim_start_matches([' ', '-', '.']) } else { &name };
+    out.trim().to_string()
+}
+
+/// Most likely first: on `album`, then the higher score, then originals before reissues, then the
+/// earliest year (an unknown one last). Equal ones keep the source's order. Albums are compared
+/// without `artist`'s name, so an EP titled "Louis Armstrong" isn't on "Louis Armstrong Plays…".
+fn rank(matches: &mut [Match], album: &str, artist: &str) {
+    let artist = fold(artist);
+    let bare = |s: &str| if artist.is_empty() { fold(s) } else { fold(s).replace(&artist, "") };
+    let want = bare(album);
+    let on_album = |m: &Match| {
+        let has = bare(&m.album);
+        !want.is_empty() && !has.is_empty() && (has.contains(&want) || want.contains(&has))
+    };
+    let year = |m: &Match| m.year.parse::<u32>().unwrap_or(u32::MAX);
+    matches.sort_by(|a, b| on_album(b).cmp(&on_album(a)).then(b.score.total_cmp(&a.score)).then(a.secondary.cmp(&b.secondary)).then(year(a).cmp(&year(b))));
+}
+
+/// Lowercase letters and digits only, so "W.C.Handy" and "W. C. Handy" compare equal.
+fn fold(s: &str) -> String {
+    s.to_lowercase().chars().filter(|c| c.is_alphanumeric()).collect()
+}
+
+/// The matches for `title` by `artist`, most likely first (`rank`, but Wikipedia in search order;
+/// `album` isn't sent).
+pub fn search(source: Source, title: &str, artist: &str, album: &str) -> Result<Vec<Match>, String> {
     let (title, artist) = (title.trim(), artist.trim());
     if title.is_empty() {
         return Err(tr("Type a title to search for.").into());
@@ -115,20 +144,35 @@ pub fn search(source: Source, title: &str, artist: &str) -> Result<Vec<Match>, S
             if !artist.is_empty() {
                 q += &format!(" AND artist:{}", phrase(artist));
             }
-            let reply = agent().get("https://musicbrainz.org/ws/2/recording").query("query", &q).query("limit", "25").query("fmt", "json").call().map_err(|e| trf("MusicBrainz can't be reached ({e})", &[("e", &e)]))?;
-            Ok(shown(mb_matches(&read(reply)?)))
+            // As many as MusicBrainz gives (~450 KB): the album often isn't among the first 25.
+            let ask = || agent().get("https://musicbrainz.org/ws/2/recording").query("query", &q).query("limit", "100").query("fmt", "json").call();
+            let reply = match ask() {
+                // MusicBrainz's "busy" reply to a request too soon.
+                Err(ureq::Error::StatusCode(503)) => {
+                    std::thread::sleep(Duration::from_secs(2));
+                    ask()
+                }
+                other => other,
+            };
+            let mut found = mb_matches(&read(reply.map_err(|e| trf("MusicBrainz can't be reached ({e})", &[("e", &e)]))?)?);
+            rank(&mut found, album, artist);
+            Ok(shown(found))
         }
         Source::Discogs => {
-            let mut req = agent().get("https://api.discogs.com/database/search").query("type", "release").query("track", title).query("per_page", "10");
+            let mut req = agent().get("https://api.discogs.com/database/search").query("type", "release").query("track", title).query("per_page", "100");
             if !artist.is_empty() {
                 req = req.query("artist", artist);
             }
-            Ok(discogs_matches(&read(req.call().map_err(discogs_error)?)?, title))
+            let mut found = discogs_matches(&read(req.call().map_err(discogs_error)?)?, title);
+            rank(&mut found, album, artist);
+            found.truncate(MAX_MATCHES);
+            Ok(found)
         }
         Source::Wikipedia => {
             let search = format!("{title} {artist} hastemplate:\"Infobox song\"");
             let pairs = [("action", "query"), ("format", "json"), ("formatversion", "2"), ("generator", "search"), ("gsrsearch", &search), ("gsrlimit", "5"), ("prop", "revisions"), ("rvprop", "content"), ("rvslots", "main"), ("rvsection", "0")];
             let reply = agent().get("https://en.wikipedia.org/w/api.php").query_pairs(pairs).call().map_err(|e| trf("Wikipedia can't be reached ({e})", &[("e", &e)]))?;
+            // Not ranked: its matches are different songs, best kept in search order.
             Ok(wiki_matches(&read(reply)?))
         }
     }
@@ -178,11 +222,12 @@ fn mb_matches(reply: &Value) -> Vec<Match> {
             let as_acoustid = serde_json::json!({"country": rel["country"], "medium_count": media.as_array().map_or(1, Vec::len), "mediums": media});
             let track = media.as_array().into_iter().flatten().flat_map(|m| m["track"].as_array().into_iter().flatten()).find_map(|t| t["number"].as_str());
             let year: String = text(&rel["date"]).chars().take(4).collect();
-            out.push(Match { release: text(&rel["id"]), release_tracks: rel["track-count"].as_u64(), edition: edition(&as_acoustid), album: text(&rel["title"]), year, track: track.unwrap_or_default().to_string(), ..base.clone() });
+            let unofficial = rel["status"].as_str().is_some_and(|s| s != "Official");
+            let secondary = unofficial || rel["release-group"]["secondary-types"].as_array().is_some_and(|t| !t.is_empty());
+            out.push(Match { release: text(&rel["id"]), release_tracks: rel["track-count"].as_u64(), edition: edition(&as_acoustid), album: text(&rel["title"]), year, track: track.unwrap_or_default().to_string(), secondary, ..base.clone() });
         }
     }
     out.retain(|m| !m.title.is_empty());
-    out.sort_by(|a, b| b.score.total_cmp(&a.score));
     out
 }
 
@@ -203,9 +248,10 @@ fn discogs_matches(reply: &Value, title: &str) -> Vec<Match> {
         let list = |v: &Value| -> Vec<String> { v.as_array().into_iter().flatten().filter_map(Value::as_str).map(str::trim).filter(|s| !s.is_empty()).map(String::from).collect() };
         let edition = [text(&r["country"]), list(&r["format"]).join(", ")].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>().join(", ");
         let genre = list(&r["genre"]).into_iter().next().unwrap_or_default();
-        out.push(Match { release: id.to_string(), title: title.to_string(), artist, album, year, edition, genre, ..Match::default() });
+        const LATER: [&str; 6] = ["Reissue", "Remastered", "Repress", "Compilation", "Club Edition", "Unofficial Release"];
+        let secondary = list(&r["format"]).iter().any(|f| LATER.contains(&f.as_str()));
+        out.push(Match { release: id.to_string(), title: title.to_string(), artist, album, year, edition, genre, secondary, ..Match::default() });
     }
-    out.truncate(MAX_MATCHES);
     out
 }
 
@@ -213,7 +259,6 @@ fn discogs_matches(reply: &Value, title: &str) -> Vec<Match> {
 /// (the position if it's a number, else its place among the tracks, so "A", "B" → 1, 2).
 fn discogs_track(release: &Value, title: &str) -> Option<(String, String)> {
     let tracks: Vec<&Value> = release["tracklist"].as_array()?.iter().filter(|t| t["type_"].as_str().unwrap_or("track") == "track").collect();
-    let fold = |s: &str| s.to_lowercase().chars().filter(|c| c.is_alphanumeric()).collect::<String>();
     let want = fold(title);
     let named = |t: &&Value| fold(t["title"].as_str().unwrap_or_default());
     let i = tracks.iter().position(|t| named(t) == want).or_else(|| tracks.iter().position(|t| !want.is_empty() && named(t).contains(&want)))?;
@@ -636,7 +681,7 @@ mod tests {
         assert_eq!(all.iter().filter(|m| m.album == "Plays W.C. Handy").count(), 2);
         let m = shown(all);
         assert_eq!(m.len(), 3, "{m:?}");
-        assert_eq!(m[0], Match { score: 0.97, recording: "a".into(), release: "r1".into(), release_tracks: Some(16), edition: "US, CD".into(), title: "St. Louis Blues".into(), artist: "Louis Armstrong and His All-Stars".into(), album: "Plays W.C. Handy".into(), year: "1954".into(), track: "1".into(), genre: String::new() });
+        assert_eq!(m[0], Match { score: 0.97, recording: "a".into(), release: "r1".into(), release_tracks: Some(16), edition: "US, CD".into(), title: "St. Louis Blues".into(), artist: "Louis Armstrong and His All-Stars".into(), album: "Plays W.C. Handy".into(), year: "1954".into(), track: "1".into(), genre: String::new(), secondary: false });
         // Odd types drop the value, not the match.
         assert_eq!((m[1].album.as_str(), m[1].year.as_str(), m[1].track.as_str()), ("", "", ""));
         assert_eq!((m[2].title.as_str(), m[2].album.as_str()), ("Long Gone", ""));
@@ -719,10 +764,11 @@ mod tests {
 
     #[test]
     fn queries_tags_then_the_file_name() {
-        let p = std::path::Path::new("/music/01 - St. Louis Blues.mp3");
-        assert_eq!(query(None, p), ("St. Louis Blues".into(), String::new()));
+        let p = std::path::Path::new("/music/1954-Louis Armstrong Plays W.C.Handy/01 - St. Louis Blues.mp3");
+        assert_eq!(query(None, p), ("St. Louis Blues".into(), String::new(), "Louis Armstrong Plays W.C.Handy".into()));
         let tags = TagEdit { title: " ".into(), artist: "Louis Armstrong".into(), ..TagEdit::default() };
-        assert_eq!(query(Some(&tags), std::path::Path::new("03-Loveless_Love.flac")), ("Loveless Love".into(), "Louis Armstrong".into()));
+        assert_eq!(query(Some(&tags), std::path::Path::new("03-Loveless_Love.flac")), ("Loveless Love".into(), "Louis Armstrong".into(), String::new()));
+        assert_eq!(query(Some(&TagEdit { album: "Plays W.C. Handy".into(), ..tags.clone() }), p).2, "Plays W.C. Handy");
         assert_eq!(query(Some(&TagEdit { title: "Long Gone".into(), ..tags }), p).0, "Long Gone");
         assert_eq!(query(None, std::path::Path::new("7. Memphis Blues.ogg")).0, "Memphis Blues");
         // A number that is the title stays.
@@ -731,31 +777,49 @@ mod tests {
     }
 
     #[test]
+    fn ranks_the_album_then_originals_then_the_earliest() {
+        let m = |album: &str, year: &str, secondary: bool| Match { album: album.into(), year: year.into(), secondary, score: 1.0, ..Match::default() };
+        let mut all = vec![m("Hello Dolly", "1994", false), m("Plays W.C. Handy", "1997", true), m("Louis Armstrong Plays W. C. Handy", "", false), m("Plays W.C. Handy", "1954", false), m("Plays W.C. Handy", "1986", true)];
+        all.push(m("Louis Armstrong", "1950", false));
+        rank(&mut all, "Louis Armstrong Plays W.C.Handy", "Louis Armstrong");
+        let order: Vec<(&str, &str)> = all.iter().map(|m| (m.album.as_str(), m.year.as_str())).collect();
+        assert_eq!(order, [("Plays W.C. Handy", "1954"), ("Louis Armstrong Plays W. C. Handy", ""), ("Plays W.C. Handy", "1986"), ("Plays W.C. Handy", "1997"), ("Louis Armstrong", "1950"), ("Hello Dolly", "1994")]);
+        // Without an album, the score still leads.
+        let mut scored = vec![Match { score: 0.5, year: "1950".into(), ..Match::default() }, Match { score: 0.9, year: "1990".into(), ..Match::default() }];
+        rank(&mut scored, "", "");
+        assert_eq!(scored[0].year, "1990");
+    }
+
+    #[test]
     fn reads_musicbrainz_search() {
         let reply = json!({"recordings": [
             {"id": "r", "score": 100, "title": "St. Louis Blues", "artist-credit": [{"name": "Louis Armstrong", "joinphrase": " & "}, {"name": "His All-Stars"}],
-             "releases": [{"id": "rel", "title": "Plays W.C. Handy", "date": "1954-08", "country": "US", "track-count": 11,
-                           "media": [{"format": "12\" Vinyl", "track": [{"number": "A1"}]}]}]},
+             "releases": [{"id": "rel", "title": "Plays W.C. Handy", "date": "1954-08", "country": "US", "track-count": 11, "status": "Official",
+                           "media": [{"format": "12\" Vinyl", "track": [{"number": "A1"}]}]},
+                          {"id": "best", "title": "Best Of", "status": "Official", "release-group": {"secondary-types": ["Compilation"]}},
+                          {"id": "boot", "title": "Live", "status": "Bootleg"}]},
             {"id": "s", "score": 40, "title": "St. Louis Blues", "artist-credit": "odd"},
             {"score": "x", "title": 5}
         ]});
         let m = mb_matches(&reply);
-        assert_eq!(m.len(), 2, "{m:?}");
+        assert_eq!(m.len(), 4, "{m:?}");
+        assert_eq!(m.iter().map(|m| m.secondary).collect::<Vec<_>>(), [false, true, true, false]);
         assert_eq!((m[0].score, m[0].artist.as_str(), m[0].album.as_str(), m[0].year.as_str(), m[0].track.as_str(), m[0].edition.as_str(), m[0].release_tracks), (1.0, "Louis Armstrong & His All-Stars", "Plays W.C. Handy", "1954", "A1", "US, 12\" Vinyl", Some(11)));
-        assert_eq!((m[1].recording.as_str(), m[1].album.as_str()), ("s", ""));
+        assert_eq!((m[3].recording.as_str(), m[3].album.as_str()), ("s", ""));
     }
 
     #[test]
     fn reads_discogs_search_and_tracklist() {
         let reply = json!({"results": [
             {"id": 7680029, "title": "Louis Armstrong - St Louis Blues / Basin Street Blues", "year": "1955", "genre": ["Jazz"], "country": "Germany", "format": ["Vinyl", "7\""]},
-            {"id": 2, "title": "No Dash Here", "year": 1960},
+            {"id": 2, "title": "No Dash Here", "year": 1960, "format": ["CD", "Album", "Reissue"]},
             {"title": "no id"}
         ]});
         let m = discogs_matches(&reply, "St. Louis Blues");
         assert_eq!(m.len(), 2);
         assert_eq!((m[0].release.as_str(), m[0].artist.as_str(), m[0].album.as_str(), m[0].year.as_str(), m[0].genre.as_str(), m[0].edition.as_str()), ("7680029", "Louis Armstrong", "St Louis Blues / Basin Street Blues", "1955", "Jazz", "Germany, Vinyl, 7\""));
         assert_eq!((m[1].artist.as_str(), m[1].album.as_str(), m[1].year.as_str()), ("", "No Dash Here", "1960"));
+        assert_eq!((m[0].secondary, m[1].secondary), (false, true));
         let release = json!({"tracklist": [
             {"position": "", "type_": "heading", "title": "Side One"},
             {"position": "A", "type_": "track", "title": "St Louis Blues"},
@@ -809,10 +873,12 @@ mod tests {
 #[ignore]
 fn fill_from_each_source() {
     for source in [Source::MusicBrainz, Source::Discogs, Source::Wikipedia] {
-        let found = search(source, "St. Louis Blues", "Louis Armstrong").unwrap();
+        let found = search(source, "St. Louis Blues", "Louis Armstrong", "Louis Armstrong Plays W.C. Handy").unwrap();
         assert!(!found.is_empty(), "{source:?}");
-        let best = complete(source, found[0].clone());
-        println!("{source:?}: {} found; {best:?}", found.len());
+        for m in found.iter().take(4) {
+            println!("{source:?}: {} — {} ({}, {}){}", m.title, m.album, m.year, m.edition, if m.secondary { " later" } else { "" });
+        }
+        println!("  picked: {:?}", complete(source, found[0].clone()));
     }
 }
 
