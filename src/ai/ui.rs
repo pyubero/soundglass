@@ -143,6 +143,9 @@ impl Ai {
             crate::track::background();
             let report = |x: f32| p.store(x.to_bits(), Ordering::Relaxed);
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run_tool(task, model, &tune, &track, &edit, selection, kind, &report, &c))).unwrap_or_else(|_| Err(tr("the AI tool failed").into()));
+            if let Err(e) = &result {
+                log::warn!("{task:?} with {}: {e}", model.file);
+            }
             let _ = tx.send(result);
             ctx.request_repaint();
         });
@@ -278,6 +281,9 @@ impl Ai {
                 Download::WebGpu => download_webgpu(&report, &c),
                 Download::Model(i) => download(&CATALOG[i], &report, &c),
             };
+            if let Err(e) = &result {
+                log::warn!("download: {e}");
+            }
             let _ = tx.send(result);
             ctx.request_repaint();
         });

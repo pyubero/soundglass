@@ -98,6 +98,10 @@ What each tool does: [`FEATURES.md`](FEATURES.md#ai-tools).
 - **Full Screen** (F11) — always — hides the menu bar; Esc leaves it once there's no selection.
 - **Practice mode** — always — adds the Practice menu and the tempo, key and chord estimates.
 
+## Help
+
+- **Show Log** — always — opens the file manager at `soundglass.log`, the log to attach to a bug report.
+
 ## Practice (only in Practice mode)
 
 - **Loop selection** (L, fixed) — always — loops the selection; otherwise playback stops at its end.

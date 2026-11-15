@@ -273,6 +273,10 @@ File → Settings… (Ctrl+,) has:
 
 Settings are saved in `~/.local/share/soundglass/app.ron` (Windows: `%APPDATA%\soundglass\data\`).
 
+A log for bug reports is kept next to it in `soundglass.log`: the start, each file opened, error
+messages, panics and warnings from the libraries. It's rotated to `soundglass.log.1` at 512 KB, so
+the two hold the most recent 0.5–1 MB. Help → Show Log opens its folder.
+
 ## Themes
 
 File → Settings… → Theme changes the colours and shapes of menus, panels, dialogs and buttons. The

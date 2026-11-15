@@ -127,7 +127,7 @@ impl Player {
                         }
                     }
                 },
-                |e| eprintln!("soundglass: sound output: {e}"),
+                |e| log::error!("sound output: {e}"),
                 None,
             )
             .map_err(|e| format!("cannot open the sound device ({e})"))?;

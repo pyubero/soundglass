@@ -8,6 +8,7 @@ mod folder;
 mod i18n;
 mod identify;
 mod keys;
+mod logfile;
 mod loudness;
 mod media_keys;
 mod midi;
@@ -51,6 +52,8 @@ fn app_icon() -> Arc<egui::IconData> {
 
 fn main() -> eframe::Result {
     let t0 = Instant::now();
+    logfile::init();
+    log::info!("soundglass {} on {} {}", env!("CARGO_PKG_VERSION"), std::env::consts::OS, std::env::consts::ARCH);
     let (mut timings, mut bench, mut path) = (false, false, None);
     // `args()` panics on a file name that isn't valid Unicode.
     for arg in std::env::args_os().skip(1) {
@@ -839,6 +842,14 @@ impl eframe::App for App {
                         }
                     });
                 }
+                ui.menu_button(tr("Help"), |ui| {
+                    if let Some(log) = logfile::path()
+                        && ui.button(tr("Show Log")).on_hover_text(tr("The log file, for bug reports")).clicked()
+                    {
+                        folder::show_in_folder(&log);
+                        ui.close();
+                    }
+                });
             });
         }));
 
@@ -949,7 +960,7 @@ impl eframe::App for App {
             match panel.inner {
                 Some(TagClick::Edit) => match tags::read(&self.track.path) {
                     Ok(t) => self.tag_editor = Some(TagEditor { read: t.clone(), draft: t, confirm: false, error: None }),
-                    Err(e) => self.save_notice = Some((Err(e), ui.input(|i| i.time))),
+                    Err(e) => self.notify(Err(e), ui.input(|i| i.time)),
                 },
                 Some(TagClick::Save) => {
                     if let Some(e) = &mut self.tag_editor {
@@ -1059,7 +1070,7 @@ impl eframe::App for App {
         if pick_cover && let Some(image) = rfd::FileDialog::new().add_filter(tr("Image"), folder::IMAGE_EXTS).set_directory(dir).pick_file()
             && let Err(e) = self.offer_cover(&ctx, image, true)
         {
-            self.save_notice = Some((Err(e), ctx.input(|i| i.time)));
+            self.notify(Err(e), ctx.input(|i| i.time));
         }
         if remove_cover {
             // The preview is the current track's own cover, if it shows one.
@@ -1731,6 +1742,14 @@ impl App {
         self.forget_edits();
     }
 
+    /// Shows a notice under the waveform; errors also go to the log.
+    fn notify(&mut self, notice: Result<String, String>, time: f64) {
+        if let Err(e) = &notice {
+            log::warn!("{e}");
+        }
+        self.save_notice = Some((notice, time));
+    }
+
     /// A file is open (not the empty window).
     fn has_track(&self) -> bool {
         !self.track.path.as_os_str().is_empty()
@@ -1813,7 +1832,7 @@ impl App {
                 match edited {
                     Ok(e) => history.push(e),
                     Err(m) => {
-                        self.save_notice = Some((Ok(m.into()), self.ctx.get().map_or(0.0, |c| c.input(|i| i.time))));
+                        self.notify(Ok(m.into()), self.ctx.get().map_or(0.0, |c| c.input(|i| i.time)));
                         return;
                     }
                 }
@@ -1881,7 +1900,7 @@ impl App {
         let choice = save::copy_choice(&self.track.path, &codec, bits, self.save_choice);
         match save::reserve_copy(&self.track.path, choice.kind.ext()) {
             Ok(target) => self.start_save(choice, target, true),
-            Err(e) => self.save_notice = Some((Err(e), self.ctx.get().map_or(0.0, |c| c.input(|i| i.time)))),
+            Err(e) => self.notify(Err(e), self.ctx.get().map_or(0.0, |c| c.input(|i| i.time))),
         }
     }
 
@@ -2295,11 +2314,11 @@ impl App {
                 self.tag_editor = None;
                 // A track decoded ahead would show its old cover.
                 self.next = None;
-                self.save_notice = Some((Ok(notice), ctx.input(|i| i.time)));
+                self.notify(Ok(notice), ctx.input(|i| i.time));
             }
             Err(e) => match &mut self.tag_editor {
                 Some(editor) => editor.error = Some(e),
-                None => self.save_notice = Some((Err(e), ctx.input(|i| i.time))),
+                None => self.notify(Err(e), ctx.input(|i| i.time)),
             },
         }
     }
@@ -2445,7 +2464,7 @@ impl App {
                 true
             }
             Err(e) => {
-                self.save_notice = Some((Err(e), ctx.input(|i| i.time)));
+                self.notify(Err(e), ctx.input(|i| i.time));
                 false
             }
         }
@@ -2727,7 +2746,7 @@ impl App {
             if *old == self.track.path {
                 self.own_stamp = folder::stamp(new);
                 if let Err(e) = self.relabel(new.clone()) {
-                    self.save_notice = Some((Err(e), ctx.input(|i| i.time)));
+                    self.notify(Err(e), ctx.input(|i| i.time));
                 }
             }
             for p in &mut self.recent {
@@ -2786,7 +2805,7 @@ impl App {
                     self.settings.rename_pattern = pattern;
                     close = true;
                 }
-                Err(e) => self.save_notice = Some((Err(e), ctx.input(|i| i.time))),
+                Err(e) => self.notify(Err(e), ctx.input(|i| i.time)),
             }
         }
         if close {
@@ -2811,7 +2830,7 @@ impl App {
             }
         }
         self.remember(&new);
-        self.save_notice = Some((Ok(trf("Renamed to {name}", &[("name", &name)])), ctx.input(|i| i.time)));
+        self.notify(Ok(trf("Renamed to {name}", &[("name", &name)])), ctx.input(|i| i.time));
         Ok(())
     }
 
@@ -2851,7 +2870,7 @@ impl App {
     fn delete_track(&mut self, ctx: &egui::Context) {
         let path = self.track.path.clone();
         if let Err(e) = trash::delete(&path) {
-            self.save_notice = Some((Err(trf("Couldn't delete the file: {e}", &[("e", &e)])), ctx.input(|i| i.time)));
+            self.notify(Err(trf("Couldn't delete the file: {e}", &[("e", &e)])), ctx.input(|i| i.time));
             return;
         }
         self.files.retain(|p| *p != path);
@@ -2873,7 +2892,7 @@ impl App {
         if let Ok(p) = &self.player {
             p.send(Cmd::Pause);
         }
-        self.save_notice = Some((Ok(tr("Moved to the Trash").into()), ctx.input(|i| i.time)));
+        self.notify(Ok(tr("Moved to the Trash").into()), ctx.input(|i| i.time));
     }
 
     /// Puts the last file moved to the Trash back and opens it.
@@ -2882,7 +2901,7 @@ impl App {
         let time = self.ctx.get().map_or(0.0, |c| c.input(|i| i.time));
         match folder::restore_trashed(&path) {
             Ok(()) => self.open(path),
-            Err(e) => self.save_notice = Some((Err(trf("Couldn't bring back {name}: {e}", &[("name", &path.file_name().unwrap_or_default().to_string_lossy()), ("e", &e)])), time)),
+            Err(e) => self.notify(Err(trf("Couldn't bring back {name}: {e}", &[("name", &path.file_name().unwrap_or_default().to_string_lossy()), ("e", &e)])), time),
         }
     }
 
@@ -3084,7 +3103,7 @@ impl App {
         };
         match found {
             Ok(path) => self.open(path),
-            Err(e) => self.save_notice = Some((Err(e), ctx.input(|i| i.time))),
+            Err(e) => self.notify(Err(e), ctx.input(|i| i.time)),
         }
     }
 
@@ -3140,7 +3159,7 @@ impl App {
             copied
         });
         let notice = result.map(|()| tr("Copied the file").to_string()).map_err(|e| trf("Couldn't copy the file: {e}", &[("e", &e)]));
-        self.save_notice = Some((notice, ctx.input(|i| i.time)));
+        self.notify(notice, ctx.input(|i| i.time));
     }
 
     /// Puts `path` first in Open Recent.

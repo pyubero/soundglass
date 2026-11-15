@@ -314,3 +314,7 @@
 - 2026-11-15 — without both AcoustID keys the contribute prompt still shows, with a hint and Add AcoustID User Key opening Settings; it hides while Settings is open and comes back after (user's choice)
 - 2026-11-15 — the AcoustID user key is kept in app.ron next to the application key (Settings → AcoustID Settings)
 - 2026-11-15 — no online test for submitting: it would write real data into AcoustID's public database (accepted)
+- 2026-11-15 — debug log in the data folder: soundglass.log rotated to soundglass.log.1 at 512 KB — rotation instead of an exact 1 MB ring buffer, for simplicity
+- 2026-11-15 — the log takes Info and up from soundglass, Warn and up from dependencies, and panics (also the ones catch_unwind hides); only soundglass's own warnings and errors are echoed to stderr
+- 2026-11-15 — `log` crate as a direct dependency, with our own small file logger and no env_logger (user's choice)
+- 2026-11-15 — Help menu with Show Log to reach the log file (user's choice)

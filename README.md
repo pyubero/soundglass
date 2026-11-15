@@ -110,6 +110,7 @@ soundglass song.mp3     # play a file
 [`MENUS.md`](docs/MENUS.md) lists every menu item and shortcut.
 
 Settings are saved in `~/.local/share/soundglass/app.ron` (Windows: `%APPDATA%\soundglass\data\`).
+The log for bug reports, `soundglass.log` (the most recent 0.5–1 MB), is next to it: Help → Show Log.
 
 ## AI tools
 

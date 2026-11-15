@@ -102,6 +102,7 @@ pub struct Track {
 impl Track {
     /// Starts decoding `path` on its own thread; `notify` runs whenever more audio is ready.
     pub fn load(path: PathBuf, notify: impl Fn() + Send + Sync + 'static) -> Arc<Track> {
+        log::info!("open {}", path.display());
         Track::start(path, notify, false)
     }
 
@@ -164,7 +165,7 @@ impl Track {
             if let Err(e) = result.and_then(|_| t.format.get().map(|_| ()).ok_or_else(|| "the file has no audio".to_string()))
                 && !e.is_empty()
             {
-                eprintln!("soundglass: {}: {e}", t.path.display());
+                log::error!("{}: {e}", t.path.display());
                 *t.error.lock().unwrap() = Some(e);
             }
             t.done.store(true, Relaxed);
