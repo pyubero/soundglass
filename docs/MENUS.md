@@ -28,6 +28,8 @@ Each item: **name** (default key) — when it's enabled — what it does.
 - **Rename from Tags…** — as Rename… — renames from a pattern such as
   `{track} - {artist} - {title}`, with a preview.
 - **Settings…** (Ctrl+,) — always — see [`FEATURES.md`](FEATURES.md#settings).
+- **Show Log** — always — opens the file manager at `soundglass.log`, the log kept on your computer
+  to attach to a bug report. It is never sent anywhere ([`FEATURES.md`](FEATURES.md#privacy)).
 - **Quit** (Ctrl+Q) — always — closes the window (asks first about unsaved edits).
 
 ## Track
@@ -97,10 +99,6 @@ What each tool does: [`FEATURES.md`](FEATURES.md#ai-tools).
 - **Edit** (Ctrl+E) — always — shows or hides the Edit panel at the bottom.
 - **Full Screen** (F11) — always — hides the menu bar; Esc leaves it once there's no selection.
 - **Practice mode** — always — adds the Practice menu and the tempo, key and chord estimates.
-
-## Help
-
-- **Show Log** — always — opens the file manager at `soundglass.log`, the log to attach to a bug report.
 
 ## Practice (only in Practice mode)
 

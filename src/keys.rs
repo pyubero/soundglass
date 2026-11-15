@@ -24,6 +24,7 @@ pub enum Command {
     /// Track → Fill Metadata From: a name search in one source.
     Fill(crate::identify::Source),
     Settings,
+    ShowLog,
     Quit,
     Undo,
     Redo,
@@ -120,7 +121,7 @@ pub fn bindable_menus() -> Vec<(&'static str, Vec<(Command, String)>)> {
     let mut ai: Vec<(Command, String)> = Task::ALL.iter().map(|&t| (Ai(t), t.title().to_string())).collect();
     ai.push((AiModels, tr("AI Models…").into()));
     vec![
-        (tr_key("File"), named(&[(Open, tr("Open…")), (Close, tr("Close")), (ShowInFolder, if cfg!(windows) { tr("Show in Explorer") } else { tr("Show in File Manager") }), (CopyPath, tr("Copy Path")), (CopyFile, tr("Copy File")), (SaveCopy, tr("Save Copy")), (SaveAs, tr("Save As…")), (Rename, tr("Rename…")), (Delete, tr("Delete…")), (RenameFromTags, tr("Rename from Tags…")), (Settings, tr("Settings…")), (Quit, tr("Quit"))])),
+        (tr_key("File"), named(&[(Open, tr("Open…")), (Close, tr("Close")), (ShowInFolder, if cfg!(windows) { tr("Show in Explorer") } else { tr("Show in File Manager") }), (CopyPath, tr("Copy Path")), (CopyFile, tr("Copy File")), (SaveCopy, tr("Save Copy")), (SaveAs, tr("Save As…")), (Rename, tr("Rename…")), (Delete, tr("Delete…")), (RenameFromTags, tr("Rename from Tags…")), (Settings, tr("Settings…")), (ShowLog, tr("Show Log")), (Quit, tr("Quit"))])),
         (tr_key("Track"), track),
         (tr_key("Edit"), named(&[(Undo, tr("Undo")), (Redo, tr("Redo")), (Cut, tr("Cut out")), (Crop, tr("Crop")), (Silence, tr("Silence"))])),
         (tr_key("Effects"), effects),

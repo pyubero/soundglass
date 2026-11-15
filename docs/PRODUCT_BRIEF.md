@@ -15,7 +15,7 @@ It comes in four parts:
 1. **Fast.** The window appears in under 200 ms, sound starts before the whole file is decoded, and the waveform fills in as it loads.
 2. **Safe.** The original file is never changed. Edits are saved only to a copy, with full undo and redo. The app never deletes a file.
 3. **Small.** A handful of tools that each do one job. Not a DAW.
-4. **Private.** No telemetry, no account. It goes online only when you ask (track identification, AI downloads).
+4. **Private.** No telemetry, no account. It goes online only when you ask (track identification, AI downloads). The debug log stays on the computer.
 
 ## Not doing
 - Multitrack mixing, effect chains, VST/LV2 plugins, MIDI editing

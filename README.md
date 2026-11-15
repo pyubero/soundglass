@@ -11,8 +11,9 @@
 
 A small, fast music player and quick editor for Linux and Windows, written in Rust. Open a file and
 hear it at once, move through a folder without waiting, and make quick fixes without risking your
-originals: edits are only ever written to a copy, when you choose to save one. It collects nothing:
-no telemetry, no account, and it never goes online on its own.
+originals: edits are only ever written to a copy, when you choose to save one. It sends nothing:
+no telemetry, no account, and it never goes online on its own. The only record it keeps is a local
+log for bug reports, which never leaves your computer.
 
 ![soundglass playing a track](screenshots/screenshot-player.png)
 
@@ -41,7 +42,8 @@ what each release brings, and [`PRODUCT_BRIEF.md`](docs/PRODUCT_BRIEF.md) has th
 - **Local AI tools.** Remove noise, split a song into stems, turn a melody into MIDI, find the beats
   and transcribe speech, all on your own computer and offline. Nothing is installed until you ask
   for it ([AI tools](#ai-tools)).
-- **Private by design.** No telemetry, no account, and it never goes online on its own.
+- **Private by design.** No telemetry, no account, and it never goes online on its own. A local log
+  helps you report bugs; it's never sent anywhere.
 - **Your keys, your colours.** Every menu item can get its own keyboard shortcut, the font size is
   adjustable, and themes (including high contrast) are plain XML files.
 
@@ -110,7 +112,8 @@ soundglass song.mp3     # play a file
 [`MENUS.md`](docs/MENUS.md) lists every menu item and shortcut.
 
 Settings are saved in `~/.local/share/soundglass/app.ron` (Windows: `%APPDATA%\soundglass\data\`).
-The log for bug reports, `soundglass.log` (the most recent 0.5–1 MB), is next to it: Help → Show Log.
+The log for bug reports, `soundglass.log` (the most recent 0.5–1 MB), is next to it: File → Show Log.
+It stays on your computer and is never sent anywhere.
 
 ## AI tools
 

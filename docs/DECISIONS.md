@@ -317,6 +317,8 @@
 - 2026-11-15 — debug log in the data folder: soundglass.log rotated to soundglass.log.1 at 512 KB — rotation instead of an exact 1 MB ring buffer, for simplicity
 - 2026-11-15 — the log takes Info and up from soundglass, Warn and up from dependencies, and panics (also the ones catch_unwind hides); only soundglass's own warnings and errors are echoed to stderr
 - 2026-11-15 — `log` crate as a direct dependency, with our own small file logger and no env_logger (user's choice)
-- 2026-11-15 — Help menu with Show Log to reach the log file (user's choice)
+- 2026-11-15 — Help menu with Show Log to reach the log file (user's choice) — changed 2026-11-15: File → Show Log (see below)
 - 2026-11-15 — the log also records lag and dropouts: UI frames over 50 ms with named phases, a watchdog thread for frames running over 1 s, frames missing while playing and focused, and audio callback trouble counted in atomics (never logged from the callback) and logged by the UI at most once a second (user's choice: thorough enough for lag, freezes and dropouts that can't be reproduced)
 - 2026-11-15 — the log records each command and player action (not the volume sliders' steps) and online requests by host and path only, never the query (it can hold the AcoustID key)
+- 2026-11-15 — File → Show Log, between Settings… and Quit, bindable like every menu item; no Help menu (user's choice)
+- 2026-11-15 — privacy wording: "sends nothing" instead of "collects nothing", since the local log keeps file names and times; every doc that mentions the log says it is never sent (user's choice)

@@ -779,6 +779,7 @@ impl eframe::App for App {
                     item(ui, &mut commands, tr("Rename from Tags…"), Command::RenameFromTags, why_not_rename);
                     ui.separator();
                     item(ui, &mut commands, tr("Settings…"), Command::Settings, None);
+                    item(ui, &mut commands, tr("Show Log"), Command::ShowLog, None);
                     item(ui, &mut commands, tr("Quit"), Command::Quit, None);
                 });
                 ui.menu_button(tr("Track"), |ui| {
@@ -860,14 +861,6 @@ impl eframe::App for App {
                         }
                     });
                 }
-                ui.menu_button(tr("Help"), |ui| {
-                    if let Some(log) = logfile::path()
-                        && ui.button(tr("Show Log")).on_hover_text(tr("The log file, for bug reports")).clicked()
-                    {
-                        folder::show_in_folder(&log);
-                        ui.close();
-                    }
-                });
             });
         }));
 
@@ -898,6 +891,11 @@ impl eframe::App for App {
                     self.identify_album = Some(IdentifyAlbum { files, per_file: Vec::new(), albums: Vec::new(), pick: 0, job: None, written: Vec::new(), writing: None });
                 }
                 Command::Settings => self.show_settings = true,
+                Command::ShowLog => {
+                    if let Some(log) = logfile::path() {
+                        folder::show_in_folder(&log);
+                    }
+                }
                 Command::Undo => actions.push(Action::Undo),
                 Command::Redo => actions.push(Action::Redo),
                 Command::Cut => actions.push(Action::Cut),

@@ -274,8 +274,9 @@ File → Settings… (Ctrl+,) has:
 Settings are saved in `~/.local/share/soundglass/app.ron` (Windows: `%APPDATA%\soundglass\data\`).
 
 A log for bug reports is kept next to it in `soundglass.log`, so a problem that can't be
-reproduced still leaves a trace. It's rotated to `soundglass.log.1` at 512 KB, so the two hold the
-most recent 0.5–1 MB. Help → Show Log opens its folder. It records:
+reproduced still leaves a trace. It stays on your computer and is never sent anywhere
+([Privacy](#privacy)). It's rotated to `soundglass.log.1` at 512 KB, so the two hold the most recent
+0.5–1 MB. File → Show Log opens its folder. It records:
 
 - the start: version, system, sound device (rate, channels) and graphics card;
 - each file opened, how long it took to decode and the memory in use after;
@@ -344,7 +345,7 @@ Unknown elements and attributes are ignored.
 
 ## Privacy
 
-soundglass collects nothing: no telemetry, no account. It goes online only when you ask:
+soundglass sends nothing: no telemetry, no account. It goes online only when you ask:
 
 - Identify Track… and Identify Album… (AcoustID and MusicBrainz), after you click Look up;
 - Fill Metadata From (Wikipedia, Discogs or MusicBrainz), which sends only the title and artist
@@ -354,6 +355,12 @@ soundglass collects nothing: no telemetry, no account. It goes online only when 
   sends it with its length, the MusicBrainz recording ID and your user key, after you click Contribute;
 - the AI runtime, GPU libraries and models, each after you accept its licence;
 - Check for updates, which only opens the Releases page in your browser.
+
+soundglass keeps a log on your computer, `soundglass.log` (File → Show Log), only to help you report
+bugs. It is never sent anywhere: nothing in soundglass uploads or attaches it, and nobody sees it
+unless you share it yourself. It holds the names and folders of the files you opened, what you did
+and when ([what it records](#settings)), so look it over before you attach it to a bug report. You
+can delete it at any time; soundglass starts a new one.
 
 ## Supported formats
 

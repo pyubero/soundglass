@@ -11,8 +11,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 - After Fill Metadata From → MusicBrainz, soundglass offers to contribute the track's fingerprint to
   AcoustID when AcoustID doesn't know it yet (needs your AcoustID user key in Settings).
 - A log for bug reports, `soundglass.log` in the data folder (the most recent 0.5–1 MB): files,
-  commands, timings, slow or frozen frames, sound dropouts, errors and panics; Help → Show Log opens
-  its folder.
+  commands, timings, slow or frozen frames, sound dropouts, errors and panics. It stays on your
+  computer and is never sent anywhere; File → Show Log opens its folder.
 
 ## [1.0.0] - 2026-11-15
 
