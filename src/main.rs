@@ -41,6 +41,12 @@ const STEP_SECONDS: u64 = 5;
 /// Previous restarts the track after this much has played, as Spotify does.
 const RESTART_SECONDS: u64 = 3;
 
+/// The window icon, decoded once: the Spectrogram's builder is made every frame.
+fn app_icon() -> Arc<egui::IconData> {
+    static ICON: OnceLock<Arc<egui::IconData>> = OnceLock::new();
+    ICON.get_or_init(|| Arc::new(eframe::icon_data::from_png_bytes(include_bytes!("../icon/soundglass-256.png")).expect("the bundled icon is a valid PNG"))).clone()
+}
+
 fn main() -> eframe::Result {
     let t0 = Instant::now();
     let (mut timings, mut bench, mut path) = (false, false, None);
@@ -86,7 +92,7 @@ fn main() -> eframe::Result {
     ai::set_use_gpu(settings.ai.use_gpu);
     let remembered = settings.window_size.filter(|_| settings.remember_window_size);
     let viewport = egui::ViewportBuilder::default().with_title(&name).with_inner_size(remembered.unwrap_or(settings.default_size)).with_min_inner_size(settings::MIN_SIZE)
-        .with_icon(eframe::icon_data::from_png_bytes(include_bytes!("../icon/soundglass-256.png")).unwrap());
+        .with_icon(app_icon());
     // soundglass keeps the window size itself (see `App::save`): eframe's own saving can't follow Track Info.
     let options = eframe::NativeOptions { viewport, persist_window: false, ..Default::default() };
     let (show_info, show_edit) = (remembered.is_some() && settings.info_panel, remembered.is_some() && settings.edit_panel);
@@ -1936,7 +1942,9 @@ impl App {
             return Vec::new();
         }
         let name = self.track.path.file_name().unwrap_or_default().to_string_lossy();
-        let builder = egui::ViewportBuilder::default().with_title(trf("Spectrogram — {name}", &[("name", &name)])).with_inner_size([900.0, 400.0]);
+        let builder = egui::ViewportBuilder::default().with_title(trf("Spectrogram — {name}", &[("name", &name)])).with_inner_size([900.0, 400.0])
+            // As the main window's: Wayland finds the icon through the app_id's .desktop file.
+            .with_app_id("soundglass").with_icon(app_icon());
         ctx.show_viewport_immediate(egui::ViewportId::from_hash_of("spectrum"), builder, |ui, _| {
             if ui.input(|i| i.viewport().close_requested()) {
                 self.show_spectrum = false;

@@ -4,6 +4,12 @@ What changed in each release of soundglass. [`docs/FEATURES.md`](docs/FEATURES.m
 feature in detail. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- The Spectrogram window shows the soundglass icon (it showed a generic one on Wayland).
+
 ## [0.1.0] - 2026-11-15
 
 The first release: a small, fast music player and quick editor for Linux and Windows.
@@ -68,4 +74,5 @@ The first release: a small, fast music player and quick editor for Linux and Win
 - A `.deb` for Ubuntu 22.04, Debian 12 or newer (64-bit), and a `.msi` installer for Windows 10
   and 11 (64-bit).
 
+[Unreleased]: https://github.com/pyubero/soundglass/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/pyubero/soundglass/releases/tag/v0.1.0
