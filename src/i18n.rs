@@ -1,8 +1,6 @@
-//! UI translations, as lightview's: the English text is the key, `tr("Save As…")`. English only
-//! for now (user's choice). To add a language: a `Language` variant and its name, a match arm in
-//! `from_locale` and `source`, a `locales/xx.tsv` with one `English<TAB>translation` line per key
-//! (`\n` for a newline), and the language in the tests' `TRANSLATED`; a test then fails until the
-//! file has exactly the keys in the code.
+//! UI translations, as lightview's: the English text is the key, `tr("Save As…")`. To add a string,
+//! wrap it in `tr`/`trf` and add a line to every `locales/*.tsv` (`English<TAB>translation`, `\n`
+//! for a newline); a test fails until all of them have it. Adding a language: docs/TRANSLATING.md.
 //! shortcut: left in English on purpose: units (dB, Hz, kb/s), note names, the AI models' internal
 //! errors and licence texts; wrap them too if a translator asks.
 use serde::{Deserialize, Serialize};
@@ -15,35 +13,174 @@ use std::sync::atomic::{AtomicU8, Ordering};
 pub enum Language {
     #[default]
     English,
+    Spanish,
+    French,
+    German,
+    Italian,
+    Portuguese,
+    Polish,
+    Dutch,
+    Russian,
+    Japanese,
+    ChineseSimplified,
+    ChineseTraditional,
+    Korean,
+    Ukrainian,
+    Turkish,
+    Indonesian,
+    Vietnamese,
+    Czech,
+    Swedish,
+    Hungarian,
+    Romanian,
+    Greek,
+    Danish,
+    Finnish,
+    Norwegian,
+    Catalan,
+    Basque,
+    Galician,
 }
 
 impl Language {
-    pub const ALL: [Self; 1] = [Self::English];
+    pub const ALL: [Self; 28] = [
+        Self::English, Self::Spanish, Self::French, Self::German, Self::Italian, Self::Portuguese, Self::Polish, Self::Dutch, Self::Russian,
+        Self::Japanese, Self::ChineseSimplified, Self::ChineseTraditional, Self::Korean, Self::Ukrainian, Self::Turkish,
+        Self::Indonesian, Self::Vietnamese, Self::Czech, Self::Swedish, Self::Hungarian, Self::Romanian, Self::Greek, Self::Danish, Self::Finnish, Self::Norwegian,
+        Self::Catalan, Self::Basque, Self::Galician,
+    ];
 
     /// In its own language, so it can be found whatever the current one is.
     pub fn name(self) -> &'static str {
         match self {
             Self::English => "English",
+            Self::Spanish => "Español",
+            Self::French => "Français",
+            Self::German => "Deutsch",
+            Self::Italian => "Italiano",
+            Self::Portuguese => "Português",
+            Self::Polish => "Polski",
+            Self::Dutch => "Nederlands",
+            Self::Russian => "Русский",
+            Self::Japanese => "日本語",
+            Self::ChineseSimplified => "简体中文",
+            Self::ChineseTraditional => "繁體中文",
+            Self::Korean => "한국어",
+            Self::Ukrainian => "Українська",
+            Self::Turkish => "Türkçe",
+            Self::Indonesian => "Bahasa Indonesia",
+            Self::Vietnamese => "Tiếng Việt",
+            Self::Czech => "Čeština",
+            Self::Swedish => "Svenska",
+            Self::Hungarian => "Magyar",
+            Self::Romanian => "Română",
+            Self::Greek => "Ελληνικά",
+            Self::Danish => "Dansk",
+            Self::Finnish => "Suomi",
+            Self::Norwegian => "Norsk bokmål",
+            Self::Catalan => "Català",
+            Self::Basque => "Euskara",
+            Self::Galician => "Galego",
         }
     }
 
-    /// A locale such as `es_ES.UTF-8` or a `LANGUAGE` list such as `de:en`; English if it isn't one of ours.
-    fn from_locale(_locale: &str) -> Self {
-        Self::English
-    }
-
-    /// The translation table, built into the program.
     fn source(self) -> &'static str {
         match self {
             Self::English => "",
+            Self::Spanish => include_str!("../locales/es.tsv"),
+            Self::French => include_str!("../locales/fr.tsv"),
+            Self::German => include_str!("../locales/de.tsv"),
+            Self::Italian => include_str!("../locales/it.tsv"),
+            Self::Portuguese => include_str!("../locales/pt.tsv"),
+            Self::Polish => include_str!("../locales/pl.tsv"),
+            Self::Dutch => include_str!("../locales/nl.tsv"),
+            Self::Russian => include_str!("../locales/ru.tsv"),
+            Self::Japanese => include_str!("../locales/ja.tsv"),
+            Self::ChineseSimplified => include_str!("../locales/zh_CN.tsv"),
+            Self::ChineseTraditional => include_str!("../locales/zh_TW.tsv"),
+            Self::Korean => include_str!("../locales/ko.tsv"),
+            Self::Ukrainian => include_str!("../locales/uk.tsv"),
+            Self::Turkish => include_str!("../locales/tr.tsv"),
+            Self::Indonesian => include_str!("../locales/id.tsv"),
+            Self::Vietnamese => include_str!("../locales/vi.tsv"),
+            Self::Czech => include_str!("../locales/cs.tsv"),
+            Self::Swedish => include_str!("../locales/sv.tsv"),
+            Self::Hungarian => include_str!("../locales/hu.tsv"),
+            Self::Romanian => include_str!("../locales/ro.tsv"),
+            Self::Greek => include_str!("../locales/el.tsv"),
+            Self::Danish => include_str!("../locales/da.tsv"),
+            Self::Finnish => include_str!("../locales/fi.tsv"),
+            Self::Norwegian => include_str!("../locales/nb.tsv"),
+            Self::Catalan => include_str!("../locales/ca.tsv"),
+            Self::Basque => include_str!("../locales/eu.tsv"),
+            Self::Galician => include_str!("../locales/gl.tsv"),
+        }
+    }
+
+    fn from_locale(locale: &str) -> Self {
+        match locale.get(..2) {
+            Some("es") => Self::Spanish,
+            Some("fr") => Self::French,
+            Some("de") => Self::German,
+            Some("it") => Self::Italian,
+            Some("pt") => Self::Portuguese,
+            Some("pl") => Self::Polish,
+            Some("nl") => Self::Dutch,
+            Some("ru") => Self::Russian,
+            Some("ja") => Self::Japanese,
+            Some("zh") if ["TW", "HK", "MO", "Hant"].iter().any(|r| locale.contains(r)) => Self::ChineseTraditional,
+            Some("zh") => Self::ChineseSimplified,
+            Some("ko") => Self::Korean,
+            Some("uk") => Self::Ukrainian,
+            Some("tr") => Self::Turkish,
+            Some("id" | "in") => Self::Indonesian,
+            Some("vi") => Self::Vietnamese,
+            Some("cs") => Self::Czech,
+            Some("sv") => Self::Swedish,
+            Some("hu") => Self::Hungarian,
+            Some("ro") => Self::Romanian,
+            Some("el") => Self::Greek,
+            Some("da") => Self::Danish,
+            Some("fi") => Self::Finnish,
+            // Nynorsk users read Bokmål too.
+            Some("nb" | "no" | "nn") => Self::Norwegian,
+            Some("ca") => Self::Catalan,
+            Some("eu") => Self::Basque,
+            Some("gl") => Self::Galician,
+            _ => Self::English,
+        }
+    }
+
+    /// The fontconfig language tag of the CJK font this language needs, if it needs one.
+    pub fn cjk_tag(self) -> Option<&'static str> {
+        match self {
+            Self::Japanese => Some("ja"),
+            Self::ChineseSimplified => Some("zh-cn"),
+            Self::ChineseTraditional => Some("zh-tw"),
+            Self::Korean => Some("ko"),
+            _ => None,
         }
     }
 }
 
 /// The desktop's language, the way gettext picks it; English if it isn't one of ours.
 pub fn system_language() -> Language {
-    let locale = ["LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG"].iter().filter_map(|v| std::env::var(v).ok()).find(|v| !v.is_empty());
+    let locale = ["LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG"].iter().filter_map(|v| std::env::var(v).ok()).find(|v| !v.is_empty()).or_else(windows_locale);
     locale.map_or(Language::English, |l| Language::from_locale(&l))
+}
+
+/// The user's locale, like `es-ES`; Linux has no call for this, the language comes from the environment.
+// shortcut: this is the regional format, not the display language; use GetUserPreferredUILanguages if they often differ.
+fn windows_locale() -> Option<String> {
+    #[cfg(windows)]
+    {
+        let mut name = [0u16; 85]; // LOCALE_NAME_MAX_LENGTH
+        // SAFETY: the buffer is as long as the length passed.
+        let len = unsafe { windows_sys::Win32::Globalization::GetUserDefaultLocaleName(name.as_mut_ptr(), name.len() as i32) };
+        return (len > 0).then(|| String::from_utf16_lossy(&name[..len as usize - 1]));
+    }
+    #[cfg(not(windows))]
+    None
 }
 
 static CURRENT: AtomicU8 = AtomicU8::new(0);
@@ -106,8 +243,13 @@ mod tests {
     use super::*;
     use std::collections::BTreeSet;
 
-    /// The languages with a table; none yet.
-    const TRANSLATED: [Language; 0] = [];
+    /// The languages with a table.
+    const TRANSLATED: [Language; 27] = [
+        Language::Spanish, Language::French, Language::German, Language::Italian, Language::Portuguese, Language::Polish, Language::Dutch, Language::Russian,
+        Language::Japanese, Language::ChineseSimplified, Language::ChineseTraditional, Language::Korean, Language::Ukrainian, Language::Turkish,
+        Language::Indonesian, Language::Vietnamese, Language::Czech, Language::Swedish, Language::Hungarian, Language::Romanian, Language::Greek,
+        Language::Danish, Language::Finnish, Language::Norwegian, Language::Catalan, Language::Basque, Language::Galician,
+    ];
 
     /// Every literal passed to `tr`/`trf`/`tr_key` in the sources, as written there.
     fn keys_in_sources() -> BTreeSet<String> {
@@ -166,7 +308,19 @@ mod tests {
     }
 
     #[test]
+    fn translations_keep_their_placeholders() {
+        for language in TRANSLATED {
+            for line in language.source().lines() {
+                let (key, value) = line.split_once('\t').unwrap();
+                assert_eq!(placeholders(key), placeholders(value), "{language:?}: {line}");
+                assert!(!value.trim().is_empty(), "{language:?}: {line}");
+            }
+        }
+    }
+
+    #[test]
     fn unknown_text_stays_english() {
+        assert_eq!(lookup(Language::German, "Not a key"), "Not a key");
         assert_eq!(lookup(Language::English, "Save As…"), "Save As…");
         assert_eq!(parse("One\\nTwo\tUno\\nDos")["One\nTwo"], "Uno\nDos");
     }
@@ -179,8 +333,34 @@ mod tests {
     }
 
     #[test]
-    fn languages_are_in_declaration_order() {
-        assert_eq!(Language::ALL.map(|l| l as usize), std::array::from_fn(|i| i));
-        assert_eq!(Language::from_locale("es_ES.UTF-8"), Language::English);
+    fn locale_names_map_to_languages() {
+        assert_eq!(Language::from_locale("es_ES.UTF-8"), Language::Spanish);
+        assert_eq!(Language::from_locale("es_MX"), Language::Spanish);
+        assert_eq!(Language::from_locale("pt_BR.UTF-8"), Language::Portuguese);
+        assert_eq!(Language::from_locale("de:en"), Language::German);
+        assert_eq!(Language::from_locale("pl_PL.UTF-8"), Language::Polish);
+        assert_eq!(Language::from_locale("nl_BE"), Language::Dutch);
+        assert_eq!(Language::from_locale("ru_RU.UTF-8"), Language::Russian);
+        assert_eq!(lookup(Language::Russian, "Open…"), "Открыть…");
+        assert_eq!(Language::ALL.map(|l| l as usize), std::array::from_fn(|i| i), "ALL is in declaration order");
+        assert_eq!(Language::ALL.len(), TABLES.len());
+        assert_eq!(Language::from_locale("ja_JP"), Language::Japanese);
+        assert_eq!(Language::from_locale("zh_CN.UTF-8"), Language::ChineseSimplified);
+        assert_eq!(Language::from_locale("zh_TW.UTF-8"), Language::ChineseTraditional);
+        assert_eq!(Language::from_locale("zh-HK"), Language::ChineseTraditional);
+        assert_eq!(Language::from_locale("zh-Hant-TW"), Language::ChineseTraditional);
+        assert_eq!(Language::from_locale("ko_KR.UTF-8"), Language::Korean);
+        assert_eq!(Language::from_locale("uk_UA.UTF-8"), Language::Ukrainian);
+        assert_eq!(Language::from_locale("tr_TR.UTF-8"), Language::Turkish);
+        assert_eq!(Language::from_locale("in_ID"), Language::Indonesian);
+        assert_eq!(Language::from_locale("vi_VN.UTF-8"), Language::Vietnamese);
+        assert_eq!(Language::from_locale("el_GR"), Language::Greek);
+        assert_eq!(Language::from_locale("nn_NO.UTF-8"), Language::Norwegian);
+        assert_eq!(Language::from_locale("sv_FI"), Language::Swedish);
+        assert_eq!(Language::from_locale("ca_ES@valencia"), Language::Catalan);
+        assert_eq!(Language::from_locale("eu_ES.UTF-8"), Language::Basque);
+        assert_eq!(Language::from_locale("gl_ES"), Language::Galician);
+        assert_eq!(Language::from_locale("ar_EG"), Language::English);
+        assert_eq!(Language::from_locale("C"), Language::English);
     }
 }

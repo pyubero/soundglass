@@ -1,0 +1,551 @@
+ dB at most	 dB 以下
+ semitones	 半音
+0 (Normal)	0 (標準)
+0 = max	0 = 最大
+1 (mono)	1 (モノラル)
+16-bit	16 ビット
+1× (Normal)	1× (標準)
+2 (stereo)	2 (ステレオ)
+24-bit	24 ビット
+32-bit float	32 ビット浮動小数点
+<{tag}>: invalid value	<{tag}>: 無効な値
+A code such as en, es, fr, de; empty to detect it from the first speech	en、es、fr、de などのコード。空欄なら最初の発話から検出します
+A file with that name already exists.	その名前のファイルは既にあります。
+A long track: the hop is raised so the spectrogram fits in memory	長いトラック: スペクトログラムがメモリに収まるようホップを大きくしています
+AI Models	AI モデル
+AI Models…	AI モデル…
+AI runtime (ONNX Runtime)	AI ランタイム (ONNX Runtime)
+About 50 MB for a 4-minute stem, for further editing	4 分のステムで約 50 MB。さらに編集する場合に
+Accept and Continue	同意して続行
+Accept and Download	同意してダウンロード
+AcoustID Settings	AcoustID の設定
+AcoustID can't be reached ({e})	AcoustID に接続できません ({e})
+AcoustID: {why}	AcoustID: {why}
+Add AcoustID User Key	AcoustID ユーザーキーを追加
+Add Cover	カバーを追加
+Add album cover?	アルバムカバーを追加しますか?
+Add your AcoustID application key and user key in Settings to contribute.	提供するには、設定で AcoustID のアプリケーションキーとユーザーキーを追加してください。
+Add/Replace Album Cover…	アルバムカバーを追加/置換…
+Album	アルバム
+Album cover	アルバムカバー
+Album:	アルバム:
+All notes	すべての音
+All {n} Tracks	全 {n} トラック
+Already in AcoustID; nothing was sent.	既に AcoustID にあります。何も送信していません。
+Also find notes without a clear start	はっきりした立ち上がりのない音も検出
+Analysis	解析
+Any graphics card with Vulkan or Direct3D 12 ({mb} MB). A weak built-in one can be slower than the CPU.	Vulkan または Direct3D 12 対応のグラフィックカード ({mb} MB)。性能の低い内蔵 GPU は CPU より遅いことがあります。
+Application key:	アプリケーションキー:
+Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.	次回 soundglass を開いたときに適用されます。ウィンドウ、トラック情報、編集パネルは終了時のまま保たれます。
+Apply and Rename	適用して名前を変更
+Apply speed and pitch	速度とピッチを適用
+Apply to All Tracks	すべてのトラックに適用
+Artist	アーティスト
+Artist:	アーティスト:
+As Apply to All Tracks, then renames each file with the Rename from Tags pattern	「すべてのトラックに適用」の後、「タグから名前を変更」のパターンで各ファイルの名前を変更します
+As TV	テレビ並み
+As podcasts	ポッドキャスト並み
+As streaming	ストリーミング並み
+As subtitles (.srt)	字幕として (.srt)
+Audio	オーディオ
+BPM	BPM
+BPM tag saved ({bpm})	BPM タグを保存しました ({bpm})
+Basic Pitch — any instrument, several notes at once	Basic Pitch — あらゆる楽器、和音も可
+Basic Pitch's melodia trick	Basic Pitch の melodia トリック
+Beat This! — beats and downbeats	Beat This! — 拍と小節の頭
+Bit depth	ビット深度
+Bitrate	ビットレート
+Blackman–Harris	ブラックマン–ハリス
+Blue to red	青から赤
+C D E	C D E
+CUDA: Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050. WebGPU: Find Beats only, about 2× faster (Split into Stems was slower than the CPU). The other tools are faster on the CPU. With both installed, NVIDIA's is used	CUDA: 「ステムに分離」と「拍を検出」が GTX 1050 で 2.6〜3 倍高速。WebGPU: 「拍を検出」のみ約 2 倍高速 (「ステムに分離」は CPU より遅い)。その他のツールは CPU のほうが高速です。両方入っている場合は NVIDIA のものを使います
+Can't fingerprint this audio ({e})	このオーディオの指紋を作れません ({e})
+Can't read this folder: {e}	このフォルダーを読み込めません: {e}
+Can't write tags to this format ({e})	この形式にはタグを書き込めません ({e})
+Cancel	キャンセル
+Change	変更
+Change Keyboard Shortcuts…	キーボードショートカットを変更…
+Change speed and pitch	速度とピッチを変更
+Channels	チャンネル
+Channels: mono	チャンネル: モノラル
+Channels: stereo	チャンネル: ステレオ
+Channels: swap left and right	チャンネル: 左右を入れ替え
+Check for updates	アップデートを確認
+Chords	コード
+Chords: after loading	コード: 読み込み後
+Chords: measuring…	コード: 測定中…
+Clicks	クリック音
+Clicks on the found beats	検出した拍にクリック音
+Close	閉じる
+Codec	コーデック
+Colours	色
+Continue	続行
+Contribute	提供する
+Contribute to AcoustID?	AcoustID に提供しますか?
+Copied the file	ファイルをコピーしました
+Copy	コピー
+Copy File	ファイルをコピー
+Copy Path	パスをコピー
+Couldn't bring back {name}: {e}	{name} を元に戻せませんでした: {e}
+Couldn't copy the file: {e}	ファイルをコピーできませんでした: {e}
+Couldn't delete the file: {e}	ファイルを削除できませんでした: {e}
+Cover	カバー
+Cover added to 1 track	1 トラックにカバーを追加しました
+Cover added to {n} of {total} tracks (not: {failed})	{total} トラック中 {n} トラックにカバーを追加しました (失敗: {failed})
+Cover added to {n} tracks	{n} トラックにカバーを追加しました
+Cover at 256 px	256 px のカバー
+Cover removed from 1 track	1 トラックからカバーを削除しました
+Cover removed from {n} of {total} tracks (not: {failed})	{total} トラック中 {n} トラックからカバーを削除しました (失敗: {failed})
+Cover removed from {n} tracks	{n} トラックからカバーを削除しました
+Crop	切り抜き
+Current cover	現在のカバー
+Custom ({value})…	カスタム ({value})…
+Custom loudness…	カスタムラウドネス…
+Custom peak…	カスタムピーク…
+Custom…	カスタム…
+Cut out	切り取り
+Dark	ダーク
+Data from Discogs.	Discogs のデータです。
+Decoding…	デコード中…
+DeepFilterNet3 — speech, 48 kHz	DeepFilterNet3 — 音声、48 kHz
+Delete file?	ファイルを削除しますか?
+Delete…	削除…
+Discard edits	編集を破棄
+Discogs can't be reached ({e})	Discogs に接続できません ({e})
+Discogs is busy; try again in a minute.	Discogs が混雑しています。1 分後にもう一度お試しください。
+Discogs now asks for a token; this lookup can't run.	Discogs がトークンを求めるようになったため、この検索はできません。
+Discogs…	Discogs…
+Do Ré Mi	ドレミ
+Do you want to contribute this track's fingerprint to AcoustID? AcoustID will then recognise {title} — {artist} for everyone.	このトラックの指紋を AcoustID に提供しますか? 提供すると AcoustID は誰に対しても {title} — {artist} を認識するようになります。
+Double the tempo	テンポを倍に
+Download	ダウンロード
+Download AI Runtime ({mb} MB)	AI ランタイムをダウンロード ({mb} MB)
+Download AI Runtime ({mb} MB)…	AI ランタイムをダウンロード ({mb} MB)…
+Download GPU Support	GPU サポートをダウンロード
+Downloaded from Microsoft (ONNX Runtime's WebGPU plugin, via its official PyPI package).	Microsoft からダウンロードします (ONNX Runtime の WebGPU プラグイン、公式 PyPI パッケージ経由)。
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Microsoft (ONNX Runtime) と NVIDIA (CUDA ライブラリ、公式 PyPI パッケージ経由) からダウンロードされます。
+Drag on the waveform to select	波形をドラッグして選択
+Each stretch of speech with its start and end, to save as an .srt file	発話ごとの開始と終了。.srt ファイルとして保存します
+Edit	編集
+Effects	エフェクト
+Europe	ヨーロッパ
+FFT size	FFT サイズ
+FLAC (lossless)	FLAC (ロスレス)
+Fade in	フェードイン
+Fade out	フェードアウト
+Faint noise	かすかなノイズ
+Fetching details…	詳細を取得中…
+File	ファイル
+File changed	ファイルが変更されました
+File size	ファイルサイズ
+Fill In All Tracks	すべてのトラックに入力
+Fill Metadata From	メタデータの取得元
+Fill from Discogs	Discogs から入力
+Fill from Discogs…	Discogs から入力…
+Fill from MusicBrainz	MusicBrainz から入力
+Fill from MusicBrainz…	MusicBrainz から入力…
+Fill from Wikipedia	Wikipedia から入力
+Fill from Wikipedia…	Wikipedia から入力…
+Fills Track Info's tag editor; Save… there writes the tags	トラック情報のタグエディターに入力します。そこで「保存…」するとタグが書き込まれます
+Find Beats	拍を検出
+Fingerprint sent to AcoustID; lookups find it once it's processed.	指紋を AcoustID に送信しました。処理が済むと検索で見つかります。
+Fingerprinting {i} of {n}: {file}	指紋 {i} / {n}: {file}
+Fit	全体表示
+Fit cover space	カバー領域に合わせる
+Flats (Db)	フラット (Db)
+Folder	フォルダー
+Follow system	システムに従う
+Font size:	フォントサイズ:
+Format	形式
+Found {n} beats, ≈ {bpm} BPM. Metronome on (volume button).	{n} 拍を検出、≈ {bpm} BPM。メトロノームをオンにしました (音量ボタン)。
+Found {n} beats. Metronome on (volume button).	{n} 拍を検出。メトロノームをオンにしました (音量ボタン)。
+Full	最大
+Full Screen	全画面表示
+Full takes away all the noise it finds; a limit keeps some, for a more natural sound	「最大」は見つけたノイズをすべて除去します。制限を設けると少し残し、より自然な音になります
+GPU (AMD, Intel and others, experimental)	GPU (AMD、Intel など、実験的)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU support	GPU サポート
+GPU support (AMD, Intel and others)	GPU サポート (AMD、Intel など)
+Gain	ゲイン
+Gain: custom…	ゲイン: カスタム…
+Gain: {db} dB	ゲイン: {db} dB
+General	一般
+Genre	ジャンル
+Get a key	キーを取得
+Get your user key	ユーザーキーを取得
+Gray	グレー
+HTDemucs v4 — drums, bass, other, vocals	HTDemucs v4 — ドラム、ベース、その他、ボーカル
+Half the tempo	テンポを半分に
+Hamming	ハミング
+Hann	ハン
+Held notes	伸ばした音
+High contrast	ハイコントラスト
+Higher: fewer, surer notes start	高くすると: 音の開始が少なく、確実に
+Higher: notes end sooner, quiet ones are left out	高くすると: 音が早く終わり、小さな音は省かれます
+Hiss	ヒスノイズ
+Hop	ホップ
+Identify Album	アルバムを特定
+Identify Album…	アルバムを特定…
+Identify Track	トラックを特定
+Identify Track needs one; it is free for non-commercial use.	「トラックを特定」に必要です。非商用なら無料です。
+Identify Track…	トラックを特定…
+Image	画像
+In order	順番に
+Instrument range	楽器の音域
+It already has that name.	既にその名前です。
+It's all quieter than that; nothing trimmed	すべてそれより小さいため、何もトリミングしませんでした
+It's no longer in the Trash.	もうゴミ箱にありません。
+Its unsaved edits will be lost.	保存していない編集は失われます。
+Keep current	現在のものを保持
+Key	キー
+Key ≈ {key}	キー ≈ {key}
+Keyboard Shortcuts	キーボードショートカット
+Label size	ラベルのサイズ
+Language	言語
+Language:	言語:
+Length	長さ
+Levels	レベル
+Licence ({n} of {count}) — {title}	ライセンス ({n} / {count}) — {title}
+Licence — {title}	ライセンス — {title}
+Light	ライト
+Line	直線
+Local AI	ローカル AI
+Look up	検索
+Looking up…	検索中…
+Loop selection	選択範囲をループ
+Loudness	ラウドネス
+Lower finds more beats, also where the model is unsure	低くすると拍を多く検出します。モデルに自信がない箇所も含みます
+Lowest frequency	最低周波数
+MIDI file is too big	MIDI ファイルが大きすぎます
+MIDI file is too long	MIDI ファイルが長すぎます
+MIDI tempo	MIDI テンポ
+MP3 can't hold {khz} kHz audio; save as FLAC or WAV instead	MP3 は {khz} kHz のオーディオを扱えません。FLAC か WAV で保存してください
+MP3 holds mono or stereo only; save as FLAC or WAV instead	MP3 はモノラルかステレオのみです。FLAC か WAV で保存してください
+MP3: LAME failed to start	MP3: LAME を起動できませんでした
+Magma	マグマ
+Make soundglass my default player	soundglass を既定のプレーヤーにする
+Make soundglass the default player	soundglass を既定のプレーヤーにする
+Matches on this album are listed first	このアルバムの一致を先頭に表示します
+Matches on this album are listed first; it isn't sent	このアルバムの一致を先頭に表示します。送信はしません
+Melody to MIDI	メロディーを MIDI に
+Metronome	メトロノーム
+Mono	モノラル
+More overlap between the 7.8 s segments: smoother joins, slower	7.8 秒の区間の重なりを増やします: つなぎ目は滑らかに、処理は遅く
+Moved to the Trash	ゴミ箱に移動しました
+MusicBrainz can't be reached ({e})	MusicBrainz に接続できません ({e})
+MusicBrainz…	MusicBrainz…
+Name	名前
+Next	次へ
+No album cover	アルバムカバーなし
+No album found.	アルバムが見つかりません。
+No audio files in {name}	{name} にオーディオファイルがありません
+No audio files or folders here	ここにはオーディオファイルもフォルダーもありません
+No file open	ファイルが開かれていません
+No match found.	一致するものが見つかりません。
+No silence at the start or end to trim	先頭や末尾にトリミングする無音はありません
+None	なし
+None (whole range)	なし (全範囲)
+None of these tags is set.	これらのタグはどれも設定されていません。
+Normalize	ノーマライズ
+Normalize loudness	ラウドネスをノーマライズ
+Normalize peak	ピークをノーマライズ
+Normalize: custom loudness…	ノーマライズ: カスタムラウドネス…
+Normalize: custom peak…	ノーマライズ: カスタムピーク…
+Normalize: {name} ({db} dBFS)	ノーマライズ: {name} ({db} dBFS)
+Normalize: {name} ({lufs} LUFS)	ノーマライズ: {name} ({lufs} LUFS)
+Not Now	今はしない
+Note threshold	音のしきい値
+Notes	音名
+Notes from	音域
+Nothing to normalize: it's silent	ノーマライズするものがありません: 無音です
+OK	OK
+Octave numbers	オクターブ番号
+Ogg Vorbis (q6)	Ogg Vorbis (q6)
+On the selection	選択範囲に
+On the whole track	トラック全体に
+Only fill empty tags	空のタグだけ入力
+Only how the file's beats are counted; the notes keep their times	ファイル内の拍の数え方だけで、音のタイミングは変わりません
+Only needed to contribute fingerprints to AcoustID.	AcoustID に指紋を提供する場合のみ必要です。
+Onset threshold	立ち上がりのしきい値
+Open Recent	最近使ったファイル
+Open models folder	モデルフォルダーを開く
+Open project page	プロジェクトページを開く
+Open themes folder	テーマフォルダーを開く
+Open…	開く…
+Other lines	その他の線
+Output	出力
+Overlap	オーバーラップ
+Parakeet TDT 0.6B v3 — 25 European languages, more accurate	Parakeet TDT 0.6B v3 — ヨーロッパの 25 言語、より正確
+Pause	一時停止
+Peak	ピーク
+Peak at max	ピークを最大に
+Peak near max	ピークを最大付近に
+Piano synth	ピアノシンセ
+Pitch-preserved speed change	ピッチを保った速度変更
+Play	再生
+Play order, {name}	再生順、{name}
+Please read and accept the licence before downloading.	ダウンロードする前にライセンスを読んで同意してください。
+Position, seconds	位置 (秒)
+Practice	練習
+Practice mode	練習モード
+Press keys… (Esc to cancel)	キーを押してください… (Esc でキャンセル)
+Previous	前へ
+Quit	終了
+Rectangular	矩形
+Redo	やり直し
+Reload	再読み込み
+Remember window size	ウィンドウサイズを記憶
+Remove	削除
+Remove Album Cover…	アルバムカバーを削除…
+Remove Cover	カバーを削除
+Remove Noise	ノイズ除去
+Remove album cover	アルバムカバーを削除
+Remove the cover from this track only, or from {what}? The music itself isn't changed.	このトラックだけからカバーを削除しますか、それとも {what} から削除しますか? 音楽自体は変わりません。
+Remove the cover from this track? The music itself isn't changed.	このトラックからカバーを削除しますか? 音楽自体は変わりません。
+Rename	名前を変更
+Rename from Tags	タグから名前を変更
+Rename from Tags…	タグから名前を変更…
+Renamed to {name}	{name} に名前を変更しました
+Rename…	名前を変更…
+Repeat track	トラックをリピート
+Replace…	置換…
+Reset	リセット
+Reset All Shortcuts	すべてのショートカットをリセット
+Reset to defaults	既定値に戻す
+Restart soundglass to start using the GPU.	GPU を使うには soundglass を再起動してください。
+Reverse	逆再生
+Run the AI tools on the graphics card ({mb} MB, NVIDIA's CUDA libraries).	AI ツールをグラフィックカードで実行します ({mb} MB、NVIDIA の CUDA ライブラリ)。
+Running on the CPU…	CPU で実行中…
+Running on the GPU…	GPU で実行中…
+Same ({rate})	同じ ({rate})
+Sample rate	サンプルレート
+Save As	名前を付けて保存
+Save As…	名前を付けて保存…
+Save Copy	コピーを保存
+Save Cover	カバーを保存
+Save as Subtitles…	字幕として保存…
+Save as Text…	テキストとして保存…
+Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed.	{name} をこのトラックのカバーにしますか、それとも {what} のカバーにしますか? 既存のカバーは置き換えられます。音楽自体は変わりません。
+Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed.	{name} をこのトラックのカバーにしますか? 既存のカバーは置き換えられます。音楽自体は変わりません。
+Saved {name}	{name} を保存しました
+Saved {name}, but the tags could not be copied	{name} を保存しましたが、タグをコピーできませんでした
+Save…	保存…
+Saving failed	保存に失敗しました
+Saving {name}…	{name} を保存中…
+Scale shown	表示する音階
+Seek bar:	シークバー:
+Sends each file's fingerprint and length to AcoustID, one a second, and one recording's ID to MusicBrainz for the genre. Nothing else leaves this computer.	各ファイルの指紋と長さを AcoustID に 1 秒に 1 件送信し、ジャンル取得のため 1 件の録音 ID を MusicBrainz に送信します。それ以外はこのコンピューターから出ません。
+Sends the fingerprint, its length and the MusicBrainz recording ID to AcoustID, with your user key. It is sent only if AcoustID doesn't know this fingerprint yet.	指紋、その長さ、MusicBrainz の録音 ID をユーザーキーとともに AcoustID に送信します。AcoustID がこの指紋をまだ知らない場合のみ送信します。
+Sends the title and artist to Discogs, and the chosen release's ID for its track list. Nothing else leaves this computer.	タイトルとアーティストを Discogs に送信し、トラックリスト取得のため選んだリリースの ID を送信します。それ以外はこのコンピューターから出ません。
+Sends the title and artist to English Wikipedia. Nothing else leaves this computer.	タイトルとアーティストを英語版 Wikipedia に送信します。それ以外はこのコンピューターから出ません。
+Sends the title, artist and album to MusicBrainz, and the chosen match's ID for its genre. Nothing else leaves this computer.	タイトル、アーティスト、アルバムを MusicBrainz に送信し、ジャンル取得のため選んだ一致の ID を送信します。それ以外はこのコンピューターから出ません。
+Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer.	このファイルの指紋と長さを AcoustID に、選んだ一致の ID を MusicBrainz に送信します。それ以外はこのコンピューターから出ません。
+Sensitivity	感度
+Settings	設定
+Settings: {model}	設定: {model}
+Settings…	設定…
+Sharps (C#)	シャープ (C#)
+Shortest note	最短の音
+Show Log	ログを表示
+Show in Explorer	エクスプローラーで表示
+Show in File Manager	ファイルマネージャーで表示
+Show or hide the chords along the top	上部のコード表示を切り替え
+Show or hide the note lines	音名の線の表示を切り替え
+Show the notes of {major} major	{major} メジャーの音を表示
+Show the notes of {major} major, which {key} shares	{key} と共通する {major} メジャーの音を表示
+Show the whole track	トラック全体を表示
+Show the whole track and all frequencies	トラック全体とすべての周波数を表示
+Shuffle	シャッフル
+Silence	無音
+Silent pieces are left out, so nothing is made up there	無音部分は除外するので、そこに何かを作り出すことはありません
+Skip quieter than	これより小さい音を飛ばす
+Small: about 6 MB for a 4-minute stem	小: 4 分のステムで約 6 MB
+Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed.	Space、←、→、Page Up、Page Down、L (選択範囲をループ)、Esc、Enter は固定です。
+Space, ←, →, Page Up, Page Down, L, Esc, Enter and Ctrl+C/X/V	Space、←、→、Page Up、Page Down、L、Esc、Enter、Ctrl+C/X/V
+Spectrogram	スペクトログラム
+Spectrogram settings	スペクトログラムの設定
+Spectrogram — {name}	スペクトログラム — {name}
+Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around	スペクトログラム: クリックでそこから再生、ドラッグで選択、スクロールでズーム、Ctrl+スクロールで周波数をズーム、右ドラッグで移動
+Split into Stems	ステムに分離
+Split into Stems takes mono or stereo tracks	「ステムに分離」はモノラルかステレオのトラックが対象です
+Stereo	ステレオ
+Stopped after {i} of {n}	{n} 件中 {i} 件で停止しました
+Strength	強さ
+Subtitles	字幕
+Swap left and right	左右を入れ替え
+Tags	タグ
+Tags saved	タグを保存しました
+Task	タスク
+Tempo	テンポ
+Tenor sax	テナーサックス
+Text	テキスト
+That image can't be read.	その画像は読み込めません。
+That image can't be used as a cover.	その画像はカバーに使えません。
+That is the original file; choose another name. The original is never changed.	それは元のファイルです。別の名前を選んでください。元のファイルは決して変更されません。
+That isn't a valid file name.	有効なファイル名ではありません。
+The AI runtime isn't installed yet.	AI ランタイムはまだインストールされていません。
+The GPU couldn't be used, so the CPU is: {e}	GPU を使えなかったため CPU を使います: {e}
+The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face.	ONNX ファイルは StemSplit によるエクスポート (重みは半精度) で、Hugging Face にあります。
+The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face.	ONNX ファイルは grazder による torchDF のストリーミング用エクスポートで、KimtOS が Hugging Face で公開しています。
+The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face.	ONNX ファイルは JKU の final0 チェックポイントを musetric がエクスポートしたもので、Hugging Face にあります。
+The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face.	ONNX ファイルは istupakov による onnx-asr 用の int8 変換で、Hugging Face にあります。
+The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.	ONNX ファイルは sherpa-onnx (k2-fsa) による int8 エクスポートで、Hugging Face にあります。
+The audio changes format partway.	オーディオの形式が途中で変わります。
+The cover couldn't be written ({failed})	カバーを書き込めませんでした ({failed})
+The file has no audio.	ファイルにオーディオがありません。
+The file is too short to identify.	ファイルが短すぎて特定できません。
+The image is larger than 10 MB.	画像が 10 MB を超えています。
+The key spells its notes	キーに合わせた音名表記
+The lookup stopped.	検索を中止しました。
+The original file is never changed.	元のファイルは決して変更されません。
+The reply couldn't be read ({e})	応答を読み取れませんでした ({e})
+The reply wasn't understood.	応答を解釈できませんでした。
+Theme:	テーマ:
+This Track	このトラック
+This file's tags can't be read.	このファイルのタグは読み込めません。
+This match has no MusicBrainz recording to link to.	この一致にはリンク先の MusicBrainz 録音がありません。
+This track has edits that aren't saved. The original file is never changed.	このトラックには保存していない編集があります。元のファイルは決して変更されません。
+This track has no cover. Save {name} as the cover of {what}?	このトラックにはカバーがありません。{name} を {what} のカバーにしますか?
+Time marks	タイムスタンプ
+Time-preserved pitch change	長さを保ったピッチ変更
+Title	タイトル
+Title:	タイトル:
+Tonic line width	主音の線の太さ
+Tonic lines (C for all notes)	主音の線 (すべての音で C)
+Too short or too quiet to measure its loudness	短すぎるか小さすぎて、ラウドネスを測定できません
+Tools for musicians: loops, the spectrogram, tempo, key and chords	ミュージシャン向けツール: ループ、スペクトログラム、テンポ、キー、コード
+Track	トラック
+Track Info	トラック情報
+Tracks that already have a cover get this one instead. The music itself isn't changed.	既にカバーがあるトラックは、このカバーに置き換わります。音楽自体は変わりません。
+Transcribe	文字起こし
+Transcribe Speech	音声を文字起こし
+Transcript	文字起こし結果
+Translate to English	英語に翻訳
+Trim silence	無音をトリミング
+Trim silence below	これ以下の無音をトリミング
+Trim silence: custom…	無音をトリミング: カスタム…
+Trim silence: {name} ({db} dB)	無音をトリミング: {name} ({db} dB)
+Trumpet	トランペット
+Tuning A4	基準音 A4
+Type a title to search for.	検索するタイトルを入力してください。
+Undo	元に戻す
+Unsaved edits	保存していない編集
+Up one folder	1 つ上のフォルダー
+Use Match	この一致を使う
+Use the GPU	GPU を使用
+Use the estimated key, {key}	推定キー {key} を使う
+Use the estimated tempo	推定テンポを使う
+User key:	ユーザーキー:
+View	表示
+Visualiser	ビジュアライザー
+Volume	音量
+Volume, {percent} %	音量、{percent} %
+Volume, {percent} %, metronome on	音量、{percent} %、メトロノームオン
+Waveform	波形
+Waveform position	波形上の位置
+Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along	波形: クリックでそこから再生、ドラッグで選択、スクロールでズーム、右ドラッグで移動
+Welcome to soundglass	soundglass へようこそ
+Whisper large-v3-turbo — 99 languages, best, slow on a CPU	Whisper large-v3-turbo — 99 言語、最高精度、CPU では低速
+Whisper small — 99 languages	Whisper small — 99 言語
+Whole selection	選択範囲全体
+Wikipedia can't be reached ({e})	Wikipedia に接続できません ({e})
+Wikipedia…	Wikipedia…
+Window function	窓関数
+Window size	窓の長さ
+Window size:	ウィンドウサイズ:
+Worldwide	全世界
+Write	書き込む
+Write tags	タグを書き込む
+Write the tags into {name}? The audio isn't changed.	{name} にタグを書き込みますか? オーディオは変わりません。
+Writes only the tags that are empty in each file	各ファイルで空のタグだけを書き込みます
+Writes the album's tags into every matched file, replacing the tags there	一致した各ファイルにアルバムのタグを書き込み、既存のタグを置き換えます
+Writes the tags into the file; the audio isn't changed	ファイルにタグを書き込みます。オーディオは変わりません
+Writing the tags failed	タグの書き込みに失敗しました
+Writing {i} of {n}	書き込み中 {i} / {n}
+Year	年
+Your own themes go in the themes folder. Choosing a theme again reloads its file.	自作のテーマはテーマフォルダーに置きます。テーマを選び直すとファイルを再読み込みします。
+Zoom in (scroll; right-drag to move along)	拡大 (スクロール、右ドラッグで移動)
+Zoom out	縮小
+a GPU library was missing from the download	ダウンロードに GPU ライブラリが含まれていませんでした
+add an AcoustID key in Settings	設定で AcoustID キーを追加してください
+after Local AI → Find Beats	ローカル AI → 拍を検出 の後
+after loading	読み込み後
+all {n} tracks in this folder	このフォルダーの全 {n} トラック
+already normal	既に標準です
+another AI tool is running	別の AI ツールが実行中です
+as it is	そのまま
+can't make a folder next to the track ({e})	トラックの隣にフォルダーを作れません ({e})
+can't save a copy next to the original ({e})	元のファイルの隣にコピーを保存できません ({e})
+choose at least one stem to write (AI Models → Settings)	書き込むステムを 1 つ以上選んでください (AI モデル → 設定)
+close the tag editor first	先にタグエディターを閉じてください
+hop {hop} for this length	この長さではホップ {hop}
+line {line}: {key}="{v}": invalid value	{line} 行目: {key}="{v}": 無効な値
+measuring…	測定中…
+mode="{other}": invalid value	mode="{other}": 無効な値
+needs a model: Local AI → AI Models…	モデルが必要です: ローカル AI → AI モデル…
+needs the AI runtime: Local AI → Download AI Runtime…	AI ランタイムが必要です: ローカル AI → AI ランタイムをダウンロード…
+new image	新しい画像
+no audio track	オーディオトラックがありません
+no channels	チャンネルがありません
+no data folder	データフォルダーがありません
+no file name	ファイル名がありません
+no file open	ファイルが開かれていません
+no notes were found	音が見つかりませんでした
+no sample rate	サンプルレートがありません
+no speech was found	音声が見つかりませんでした
+not a supported audio file ({e})	対応していないオーディオファイルです ({e})
+not a transcription model	文字起こしモデルではありません
+not found	見つかりません
+not found, left alone	見つからないため、そのままにしました
+nothing to redo	やり直す操作はありません
+nothing to undo	元に戻す操作はありません
+part of the track could not be read	トラックの一部を読み込めませんでした
+quality	品質
+removed	削除
+saving tags…	タグを保存中…
+select a part in the Edit panel	編集パネルで範囲を選択してください
+select at least half a second, or nothing for the whole track	0.5 秒以上を選択するか、トラック全体なら何も選択しないでください
+silent	無音
+soundglass is now the default player	soundglass が既定のプレーヤーになりました
+the AI tool failed	AI ツールが失敗しました
+the AI tool stopped	AI ツールが停止しました
+the channel count changes mid-file	ファイルの途中でチャンネル数が変わります
+the encoder failed	エンコーダーが失敗しました
+the model gave an unexpected output	モデルが予期しない出力を返しました
+the saved file doesn't read back ({e})	保存したファイルを読み戻せません ({e})
+the saved file reads back wrong ({frames} frames, expected {expected})	保存したファイルの読み戻しが正しくありません ({frames} フレーム、期待値 {expected})
+the settings aren't for this tool	この設定はこのツール用ではありません
+the sound device failed to open	サウンドデバイスを開けませんでした
+the tag writer failed	タグの書き込みに失敗しました
+the track has no audio	トラックにオーディオがありません
+the track is still loading	トラックはまだ読み込み中です
+the track isn't fully loaded	トラックが完全には読み込まれていません
+this file can't be decoded	このファイルはデコードできません
+this track	このトラック
+to	〜
+track {n}	トラック {n}
+unknown error	不明なエラー
+with unsaved edits, once loaded	読み込み後、保存していない編集付きで
+writing the tags would change the audio, so nothing was written	タグを書き込むとオーディオが変わるため、何も書き込みませんでした
+{kbps} kb/s	{kbps} kb/s
+{keys} is already used by {other}	{keys} は既に {other} で使われています
+{key} major	{key} メジャー
+{model} (installed)	{model} (インストール済み)
+{name} isn't an audio file soundglass plays	{name} は soundglass で再生できるオーディオファイルではありません
+{name} was changed by another program. Reload it?	{name} が別のプログラムで変更されました。再読み込みしますか?
+{name} will be moved to the Trash.	{name} をゴミ箱に移動します。
+{name}: custom…	{name}: カスタム…
+{name}: whole selection	{name}: 選択範囲全体
+{name}: {s} s	{name}: {s} 秒
+{n} of {total} tracks	{total} トラック中 {n}
+{ok} written, {bad} failed	{ok} 件書き込み、{bad} 件失敗
+{path}: bigger than 64 KiB	{path}: 64 KiB を超えています
+{secs} s	{secs} 秒
+{sign}{n} semitone	{sign}{n} 半音
+{sign}{n} semitones	{sign}{n} 半音
+{task} (selection)	{task} (選択範囲)
+{what} installed.	{what} をインストールしました。
+{what}: the download stopped.	{what}: ダウンロードが止まりました。
+→ {n}	→ {n}
+−14 streaming, −23 TV	−14 ストリーミング、−23 テレビ
+−60 silence, −40 hiss	−60 無音、−40 ヒスノイズ

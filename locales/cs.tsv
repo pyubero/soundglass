@@ -1,0 +1,551 @@
+ dB at most	 dB nejvýše
+ semitones	 půltónů
+0 (Normal)	0 (normální)
+0 = max	0 = maximum
+1 (mono)	1 (mono)
+16-bit	16 bitů
+1× (Normal)	1× (normální)
+2 (stereo)	2 (stereo)
+24-bit	24 bitů
+32-bit float	32 bitů s plovoucí čárkou
+<{tag}>: invalid value	<{tag}>: neplatná hodnota
+A code such as en, es, fr, de; empty to detect it from the first speech	Kód jako en, es, fr, de; prázdné pro rozpoznání z první řeči
+A file with that name already exists.	Soubor s tímto názvem už existuje.
+A long track: the hop is raised so the spectrogram fits in memory	Dlouhá skladba: krok je zvětšen, aby se spektrogram vešel do paměti
+AI Models	Modely AI
+AI Models…	Modely AI…
+AI runtime (ONNX Runtime)	Běhové prostředí AI (ONNX Runtime)
+About 50 MB for a 4-minute stem, for further editing	Asi 50 MB na 4minutovou stopu, pro další úpravy
+Accept and Continue	Přijmout a pokračovat
+Accept and Download	Přijmout a stáhnout
+AcoustID Settings	Nastavení AcoustID
+AcoustID can't be reached ({e})	AcoustID není dostupný ({e})
+AcoustID: {why}	AcoustID: {why}
+Add AcoustID User Key	Přidat uživatelský klíč AcoustID
+Add Cover	Přidat obal
+Add album cover?	Přidat obal alba?
+Add your AcoustID application key and user key in Settings to contribute.	Pro přispívání přidejte v Nastavení aplikační a uživatelský klíč AcoustID.
+Add/Replace Album Cover…	Přidat/nahradit obal alba…
+Album	Album
+Album cover	Obal alba
+Album:	Album:
+All notes	Všechny tóny
+All {n} Tracks	Všech {n} skladeb
+Already in AcoustID; nothing was sent.	Už je v AcoustID; nic nebylo odesláno.
+Also find notes without a clear start	Hledat i tóny bez zřetelného nástupu
+Analysis	Analýza
+Any graphics card with Vulkan or Direct3D 12 ({mb} MB). A weak built-in one can be slower than the CPU.	Jakákoli grafická karta s Vulkan nebo Direct3D 12 ({mb} MB). Slabá integrovaná může být pomalejší než procesor.
+Application key:	Aplikační klíč:
+Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.	Použije se při příštím spuštění soundglass; okno, Informace o skladbě a panel Úpravy zůstanou jako při ukončení.
+Apply and Rename	Použít a přejmenovat
+Apply speed and pitch	Použít rychlost a výšku
+Apply to All Tracks	Použít na všechny skladby
+Artist	Interpret
+Artist:	Interpret:
+As Apply to All Tracks, then renames each file with the Rename from Tags pattern	Jako Použít na všechny skladby, pak přejmenuje každý soubor podle vzoru Přejmenovat podle tagů
+As TV	Jako TV
+As podcasts	Jako podcasty
+As streaming	Jako streamování
+As subtitles (.srt)	Jako titulky (.srt)
+Audio	Zvuk
+BPM	BPM
+BPM tag saved ({bpm})	Tag BPM uložen ({bpm})
+Basic Pitch — any instrument, several notes at once	Basic Pitch — jakýkoli nástroj, více tónů najednou
+Basic Pitch's melodia trick	Trik melodia v Basic Pitch
+Beat This! — beats and downbeats	Beat This! — doby a první doby taktu
+Bit depth	Bitová hloubka
+Bitrate	Datový tok
+Blackman–Harris	Blackman–Harris
+Blue to red	Modrá až červená
+C D E	C D E
+CUDA: Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050. WebGPU: Find Beats only, about 2× faster (Split into Stems was slower than the CPU). The other tools are faster on the CPU. With both installed, NVIDIA's is used	CUDA: Rozdělit na stopy a Najít doby 2,6–3× rychleji na GTX 1050. WebGPU: jen Najít doby, asi 2× rychleji (Rozdělit na stopy bylo pomalejší než procesor). Ostatní nástroje jsou rychlejší na procesoru. Jsou-li nainstalovány oba, použije se NVIDIA
+Can't fingerprint this audio ({e})	Z tohoto zvuku nelze vytvořit otisk ({e})
+Can't read this folder: {e}	Tuto složku nelze přečíst: {e}
+Can't write tags to this format ({e})	Do tohoto formátu nelze zapsat tagy ({e})
+Cancel	Zrušit
+Change	Změnit
+Change Keyboard Shortcuts…	Změnit klávesové zkratky…
+Change speed and pitch	Změnit rychlost a výšku
+Channels	Kanály
+Channels: mono	Kanály: mono
+Channels: stereo	Kanály: stereo
+Channels: swap left and right	Kanály: prohodit levý a pravý
+Check for updates	Zkontrolovat aktualizace
+Chords	Akordy
+Chords: after loading	Akordy: po načtení
+Chords: measuring…	Akordy: měření…
+Clicks	Kliky
+Clicks on the found beats	Kliky na nalezených dobách
+Close	Zavřít
+Codec	Kodek
+Colours	Barvy
+Continue	Pokračovat
+Contribute	Přispět
+Contribute to AcoustID?	Přispět do AcoustID?
+Copied the file	Soubor zkopírován
+Copy	Kopírovat
+Copy File	Kopírovat soubor
+Copy Path	Kopírovat cestu
+Couldn't bring back {name}: {e}	Nelze obnovit {name}: {e}
+Couldn't copy the file: {e}	Soubor nelze zkopírovat: {e}
+Couldn't delete the file: {e}	Soubor nelze smazat: {e}
+Cover	Obal
+Cover added to 1 track	Obal přidán k 1 skladbě
+Cover added to {n} of {total} tracks (not: {failed})	Obal přidán k {n} z {total} skladeb (ne: {failed})
+Cover added to {n} tracks	Obal přidán ke skladbám: {n}
+Cover at 256 px	Obal 256 px
+Cover removed from 1 track	Obal odebrán z 1 skladby
+Cover removed from {n} of {total} tracks (not: {failed})	Obal odebrán z {n} z {total} skladeb (ne: {failed})
+Cover removed from {n} tracks	Obal odebrán ze skladeb: {n}
+Crop	Oříznout
+Current cover	Současný obal
+Custom ({value})…	Vlastní ({value})…
+Custom loudness…	Vlastní hlasitost…
+Custom peak…	Vlastní špička…
+Custom…	Vlastní…
+Cut out	Vystřihnout
+Dark	Tmavý
+Data from Discogs.	Data z Discogs.
+Decoding…	Dekódování…
+DeepFilterNet3 — speech, 48 kHz	DeepFilterNet3 — řeč, 48 kHz
+Delete file?	Smazat soubor?
+Delete…	Smazat…
+Discard edits	Zahodit úpravy
+Discogs can't be reached ({e})	Discogs není dostupný ({e})
+Discogs is busy; try again in a minute.	Discogs je vytížený; zkuste to za minutu.
+Discogs now asks for a token; this lookup can't run.	Discogs nyní vyžaduje token; toto vyhledávání nelze provést.
+Discogs…	Discogs…
+Do Ré Mi	Do Re Mi
+Do you want to contribute this track's fingerprint to AcoustID? AcoustID will then recognise {title} — {artist} for everyone.	Chcete přispět otiskem této skladby do AcoustID? AcoustID pak bude rozpoznávat {title} — {artist} pro všechny.
+Double the tempo	Zdvojnásobit tempo
+Download	Stáhnout
+Download AI Runtime ({mb} MB)	Stáhnout běhové prostředí AI ({mb} MB)
+Download AI Runtime ({mb} MB)…	Stáhnout běhové prostředí AI ({mb} MB)…
+Download GPU Support	Stáhnout podporu GPU
+Downloaded from Microsoft (ONNX Runtime's WebGPU plugin, via its official PyPI package).	Staženo od Microsoftu (zásuvný modul WebGPU pro ONNX Runtime, z jeho oficiálního balíčku PyPI).
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Staženo od Microsoftu (ONNX Runtime) a NVIDIA (knihovny CUDA, z jejich oficiálních balíčků PyPI).
+Drag on the waveform to select	Táhněte po průběhu pro výběr
+Each stretch of speech with its start and end, to save as an .srt file	Každý úsek řeči se začátkem a koncem, k uložení jako soubor .srt
+Edit	Úpravy
+Effects	Efekty
+Europe	Evropa
+FFT size	Velikost FFT
+FLAC (lossless)	FLAC (bezeztrátový)
+Fade in	Roztmívání
+Fade out	Stmívání
+Faint noise	Slabý šum
+Fetching details…	Načítání podrobností…
+File	Soubor
+File changed	Soubor změněn
+File size	Velikost souboru
+Fill In All Tracks	Vyplnit všechny skladby
+Fill Metadata From	Vyplnit metadata z
+Fill from Discogs	Vyplnit z Discogs
+Fill from Discogs…	Vyplnit z Discogs…
+Fill from MusicBrainz	Vyplnit z MusicBrainz
+Fill from MusicBrainz…	Vyplnit z MusicBrainz…
+Fill from Wikipedia	Vyplnit z Wikipedie
+Fill from Wikipedia…	Vyplnit z Wikipedie…
+Fills Track Info's tag editor; Save… there writes the tags	Vyplní editor tagů v Informacích o skladbě; Uložit… tam zapíše tagy
+Find Beats	Najít doby
+Fingerprint sent to AcoustID; lookups find it once it's processed.	Otisk odeslán do AcoustID; vyhledávání ho najde po zpracování.
+Fingerprinting {i} of {n}: {file}	Otisk {i} z {n}: {file}
+Fit	Přizpůsobit
+Fit cover space	Přizpůsobit prostoru obalu
+Flats (Db)	Béčka (Db)
+Folder	Složka
+Follow system	Podle systému
+Font size:	Velikost písma:
+Format	Formát
+Found {n} beats, ≈ {bpm} BPM. Metronome on (volume button).	Nalezeno dob: {n}, ≈ {bpm} BPM. Metronom zapnut (tlačítko hlasitosti).
+Found {n} beats. Metronome on (volume button).	Nalezeno dob: {n}. Metronom zapnut (tlačítko hlasitosti).
+Full	Plné
+Full Screen	Celá obrazovka
+Full takes away all the noise it finds; a limit keeps some, for a more natural sound	Plné odstraní všechen nalezený šum; limit trochu ponechá, pro přirozenější zvuk
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel a další, experimentální)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU support	Podpora GPU
+GPU support (AMD, Intel and others)	Podpora GPU (AMD, Intel a další)
+Gain	Zisk
+Gain: custom…	Zisk: vlastní…
+Gain: {db} dB	Zisk: {db} dB
+General	Obecné
+Genre	Žánr
+Get a key	Získat klíč
+Get your user key	Získat uživatelský klíč
+Gray	Šedá
+HTDemucs v4 — drums, bass, other, vocals	HTDemucs v4 — bicí, basa, ostatní, zpěv
+Half the tempo	Poloviční tempo
+Hamming	Hamming
+Hann	Hann
+Held notes	Držené tóny
+High contrast	Vysoký kontrast
+Higher: fewer, surer notes start	Vyšší: méně, ale jistějších nástupů tónů
+Higher: notes end sooner, quiet ones are left out	Vyšší: tóny končí dřív, tiché se vynechají
+Hiss	Šum
+Hop	Krok
+Identify Album	Rozpoznat album
+Identify Album…	Rozpoznat album…
+Identify Track	Rozpoznat skladbu
+Identify Track needs one; it is free for non-commercial use.	Rozpoznat skladbu ho potřebuje; je zdarma pro nekomerční použití.
+Identify Track…	Rozpoznat skladbu…
+Image	Obrázek
+In order	Popořadě
+Instrument range	Rozsah nástroje
+It already has that name.	Už má tento název.
+It's all quieter than that; nothing trimmed	Vše je tišší; nic nebylo oříznuto
+It's no longer in the Trash.	Už není v koši.
+Its unsaved edits will be lost.	Neuložené úpravy budou ztraceny.
+Keep current	Ponechat současný
+Key	Tónina
+Key ≈ {key}	Tónina ≈ {key}
+Keyboard Shortcuts	Klávesové zkratky
+Label size	Velikost popisků
+Language	Jazyk
+Language:	Jazyk:
+Length	Délka
+Levels	Úrovně
+Licence ({n} of {count}) — {title}	Licence ({n} z {count}) — {title}
+Licence — {title}	Licence — {title}
+Light	Světlý
+Line	Čára
+Local AI	Místní AI
+Look up	Vyhledat
+Looking up…	Vyhledávání…
+Loop selection	Opakovat výběr
+Loudness	Hlasitost (LUFS)
+Lower finds more beats, also where the model is unsure	Nižší najde více dob, i tam, kde si model není jistý
+Lowest frequency	Nejnižší frekvence
+MIDI file is too big	Soubor MIDI je příliš velký
+MIDI file is too long	Soubor MIDI je příliš dlouhý
+MIDI tempo	Tempo MIDI
+MP3 can't hold {khz} kHz audio; save as FLAC or WAV instead	MP3 nepojme zvuk {khz} kHz; uložte jako FLAC nebo WAV
+MP3 holds mono or stereo only; save as FLAC or WAV instead	MP3 pojme jen mono nebo stereo; uložte jako FLAC nebo WAV
+MP3: LAME failed to start	MP3: LAME se nepodařilo spustit
+Magma	Magma
+Make soundglass my default player	Nastavit soundglass jako můj výchozí přehrávač
+Make soundglass the default player	Nastavit soundglass jako výchozí přehrávač
+Matches on this album are listed first	Shody z tohoto alba jsou uvedeny první
+Matches on this album are listed first; it isn't sent	Shody z tohoto alba jsou uvedeny první; neodesílá se
+Melody to MIDI	Melodie do MIDI
+Metronome	Metronom
+Mono	Mono
+More overlap between the 7.8 s segments: smoother joins, slower	Větší překryv mezi 7,8s úseky: hladší spoje, pomalejší
+Moved to the Trash	Přesunuto do koše
+MusicBrainz can't be reached ({e})	MusicBrainz není dostupný ({e})
+MusicBrainz…	MusicBrainz…
+Name	Název
+Next	Další
+No album cover	Bez obalu alba
+No album found.	Album nenalezeno.
+No audio files in {name}	V {name} nejsou zvukové soubory
+No audio files or folders here	Nejsou tu zvukové soubory ani složky
+No file open	Není otevřen soubor
+No match found.	Shoda nenalezena.
+No silence at the start or end to trim	Na začátku ani na konci není ticho k oříznutí
+None	Žádné
+None (whole range)	Žádný (celý rozsah)
+None of these tags is set.	Žádný z těchto tagů není vyplněn.
+Normalize	Normalizovat
+Normalize loudness	Normalizovat hlasitost
+Normalize peak	Normalizovat špičku
+Normalize: custom loudness…	Normalizovat: vlastní hlasitost…
+Normalize: custom peak…	Normalizovat: vlastní špička…
+Normalize: {name} ({db} dBFS)	Normalizovat: {name} ({db} dBFS)
+Normalize: {name} ({lufs} LUFS)	Normalizovat: {name} ({lufs} LUFS)
+Not Now	Teď ne
+Note threshold	Práh tónu
+Notes	Tóny
+Notes from	Tóny od
+Nothing to normalize: it's silent	Není co normalizovat: je to ticho
+OK	OK
+Octave numbers	Čísla oktáv
+Ogg Vorbis (q6)	Ogg Vorbis (q6)
+On the selection	Na výběr
+On the whole track	Na celou skladbu
+Only fill empty tags	Vyplňovat jen prázdné tagy
+Only how the file's beats are counted; the notes keep their times	Jen způsob počítání dob v souboru; tóny si ponechají své časy
+Only needed to contribute fingerprints to AcoustID.	Potřeba jen pro přispívání otisků do AcoustID.
+Onset threshold	Práh nástupu
+Open Recent	Otevřít nedávné
+Open models folder	Otevřít složku modelů
+Open project page	Otevřít stránku projektu
+Open themes folder	Otevřít složku motivů
+Open…	Otevřít…
+Other lines	Ostatní čáry
+Output	Výstup
+Overlap	Překryv
+Parakeet TDT 0.6B v3 — 25 European languages, more accurate	Parakeet TDT 0.6B v3 — 25 evropských jazyků, přesnější
+Pause	Pozastavit
+Peak	Špička
+Peak at max	Špička na maximu
+Peak near max	Špička blízko maxima
+Piano synth	Syntezátor klavíru
+Pitch-preserved speed change	Změna rychlosti se zachováním výšky
+Play	Přehrát
+Play order, {name}	Pořadí přehrávání, {name}
+Please read and accept the licence before downloading.	Před stažením si prosím přečtěte a přijměte licenci.
+Position, seconds	Pozice, sekundy
+Practice	Cvičení
+Practice mode	Režim cvičení
+Press keys… (Esc to cancel)	Stiskněte klávesy… (Esc zruší)
+Previous	Předchozí
+Quit	Ukončit
+Rectangular	Obdélníkové
+Redo	Znovu
+Reload	Načíst znovu
+Remember window size	Pamatovat velikost okna
+Remove	Odebrat
+Remove Album Cover…	Odebrat obal alba…
+Remove Cover	Odebrat obal
+Remove Noise	Odstranit šum
+Remove album cover	Odebrat obal alba
+Remove the cover from this track only, or from {what}? The music itself isn't changed.	Odebrat obal jen z této skladby, nebo z {what}? Samotná hudba se nemění.
+Remove the cover from this track? The music itself isn't changed.	Odebrat obal z této skladby? Samotná hudba se nemění.
+Rename	Přejmenovat
+Rename from Tags	Přejmenovat podle tagů
+Rename from Tags…	Přejmenovat podle tagů…
+Renamed to {name}	Přejmenováno na {name}
+Rename…	Přejmenovat…
+Repeat track	Opakovat skladbu
+Replace…	Nahradit…
+Reset	Obnovit
+Reset All Shortcuts	Obnovit všechny zkratky
+Reset to defaults	Obnovit výchozí
+Restart soundglass to start using the GPU.	Restartujte soundglass, abyste začali používat GPU.
+Reverse	Obrátit
+Run the AI tools on the graphics card ({mb} MB, NVIDIA's CUDA libraries).	Spouštět nástroje AI na grafické kartě ({mb} MB, knihovny CUDA od NVIDIA).
+Running on the CPU…	Běží na procesoru…
+Running on the GPU…	Běží na GPU…
+Same ({rate})	Stejná ({rate})
+Sample rate	Vzorkovací frekvence
+Save As	Uložit jako
+Save As…	Uložit jako…
+Save Copy	Uložit kopii
+Save Cover	Uložit obal
+Save as Subtitles…	Uložit jako titulky…
+Save as Text…	Uložit jako text…
+Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed.	Uložit {name} jako obal této skladby, nebo {what}? Stávající obaly budou nahrazeny. Samotná hudba se nemění.
+Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed.	Uložit {name} jako obal této skladby? Stávající obal bude nahrazen. Samotná hudba se nemění.
+Saved {name}	Uloženo: {name}
+Saved {name}, but the tags could not be copied	{name} uloženo, ale tagy se nepodařilo zkopírovat
+Save…	Uložit…
+Saving failed	Uložení selhalo
+Saving {name}…	Ukládání {name}…
+Scale shown	Zobrazená stupnice
+Seek bar:	Posuvník:
+Sends each file's fingerprint and length to AcoustID, one a second, and one recording's ID to MusicBrainz for the genre. Nothing else leaves this computer.	Odešle otisk a délku každého souboru do AcoustID, jeden za sekundu, a ID jedné nahrávky do MusicBrainz kvůli žánru. Nic jiného tento počítač neopustí.
+Sends the fingerprint, its length and the MusicBrainz recording ID to AcoustID, with your user key. It is sent only if AcoustID doesn't know this fingerprint yet.	Odešle otisk, jeho délku a ID nahrávky MusicBrainz do AcoustID s vaším uživatelským klíčem. Odešle se, jen pokud AcoustID tento otisk ještě nezná.
+Sends the title and artist to Discogs, and the chosen release's ID for its track list. Nothing else leaves this computer.	Odešle název a interpreta do Discogs a ID zvoleného vydání kvůli seznamu skladeb. Nic jiného tento počítač neopustí.
+Sends the title and artist to English Wikipedia. Nothing else leaves this computer.	Odešle název a interpreta do anglické Wikipedie. Nic jiného tento počítač neopustí.
+Sends the title, artist and album to MusicBrainz, and the chosen match's ID for its genre. Nothing else leaves this computer.	Odešle název, interpreta a album do MusicBrainz a ID zvolené shody kvůli žánru. Nic jiného tento počítač neopustí.
+Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer.	Odešle otisk a délku tohoto souboru do AcoustID a ID zvolené shody do MusicBrainz. Nic jiného tento počítač neopustí.
+Sensitivity	Citlivost
+Settings	Nastavení
+Settings: {model}	Nastavení: {model}
+Settings…	Nastavení…
+Sharps (C#)	Křížky (C#)
+Shortest note	Nejkratší tón
+Show Log	Zobrazit protokol
+Show in Explorer	Zobrazit v Průzkumníkovi
+Show in File Manager	Zobrazit ve správci souborů
+Show or hide the chords along the top	Zobrazit nebo skrýt akordy nahoře
+Show or hide the note lines	Zobrazit nebo skrýt čáry tónů
+Show the notes of {major} major	Zobrazit tóny {major} dur
+Show the notes of {major} major, which {key} shares	Zobrazit tóny {major} dur, které sdílí {key}
+Show the whole track	Zobrazit celou skladbu
+Show the whole track and all frequencies	Zobrazit celou skladbu a všechny frekvence
+Shuffle	Náhodně
+Silence	Ticho
+Silent pieces are left out, so nothing is made up there	Tichá místa se vynechají, takže se tam nic nevymýšlí
+Skip quieter than	Přeskočit tišší než
+Small: about 6 MB for a 4-minute stem	Malá: asi 6 MB na 4minutovou stopu
+Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed.	Mezerník, ←, →, Page Up, Page Down, L (Opakovat výběr), Esc a Enter jsou pevné.
+Space, ←, →, Page Up, Page Down, L, Esc, Enter and Ctrl+C/X/V	Mezerník, ←, →, Page Up, Page Down, L, Esc, Enter a Ctrl+C/X/V
+Spectrogram	Spektrogram
+Spectrogram settings	Nastavení spektrogramu
+Spectrogram — {name}	Spektrogram — {name}
+Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around	Spektrogram: kliknutím přehrát odtud, tažením vybrat, posunem kolečka zvětšit, Ctrl+kolečko zvětší frekvence, tažením pravým tlačítkem posouvat
+Split into Stems	Rozdělit na stopy
+Split into Stems takes mono or stereo tracks	Rozdělit na stopy přijímá mono nebo stereo skladby
+Stereo	Stereo
+Stopped after {i} of {n}	Zastaveno po {i} z {n}
+Strength	Síla
+Subtitles	Titulky
+Swap left and right	Prohodit levý a pravý
+Tags	Tagy
+Tags saved	Tagy uloženy
+Task	Úloha
+Tempo	Tempo
+Tenor sax	Tenorsaxofon
+Text	Text
+That image can't be read.	Obrázek nelze přečíst.
+That image can't be used as a cover.	Tento obrázek nelze použít jako obal.
+That is the original file; choose another name. The original is never changed.	To je původní soubor; zvolte jiný název. Originál se nikdy nemění.
+That isn't a valid file name.	To není platný název souboru.
+The AI runtime isn't installed yet.	Běhové prostředí AI ještě není nainstalováno.
+The GPU couldn't be used, so the CPU is: {e}	GPU nešlo použít, používá se CPU: {e}
+The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face.	Soubor ONNX je export od StemSplit (váhy v poloviční přesnosti), na Hugging Face.
+The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face.	Soubor ONNX je streamovací export torchDF od grazdera, hostovaný KimtOS na Hugging Face.
+The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face.	Soubor ONNX je export kontrolního bodu final0 od JKU, který vytvořil musetric, na Hugging Face.
+The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face.	Soubory ONNX jsou převod int8 od istupakova pro onnx-asr, na Hugging Face.
+The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.	Soubory ONNX jsou export int8 od sherpa-onnx (k2-fsa), na Hugging Face.
+The audio changes format partway.	Formát zvuku se v průběhu mění.
+The cover couldn't be written ({failed})	Obal se nepodařilo zapsat ({failed})
+The file has no audio.	Soubor neobsahuje zvuk.
+The file is too short to identify.	Soubor je příliš krátký na rozpoznání.
+The image is larger than 10 MB.	Obrázek je větší než 10 MB.
+The key spells its notes	Tónina určuje zápis tónů
+The lookup stopped.	Vyhledávání se zastavilo.
+The original file is never changed.	Původní soubor se nikdy nemění.
+The reply couldn't be read ({e})	Odpověď se nepodařilo přečíst ({e})
+The reply wasn't understood.	Odpovědi nebylo rozuměno.
+Theme:	Motiv:
+This Track	Tato skladba
+This file's tags can't be read.	Tagy tohoto souboru nelze přečíst.
+This match has no MusicBrainz recording to link to.	Tato shoda nemá nahrávku MusicBrainz k propojení.
+This track has edits that aren't saved. The original file is never changed.	Tato skladba má neuložené úpravy. Původní soubor se nikdy nemění.
+This track has no cover. Save {name} as the cover of {what}?	Tato skladba nemá obal. Uložit {name} jako obal {what}?
+Time marks	Časové značky
+Time-preserved pitch change	Změna výšky se zachováním délky
+Title	Název
+Title:	Název:
+Tonic line width	Šířka čáry toniky
+Tonic lines (C for all notes)	Čáry toniky (C pro všechny tóny)
+Too short or too quiet to measure its loudness	Příliš krátké nebo tiché na změření hlasitosti
+Tools for musicians: loops, the spectrogram, tempo, key and chords	Nástroje pro hudebníky: smyčky, spektrogram, tempo, tónina a akordy
+Track	Skladba
+Track Info	Informace o skladbě
+Tracks that already have a cover get this one instead. The music itself isn't changed.	Skladby, které už obal mají, dostanou místo něj tento. Samotná hudba se nemění.
+Transcribe	Přepsat
+Transcribe Speech	Přepsat řeč
+Transcript	Přepis
+Translate to English	Přeložit do angličtiny
+Trim silence	Oříznout ticho
+Trim silence below	Oříznout ticho pod
+Trim silence: custom…	Oříznout ticho: vlastní…
+Trim silence: {name} ({db} dB)	Oříznout ticho: {name} ({db} dB)
+Trumpet	Trubka
+Tuning A4	Ladění A4
+Type a title to search for.	Zadejte název k vyhledání.
+Undo	Zpět
+Unsaved edits	Neuložené úpravy
+Up one folder	O složku výš
+Use Match	Použít shodu
+Use the GPU	Použít GPU
+Use the estimated key, {key}	Použít odhadnutou tóninu, {key}
+Use the estimated tempo	Použít odhadnuté tempo
+User key:	Uživatelský klíč:
+View	Zobrazit
+Visualiser	Vizualizace
+Volume	Hlasitost
+Volume, {percent} %	Hlasitost, {percent} %
+Volume, {percent} %, metronome on	Hlasitost, {percent} %, metronom zapnut
+Waveform	Průběh
+Waveform position	Pozice v průběhu
+Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along	Průběh: kliknutím přehrát odtud, tažením vybrat, kolečkem zvětšit, tažením pravým tlačítkem posouvat
+Welcome to soundglass	Vítejte v soundglass
+Whisper large-v3-turbo — 99 languages, best, slow on a CPU	Whisper large-v3-turbo — 99 jazyků, nejlepší, pomalý na procesoru
+Whisper small — 99 languages	Whisper small — 99 jazyků
+Whole selection	Celý výběr
+Wikipedia can't be reached ({e})	Wikipedie není dostupná ({e})
+Wikipedia…	Wikipedie…
+Window function	Okenní funkce
+Window size	Délka okna
+Window size:	Velikost okna:
+Worldwide	Celý svět
+Write	Zapsat
+Write tags	Zapsat tagy
+Write the tags into {name}? The audio isn't changed.	Zapsat tagy do {name}? Zvuk se nemění.
+Writes only the tags that are empty in each file	Zapíše jen tagy, které jsou v každém souboru prázdné
+Writes the album's tags into every matched file, replacing the tags there	Zapíše tagy alba do každého nalezeného souboru a nahradí tamní tagy
+Writes the tags into the file; the audio isn't changed	Zapíše tagy do souboru; zvuk se nemění
+Writing the tags failed	Zápis tagů selhal
+Writing {i} of {n}	Zápis {i} z {n}
+Year	Rok
+Your own themes go in the themes folder. Choosing a theme again reloads its file.	Vlastní motivy patří do složky motivů. Opětovná volba motivu znovu načte jeho soubor.
+Zoom in (scroll; right-drag to move along)	Přiblížit (kolečko; tažením pravým tlačítkem posouvat)
+Zoom out	Oddálit
+a GPU library was missing from the download	ve stažených souborech chyběla knihovna GPU
+add an AcoustID key in Settings	přidejte klíč AcoustID v Nastavení
+after Local AI → Find Beats	po Místní AI → Najít doby
+after loading	po načtení
+all {n} tracks in this folder	všech {n} skladeb v této složce
+already normal	už normální
+another AI tool is running	běží jiný nástroj AI
+as it is	beze změny
+can't make a folder next to the track ({e})	vedle skladby nelze vytvořit složku ({e})
+can't save a copy next to the original ({e})	vedle originálu nelze uložit kopii ({e})
+choose at least one stem to write (AI Models → Settings)	zvolte alespoň jednu stopu k zápisu (Modely AI → Nastavení)
+close the tag editor first	nejdřív zavřete editor tagů
+hop {hop} for this length	krok {hop} pro tuto délku
+line {line}: {key}="{v}": invalid value	řádek {line}: {key}="{v}": neplatná hodnota
+measuring…	měření…
+mode="{other}": invalid value	mode="{other}": neplatná hodnota
+needs a model: Local AI → AI Models…	potřebuje model: Místní AI → Modely AI…
+needs the AI runtime: Local AI → Download AI Runtime…	potřebuje běhové prostředí AI: Místní AI → Stáhnout běhové prostředí AI…
+new image	nový obrázek
+no audio track	žádná zvuková stopa
+no channels	žádné kanály
+no data folder	žádná datová složka
+no file name	žádný název souboru
+no file open	není otevřen soubor
+no notes were found	nebyly nalezeny tóny
+no sample rate	žádná vzorkovací frekvence
+no speech was found	nebyla nalezena řeč
+not a supported audio file ({e})	nepodporovaný zvukový soubor ({e})
+not a transcription model	není to model pro přepis
+not found	nenalezeno
+not found, left alone	nenalezeno, ponecháno
+nothing to redo	není co opakovat
+nothing to undo	není co vrátit
+part of the track could not be read	část skladby nelze přečíst
+quality	kvalita
+removed	odebrán
+saving tags…	ukládání tagů…
+select a part in the Edit panel	vyberte část v panelu Úpravy
+select at least half a second, or nothing for the whole track	vyberte alespoň půl sekundy, nebo nic pro celou skladbu
+silent	ticho
+soundglass is now the default player	soundglass je nyní výchozí přehrávač
+the AI tool failed	nástroj AI selhal
+the AI tool stopped	nástroj AI se zastavil
+the channel count changes mid-file	počet kanálů se mění uprostřed souboru
+the encoder failed	kodér selhal
+the model gave an unexpected output	model vrátil nečekaný výstup
+the saved file doesn't read back ({e})	uložený soubor nelze přečíst zpět ({e})
+the saved file reads back wrong ({frames} frames, expected {expected})	uložený soubor se čte chybně ({frames} snímků, očekáváno {expected})
+the settings aren't for this tool	nastavení nepatří k tomuto nástroji
+the sound device failed to open	zvukové zařízení se nepodařilo otevřít
+the tag writer failed	zápis tagů selhal
+the track has no audio	skladba neobsahuje zvuk
+the track is still loading	skladba se ještě načítá
+the track isn't fully loaded	skladba není plně načtena
+this file can't be decoded	tento soubor nelze dekódovat
+this track	tato skladba
+to	až
+track {n}	skladba {n}
+unknown error	neznámá chyba
+with unsaved edits, once loaded	s neuloženými úpravami, po načtení
+writing the tags would change the audio, so nothing was written	zápis tagů by změnil zvuk, proto nebylo nic zapsáno
+{kbps} kb/s	{kbps} kb/s
+{keys} is already used by {other}	{keys} už používá {other}
+{key} major	{key} dur
+{model} (installed)	{model} (nainstalováno)
+{name} isn't an audio file soundglass plays	{name} není zvukový soubor, který soundglass přehrává
+{name} was changed by another program. Reload it?	{name} změnil jiný program. Znovu načíst?
+{name} will be moved to the Trash.	{name} bude přesunut do Koše.
+{name}: custom…	{name}: vlastní…
+{name}: whole selection	{name}: celý výběr
+{name}: {s} s	{name}: {s} s
+{n} of {total} tracks	{n} z {total} skladeb
+{ok} written, {bad} failed	zapsáno: {ok}, selhalo: {bad}
+{path}: bigger than 64 KiB	{path}: větší než 64 KiB
+{secs} s	{secs} s
+{sign}{n} semitone	{sign}{n} půltón
+{sign}{n} semitones	{sign}{n} půltónů
+{task} (selection)	{task} (výběr)
+{what} installed.	Nainstalováno: {what}.
+{what}: the download stopped.	{what}: stahování se zastavilo.
+→ {n}	→ {n}
+−14 streaming, −23 TV	−14 streamování, −23 TV
+−60 silence, −40 hiss	−60 ticho, −40 šum

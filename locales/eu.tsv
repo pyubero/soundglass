@@ -1,0 +1,551 @@
+ dB at most	 dB gehienez
+ semitones	 tonuerdi
+0 (Normal)	0 (normala)
+0 = max	0 = gehienez
+1 (mono)	1 (mono)
+16-bit	16 bit
+1× (Normal)	1× (normala)
+2 (stereo)	2 (estereo)
+24-bit	24 bit
+32-bit float	32 bit koma mugikorra
+<{tag}>: invalid value	<{tag}>: balio baliogabea
+A code such as en, es, fr, de; empty to detect it from the first speech	en, es, fr, de bezalako kode bat; hutsik, lehen hizketatik detektatzeko
+A file with that name already exists.	Badago izen hori duen fitxategi bat.
+A long track: the hop is raised so the spectrogram fits in memory	Pista luzea: jauzia handitu da espektrograma memorian sar dadin
+AI Models	AA ereduak
+AI Models…	AA ereduak…
+AI runtime (ONNX Runtime)	AA exekuzio-ingurunea (ONNX Runtime)
+About 50 MB for a 4-minute stem, for further editing	50 MB inguru 4 minutuko pista bereizi bakoitzeko, gehiago editatzeko
+Accept and Continue	Onartu eta jarraitu
+Accept and Download	Onartu eta deskargatu
+AcoustID Settings	AcoustID ezarpenak
+AcoustID can't be reached ({e})	Ezin da AcoustID-rekin konektatu ({e})
+AcoustID: {why}	AcoustID: {why}
+Add AcoustID User Key	Gehitu AcoustID erabiltzaile-gakoa
+Add Cover	Gehitu azala
+Add album cover?	Albumaren azala gehitu?
+Add your AcoustID application key and user key in Settings to contribute.	Gehitu zure AcoustID aplikazio-gakoa eta erabiltzaile-gakoa Ezarpenetan laguntzeko.
+Add/Replace Album Cover…	Gehitu/ordeztu albumaren azala…
+Album	Albuma
+Album cover	Albumaren azala
+Album:	Albuma:
+All notes	Nota guztiak
+All {n} Tracks	{n} pista guztiak
+Already in AcoustID; nothing was sent.	Dagoeneko AcoustID-n dago; ez da ezer bidali.
+Also find notes without a clear start	Bilatu hasiera argirik gabeko notak ere
+Analysis	Analisia
+Any graphics card with Vulkan or Direct3D 12 ({mb} MB). A weak built-in one can be slower than the CPU.	Vulkan edo Direct3D 12 duen edozein txartel grafiko ({mb} MB). Integratu ahul bat PUZa baino motelagoa izan daiteke.
+Application key:	Aplikazio-gakoa:
+Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.	soundglass irekitzen den hurrengoan aplikatzen da; leihoa, Pistaren informazioa eta Editatu panela irtetean zeuden bezala gordetzen dira.
+Apply and Rename	Aplikatu eta berrizendatu
+Apply speed and pitch	Aplikatu abiadura eta tonua
+Apply to All Tracks	Aplikatu pista guztiei
+Artist	Artista
+Artist:	Artista:
+As Apply to All Tracks, then renames each file with the Rename from Tags pattern	Aplikatu pista guztiei bezala, eta gero fitxategi bakoitza berrizendatzen du Berrizendatu etiketetatik ereduarekin
+As TV	Telebista bezala
+As podcasts	Podcastak bezala
+As streaming	Streaminga bezala
+As subtitles (.srt)	Azpititulu gisa (.srt)
+Audio	Audioa
+BPM	BPM
+BPM tag saved ({bpm})	BPM etiketa gorde da ({bpm})
+Basic Pitch — any instrument, several notes at once	Basic Pitch — edozein instrumentu, hainbat nota batera
+Basic Pitch's melodia trick	Basic Pitch-en melodia trikimailua
+Beat This! — beats and downbeats	Beat This! — taupadak eta konpas-hasierak
+Bit depth	Bit-sakonera
+Bitrate	Bit-tasa
+Blackman–Harris	Blackman–Harris
+Blue to red	Urdinetik gorrira
+C D E	C D E
+CUDA: Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050. WebGPU: Find Beats only, about 2× faster (Split into Stems was slower than the CPU). The other tools are faster on the CPU. With both installed, NVIDIA's is used	CUDA: Bereizi pistetan eta Bilatu taupadak 2,6–3× azkarrago GTX 1050 batean. WebGPU: Bilatu taupadak bakarrik, 2× inguru azkarrago (Bereizi pistetan PUZa baino motelagoa zen). Beste tresnak azkarragoak dira PUZean. Biak instalatuta badaude, NVIDIArena erabiltzen da
+Can't fingerprint this audio ({e})	Ezin da audio honen hatz-marka atera ({e})
+Can't read this folder: {e}	Ezin da karpeta hau irakurri: {e}
+Can't write tags to this format ({e})	Ezin da etiketarik idatzi formatu honetan ({e})
+Cancel	Utzi
+Change	Aldatu
+Change Keyboard Shortcuts…	Aldatu laster-teklak…
+Change speed and pitch	Aldatu abiadura eta tonua
+Channels	Kanalak
+Channels: mono	Kanalak: mono
+Channels: stereo	Kanalak: estereo
+Channels: swap left and right	Kanalak: trukatu ezkerra eta eskuina
+Check for updates	Bilatu eguneraketak
+Chords	Akordeak
+Chords: after loading	Akordeak: kargatu ondoren
+Chords: measuring…	Akordeak: neurtzen…
+Clicks	Klikak
+Clicks on the found beats	Klikak aurkitutako taupadetan
+Close	Itxi
+Codec	Kodeka
+Colours	Koloreak
+Continue	Jarraitu
+Contribute	Lagundu
+Contribute to AcoustID?	AcoustID-ri lagundu?
+Copied the file	Fitxategia kopiatuta
+Copy	Kopiatu
+Copy File	Kopiatu fitxategia
+Copy Path	Kopiatu bidea
+Couldn't bring back {name}: {e}	Ezin izan da {name} berreskuratu: {e}
+Couldn't copy the file: {e}	Ezin izan da fitxategia kopiatu: {e}
+Couldn't delete the file: {e}	Ezin izan da fitxategia ezabatu: {e}
+Cover	Azala
+Cover added to 1 track	Azala pista 1i gehitu zaio
+Cover added to {n} of {total} tracks (not: {failed})	Azala {total} pistatik {n}ri gehitu zaie (ez: {failed})
+Cover added to {n} tracks	Azala {n} pistari gehitu zaie
+Cover at 256 px	Azala 256 px-tan
+Cover removed from 1 track	Azala pista 1etik kendu da
+Cover removed from {n} of {total} tracks (not: {failed})	Azala {total} pistatik {n}tik kendu da (ez: {failed})
+Cover removed from {n} tracks	Azala {n} pistatik kendu da
+Crop	Moztu
+Current cover	Uneko azala
+Custom ({value})…	Pertsonalizatua ({value})…
+Custom loudness…	Ozentasun pertsonalizatua…
+Custom peak…	Gailur pertsonalizatua…
+Custom…	Pertsonalizatua…
+Cut out	Moztu kanpora
+Dark	Iluna
+Data from Discogs.	Discogs-eko datuak.
+Decoding…	Deskodetzen…
+DeepFilterNet3 — speech, 48 kHz	DeepFilterNet3 — hizketa, 48 kHz
+Delete file?	Fitxategia ezabatu?
+Delete…	Ezabatu…
+Discard edits	Baztertu edizioak
+Discogs can't be reached ({e})	Ezin da Discogs-ekin konektatu ({e})
+Discogs is busy; try again in a minute.	Discogs lanpetuta dago; saiatu berriro minutu batean.
+Discogs now asks for a token; this lookup can't run.	Discogs-ek tokena eskatzen du orain; bilaketa hau ezin da egin.
+Discogs…	Discogs…
+Do Ré Mi	Do Re Mi
+Do you want to contribute this track's fingerprint to AcoustID? AcoustID will then recognise {title} — {artist} for everyone.	Pista honen hatz-marka AcoustID-ri eman nahi diozu? Orduan AcoustID-k {title} — {artist} ezagutuko du denentzat.
+Double the tempo	Bikoiztu tempoa
+Download	Deskargatu
+Download AI Runtime ({mb} MB)	Deskargatu AA exekuzio-ingurunea ({mb} MB)
+Download AI Runtime ({mb} MB)…	Deskargatu AA exekuzio-ingurunea ({mb} MB)…
+Download GPU Support	Deskargatu GPU euskarria
+Downloaded from Microsoft (ONNX Runtime's WebGPU plugin, via its official PyPI package).	Microsoft-etik deskargatua (ONNX Runtime-ren WebGPU plugina, bere PyPI pakete ofizialaren bidez).
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Microsoft-etik (ONNX Runtime) eta NVIDIAtik (CUDA liburutegiak, haien PyPI pakete ofizialen bidez) deskargatua.
+Drag on the waveform to select	Arrastatu uhin-forman hautatzeko
+Each stretch of speech with its start and end, to save as an .srt file	Hizketa-zati bakoitza bere hasiera eta amaierarekin, .srt fitxategi gisa gordetzeko
+Edit	Editatu
+Effects	Efektuak
+Europe	Europa
+FFT size	FFT tamaina
+FLAC (lossless)	FLAC (galerarik gabe)
+Fade in	Sarrera leuna
+Fade out	Irteera leuna
+Faint noise	Zarata ahula
+Fetching details…	Xehetasunak eskuratzen…
+File	Fitxategia
+File changed	Fitxategia aldatu da
+File size	Fitxategi-tamaina
+Fill In All Tracks	Bete pista guztiak
+Fill Metadata From	Bete metadatuak hemendik
+Fill from Discogs	Bete Discogs-etik
+Fill from Discogs…	Bete Discogs-etik…
+Fill from MusicBrainz	Bete MusicBrainz-etik
+Fill from MusicBrainz…	Bete MusicBrainz-etik…
+Fill from Wikipedia	Bete Wikipediatik
+Fill from Wikipedia…	Bete Wikipediatik…
+Fills Track Info's tag editor; Save… there writes the tags	Pistaren informazioaren etiketa-editorea betetzen du; han Gorde…-k etiketak idazten ditu
+Find Beats	Bilatu taupadak
+Fingerprint sent to AcoustID; lookups find it once it's processed.	Hatz-marka AcoustID-ra bidali da; bilaketek aurkituko dute prozesatu ondoren.
+Fingerprinting {i} of {n}: {file}	Hatz-marka {i}/{n}: {file}
+Fit	Doitu
+Fit cover space	Doitu azalaren espaziora
+Flats (Db)	Bemolak (Db)
+Folder	Karpeta
+Follow system	Jarraitu sistemari
+Font size:	Letra-tamaina:
+Format	Formatua
+Found {n} beats, ≈ {bpm} BPM. Metronome on (volume button).	{n} taupada aurkitu dira, ≈ {bpm} BPM. Metronomoa piztuta (bolumen-botoia).
+Found {n} beats. Metronome on (volume button).	{n} taupada aurkitu dira. Metronomoa piztuta (bolumen-botoia).
+Full	Osoa
+Full Screen	Pantaila osoa
+Full takes away all the noise it finds; a limit keeps some, for a more natural sound	Osoak aurkitzen duen zarata guztia kentzen du; muga batek pixka bat uzten du, soinu naturalago baterako
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel eta beste batzuk, esperimentala)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU support	GPU euskarria
+GPU support (AMD, Intel and others)	GPU euskarria (AMD, Intel eta beste)
+Gain	Irabazia
+Gain: custom…	Irabazia: pertsonalizatua…
+Gain: {db} dB	Irabazia: {db} dB
+General	Orokorra
+Genre	Generoa
+Get a key	Lortu gako bat
+Get your user key	Lortu zure erabiltzaile-gakoa
+Gray	Grisa
+HTDemucs v4 — drums, bass, other, vocals	HTDemucs v4 — bateria, baxua, bestelakoak, ahotsa
+Half the tempo	Tempoaren erdia
+Hamming	Hamming
+Hann	Hann
+Held notes	Iraunarazitako notak
+High contrast	Kontraste handia
+Higher: fewer, surer notes start	Altuagoa: nota-hasiera gutxiago eta seguruagoak
+Higher: notes end sooner, quiet ones are left out	Altuagoa: notak lehenago amaitzen dira, ahulak kanpoan geratzen dira
+Hiss	Txistua
+Hop	Jauzia
+Identify Album	Identifikatu albuma
+Identify Album…	Identifikatu albuma…
+Identify Track	Identifikatu pista
+Identify Track needs one; it is free for non-commercial use.	Identifikatu pista-k behar du; doakoa da erabilera ez-komertzialerako.
+Identify Track…	Identifikatu pista…
+Image	Irudia
+In order	Ordenan
+Instrument range	Instrumentuaren tartea
+It already has that name.	Dagoeneko izen hori du.
+It's all quieter than that; nothing trimmed	Dena baino ahulagoa da; ez da ezer moztu
+It's no longer in the Trash.	Jada ez dago zakarrontzian.
+Its unsaved edits will be lost.	Gorde gabeko edizioak galduko dira.
+Keep current	Mantendu unekoa
+Key	Tonalitatea
+Key ≈ {key}	Tonalitatea ≈ {key}
+Keyboard Shortcuts	Laster-teklak
+Label size	Etiketen tamaina
+Language	Hizkuntza
+Language:	Hizkuntza:
+Length	Iraupena
+Levels	Mailak
+Licence ({n} of {count}) — {title}	Lizentzia ({n}/{count}) — {title}
+Licence — {title}	Lizentzia — {title}
+Light	Argia
+Line	Lerroa
+Local AI	AA lokala
+Look up	Bilatu
+Looking up…	Bilatzen…
+Loop selection	Errepikatu hautapena
+Loudness	Ozentasuna
+Lower finds more beats, also where the model is unsure	Baxuagoak taupada gehiago aurkitzen ditu, ereduak zalantza duen tokietan ere
+Lowest frequency	Maiztasun baxuena
+MIDI file is too big	MIDI fitxategia handiegia da
+MIDI file is too long	MIDI fitxategia luzeegia da
+MIDI tempo	MIDI tempoa
+MP3 can't hold {khz} kHz audio; save as FLAC or WAV instead	MP3k ezin du {khz} kHz-ko audiorik eduki; gorde FLAC edo WAV gisa
+MP3 holds mono or stereo only; save as FLAC or WAV instead	MP3k mono edo estereoa bakarrik eduki dezake; gorde FLAC edo WAV gisa
+MP3: LAME failed to start	MP3: LAME ezin izan da abiarazi
+Magma	Magma
+Make soundglass my default player	Egin soundglass nire erreproduzigailu lehenetsia
+Make soundglass the default player	Egin soundglass erreproduzigailu lehenetsia
+Matches on this album are listed first	Album honetako bat-etortzeak lehenengo agertzen dira
+Matches on this album are listed first; it isn't sent	Album honetako bat-etortzeak lehenengo agertzen dira; ez da bidaltzen
+Melody to MIDI	Melodia MIDIra
+Metronome	Metronomoa
+Mono	Mono
+More overlap between the 7.8 s segments: smoother joins, slower	Gainjartze gehiago 7,8 s-ko zatien artean: lotura leunagoak, motelagoa
+Moved to the Trash	Zakarrontzira eraman da
+MusicBrainz can't be reached ({e})	Ezin da MusicBrainz-ekin konektatu ({e})
+MusicBrainz…	MusicBrainz…
+Name	Izena
+Next	Hurrengoa
+No album cover	Albumaren azalik ez
+No album found.	Ez da albumik aurkitu.
+No audio files in {name}	Ez dago audio-fitxategirik hemen: {name}
+No audio files or folders here	Hemen ez dago audio-fitxategirik ez karpetarik
+No file open	Ez dago fitxategirik irekita
+No match found.	Ez da bat-etortzerik aurkitu.
+No silence at the start or end to trim	Ez dago isilunerik hasieran edo amaieran mozteko
+None	Bat ere ez
+None (whole range)	Bat ere ez (tarte osoa)
+None of these tags is set.	Etiketa hauetako bat ere ez dago ezarrita.
+Normalize	Normalizatu
+Normalize loudness	Normalizatu ozentasuna
+Normalize peak	Normalizatu gailurra
+Normalize: custom loudness…	Normalizatu: ozentasun pertsonalizatua…
+Normalize: custom peak…	Normalizatu: gailur pertsonalizatua…
+Normalize: {name} ({db} dBFS)	Normalizatu: {name} ({db} dBFS)
+Normalize: {name} ({lufs} LUFS)	Normalizatu: {name} ({lufs} LUFS)
+Not Now	Orain ez
+Note threshold	Nota-atalasea
+Notes	Notak
+Notes from	Notak hemendik
+Nothing to normalize: it's silent	Ez dago normalizatzekorik: isilunea da
+OK	Ados
+Octave numbers	Zortzidun-zenbakiak
+Ogg Vorbis (q6)	Ogg Vorbis (q6)
+On the selection	Hautapenean
+On the whole track	Pista osoan
+Only fill empty tags	Bete etiketa hutsak bakarrik
+Only how the file's beats are counted; the notes keep their times	Fitxategiaren taupadak nola zenbatzen diren bakarrik; notek beren denborak mantentzen dituzte
+Only needed to contribute fingerprints to AcoustID.	AcoustID-ri hatz-markak emateko bakarrik behar da.
+Onset threshold	Hasiera-atalasea
+Open Recent	Ireki azkenak
+Open models folder	Ireki ereduen karpeta
+Open project page	Ireki proiektuaren orria
+Open themes folder	Ireki gaien karpeta
+Open…	Ireki…
+Other lines	Beste lerroak
+Output	Irteera
+Overlap	Gainjartzea
+Parakeet TDT 0.6B v3 — 25 European languages, more accurate	Parakeet TDT 0.6B v3 — Europako 25 hizkuntza, zehatzagoa
+Pause	Pausatu
+Peak	Gailurra
+Peak at max	Gailurra gehienekoan
+Peak near max	Gailurra gehienekotik gertu
+Piano synth	Piano sintetizatua
+Pitch-preserved speed change	Abiadura-aldaketa tonua mantenduz
+Play	Erreproduzitu
+Play order, {name}	Erreprodukzio-ordena, {name}
+Please read and accept the licence before downloading.	Irakurri eta onartu lizentzia deskargatu aurretik.
+Position, seconds	Posizioa, segundoak
+Practice	Praktika
+Practice mode	Praktika modua
+Press keys… (Esc to cancel)	Sakatu teklak… (Esc uzteko)
+Previous	Aurrekoa
+Quit	Irten
+Rectangular	Laukizuzena
+Redo	Berregin
+Reload	Kargatu berriro
+Remember window size	Gogoratu leihoaren tamaina
+Remove	Kendu
+Remove Album Cover…	Kendu albumaren azala…
+Remove Cover	Kendu azala
+Remove Noise	Kendu zarata
+Remove album cover	Kendu albumaren azala
+Remove the cover from this track only, or from {what}? The music itself isn't changed.	Azala pista honetatik bakarrik kendu, edo {what}? Musika bera ez da aldatzen.
+Remove the cover from this track? The music itself isn't changed.	Azala pista honetatik kendu? Musika bera ez da aldatzen.
+Rename	Aldatu izena
+Rename from Tags	Berrizendatu etiketetatik
+Rename from Tags…	Berrizendatu etiketetatik…
+Renamed to {name}	Izen berria: {name}
+Rename…	Aldatu izena…
+Repeat track	Errepikatu pista
+Replace…	Ordeztu…
+Reset	Berrezarri
+Reset All Shortcuts	Berrezarri laster-tekla guztiak
+Reset to defaults	Berrezarri lehenetsiak
+Restart soundglass to start using the GPU.	Berrabiarazi soundglass GPUa erabiltzen hasteko.
+Reverse	Alderantzikatu
+Run the AI tools on the graphics card ({mb} MB, NVIDIA's CUDA libraries).	Exekutatu AA tresnak txartel grafikoan ({mb} MB, NVIDIAren CUDA liburutegiak).
+Running on the CPU…	PUZean exekutatzen…
+Running on the GPU…	GPUan exekutatzen…
+Same ({rate})	Berdina ({rate})
+Sample rate	Lagin-maiztasuna
+Save As	Gorde honela
+Save As…	Gorde honela…
+Save Copy	Gorde kopia
+Save Cover	Gorde azala
+Save as Subtitles…	Gorde azpititulu gisa…
+Save as Text…	Gorde testu gisa…
+Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed.	{name} pista honen azal gisa gorde, edo {what}? Orain duten azala ordeztuko da. Musika bera ez da aldatzen.
+Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed.	{name} pista honen azal gisa gorde? Orain duen azala ordeztuko da. Musika bera ez da aldatzen.
+Saved {name}	Gordeta: {name}
+Saved {name}, but the tags could not be copied	{name} gorde da, baina ezin izan dira etiketak kopiatu
+Save…	Gorde…
+Saving failed	Ezin izan da gorde
+Saving {name}…	{name} gordetzen…
+Scale shown	Erakutsitako eskala
+Seek bar:	Posizio-barra:
+Sends each file's fingerprint and length to AcoustID, one a second, and one recording's ID to MusicBrainz for the genre. Nothing else leaves this computer.	Fitxategi bakoitzaren hatz-marka eta iraupena AcoustID-ra bidaltzen ditu, bat segundoko, eta grabazio baten IDa MusicBrainz-era generorako. Beste ezer ez da ordenagailu honetatik ateratzen.
+Sends the fingerprint, its length and the MusicBrainz recording ID to AcoustID, with your user key. It is sent only if AcoustID doesn't know this fingerprint yet.	Hatz-marka, haren iraupena eta MusicBrainz grabazioaren IDa AcoustID-ra bidaltzen ditu, zure erabiltzaile-gakoarekin. AcoustID-k hatz-marka hau oraindik ezagutzen ez badu bakarrik bidaltzen da.
+Sends the title and artist to Discogs, and the chosen release's ID for its track list. Nothing else leaves this computer.	Izenburua eta artista Discogs-era bidaltzen ditu, eta aukeratutako argitalpenaren IDa pista-zerrendarako. Beste ezer ez da ordenagailu honetatik ateratzen.
+Sends the title and artist to English Wikipedia. Nothing else leaves this computer.	Izenburua eta artista ingelesezko Wikipediara bidaltzen ditu. Beste ezer ez da ordenagailu honetatik ateratzen.
+Sends the title, artist and album to MusicBrainz, and the chosen match's ID for its genre. Nothing else leaves this computer.	Izenburua, artista eta albuma MusicBrainz-era bidaltzen ditu, eta aukeratutako bat-etortzearen IDa generorako. Beste ezer ez da ordenagailu honetatik ateratzen.
+Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer.	Fitxategi honen hatz-marka eta iraupena AcoustID-ra bidaltzen ditu, eta aukeratutako bat-etortzearen IDa MusicBrainz-era. Beste ezer ez da ordenagailu honetatik ateratzen.
+Sensitivity	Sentikortasuna
+Settings	Ezarpenak
+Settings: {model}	Ezarpenak: {model}
+Settings…	Ezarpenak…
+Sharps (C#)	Diesak (C#)
+Shortest note	Notarik laburrena
+Show Log	Erakutsi erregistroa
+Show in Explorer	Erakutsi Arakatzailean
+Show in File Manager	Erakutsi fitxategi-kudeatzailean
+Show or hide the chords along the top	Erakutsi edo ezkutatu goiko akordeak
+Show or hide the note lines	Erakutsi edo ezkutatu nota-lerroak
+Show the notes of {major} major	Erakutsi {major} maiorraren notak
+Show the notes of {major} major, which {key} shares	Erakutsi {major} maiorraren notak, {key}(e)k partekatzen dituenak
+Show the whole track	Erakutsi pista osoa
+Show the whole track and all frequencies	Erakutsi pista osoa eta maiztasun guztiak
+Shuffle	Ausaz
+Silence	Isilunea
+Silent pieces are left out, so nothing is made up there	Zati isilak kanpoan uzten dira, beraz ez da ezer asmatzen han
+Skip quieter than	Saltatu hau baino ahulagoa
+Small: about 6 MB for a 4-minute stem	Txikia: 6 MB inguru 4 minutuko pista bereizi bakoitzeko
+Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed.	Zuriunea, ←, →, Page Up, Page Down, L (Errepikatu hautapena), Esc eta Sartu finkoak dira.
+Space, ←, →, Page Up, Page Down, L, Esc, Enter and Ctrl+C/X/V	Zuriunea, ←, →, Page Up, Page Down, L, Esc, Sartu eta Ctrl+C/X/V
+Spectrogram	Espektrograma
+Spectrogram settings	Espektrogramaren ezarpenak
+Spectrogram — {name}	Espektrograma — {name}
+Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around	Espektrograma: egin klik hortik erreproduzitzeko, arrastatu hautatzeko, korritu zoomerako, Ctrl+korritu maiztasunen zoomerako, eskuineko botoiaz arrastatu mugitzeko
+Split into Stems	Bereizi pistetan
+Split into Stems takes mono or stereo tracks	Bereizi pistetan-ek mono edo estereo pistak onartzen ditu
+Stereo	Estereo
+Stopped after {i} of {n}	Geldituta {i}/{n} ondoren
+Strength	Indarra
+Subtitles	Azpitituluak
+Swap left and right	Trukatu ezkerra eta eskuina
+Tags	Etiketak
+Tags saved	Etiketak gorde dira
+Task	Zeregina
+Tempo	Tempoa
+Tenor sax	Saxofoi tenorra
+Text	Testua
+That image can't be read.	Ezin da irudi hori irakurri.
+That image can't be used as a cover.	Irudi hori ezin da azal gisa erabili.
+That is the original file; choose another name. The original is never changed.	Hori jatorrizko fitxategia da; aukeratu beste izen bat. Jatorrizkoa ez da inoiz aldatzen.
+That isn't a valid file name.	Hori ez da fitxategi-izen baliozkoa.
+The AI runtime isn't installed yet.	AA exekuzio-ingurunea ez dago oraindik instalatuta.
+The GPU couldn't be used, so the CPU is: {e}	Ezin izan da GPUa erabili, beraz PUZa erabiltzen da: {e}
+The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face.	ONNX fitxategia StemSplit-en esportazioa da (pisuak erdi-zehaztasunean), Hugging Face-n.
+The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face.	ONNX fitxategia grazder-en torchDF streaming esportazioa da, KimtOS-ek Hugging Face-n ostatatua.
+The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face.	ONNX fitxategia musetric-ek JKUren final0 kontrol-puntutik egindako esportazioa da, Hugging Face-n.
+The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face.	ONNX fitxategiak istupakov-ek onnx-asr-rako egindako int8 bihurketa dira, Hugging Face-n.
+The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.	ONNX fitxategiak sherpa-onnx-en (k2-fsa) int8 esportazioa dira, Hugging Face-n.
+The audio changes format partway.	Audioak formatua aldatzen du bidean.
+The cover couldn't be written ({failed})	Ezin izan da azala idatzi ({failed})
+The file has no audio.	Fitxategiak ez du audiorik.
+The file is too short to identify.	Fitxategia laburregia da identifikatzeko.
+The image is larger than 10 MB.	Irudiak 10 MB baino gehiago ditu.
+The key spells its notes	Tonalitateak bere notak idazten ditu
+The lookup stopped.	Bilaketa gelditu da.
+The original file is never changed.	Jatorrizko fitxategia ez da inoiz aldatzen.
+The reply couldn't be read ({e})	Ezin izan da erantzuna irakurri ({e})
+The reply wasn't understood.	Ez da erantzuna ulertu.
+Theme:	Gaia:
+This Track	Pista hau
+This file's tags can't be read.	Ezin dira fitxategi honen etiketak irakurri.
+This match has no MusicBrainz recording to link to.	Bat-etortze honek ez du loturako MusicBrainz grabaziorik.
+This track has edits that aren't saved. The original file is never changed.	Pista honek gorde gabeko edizioak ditu. Jatorrizko fitxategia ez da inoiz aldatzen.
+This track has no cover. Save {name} as the cover of {what}?	Pista honek ez du azalik. {name} gorde {what}(r)en azal gisa?
+Time marks	Denbora-markak
+Time-preserved pitch change	Tonu-aldaketa iraupena mantenduz
+Title	Izenburua
+Title:	Izenburua:
+Tonic line width	Tonika-lerroaren lodiera
+Tonic lines (C for all notes)	Tonika-lerroak (C nota guztientzat)
+Too short or too quiet to measure its loudness	Laburregia edo ahulegia ozentasuna neurtzeko
+Tools for musicians: loops, the spectrogram, tempo, key and chords	Musikarientzako tresnak: begiztak, espektrograma, tempoa, tonalitatea eta akordeak
+Track	Pista
+Track Info	Pistaren informazioa
+Tracks that already have a cover get this one instead. The music itself isn't changed.	Dagoeneko azala duten pistek hau jasoko dute haren ordez. Musika bera ez da aldatzen.
+Transcribe	Transkribatu
+Transcribe Speech	Transkribatu hizketa
+Transcript	Transkripzioa
+Translate to English	Itzuli ingelesera
+Trim silence	Moztu isilunea
+Trim silence below	Moztu isilunea hemendik behera
+Trim silence: custom…	Moztu isilunea: pertsonalizatua…
+Trim silence: {name} ({db} dB)	Moztu isilunea: {name} ({db} dB)
+Trumpet	Tronpeta
+Tuning A4	A4 afinazioa
+Type a title to search for.	Idatzi bilatzeko izenburu bat.
+Undo	Desegin
+Unsaved edits	Gorde gabeko edizioak
+Up one folder	Karpeta bat gora
+Use Match	Erabili bat-etortzea
+Use the GPU	Erabili GPUa
+Use the estimated key, {key}	Erabili kalkulatutako tonalitatea, {key}
+Use the estimated tempo	Erabili kalkulatutako tempoa
+User key:	Erabiltzaile-gakoa:
+View	Ikusi
+Visualiser	Bistaratzailea
+Volume	Bolumena
+Volume, {percent} %	Bolumena, % {percent}
+Volume, {percent} %, metronome on	Bolumena, % {percent}, metronomoa piztuta
+Waveform	Uhin-forma
+Waveform position	Posizioa uhin-forman
+Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along	Uhin-forma: egin klik hortik erreproduzitzeko, arrastatu hautatzeko, korritu zoomerako, eskuineko botoiaz arrastatu mugitzeko
+Welcome to soundglass	Ongi etorri soundglass-era
+Whisper large-v3-turbo — 99 languages, best, slow on a CPU	Whisper large-v3-turbo — 99 hizkuntza, onena, motela PUZean
+Whisper small — 99 languages	Whisper small — 99 hizkuntza
+Whole selection	Hautapen osoa
+Wikipedia can't be reached ({e})	Ezin da Wikipediarekin konektatu ({e})
+Wikipedia…	Wikipedia…
+Window function	Leiho-funtzioa
+Window size	Leihoaren luzera
+Window size:	Leihoaren tamaina:
+Worldwide	Mundu osoa
+Write	Idatzi
+Write tags	Idatzi etiketak
+Write the tags into {name}? The audio isn't changed.	Etiketak {name}(e)n idatzi? Audioa ez da aldatzen.
+Writes only the tags that are empty in each file	Fitxategi bakoitzean hutsik dauden etiketak bakarrik idazten ditu
+Writes the album's tags into every matched file, replacing the tags there	Albumaren etiketak bat datorren fitxategi bakoitzean idazten ditu, hango etiketak ordeztuz
+Writes the tags into the file; the audio isn't changed	Etiketak fitxategian idazten ditu; audioa ez da aldatzen
+Writing the tags failed	Ezin izan dira etiketak idatzi
+Writing {i} of {n}	Idazten {i}/{n}
+Year	Urtea
+Your own themes go in the themes folder. Choosing a theme again reloads its file.	Zure gaiak gaien karpetan doaz. Gai bat berriro aukeratzeak bere fitxategia birkargatzen du.
+Zoom in (scroll; right-drag to move along)	Handiagotu (korritu; eskuineko botoiaz arrastatu mugitzeko)
+Zoom out	Txikiagotu
+a GPU library was missing from the download	GPU liburutegi bat falta zen deskargan
+add an AcoustID key in Settings	gehitu AcoustID gako bat Ezarpenetan
+after Local AI → Find Beats	AA lokala → Bilatu taupadak ondoren
+after loading	kargatu ondoren
+all {n} tracks in this folder	karpeta honetako {n} pista guztiak
+already normal	dagoeneko normala
+another AI tool is running	beste AA tresna bat exekutatzen ari da
+as it is	dagoen bezala
+can't make a folder next to the track ({e})	ezin da karpetarik sortu pistaren ondoan ({e})
+can't save a copy next to the original ({e})	ezin da kopiarik gorde jatorrizkoaren ondoan ({e})
+choose at least one stem to write (AI Models → Settings)	aukeratu idazteko pista bat gutxienez (AA ereduak → Ezarpenak)
+close the tag editor first	itxi lehenik etiketa-editorea
+hop {hop} for this length	{hop} jauzia iraupen honetarako
+line {line}: {key}="{v}": invalid value	{line}. lerroa: {key}="{v}": balio baliogabea
+measuring…	neurtzen…
+mode="{other}": invalid value	mode="{other}": balio baliogabea
+needs a model: Local AI → AI Models…	eredu bat behar du: AA lokala → AA ereduak…
+needs the AI runtime: Local AI → Download AI Runtime…	AA exekuzio-ingurunea behar du: AA lokala → Deskargatu AA exekuzio-ingurunea…
+new image	irudi berria
+no audio track	ez dago audio-pistarik
+no channels	kanalik ez
+no data folder	ez dago datu-karpetarik
+no file name	fitxategi-izenik ez
+no file open	ez dago fitxategirik irekita
+no notes were found	ez da notarik aurkitu
+no sample rate	lagin-maiztasunik ez
+no speech was found	ez da hizketarik aurkitu
+not a supported audio file ({e})	ez da onartutako audio-fitxategia ({e})
+not a transcription model	ez da transkripzio-eredua
+not found	ez da aurkitu
+not found, left alone	ez da aurkitu, dagoen bezala utzi da
+nothing to redo	ez dago berregitekorik
+nothing to undo	ez dago desegitekorik
+part of the track could not be read	ezin izan da pistaren zati bat irakurri
+quality	kalitatea
+removed	kenduta
+saving tags…	etiketak gordetzen…
+select a part in the Edit panel	hautatu zati bat Editatu panelean
+select at least half a second, or nothing for the whole track	hautatu segundo erdi gutxienez, edo ezer ez pista osorako
+silent	isila
+soundglass is now the default player	soundglass da orain erreproduzigailu lehenetsia
+the AI tool failed	AA tresnak huts egin du
+the AI tool stopped	AA tresna gelditu da
+the channel count changes mid-file	kanal kopurua fitxategiaren erdian aldatzen da
+the encoder failed	kodetzaileak huts egin du
+the model gave an unexpected output	ereduak ustekabeko irteera eman du
+the saved file doesn't read back ({e})	gordetako fitxategia ezin da berriro irakurri ({e})
+the saved file reads back wrong ({frames} frames, expected {expected})	gordetako fitxategia gaizki irakurtzen da ({frames} lagin, {expected} espero ziren)
+the settings aren't for this tool	ezarpenak ez dira tresna honenak
+the sound device failed to open	ezin izan da soinu-gailua ireki
+the tag writer failed	etiketa-idazleak huts egin du
+the track has no audio	pistak ez du audiorik
+the track is still loading	pista oraindik kargatzen ari da
+the track isn't fully loaded	pista ez dago guztiz kargatuta
+this file can't be decoded	fitxategi hau ezin da deskodetu
+this track	pista hau
+to	–
+track {n}	{n}. pista
+unknown error	errore ezezaguna
+with unsaved edits, once loaded	gorde gabeko edizioekin, kargatu ondoren
+writing the tags would change the audio, so nothing was written	etiketak idazteak audioa aldatuko luke, beraz ez da ezer idatzi
+{kbps} kb/s	{kbps} kb/s
+{keys} is already used by {other}	{keys} dagoeneko erabiltzen du {other}(e)k
+{key} major	{key} maiorra
+{model} (installed)	{model} (instalatuta)
+{name} isn't an audio file soundglass plays	{name} ez da soundglass-ek erreproduzitzen duen audio-fitxategia
+{name} was changed by another program. Reload it?	Beste programa batek {name} aldatu du. Birkargatu?
+{name} will be moved to the Trash.	{name} zakarrontzira eramango da.
+{name}: custom…	{name}: pertsonalizatua…
+{name}: whole selection	{name}: hautapen osoa
+{name}: {s} s	{name}: {s} s
+{n} of {total} tracks	{total} pistatik {n}
+{ok} written, {bad} failed	{ok} idatzita, {bad} huts eginda
+{path}: bigger than 64 KiB	{path}: 64 KiB baino handiagoa
+{secs} s	{secs} s
+{sign}{n} semitone	{sign}{n} tonuerdi
+{sign}{n} semitones	{sign}{n} tonuerdi
+{task} (selection)	{task} (hautapena)
+{what} installed.	{what} instalatuta.
+{what}: the download stopped.	{what}: deskarga gelditu da.
+→ {n}	→ {n}
+−14 streaming, −23 TV	−14 streaming, −23 telebista
+−60 silence, −40 hiss	−60 isilunea, −40 txistua

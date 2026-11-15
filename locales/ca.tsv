@@ -1,0 +1,551 @@
+ dB at most	 dB com a màxim
+ semitones	 semitons
+0 (Normal)	0 (normal)
+0 = max	0 = màxim
+1 (mono)	1 (mono)
+16-bit	16 bits
+1× (Normal)	1× (normal)
+2 (stereo)	2 (estèreo)
+24-bit	24 bits
+32-bit float	32 bits de coma flotant
+<{tag}>: invalid value	<{tag}>: valor no vàlid
+A code such as en, es, fr, de; empty to detect it from the first speech	Un codi com en, es, fr, de; buit per detectar-lo a la primera veu
+A file with that name already exists.	Ja existeix un fitxer amb aquest nom.
+A long track: the hop is raised so the spectrogram fits in memory	Pista llarga: s'augmenta el salt perquè l'espectrograma càpiga a la memòria
+AI Models	Models d'IA
+AI Models…	Models d'IA…
+AI runtime (ONNX Runtime)	Entorn d'execució d'IA (ONNX Runtime)
+About 50 MB for a 4-minute stem, for further editing	Uns 50 MB per pista separada de 4 minuts, per continuar editant
+Accept and Continue	Accepta i continua
+Accept and Download	Accepta i baixa
+AcoustID Settings	Configuració d'AcoustID
+AcoustID can't be reached ({e})	No es pot connectar amb AcoustID ({e})
+AcoustID: {why}	AcoustID: {why}
+Add AcoustID User Key	Afegeix la clau d'usuari d'AcoustID
+Add Cover	Afegeix la portada
+Add album cover?	Voleu afegir la portada de l'àlbum?
+Add your AcoustID application key and user key in Settings to contribute.	Afegiu la clau d'aplicació i la clau d'usuari d'AcoustID a la Configuració per contribuir.
+Add/Replace Album Cover…	Afegeix o substitueix la portada de l'àlbum…
+Album	Àlbum
+Album cover	Portada de l'àlbum
+Album:	Àlbum:
+All notes	Totes les notes
+All {n} Tracks	Les {n} pistes
+Already in AcoustID; nothing was sent.	Ja és a AcoustID; no s'ha enviat res.
+Also find notes without a clear start	Troba també notes sense un atac clar
+Analysis	Anàlisi
+Any graphics card with Vulkan or Direct3D 12 ({mb} MB). A weak built-in one can be slower than the CPU.	Qualsevol targeta gràfica amb Vulkan o Direct3D 12 ({mb} MB). Una d'integrada poc potent pot ser més lenta que la CPU.
+Application key:	Clau d'aplicació:
+Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.	S'aplica la propera vegada que s'obri soundglass; la finestra, Informació de la pista i el tauler Edita es conserven com eren en sortir.
+Apply and Rename	Aplica i canvia el nom
+Apply speed and pitch	Aplica la velocitat i el to
+Apply to All Tracks	Aplica a totes les pistes
+Artist	Artista
+Artist:	Artista:
+As Apply to All Tracks, then renames each file with the Rename from Tags pattern	Com Aplica a totes les pistes, i després canvia el nom de cada fitxer amb el patró de Canvia el nom a partir de les etiquetes
+As TV	Com la TV
+As podcasts	Com els pòdcasts
+As streaming	Com el streaming
+As subtitles (.srt)	Com a subtítols (.srt)
+Audio	Àudio
+BPM	BPM
+BPM tag saved ({bpm})	S'ha desat l'etiqueta BPM ({bpm})
+Basic Pitch — any instrument, several notes at once	Basic Pitch — qualsevol instrument, diverses notes alhora
+Basic Pitch's melodia trick	Truc «melodia» de Basic Pitch
+Beat This! — beats and downbeats	Beat This! — pulsacions i temps forts
+Bit depth	Profunditat de bits
+Bitrate	Taxa de bits
+Blackman–Harris	Blackman–Harris
+Blue to red	De blau a vermell
+C D E	C D E
+CUDA: Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050. WebGPU: Find Beats only, about 2× faster (Split into Stems was slower than the CPU). The other tools are faster on the CPU. With both installed, NVIDIA's is used	CUDA: Separa en pistes i Troba les pulsacions, de 2,6 a 3 vegades més ràpid en una GTX 1050. WebGPU: només Troba les pulsacions, unes 2 vegades més ràpid (Separa en pistes era més lent que la CPU). Les altres eines són més ràpides a la CPU. Amb tots dos instal·lats s'usa el de NVIDIA
+Can't fingerprint this audio ({e})	No es pot calcular l'empremta d'aquest àudio ({e})
+Can't read this folder: {e}	No es pot llegir aquesta carpeta: {e}
+Can't write tags to this format ({e})	No es poden escriure etiquetes en aquest format ({e})
+Cancel	Cancel·la
+Change	Canvia
+Change Keyboard Shortcuts…	Canvia les dreceres de teclat…
+Change speed and pitch	Canvia la velocitat i el to
+Channels	Canals
+Channels: mono	Canals: mono
+Channels: stereo	Canals: estèreo
+Channels: swap left and right	Canals: intercanvia esquerre i dret
+Check for updates	Cerca actualitzacions
+Chords	Acords
+Chords: after loading	Acords: després de carregar
+Chords: measuring…	Acords: mesurant…
+Clicks	Clics
+Clicks on the found beats	Clics a les pulsacions trobades
+Close	Tanca
+Codec	Còdec
+Colours	Colors
+Continue	Continua
+Contribute	Contribueix
+Contribute to AcoustID?	Voleu contribuir a AcoustID?
+Copied the file	S'ha copiat el fitxer
+Copy	Copia
+Copy File	Copia el fitxer
+Copy Path	Copia el camí
+Couldn't bring back {name}: {e}	No s'ha pogut recuperar {name}: {e}
+Couldn't copy the file: {e}	No s'ha pogut copiar el fitxer: {e}
+Couldn't delete the file: {e}	No s'ha pogut suprimir el fitxer: {e}
+Cover	Portada
+Cover added to 1 track	Portada afegida a 1 pista
+Cover added to {n} of {total} tracks (not: {failed})	Portada afegida a {n} de {total} pistes (no: {failed})
+Cover added to {n} tracks	Portada afegida a {n} pistes
+Cover at 256 px	Portada a 256 px
+Cover removed from 1 track	Portada treta d'1 pista
+Cover removed from {n} of {total} tracks (not: {failed})	Portada treta de {n} de {total} pistes (no: {failed})
+Cover removed from {n} tracks	Portada treta de {n} pistes
+Crop	Retalla
+Current cover	Portada actual
+Custom ({value})…	Personalitzat ({value})…
+Custom loudness…	Sonoritat personalitzada…
+Custom peak…	Pic personalitzat…
+Custom…	Personalitzat…
+Cut out	Retalla fora
+Dark	Fosc
+Data from Discogs.	Dades de Discogs.
+Decoding…	Descodificant…
+DeepFilterNet3 — speech, 48 kHz	DeepFilterNet3 — veu, 48 kHz
+Delete file?	Voleu suprimir el fitxer?
+Delete…	Suprimeix…
+Discard edits	Descarta les edicions
+Discogs can't be reached ({e})	No es pot connectar amb Discogs ({e})
+Discogs is busy; try again in a minute.	Discogs està ocupat; torneu-ho a provar d'aquí a un minut.
+Discogs now asks for a token; this lookup can't run.	Discogs ara demana un testimoni; aquesta cerca no es pot fer.
+Discogs…	Discogs…
+Do Ré Mi	Do Re Mi
+Do you want to contribute this track's fingerprint to AcoustID? AcoustID will then recognise {title} — {artist} for everyone.	Voleu contribuir amb l'empremta d'aquesta pista a AcoustID? Llavors AcoustID reconeixerà {title} — {artist} per a tothom.
+Double the tempo	Duplica el tempo
+Download	Baixa
+Download AI Runtime ({mb} MB)	Baixa l'entorn d'execució d'IA ({mb} MB)
+Download AI Runtime ({mb} MB)…	Baixa l'entorn d'execució d'IA ({mb} MB)…
+Download GPU Support	Baixa el suport de GPU
+Downloaded from Microsoft (ONNX Runtime's WebGPU plugin, via its official PyPI package).	Es baixa de Microsoft (el connector WebGPU d'ONNX Runtime, mitjançant el seu paquet oficial de PyPI).
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Baixat de Microsoft (ONNX Runtime) i NVIDIA (biblioteques CUDA, a través dels seus paquets oficials de PyPI).
+Drag on the waveform to select	Arrossegueu sobre la forma d'ona per seleccionar
+Each stretch of speech with its start and end, to save as an .srt file	Cada tram de veu amb el seu inici i final, per desar-lo com a fitxer .srt
+Edit	Edita
+Effects	Efectes
+Europe	Europa
+FFT size	Mida de la FFT
+FLAC (lossless)	FLAC (sense pèrdua)
+Fade in	Fosa d'entrada
+Fade out	Fosa de sortida
+Faint noise	Soroll lleu
+Fetching details…	Obtenint els detalls…
+File	Fitxer
+File changed	Fitxer modificat
+File size	Mida del fitxer
+Fill In All Tracks	Emplena totes les pistes
+Fill Metadata From	Emplena les metadades des de
+Fill from Discogs	Emplena des de Discogs
+Fill from Discogs…	Emplena des de Discogs…
+Fill from MusicBrainz	Emplena des de MusicBrainz
+Fill from MusicBrainz…	Emplena des de MusicBrainz…
+Fill from Wikipedia	Emplena des de la Viquipèdia
+Fill from Wikipedia…	Emplena des de la Viquipèdia…
+Fills Track Info's tag editor; Save… there writes the tags	Emplena l'editor d'etiquetes d'Informació de la pista; allà Desa… escriu les etiquetes
+Find Beats	Troba les pulsacions
+Fingerprint sent to AcoustID; lookups find it once it's processed.	Empremta enviada a AcoustID; les cerques la trobaran un cop processada.
+Fingerprinting {i} of {n}: {file}	Calculant l'empremta {i} de {n}: {file}
+Fit	Ajusta
+Fit cover space	Ajusta a l'espai de la portada
+Flats (Db)	Bemolls (Db)
+Folder	Carpeta
+Follow system	Segueix el sistema
+Font size:	Mida de la lletra:
+Format	Format
+Found {n} beats, ≈ {bpm} BPM. Metronome on (volume button).	{n} pulsacions trobades, ≈ {bpm} BPM. Metrònom activat (botó del volum).
+Found {n} beats. Metronome on (volume button).	{n} pulsacions trobades. Metrònom activat (botó del volum).
+Full	Total
+Full Screen	Pantalla completa
+Full takes away all the noise it finds; a limit keeps some, for a more natural sound	Total treu tot el soroll que troba; un límit en deixa una mica, per a un so més natural
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel i altres, experimental)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU support	Suport de GPU
+GPU support (AMD, Intel and others)	Compatibilitat amb GPU (AMD, Intel i altres)
+Gain	Guany
+Gain: custom…	Guany: personalitzat…
+Gain: {db} dB	Guany: {db} dB
+General	General
+Genre	Gènere
+Get a key	Obteniu una clau
+Get your user key	Obteniu la vostra clau d'usuari
+Gray	Gris
+HTDemucs v4 — drums, bass, other, vocals	HTDemucs v4 — bateria, baix, altres, veu
+Half the tempo	Meitat del tempo
+Hamming	Hamming
+Hann	Hann
+Held notes	Notes sostingudes
+High contrast	Contrast alt
+Higher: fewer, surer notes start	Més alt: menys inicis de nota, més segurs
+Higher: notes end sooner, quiet ones are left out	Més alt: les notes acaben abans i s'ometen les fluixes
+Hiss	Xiuxiueig
+Hop	Salt
+Identify Album	Identifica l'àlbum
+Identify Album…	Identifica l'àlbum…
+Identify Track	Identifica la pista
+Identify Track needs one; it is free for non-commercial use.	Identifica la pista la necessita; és gratuïta per a ús no comercial.
+Identify Track…	Identifica la pista…
+Image	Imatge
+In order	En ordre
+Instrument range	Registre de l'instrument
+It already has that name.	Ja té aquest nom.
+It's all quieter than that; nothing trimmed	Tot és més fluix que això; no s'ha retallat res
+It's no longer in the Trash.	Ja no és a la paperera.
+Its unsaved edits will be lost.	Es perdran les edicions no desades.
+Keep current	Mantén l'actual
+Key	Tonalitat
+Key ≈ {key}	Tonalitat ≈ {key}
+Keyboard Shortcuts	Dreceres de teclat
+Label size	Mida de les etiquetes
+Language	Idioma
+Language:	Idioma:
+Length	Durada
+Levels	Nivells
+Licence ({n} of {count}) — {title}	Llicència ({n} de {count}) — {title}
+Licence — {title}	Llicència — {title}
+Light	Clar
+Line	Línia
+Local AI	IA local
+Look up	Cerca
+Looking up…	Cercant…
+Loop selection	Repeteix la selecció
+Loudness	Sonoritat
+Lower finds more beats, also where the model is unsure	Més baix troba més pulsacions, també on el model dubta
+Lowest frequency	Freqüència més baixa
+MIDI file is too big	El fitxer MIDI és massa gran
+MIDI file is too long	El fitxer MIDI és massa llarg
+MIDI tempo	Tempo MIDI
+MP3 can't hold {khz} kHz audio; save as FLAC or WAV instead	L'MP3 no admet àudio a {khz} kHz; deseu-lo com a FLAC o WAV
+MP3 holds mono or stereo only; save as FLAC or WAV instead	L'MP3 només admet mono o estèreo; deseu-lo com a FLAC o WAV
+MP3: LAME failed to start	MP3: no s'ha pogut iniciar LAME
+Magma	Magma
+Make soundglass my default player	Fes de soundglass el meu reproductor predeterminat
+Make soundglass the default player	Fes de soundglass el reproductor predeterminat
+Matches on this album are listed first	Les coincidències d'aquest àlbum surten primer
+Matches on this album are listed first; it isn't sent	Les coincidències d'aquest àlbum surten primer; no s'envia
+Melody to MIDI	Melodia a MIDI
+Metronome	Metrònom
+Mono	Mono
+More overlap between the 7.8 s segments: smoother joins, slower	Més solapament entre els segments de 7,8 s: unions més suaus, més lent
+Moved to the Trash	S'ha mogut a la paperera
+MusicBrainz can't be reached ({e})	No es pot connectar amb MusicBrainz ({e})
+MusicBrainz…	MusicBrainz…
+Name	Nom
+Next	Següent
+No album cover	Sense portada de l'àlbum
+No album found.	No s'ha trobat cap àlbum.
+No audio files in {name}	No hi ha fitxers d'àudio a {name}
+No audio files or folders here	Aquí no hi ha fitxers d'àudio ni carpetes
+No file open	Cap fitxer obert
+No match found.	No s'ha trobat cap coincidència.
+No silence at the start or end to trim	No hi ha silenci al principi ni al final per retallar
+None	Cap
+None (whole range)	Cap (tot el rang)
+None of these tags is set.	Cap d'aquestes etiquetes té valor.
+Normalize	Normalitza
+Normalize loudness	Normalitza la sonoritat
+Normalize peak	Normalitza el pic
+Normalize: custom loudness…	Normalitza: sonoritat personalitzada…
+Normalize: custom peak…	Normalitza: pic personalitzat…
+Normalize: {name} ({db} dBFS)	Normalitza: {name} ({db} dBFS)
+Normalize: {name} ({lufs} LUFS)	Normalitza: {name} ({lufs} LUFS)
+Not Now	Ara no
+Note threshold	Llindar de nota
+Notes	Notes
+Notes from	Notes des de
+Nothing to normalize: it's silent	Res a normalitzar: és silenci
+OK	D'acord
+Octave numbers	Números d'octava
+Ogg Vorbis (q6)	Ogg Vorbis (q6)
+On the selection	A la selecció
+On the whole track	A tota la pista
+Only fill empty tags	Emplena només les etiquetes buides
+Only how the file's beats are counted; the notes keep their times	Només com es compten les pulsacions del fitxer; les notes mantenen els seus temps
+Only needed to contribute fingerprints to AcoustID.	Només cal per contribuir amb empremtes a AcoustID.
+Onset threshold	Llindar d'inici
+Open Recent	Obre un recent
+Open models folder	Obre la carpeta de models
+Open project page	Obre la pàgina del projecte
+Open themes folder	Obre la carpeta de temes
+Open…	Obre…
+Other lines	Altres línies
+Output	Sortida
+Overlap	Solapament
+Parakeet TDT 0.6B v3 — 25 European languages, more accurate	Parakeet TDT 0.6B v3 — 25 llengües europees, més precís
+Pause	Pausa
+Peak	Pic
+Peak at max	Pic al màxim
+Peak near max	Pic a prop del màxim
+Piano synth	Piano sintetitzat
+Pitch-preserved speed change	Canvi de velocitat sense canviar el to
+Play	Reprodueix
+Play order, {name}	Ordre de reproducció, {name}
+Please read and accept the licence before downloading.	Llegiu i accepteu la llicència abans de baixar.
+Position, seconds	Posició, segons
+Practice	Pràctica
+Practice mode	Mode de pràctica
+Press keys… (Esc to cancel)	Premeu les tecles… (Esc per cancel·lar)
+Previous	Anterior
+Quit	Surt
+Rectangular	Rectangular
+Redo	Refés
+Reload	Torna a carregar
+Remember window size	Recorda la mida de la finestra
+Remove	Suprimeix
+Remove Album Cover…	Treu la portada de l'àlbum…
+Remove Cover	Treu la portada
+Remove Noise	Treu el soroll
+Remove album cover	Treu la portada de l'àlbum
+Remove the cover from this track only, or from {what}? The music itself isn't changed.	Voleu treure la portada només d'aquesta pista, o de {what}? La música en si no canvia.
+Remove the cover from this track? The music itself isn't changed.	Voleu treure la portada d'aquesta pista? La música en si no canvia.
+Rename	Canvia el nom
+Rename from Tags	Canvia el nom a partir de les etiquetes
+Rename from Tags…	Canvia el nom a partir de les etiquetes…
+Renamed to {name}	Nom canviat a {name}
+Rename…	Canvia el nom…
+Repeat track	Repeteix la pista
+Replace…	Substitueix…
+Reset	Restableix
+Reset All Shortcuts	Restableix totes les dreceres
+Reset to defaults	Restableix els valors predeterminats
+Restart soundglass to start using the GPU.	Reinicieu soundglass per començar a usar la GPU.
+Reverse	Inverteix
+Run the AI tools on the graphics card ({mb} MB, NVIDIA's CUDA libraries).	Executa les eines d'IA a la targeta gràfica ({mb} MB, biblioteques CUDA de NVIDIA).
+Running on the CPU…	S'executa a la CPU…
+Running on the GPU…	S'executa a la GPU…
+Same ({rate})	Igual ({rate})
+Sample rate	Freqüència de mostreig
+Save As	Desa com a
+Save As…	Desa com a…
+Save Copy	Desa una còpia
+Save Cover	Desa la portada
+Save as Subtitles…	Desa com a subtítols…
+Save as Text…	Desa com a text…
+Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed.	Voleu desar {name} com a portada d'aquesta pista, o de {what}? Se substitueix qualsevol portada que tinguin ara. La música en si no canvia.
+Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed.	Voleu desar {name} com a portada d'aquesta pista? Se substitueix la portada que tingui ara. La música en si no canvia.
+Saved {name}	S'ha desat {name}
+Saved {name}, but the tags could not be copied	S'ha desat {name}, però no s'han pogut copiar les etiquetes
+Save…	Desa…
+Saving failed	No s'ha pogut desar
+Saving {name}…	Desant {name}…
+Scale shown	Escala mostrada
+Seek bar:	Barra de posició:
+Sends each file's fingerprint and length to AcoustID, one a second, and one recording's ID to MusicBrainz for the genre. Nothing else leaves this computer.	Envia l'empremta i la durada de cada fitxer a AcoustID, una per segon, i l'identificador d'un enregistrament a MusicBrainz per al gènere. Res més surt d'aquest ordinador.
+Sends the fingerprint, its length and the MusicBrainz recording ID to AcoustID, with your user key. It is sent only if AcoustID doesn't know this fingerprint yet.	Envia l'empremta, la seva durada i l'identificador d'enregistrament de MusicBrainz a AcoustID, amb la vostra clau d'usuari. Només s'envia si AcoustID encara no coneix aquesta empremta.
+Sends the title and artist to Discogs, and the chosen release's ID for its track list. Nothing else leaves this computer.	Envia el títol i l'artista a Discogs, i l'identificador de l'edició triada per a la seva llista de pistes. Res més surt d'aquest ordinador.
+Sends the title and artist to English Wikipedia. Nothing else leaves this computer.	Envia el títol i l'artista a la Viquipèdia en anglès. Res més surt d'aquest ordinador.
+Sends the title, artist and album to MusicBrainz, and the chosen match's ID for its genre. Nothing else leaves this computer.	Envia el títol, l'artista i l'àlbum a MusicBrainz, i l'identificador de la coincidència triada per al seu gènere. Res més surt d'aquest ordinador.
+Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer.	Envia l'empremta i la durada d'aquest fitxer a AcoustID, i l'identificador de la coincidència triada a MusicBrainz. Res més surt d'aquest ordinador.
+Sensitivity	Sensibilitat
+Settings	Configuració
+Settings: {model}	Configuració: {model}
+Settings…	Configuració…
+Sharps (C#)	Sostinguts (C#)
+Shortest note	Nota més curta
+Show Log	Mostra el registre
+Show in Explorer	Mostra a l'Explorador
+Show in File Manager	Mostra al gestor de fitxers
+Show or hide the chords along the top	Mostra o amaga els acords a la part superior
+Show or hide the note lines	Mostra o amaga les línies de notes
+Show the notes of {major} major	Mostra les notes de {major} major
+Show the notes of {major} major, which {key} shares	Mostra les notes de {major} major, que comparteix {key}
+Show the whole track	Mostra tota la pista
+Show the whole track and all frequencies	Mostra tota la pista i totes les freqüències
+Shuffle	Aleatori
+Silence	Silenci
+Silent pieces are left out, so nothing is made up there	Els trossos en silenci s'ometen, així que allà no s'inventa res
+Skip quieter than	Omet el que sigui més fluix que
+Small: about 6 MB for a 4-minute stem	Petit: uns 6 MB per pista separada de 4 minuts
+Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed.	Espai, ←, →, Re Pàg, Av Pàg, L (Repeteix la selecció), Esc i Retorn són fixes.
+Space, ←, →, Page Up, Page Down, L, Esc, Enter and Ctrl+C/X/V	Espai, ←, →, Re Pàg, Av Pàg, L, Esc, Retorn i Ctrl+C/X/V
+Spectrogram	Espectrograma
+Spectrogram settings	Configuració de l'espectrograma
+Spectrogram — {name}	Espectrograma — {name}
+Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around	Espectrograma: feu clic per reproduir des d'allà, arrossegueu per seleccionar, desplaceu per ampliar, Ctrl+desplaçament per ampliar les freqüències, arrossegueu amb el botó dret per moure-us
+Split into Stems	Separa en pistes
+Split into Stems takes mono or stereo tracks	Separa en pistes admet pistes mono o estèreo
+Stereo	Estèreo
+Stopped after {i} of {n}	Aturat després de {i} de {n}
+Strength	Intensitat
+Subtitles	Subtítols
+Swap left and right	Intercanvia esquerre i dret
+Tags	Etiquetes
+Tags saved	Etiquetes desades
+Task	Tasca
+Tempo	Tempo
+Tenor sax	Saxo tenor
+Text	Text
+That image can't be read.	No es pot llegir aquesta imatge.
+That image can't be used as a cover.	Aquesta imatge no es pot usar com a portada.
+That is the original file; choose another name. The original is never changed.	Aquest és el fitxer original; trieu un altre nom. L'original no es modifica mai.
+That isn't a valid file name.	Aquest no és un nom de fitxer vàlid.
+The AI runtime isn't installed yet.	L'entorn d'execució d'IA encara no està instal·lat.
+The GPU couldn't be used, so the CPU is: {e}	No s'ha pogut fer servir la GPU, així que es fa servir la CPU: {e}
+The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face.	El fitxer ONNX és l'exportació de StemSplit (pesos desats a mitja precisió), a Hugging Face.
+The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face.	El fitxer ONNX és l'exportació en temps real de torchDF de grazder, allotjada per KimtOS a Hugging Face.
+The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face.	El fitxer ONNX és l'exportació de musetric del punt de control final0 de JKU, a Hugging Face.
+The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face.	Els fitxers ONNX són la conversió int8 d'istupakov per a onnx-asr, a Hugging Face.
+The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.	Els fitxers ONNX són l'exportació int8 de sherpa-onnx (k2-fsa), a Hugging Face.
+The audio changes format partway.	L'àudio canvia de format a mig camí.
+The cover couldn't be written ({failed})	No s'ha pogut escriure la portada ({failed})
+The file has no audio.	El fitxer no té àudio.
+The file is too short to identify.	El fitxer és massa curt per identificar-lo.
+The image is larger than 10 MB.	La imatge ocupa més de 10 MB.
+The key spells its notes	La tonalitat escriu les seves notes
+The lookup stopped.	La cerca s'ha aturat.
+The original file is never changed.	El fitxer original no es modifica mai.
+The reply couldn't be read ({e})	No s'ha pogut llegir la resposta ({e})
+The reply wasn't understood.	No s'ha entès la resposta.
+Theme:	Tema:
+This Track	Aquesta pista
+This file's tags can't be read.	No es poden llegir les etiquetes d'aquest fitxer.
+This match has no MusicBrainz recording to link to.	Aquesta coincidència no té cap enregistrament de MusicBrainz per enllaçar.
+This track has edits that aren't saved. The original file is never changed.	Aquesta pista té edicions no desades. El fitxer original no es modifica mai.
+This track has no cover. Save {name} as the cover of {what}?	Aquesta pista no té portada. Voleu desar {name} com a portada de {what}?
+Time marks	Marques de temps
+Time-preserved pitch change	Canvi de to sense canviar la durada
+Title	Títol
+Title:	Títol:
+Tonic line width	Gruix de la línia de tònica
+Tonic lines (C for all notes)	Línies de tònica (C per a totes les notes)
+Too short or too quiet to measure its loudness	Massa curt o fluix per mesurar-ne la sonoritat
+Tools for musicians: loops, the spectrogram, tempo, key and chords	Eines per a músics: bucles, espectrograma, tempo, tonalitat i acords
+Track	Pista
+Track Info	Informació de la pista
+Tracks that already have a cover get this one instead. The music itself isn't changed.	Les pistes que ja tenen portada reben aquesta en lloc seu. La música en si no canvia.
+Transcribe	Transcriu
+Transcribe Speech	Transcriu la veu
+Transcript	Transcripció
+Translate to English	Tradueix a l'anglès
+Trim silence	Retalla el silenci
+Trim silence below	Retalla el silenci per sota de
+Trim silence: custom…	Retalla el silenci: personalitzat…
+Trim silence: {name} ({db} dB)	Retalla el silenci: {name} ({db} dB)
+Trumpet	Trompeta
+Tuning A4	Afinació A4
+Type a title to search for.	Escriviu un títol per cercar.
+Undo	Desfés
+Unsaved edits	Edicions no desades
+Up one folder	Puja una carpeta
+Use Match	Usa la coincidència
+Use the GPU	Fes servir la GPU
+Use the estimated key, {key}	Usa la tonalitat estimada, {key}
+Use the estimated tempo	Usa el tempo estimat
+User key:	Clau d'usuari:
+View	Visualitza
+Visualiser	Visualitzador
+Volume	Volum
+Volume, {percent} %	Volum, {percent} %
+Volume, {percent} %, metronome on	Volum, {percent} %, metrònom activat
+Waveform	Forma d'ona
+Waveform position	Posició a la forma d'ona
+Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along	Forma d'ona: feu clic per reproduir des d'allà, arrossegueu per seleccionar, desplaceu per ampliar, arrossegueu amb el botó dret per moure-us
+Welcome to soundglass	Benvinguts a soundglass
+Whisper large-v3-turbo — 99 languages, best, slow on a CPU	Whisper large-v3-turbo — 99 llengües, el millor, lent a la CPU
+Whisper small — 99 languages	Whisper small — 99 llengües
+Whole selection	Tota la selecció
+Wikipedia can't be reached ({e})	No es pot connectar amb la Viquipèdia ({e})
+Wikipedia…	Viquipèdia…
+Window function	Funció de finestra
+Window size	Llargada de la finestra
+Window size:	Mida de la finestra:
+Worldwide	Tot el món
+Write	Escriu
+Write tags	Escriu les etiquetes
+Write the tags into {name}? The audio isn't changed.	Voleu escriure les etiquetes a {name}? L'àudio no canvia.
+Writes only the tags that are empty in each file	Escriu només les etiquetes buides de cada fitxer
+Writes the album's tags into every matched file, replacing the tags there	Escriu les etiquetes de l'àlbum a cada fitxer coincident, substituint les que hi hagi
+Writes the tags into the file; the audio isn't changed	Escriu les etiquetes al fitxer; l'àudio no canvia
+Writing the tags failed	No s'han pogut escriure les etiquetes
+Writing {i} of {n}	Escrivint {i} de {n}
+Year	Any
+Your own themes go in the themes folder. Choosing a theme again reloads its file.	Els vostres temes van a la carpeta de temes. Tornar a triar un tema en recarrega el fitxer.
+Zoom in (scroll; right-drag to move along)	Amplia (desplaçament; arrossegueu amb el botó dret per moure-us)
+Zoom out	Redueix
+a GPU library was missing from the download	faltava una biblioteca de GPU a la baixada
+add an AcoustID key in Settings	afegiu una clau d'AcoustID a la Configuració
+after Local AI → Find Beats	després d'IA local → Troba les pulsacions
+after loading	després de carregar
+all {n} tracks in this folder	les {n} pistes d'aquesta carpeta
+already normal	ja és normal
+another AI tool is running	s'està executant una altra eina d'IA
+as it is	tal com és
+can't make a folder next to the track ({e})	no es pot crear una carpeta al costat de la pista ({e})
+can't save a copy next to the original ({e})	no es pot desar una còpia al costat de l'original ({e})
+choose at least one stem to write (AI Models → Settings)	trieu almenys una pista per escriure (Models d'IA → Configuració)
+close the tag editor first	tanqueu primer l'editor d'etiquetes
+hop {hop} for this length	salt de {hop} per a aquesta durada
+line {line}: {key}="{v}": invalid value	línia {line}: {key}="{v}": valor no vàlid
+measuring…	mesurant…
+mode="{other}": invalid value	mode="{other}": valor no vàlid
+needs a model: Local AI → AI Models…	cal un model: IA local → Models d'IA…
+needs the AI runtime: Local AI → Download AI Runtime…	cal l'entorn d'execució d'IA: IA local → Baixa l'entorn d'execució d'IA…
+new image	imatge nova
+no audio track	no hi ha pista d'àudio
+no channels	sense canals
+no data folder	no hi ha carpeta de dades
+no file name	sense nom de fitxer
+no file open	cap fitxer obert
+no notes were found	no s'han trobat notes
+no sample rate	sense freqüència de mostreig
+no speech was found	no s'ha trobat veu
+not a supported audio file ({e})	no és un fitxer d'àudio compatible ({e})
+not a transcription model	no és un model de transcripció
+not found	no trobat
+not found, left alone	no trobat, sense canvis
+nothing to redo	res a refer
+nothing to undo	res a desfer
+part of the track could not be read	no s'ha pogut llegir una part de la pista
+quality	qualitat
+removed	treta
+saving tags…	desant les etiquetes…
+select a part in the Edit panel	seleccioneu una part al tauler Edita
+select at least half a second, or nothing for the whole track	seleccioneu almenys mig segon, o res per a tota la pista
+silent	silenci
+soundglass is now the default player	soundglass ara és el reproductor predeterminat
+the AI tool failed	l'eina d'IA ha fallat
+the AI tool stopped	l'eina d'IA s'ha aturat
+the channel count changes mid-file	el nombre de canals canvia a mig fitxer
+the encoder failed	el codificador ha fallat
+the model gave an unexpected output	el model ha donat una sortida inesperada
+the saved file doesn't read back ({e})	el fitxer desat no es pot tornar a llegir ({e})
+the saved file reads back wrong ({frames} frames, expected {expected})	el fitxer desat es llegeix malament ({frames} mostres, se n'esperaven {expected})
+the settings aren't for this tool	la configuració no és d'aquesta eina
+the sound device failed to open	no s'ha pogut obrir el dispositiu de so
+the tag writer failed	l'escriptor d'etiquetes ha fallat
+the track has no audio	la pista no té àudio
+the track is still loading	la pista encara s'està carregant
+the track isn't fully loaded	la pista no està carregada del tot
+this file can't be decoded	aquest fitxer no es pot descodificar
+this track	aquesta pista
+to	a
+track {n}	pista {n}
+unknown error	error desconegut
+with unsaved edits, once loaded	amb edicions no desades, un cop carregada
+writing the tags would change the audio, so nothing was written	escriure les etiquetes canviaria l'àudio, així que no s'ha escrit res
+{kbps} kb/s	{kbps} kb/s
+{keys} is already used by {other}	{keys} ja l'usa {other}
+{key} major	{key} major
+{model} (installed)	{model} (instal·lat)
+{name} isn't an audio file soundglass plays	{name} no és un fitxer d'àudio que reprodueixi soundglass
+{name} was changed by another program. Reload it?	Un altre programa ha modificat {name}. Voleu recarregar-lo?
+{name} will be moved to the Trash.	{name} es mourà a la paperera.
+{name}: custom…	{name}: personalitzat…
+{name}: whole selection	{name}: tota la selecció
+{name}: {s} s	{name}: {s} s
+{n} of {total} tracks	{n} de {total} pistes
+{ok} written, {bad} failed	{ok} escrits, {bad} fallits
+{path}: bigger than 64 KiB	{path}: més de 64 KiB
+{secs} s	{secs} s
+{sign}{n} semitone	{sign}{n} semitò
+{sign}{n} semitones	{sign}{n} semitons
+{task} (selection)	{task} (selecció)
+{what} installed.	{what} instal·lat.
+{what}: the download stopped.	{what}: la baixada s'ha aturat.
+→ {n}	→ {n}
+−14 streaming, −23 TV	−14 streaming, −23 TV
+−60 silence, −40 hiss	−60 silenci, −40 xiuxiueig

@@ -1,0 +1,551 @@
+ dB at most	 dB το πολύ
+ semitones	 ημιτόνια
+0 (Normal)	0 (κανονικό)
+0 = max	0 = μέγιστο
+1 (mono)	1 (μονοφωνικό)
+16-bit	16 bit
+1× (Normal)	1× (κανονικό)
+2 (stereo)	2 (στερεοφωνικό)
+24-bit	24 bit
+32-bit float	32 bit κινητής υποδιαστολής
+<{tag}>: invalid value	<{tag}>: μη έγκυρη τιμή
+A code such as en, es, fr, de; empty to detect it from the first speech	Ένας κωδικός όπως en, es, fr, de· κενό για εντοπισμό από την πρώτη ομιλία
+A file with that name already exists.	Υπάρχει ήδη αρχείο με αυτό το όνομα.
+A long track: the hop is raised so the spectrogram fits in memory	Μεγάλο κομμάτι: το βήμα μεγαλώνει ώστε το φασματογράφημα να χωρά στη μνήμη
+AI Models	Μοντέλα ΤΝ
+AI Models…	Μοντέλα ΤΝ…
+AI runtime (ONNX Runtime)	Περιβάλλον εκτέλεσης ΤΝ (ONNX Runtime)
+About 50 MB for a 4-minute stem, for further editing	Περίπου 50 MB για ένα κανάλι 4 λεπτών, για περαιτέρω επεξεργασία
+Accept and Continue	Αποδοχή και συνέχεια
+Accept and Download	Αποδοχή και λήψη
+AcoustID Settings	Ρυθμίσεις AcoustID
+AcoustID can't be reached ({e})	Το AcoustID δεν είναι προσβάσιμο ({e})
+AcoustID: {why}	AcoustID: {why}
+Add AcoustID User Key	Προσθήκη κλειδιού χρήστη AcoustID
+Add Cover	Προσθήκη εξωφύλλου
+Add album cover?	Προσθήκη εξωφύλλου άλμπουμ;
+Add your AcoustID application key and user key in Settings to contribute.	Προσθέστε το κλειδί εφαρμογής και το κλειδί χρήστη AcoustID στις Ρυθμίσεις για να συνεισφέρετε.
+Add/Replace Album Cover…	Προσθήκη/αντικατάσταση εξωφύλλου άλμπουμ…
+Album	Άλμπουμ
+Album cover	Εξώφυλλο άλμπουμ
+Album:	Άλμπουμ:
+All notes	Όλες οι νότες
+All {n} Tracks	Και τα {n} κομμάτια
+Already in AcoustID; nothing was sent.	Υπάρχει ήδη στο AcoustID· δεν στάλθηκε τίποτα.
+Also find notes without a clear start	Εύρεση και νοτών χωρίς σαφή έναρξη
+Analysis	Ανάλυση
+Any graphics card with Vulkan or Direct3D 12 ({mb} MB). A weak built-in one can be slower than the CPU.	Οποιαδήποτε κάρτα γραφικών με Vulkan ή Direct3D 12 ({mb} MB). Μια αδύναμη ενσωματωμένη μπορεί να είναι πιο αργή από τον επεξεργαστή.
+Application key:	Κλειδί εφαρμογής:
+Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.	Ισχύει την επόμενη φορά που θα ανοίξει το soundglass· το παράθυρο, οι Πληροφορίες κομματιού και ο πίνακας Επεξεργασίας μένουν όπως στην έξοδο.
+Apply and Rename	Εφαρμογή και μετονομασία
+Apply speed and pitch	Εφαρμογή ταχύτητας και τονικού ύψους
+Apply to All Tracks	Εφαρμογή σε όλα τα κομμάτια
+Artist	Καλλιτέχνης
+Artist:	Καλλιτέχνης:
+As Apply to All Tracks, then renames each file with the Rename from Tags pattern	Όπως η Εφαρμογή σε όλα τα κομμάτια, και μετά μετονομάζει κάθε αρχείο με το μοτίβο της Μετονομασίας από ετικέτες
+As TV	Όπως η τηλεόραση
+As podcasts	Όπως τα podcast
+As streaming	Όπως το streaming
+As subtitles (.srt)	Ως υπότιτλοι (.srt)
+Audio	Ήχος
+BPM	BPM
+BPM tag saved ({bpm})	Η ετικέτα BPM αποθηκεύτηκε ({bpm})
+Basic Pitch — any instrument, several notes at once	Basic Pitch — οποιοδήποτε όργανο, πολλές νότες μαζί
+Basic Pitch's melodia trick	Το τέχνασμα melodia του Basic Pitch
+Beat This! — beats and downbeats	Beat This! — χτύποι και ισχυροί χρόνοι
+Bit depth	Βάθος bit
+Bitrate	Ρυθμός bit
+Blackman–Harris	Blackman–Harris
+Blue to red	Μπλε προς κόκκινο
+C D E	C D E
+CUDA: Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050. WebGPU: Find Beats only, about 2× faster (Split into Stems was slower than the CPU). The other tools are faster on the CPU. With both installed, NVIDIA's is used	CUDA: Διαχωρισμός σε κανάλια και Εύρεση χτύπων 2,6–3× ταχύτερα σε GTX 1050. WebGPU: μόνο Εύρεση χτύπων, περίπου 2× ταχύτερα (ο Διαχωρισμός σε κανάλια ήταν πιο αργός από τον επεξεργαστή). Τα άλλα εργαλεία είναι ταχύτερα στον επεξεργαστή. Αν είναι εγκατεστημένα και τα δύο, χρησιμοποιείται της NVIDIA
+Can't fingerprint this audio ({e})	Δεν είναι δυνατή η λήψη αποτυπώματος αυτού του ήχου ({e})
+Can't read this folder: {e}	Δεν είναι δυνατή η ανάγνωση αυτού του φακέλου: {e}
+Can't write tags to this format ({e})	Δεν είναι δυνατή η εγγραφή ετικετών σε αυτή τη μορφή ({e})
+Cancel	Ακύρωση
+Change	Αλλαγή
+Change Keyboard Shortcuts…	Αλλαγή συντομεύσεων πληκτρολογίου…
+Change speed and pitch	Αλλαγή ταχύτητας και τονικού ύψους
+Channels	Κανάλια
+Channels: mono	Κανάλια: μονοφωνικό
+Channels: stereo	Κανάλια: στερεοφωνικό
+Channels: swap left and right	Κανάλια: εναλλαγή αριστερού και δεξιού
+Check for updates	Έλεγχος για ενημερώσεις
+Chords	Συγχορδίες
+Chords: after loading	Συγχορδίες: μετά τη φόρτωση
+Chords: measuring…	Συγχορδίες: μέτρηση…
+Clicks	Κλικ
+Clicks on the found beats	Κλικ στους χτύπους που βρέθηκαν
+Close	Κλείσιμο
+Codec	Κωδικοποιητής
+Colours	Χρώματα
+Continue	Συνέχεια
+Contribute	Συνεισφορά
+Contribute to AcoustID?	Συνεισφορά στο AcoustID;
+Copied the file	Το αρχείο αντιγράφηκε
+Copy	Αντιγραφή
+Copy File	Αντιγραφή αρχείου
+Copy Path	Αντιγραφή διαδρομής
+Couldn't bring back {name}: {e}	Δεν ήταν δυνατή η επαναφορά του {name}: {e}
+Couldn't copy the file: {e}	Δεν ήταν δυνατή η αντιγραφή του αρχείου: {e}
+Couldn't delete the file: {e}	Δεν ήταν δυνατή η διαγραφή του αρχείου: {e}
+Cover	Εξώφυλλο
+Cover added to 1 track	Εξώφυλλο προστέθηκε σε 1 κομμάτι
+Cover added to {n} of {total} tracks (not: {failed})	Εξώφυλλο προστέθηκε σε {n} από {total} κομμάτια (όχι: {failed})
+Cover added to {n} tracks	Εξώφυλλο προστέθηκε σε {n} κομμάτια
+Cover at 256 px	Εξώφυλλο στα 256 px
+Cover removed from 1 track	Εξώφυλλο αφαιρέθηκε από 1 κομμάτι
+Cover removed from {n} of {total} tracks (not: {failed})	Εξώφυλλο αφαιρέθηκε από {n} από {total} κομμάτια (όχι: {failed})
+Cover removed from {n} tracks	Εξώφυλλο αφαιρέθηκε από {n} κομμάτια
+Crop	Περικοπή
+Current cover	Τρέχον εξώφυλλο
+Custom ({value})…	Προσαρμοσμένο ({value})…
+Custom loudness…	Προσαρμοσμένη ακουστότητα…
+Custom peak…	Προσαρμοσμένη κορυφή…
+Custom…	Προσαρμοσμένο…
+Cut out	Αποκοπή
+Dark	Σκούρο
+Data from Discogs.	Δεδομένα από το Discogs.
+Decoding…	Αποκωδικοποίηση…
+DeepFilterNet3 — speech, 48 kHz	DeepFilterNet3 — ομιλία, 48 kHz
+Delete file?	Διαγραφή αρχείου;
+Delete…	Διαγραφή…
+Discard edits	Απόρριψη επεξεργασιών
+Discogs can't be reached ({e})	Το Discogs δεν είναι προσβάσιμο ({e})
+Discogs is busy; try again in a minute.	Το Discogs είναι απασχολημένο· δοκιμάστε ξανά σε ένα λεπτό.
+Discogs now asks for a token; this lookup can't run.	Το Discogs ζητά πλέον token· αυτή η αναζήτηση δεν μπορεί να γίνει.
+Discogs…	Discogs…
+Do Ré Mi	Ντο Ρε Μι
+Do you want to contribute this track's fingerprint to AcoustID? AcoustID will then recognise {title} — {artist} for everyone.	Θέλετε να συνεισφέρετε το αποτύπωμα αυτού του κομματιού στο AcoustID; Τότε το AcoustID θα αναγνωρίζει το {title} — {artist} για όλους.
+Double the tempo	Διπλασιασμός τέμπο
+Download	Λήψη
+Download AI Runtime ({mb} MB)	Λήψη περιβάλλοντος εκτέλεσης ΤΝ ({mb} MB)
+Download AI Runtime ({mb} MB)…	Λήψη περιβάλλοντος εκτέλεσης ΤΝ ({mb} MB)…
+Download GPU Support	Λήψη υποστήριξης GPU
+Downloaded from Microsoft (ONNX Runtime's WebGPU plugin, via its official PyPI package).	Λήψη από τη Microsoft (το πρόσθετο WebGPU του ONNX Runtime, μέσω του επίσημου πακέτου PyPI).
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Λήψη από τη Microsoft (ONNX Runtime) και την NVIDIA (βιβλιοθήκες CUDA, μέσω των επίσημων πακέτων PyPI τους).
+Drag on the waveform to select	Σύρετε πάνω στην κυματομορφή για επιλογή
+Each stretch of speech with its start and end, to save as an .srt file	Κάθε τμήμα ομιλίας με την αρχή και το τέλος του, για αποθήκευση ως αρχείο .srt
+Edit	Επεξεργασία
+Effects	Εφέ
+Europe	Ευρώπη
+FFT size	Μέγεθος FFT
+FLAC (lossless)	FLAC (χωρίς απώλειες)
+Fade in	Σταδιακή είσοδος
+Fade out	Σταδιακή έξοδος
+Faint noise	Αχνός θόρυβος
+Fetching details…	Λήψη λεπτομερειών…
+File	Αρχείο
+File changed	Το αρχείο άλλαξε
+File size	Μέγεθος αρχείου
+Fill In All Tracks	Συμπλήρωση όλων των κομματιών
+Fill Metadata From	Συμπλήρωση μεταδεδομένων από
+Fill from Discogs	Συμπλήρωση από το Discogs
+Fill from Discogs…	Συμπλήρωση από το Discogs…
+Fill from MusicBrainz	Συμπλήρωση από το MusicBrainz
+Fill from MusicBrainz…	Συμπλήρωση από το MusicBrainz…
+Fill from Wikipedia	Συμπλήρωση από τη Wikipedia
+Fill from Wikipedia…	Συμπλήρωση από τη Wikipedia…
+Fills Track Info's tag editor; Save… there writes the tags	Συμπληρώνει τον επεξεργαστή ετικετών των Πληροφοριών κομματιού· η Αποθήκευση… εκεί γράφει τις ετικέτες
+Find Beats	Εύρεση χτύπων
+Fingerprint sent to AcoustID; lookups find it once it's processed.	Το αποτύπωμα στάλθηκε στο AcoustID· οι αναζητήσεις θα το βρουν μόλις επεξεργαστεί.
+Fingerprinting {i} of {n}: {file}	Αποτύπωμα {i} από {n}: {file}
+Fit	Προσαρμογή
+Fit cover space	Προσαρμογή στον χώρο του εξωφύλλου
+Flats (Db)	Υφέσεις (Db)
+Folder	Φάκελος
+Follow system	Όπως το σύστημα
+Font size:	Μέγεθος γραμματοσειράς:
+Format	Μορφή
+Found {n} beats, ≈ {bpm} BPM. Metronome on (volume button).	Βρέθηκαν {n} χτύποι, ≈ {bpm} BPM. Μετρονόμος ενεργός (κουμπί έντασης).
+Found {n} beats. Metronome on (volume button).	Βρέθηκαν {n} χτύποι. Μετρονόμος ενεργός (κουμπί έντασης).
+Full	Πλήρης
+Full Screen	Πλήρης οθόνη
+Full takes away all the noise it finds; a limit keeps some, for a more natural sound	Η Πλήρης αφαιρεί όλο τον θόρυβο που βρίσκει· ένα όριο κρατά λίγο, για πιο φυσικό ήχο
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel και άλλες, πειραματικό)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU support	Υποστήριξη GPU
+GPU support (AMD, Intel and others)	Υποστήριξη GPU (AMD, Intel και άλλες)
+Gain	Ενίσχυση
+Gain: custom…	Ενίσχυση: προσαρμοσμένη…
+Gain: {db} dB	Ενίσχυση: {db} dB
+General	Γενικά
+Genre	Είδος
+Get a key	Λήψη κλειδιού
+Get your user key	Λήψη του κλειδιού χρήστη
+Gray	Γκρι
+HTDemucs v4 — drums, bass, other, vocals	HTDemucs v4 — τύμπανα, μπάσο, άλλα, φωνή
+Half the tempo	Μισό τέμπο
+Hamming	Hamming
+Hann	Hann
+Held notes	Κρατημένες νότες
+High contrast	Υψηλή αντίθεση
+Higher: fewer, surer notes start	Υψηλότερο: λιγότερες, πιο σίγουρες αρχές νοτών
+Higher: notes end sooner, quiet ones are left out	Υψηλότερο: οι νότες τελειώνουν νωρίτερα, οι σιγανές παραλείπονται
+Hiss	Σφύριγμα
+Hop	Βήμα
+Identify Album	Αναγνώριση άλμπουμ
+Identify Album…	Αναγνώριση άλμπουμ…
+Identify Track	Αναγνώριση κομματιού
+Identify Track needs one; it is free for non-commercial use.	Η Αναγνώριση κομματιού το χρειάζεται· είναι δωρεάν για μη εμπορική χρήση.
+Identify Track…	Αναγνώριση κομματιού…
+Image	Εικόνα
+In order	Με τη σειρά
+Instrument range	Έκταση οργάνου
+It already has that name.	Έχει ήδη αυτό το όνομα.
+It's all quieter than that; nothing trimmed	Όλα είναι πιο σιγανά από αυτό· δεν κόπηκε τίποτα
+It's no longer in the Trash.	Δεν βρίσκεται πλέον στα Απορρίμματα.
+Its unsaved edits will be lost.	Οι μη αποθηκευμένες επεξεργασίες του θα χαθούν.
+Keep current	Διατήρηση τρέχοντος
+Key	Τονικότητα
+Key ≈ {key}	Τονικότητα ≈ {key}
+Keyboard Shortcuts	Συντομεύσεις πληκτρολογίου
+Label size	Μέγεθος ετικετών
+Language	Γλώσσα
+Language:	Γλώσσα:
+Length	Διάρκεια
+Levels	Στάθμες
+Licence ({n} of {count}) — {title}	Άδεια ({n} από {count}) — {title}
+Licence — {title}	Άδεια — {title}
+Light	Φωτεινό
+Line	Γραμμή
+Local AI	Τοπική ΤΝ
+Look up	Αναζήτηση
+Looking up…	Αναζήτηση…
+Loop selection	Επανάληψη επιλογής
+Loudness	Ακουστότητα
+Lower finds more beats, also where the model is unsure	Χαμηλότερο βρίσκει περισσότερους χτύπους, και όπου το μοντέλο δεν είναι σίγουρο
+Lowest frequency	Χαμηλότερη συχνότητα
+MIDI file is too big	Το αρχείο MIDI είναι πολύ μεγάλο
+MIDI file is too long	Το αρχείο MIDI είναι πολύ μακρύ
+MIDI tempo	Τέμπο MIDI
+MP3 can't hold {khz} kHz audio; save as FLAC or WAV instead	Το MP3 δεν χωρά ήχο {khz} kHz· αποθηκεύστε ως FLAC ή WAV
+MP3 holds mono or stereo only; save as FLAC or WAV instead	Το MP3 χωρά μόνο μονοφωνικό ή στερεοφωνικό· αποθηκεύστε ως FLAC ή WAV
+MP3: LAME failed to start	MP3: το LAME δεν μπόρεσε να ξεκινήσει
+Magma	Μάγμα
+Make soundglass my default player	Να γίνει το soundglass η προεπιλεγμένη μου εφαρμογή αναπαραγωγής
+Make soundglass the default player	Να γίνει το soundglass η προεπιλεγμένη εφαρμογή αναπαραγωγής
+Matches on this album are listed first	Οι αντιστοιχίες σε αυτό το άλμπουμ εμφανίζονται πρώτες
+Matches on this album are listed first; it isn't sent	Οι αντιστοιχίες σε αυτό το άλμπουμ εμφανίζονται πρώτες· δεν αποστέλλεται
+Melody to MIDI	Μελωδία σε MIDI
+Metronome	Μετρονόμος
+Mono	Μονοφωνικό
+More overlap between the 7.8 s segments: smoother joins, slower	Περισσότερη επικάλυψη μεταξύ των τμημάτων 7,8 δ: ομαλότερες ενώσεις, πιο αργά
+Moved to the Trash	Μετακινήθηκε στα Απορρίμματα
+MusicBrainz can't be reached ({e})	Το MusicBrainz δεν είναι προσβάσιμο ({e})
+MusicBrainz…	MusicBrainz…
+Name	Όνομα
+Next	Επόμενο
+No album cover	Χωρίς εξώφυλλο άλμπουμ
+No album found.	Δεν βρέθηκε άλμπουμ.
+No audio files in {name}	Δεν υπάρχουν αρχεία ήχου στο {name}
+No audio files or folders here	Δεν υπάρχουν αρχεία ήχου ή φάκελοι εδώ
+No file open	Κανένα ανοιχτό αρχείο
+No match found.	Δεν βρέθηκε αντιστοιχία.
+No silence at the start or end to trim	Δεν υπάρχει σιωπή στην αρχή ή στο τέλος για περικοπή
+None	Κανένα
+None (whole range)	Κανένα (όλο το εύρος)
+None of these tags is set.	Καμία από αυτές τις ετικέτες δεν είναι ορισμένη.
+Normalize	Κανονικοποίηση
+Normalize loudness	Κανονικοποίηση ακουστότητας
+Normalize peak	Κανονικοποίηση κορυφής
+Normalize: custom loudness…	Κανονικοποίηση: προσαρμοσμένη ακουστότητα…
+Normalize: custom peak…	Κανονικοποίηση: προσαρμοσμένη κορυφή…
+Normalize: {name} ({db} dBFS)	Κανονικοποίηση: {name} ({db} dBFS)
+Normalize: {name} ({lufs} LUFS)	Κανονικοποίηση: {name} ({lufs} LUFS)
+Not Now	Όχι τώρα
+Note threshold	Κατώφλι νότας
+Notes	Νότες
+Notes from	Νότες από
+Nothing to normalize: it's silent	Τίποτα για κανονικοποίηση: είναι σιωπή
+OK	OK
+Octave numbers	Αριθμοί οκτάβας
+Ogg Vorbis (q6)	Ogg Vorbis (q6)
+On the selection	Στην επιλογή
+On the whole track	Σε όλο το κομμάτι
+Only fill empty tags	Συμπλήρωση μόνο κενών ετικετών
+Only how the file's beats are counted; the notes keep their times	Μόνο ο τρόπος μέτρησης των χτύπων του αρχείου· οι νότες κρατούν τους χρόνους τους
+Only needed to contribute fingerprints to AcoustID.	Χρειάζεται μόνο για συνεισφορά αποτυπωμάτων στο AcoustID.
+Onset threshold	Κατώφλι έναρξης
+Open Recent	Άνοιγμα πρόσφατου
+Open models folder	Άνοιγμα φακέλου μοντέλων
+Open project page	Άνοιγμα σελίδας έργου
+Open themes folder	Άνοιγμα φακέλου θεμάτων
+Open…	Άνοιγμα…
+Other lines	Άλλες γραμμές
+Output	Έξοδος
+Overlap	Επικάλυψη
+Parakeet TDT 0.6B v3 — 25 European languages, more accurate	Parakeet TDT 0.6B v3 — 25 ευρωπαϊκές γλώσσες, πιο ακριβές
+Pause	Παύση
+Peak	Κορυφή
+Peak at max	Κορυφή στο μέγιστο
+Peak near max	Κορυφή κοντά στο μέγιστο
+Piano synth	Συνθεσάιζερ πιάνου
+Pitch-preserved speed change	Αλλαγή ταχύτητας με διατήρηση τονικού ύψους
+Play	Αναπαραγωγή
+Play order, {name}	Σειρά αναπαραγωγής, {name}
+Please read and accept the licence before downloading.	Διαβάστε και αποδεχτείτε την άδεια πριν από τη λήψη.
+Position, seconds	Θέση, δευτερόλεπτα
+Practice	Εξάσκηση
+Practice mode	Λειτουργία εξάσκησης
+Press keys… (Esc to cancel)	Πατήστε πλήκτρα… (Esc για ακύρωση)
+Previous	Προηγούμενο
+Quit	Έξοδος
+Rectangular	Ορθογώνιο
+Redo	Επανάληψη
+Reload	Επαναφόρτωση
+Remember window size	Απομνημόνευση μεγέθους παραθύρου
+Remove	Αφαίρεση
+Remove Album Cover…	Αφαίρεση εξωφύλλου άλμπουμ…
+Remove Cover	Αφαίρεση εξωφύλλου
+Remove Noise	Αφαίρεση θορύβου
+Remove album cover	Αφαίρεση εξωφύλλου άλμπουμ
+Remove the cover from this track only, or from {what}? The music itself isn't changed.	Αφαίρεση του εξωφύλλου μόνο από αυτό το κομμάτι ή από {what}; Η ίδια η μουσική δεν αλλάζει.
+Remove the cover from this track? The music itself isn't changed.	Αφαίρεση του εξωφύλλου από αυτό το κομμάτι; Η ίδια η μουσική δεν αλλάζει.
+Rename	Μετονομασία
+Rename from Tags	Μετονομασία από ετικέτες
+Rename from Tags…	Μετονομασία από ετικέτες…
+Renamed to {name}	Μετονομάστηκε σε {name}
+Rename…	Μετονομασία…
+Repeat track	Επανάληψη κομματιού
+Replace…	Αντικατάσταση…
+Reset	Επαναφορά
+Reset All Shortcuts	Επαναφορά όλων των συντομεύσεων
+Reset to defaults	Επαναφορά προεπιλογών
+Restart soundglass to start using the GPU.	Επανεκκινήστε το soundglass για να αρχίσει να χρησιμοποιεί τη GPU.
+Reverse	Αντιστροφή
+Run the AI tools on the graphics card ({mb} MB, NVIDIA's CUDA libraries).	Εκτέλεση των εργαλείων ΤΝ στην κάρτα γραφικών ({mb} MB, βιβλιοθήκες CUDA της NVIDIA).
+Running on the CPU…	Εκτελείται στον επεξεργαστή…
+Running on the GPU…	Εκτελείται στη GPU…
+Same ({rate})	Ίδιο ({rate})
+Sample rate	Ρυθμός δειγματοληψίας
+Save As	Αποθήκευση ως
+Save As…	Αποθήκευση ως…
+Save Copy	Αποθήκευση αντιγράφου
+Save Cover	Αποθήκευση εξωφύλλου
+Save as Subtitles…	Αποθήκευση ως υπότιτλοι…
+Save as Text…	Αποθήκευση ως κείμενο…
+Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed.	Αποθήκευση του {name} ως εξωφύλλου αυτού του κομματιού ή {what}; Όποιο εξώφυλλο έχουν τώρα αντικαθίσταται. Η ίδια η μουσική δεν αλλάζει.
+Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed.	Αποθήκευση του {name} ως εξωφύλλου αυτού του κομματιού; Όποιο εξώφυλλο έχει τώρα αντικαθίσταται. Η ίδια η μουσική δεν αλλάζει.
+Saved {name}	Αποθηκεύτηκε: {name}
+Saved {name}, but the tags could not be copied	Το {name} αποθηκεύτηκε, αλλά οι ετικέτες δεν αντιγράφηκαν
+Save…	Αποθήκευση…
+Saving failed	Η αποθήκευση απέτυχε
+Saving {name}…	Αποθήκευση του {name}…
+Scale shown	Εμφανιζόμενη κλίμακα
+Seek bar:	Γραμμή θέσης:
+Sends each file's fingerprint and length to AcoustID, one a second, and one recording's ID to MusicBrainz for the genre. Nothing else leaves this computer.	Στέλνει το αποτύπωμα και τη διάρκεια κάθε αρχείου στο AcoustID, ένα ανά δευτερόλεπτο, και το ID μιας ηχογράφησης στο MusicBrainz για το είδος. Τίποτε άλλο δεν φεύγει από αυτόν τον υπολογιστή.
+Sends the fingerprint, its length and the MusicBrainz recording ID to AcoustID, with your user key. It is sent only if AcoustID doesn't know this fingerprint yet.	Στέλνει το αποτύπωμα, τη διάρκειά του και το ID ηχογράφησης MusicBrainz στο AcoustID, με το κλειδί χρήστη σας. Στέλνεται μόνο αν το AcoustID δεν γνωρίζει ακόμη αυτό το αποτύπωμα.
+Sends the title and artist to Discogs, and the chosen release's ID for its track list. Nothing else leaves this computer.	Στέλνει τον τίτλο και τον καλλιτέχνη στο Discogs, και το ID της επιλεγμένης έκδοσης για τη λίστα κομματιών. Τίποτε άλλο δεν φεύγει από αυτόν τον υπολογιστή.
+Sends the title and artist to English Wikipedia. Nothing else leaves this computer.	Στέλνει τον τίτλο και τον καλλιτέχνη στην αγγλική Wikipedia. Τίποτε άλλο δεν φεύγει από αυτόν τον υπολογιστή.
+Sends the title, artist and album to MusicBrainz, and the chosen match's ID for its genre. Nothing else leaves this computer.	Στέλνει τον τίτλο, τον καλλιτέχνη και το άλμπουμ στο MusicBrainz, και το ID της επιλεγμένης αντιστοιχίας για το είδος. Τίποτε άλλο δεν φεύγει από αυτόν τον υπολογιστή.
+Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer.	Στέλνει το αποτύπωμα και τη διάρκεια αυτού του αρχείου στο AcoustID, και το ID της επιλεγμένης αντιστοιχίας στο MusicBrainz. Τίποτε άλλο δεν φεύγει από αυτόν τον υπολογιστή.
+Sensitivity	Ευαισθησία
+Settings	Ρυθμίσεις
+Settings: {model}	Ρυθμίσεις: {model}
+Settings…	Ρυθμίσεις…
+Sharps (C#)	Διέσεις (C#)
+Shortest note	Συντομότερη νότα
+Show Log	Εμφάνιση αρχείου καταγραφής
+Show in Explorer	Εμφάνιση στην Εξερεύνηση
+Show in File Manager	Εμφάνιση στη διαχείριση αρχείων
+Show or hide the chords along the top	Εμφάνιση ή απόκρυψη των συγχορδιών στο πάνω μέρος
+Show or hide the note lines	Εμφάνιση ή απόκρυψη των γραμμών νοτών
+Show the notes of {major} major	Εμφάνιση των νοτών της {major} μείζονας
+Show the notes of {major} major, which {key} shares	Εμφάνιση των νοτών της {major} μείζονας, κοινών με {key}
+Show the whole track	Εμφάνιση όλου του κομματιού
+Show the whole track and all frequencies	Εμφάνιση όλου του κομματιού και όλων των συχνοτήτων
+Shuffle	Τυχαία σειρά
+Silence	Σιωπή
+Silent pieces are left out, so nothing is made up there	Τα σιωπηλά σημεία παραλείπονται, οπότε εκεί δεν επινοείται τίποτα
+Skip quieter than	Παράλειψη αν πιο σιγανό από
+Small: about 6 MB for a 4-minute stem	Μικρό: περίπου 6 MB για ένα κανάλι 4 λεπτών
+Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed.	Space, ←, →, Page Up, Page Down, L (Επανάληψη επιλογής), Esc και Enter είναι σταθερά.
+Space, ←, →, Page Up, Page Down, L, Esc, Enter and Ctrl+C/X/V	Space, ←, →, Page Up, Page Down, L, Esc, Enter και Ctrl+C/X/V
+Spectrogram	Φασματογράφημα
+Spectrogram settings	Ρυθμίσεις φασματογραφήματος
+Spectrogram — {name}	Φασματογράφημα — {name}
+Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around	Φασματογράφημα: κλικ για αναπαραγωγή από εκεί, σύρσιμο για επιλογή, κύλιση για μεγέθυνση, Ctrl+κύλιση για μεγέθυνση συχνοτήτων, σύρσιμο με δεξί κουμπί για μετακίνηση
+Split into Stems	Διαχωρισμός σε κανάλια
+Split into Stems takes mono or stereo tracks	Ο Διαχωρισμός σε κανάλια δέχεται μονοφωνικά ή στερεοφωνικά κομμάτια
+Stereo	Στερεοφωνικό
+Stopped after {i} of {n}	Διακόπηκε μετά από {i} από {n}
+Strength	Ένταση
+Subtitles	Υπότιτλοι
+Swap left and right	Εναλλαγή αριστερού και δεξιού
+Tags	Ετικέτες
+Tags saved	Οι ετικέτες αποθηκεύτηκαν
+Task	Εργασία
+Tempo	Τέμπο
+Tenor sax	Τενόρο σαξόφωνο
+Text	Κείμενο
+That image can't be read.	Αυτή η εικόνα δεν μπορεί να διαβαστεί.
+That image can't be used as a cover.	Αυτή η εικόνα δεν μπορεί να χρησιμοποιηθεί ως εξώφυλλο.
+That is the original file; choose another name. The original is never changed.	Αυτό είναι το αρχικό αρχείο· επιλέξτε άλλο όνομα. Το αρχικό δεν αλλάζει ποτέ.
+That isn't a valid file name.	Δεν είναι έγκυρο όνομα αρχείου.
+The AI runtime isn't installed yet.	Το περιβάλλον εκτέλεσης ΤΝ δεν έχει εγκατασταθεί ακόμη.
+The GPU couldn't be used, so the CPU is: {e}	Η GPU δεν μπορούσε να χρησιμοποιηθεί, οπότε χρησιμοποιείται ο επεξεργαστής: {e}
+The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face.	Το αρχείο ONNX είναι η εξαγωγή του StemSplit (βάρη σε μισή ακρίβεια), στο Hugging Face.
+The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face.	Το αρχείο ONNX είναι η εξαγωγή ροής torchDF του grazder, που φιλοξενεί το KimtOS στο Hugging Face.
+The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face.	Το αρχείο ONNX είναι η εξαγωγή του musetric για το σημείο ελέγχου final0 του JKU, στο Hugging Face.
+The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face.	Τα αρχεία ONNX είναι η μετατροπή int8 του istupakov για το onnx-asr, στο Hugging Face.
+The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.	Τα αρχεία ONNX είναι η εξαγωγή int8 του sherpa-onnx (k2-fsa), στο Hugging Face.
+The audio changes format partway.	Η μορφή του ήχου αλλάζει στην πορεία.
+The cover couldn't be written ({failed})	Το εξώφυλλο δεν γράφτηκε ({failed})
+The file has no audio.	Το αρχείο δεν έχει ήχο.
+The file is too short to identify.	Το αρχείο είναι πολύ σύντομο για αναγνώριση.
+The image is larger than 10 MB.	Η εικόνα είναι μεγαλύτερη από 10 MB.
+The key spells its notes	Η τονικότητα ορίζει τη γραφή των νοτών
+The lookup stopped.	Η αναζήτηση σταμάτησε.
+The original file is never changed.	Το αρχικό αρχείο δεν αλλάζει ποτέ.
+The reply couldn't be read ({e})	Η απάντηση δεν διαβάστηκε ({e})
+The reply wasn't understood.	Η απάντηση δεν έγινε κατανοητή.
+Theme:	Θέμα:
+This Track	Αυτό το κομμάτι
+This file's tags can't be read.	Οι ετικέτες αυτού του αρχείου δεν διαβάζονται.
+This match has no MusicBrainz recording to link to.	Αυτή η αντιστοιχία δεν έχει ηχογράφηση MusicBrainz για σύνδεση.
+This track has edits that aren't saved. The original file is never changed.	Αυτό το κομμάτι έχει μη αποθηκευμένες επεξεργασίες. Το αρχικό αρχείο δεν αλλάζει ποτέ.
+This track has no cover. Save {name} as the cover of {what}?	Αυτό το κομμάτι δεν έχει εξώφυλλο. Αποθήκευση του {name} ως εξωφύλλου {what};
+Time marks	Χρονικά σημάδια
+Time-preserved pitch change	Αλλαγή τονικού ύψους με διατήρηση διάρκειας
+Title	Τίτλος
+Title:	Τίτλος:
+Tonic line width	Πάχος γραμμής τονικής
+Tonic lines (C for all notes)	Γραμμές τονικής (C για όλες τις νότες)
+Too short or too quiet to measure its loudness	Πολύ σύντομο ή πολύ σιγανό για μέτρηση ακουστότητας
+Tools for musicians: loops, the spectrogram, tempo, key and chords	Εργαλεία για μουσικούς: βρόχοι, φασματογράφημα, τέμπο, τονικότητα και συγχορδίες
+Track	Κομμάτι
+Track Info	Πληροφορίες κομματιού
+Tracks that already have a cover get this one instead. The music itself isn't changed.	Τα κομμάτια που έχουν ήδη εξώφυλλο παίρνουν αυτό στη θέση του. Η ίδια η μουσική δεν αλλάζει.
+Transcribe	Μεταγραφή
+Transcribe Speech	Μεταγραφή ομιλίας
+Transcript	Απομαγνητοφώνηση
+Translate to English	Μετάφραση στα αγγλικά
+Trim silence	Περικοπή σιωπής
+Trim silence below	Περικοπή σιωπής κάτω από
+Trim silence: custom…	Περικοπή σιωπής: προσαρμοσμένη…
+Trim silence: {name} ({db} dB)	Περικοπή σιωπής: {name} ({db} dB)
+Trumpet	Τρομπέτα
+Tuning A4	Κούρδισμα A4
+Type a title to search for.	Πληκτρολογήστε έναν τίτλο για αναζήτηση.
+Undo	Αναίρεση
+Unsaved edits	Μη αποθηκευμένες επεξεργασίες
+Up one folder	Έναν φάκελο πάνω
+Use Match	Χρήση αντιστοιχίας
+Use the GPU	Χρήση της GPU
+Use the estimated key, {key}	Χρήση της εκτιμώμενης τονικότητας, {key}
+Use the estimated tempo	Χρήση του εκτιμώμενου τέμπο
+User key:	Κλειδί χρήστη:
+View	Προβολή
+Visualiser	Οπτικοποίηση
+Volume	Ένταση
+Volume, {percent} %	Ένταση, {percent} %
+Volume, {percent} %, metronome on	Ένταση, {percent} %, μετρονόμος ενεργός
+Waveform	Κυματομορφή
+Waveform position	Θέση στην κυματομορφή
+Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along	Κυματομορφή: κλικ για αναπαραγωγή από εκεί, σύρσιμο για επιλογή, κύλιση για μεγέθυνση, σύρσιμο με δεξί κουμπί για μετακίνηση
+Welcome to soundglass	Καλώς ήρθατε στο soundglass
+Whisper large-v3-turbo — 99 languages, best, slow on a CPU	Whisper large-v3-turbo — 99 γλώσσες, το καλύτερο, αργό σε επεξεργαστή
+Whisper small — 99 languages	Whisper small — 99 γλώσσες
+Whole selection	Όλη η επιλογή
+Wikipedia can't be reached ({e})	Η Wikipedia δεν είναι προσβάσιμη ({e})
+Wikipedia…	Wikipedia…
+Window function	Συνάρτηση παραθύρου
+Window size	Μήκος παραθύρου
+Window size:	Μέγεθος παραθύρου:
+Worldwide	Παγκοσμίως
+Write	Εγγραφή
+Write tags	Εγγραφή ετικετών
+Write the tags into {name}? The audio isn't changed.	Εγγραφή των ετικετών στο {name}; Ο ήχος δεν αλλάζει.
+Writes only the tags that are empty in each file	Γράφει μόνο τις ετικέτες που είναι κενές σε κάθε αρχείο
+Writes the album's tags into every matched file, replacing the tags there	Γράφει τις ετικέτες του άλμπουμ σε κάθε αντίστοιχο αρχείο, αντικαθιστώντας όσες υπάρχουν
+Writes the tags into the file; the audio isn't changed	Γράφει τις ετικέτες στο αρχείο· ο ήχος δεν αλλάζει
+Writing the tags failed	Η εγγραφή ετικετών απέτυχε
+Writing {i} of {n}	Εγγραφή {i} από {n}
+Year	Έτος
+Your own themes go in the themes folder. Choosing a theme again reloads its file.	Τα δικά σας θέματα μπαίνουν στον φάκελο θεμάτων. Η επιλογή ενός θέματος ξανά φορτώνει ξανά το αρχείο του.
+Zoom in (scroll; right-drag to move along)	Μεγέθυνση (κύλιση· σύρσιμο με δεξί κουμπί για μετακίνηση)
+Zoom out	Σμίκρυνση
+a GPU library was missing from the download	έλειπε μια βιβλιοθήκη GPU από τη λήψη
+add an AcoustID key in Settings	προσθέστε ένα κλειδί AcoustID στις Ρυθμίσεις
+after Local AI → Find Beats	μετά την Τοπική ΤΝ → Εύρεση χτύπων
+after loading	μετά τη φόρτωση
+all {n} tracks in this folder	και τα {n} κομμάτια αυτού του φακέλου
+already normal	ήδη κανονικό
+another AI tool is running	εκτελείται άλλο εργαλείο ΤΝ
+as it is	ως έχει
+can't make a folder next to the track ({e})	δεν είναι δυνατή η δημιουργία φακέλου δίπλα στο κομμάτι ({e})
+can't save a copy next to the original ({e})	δεν είναι δυνατή η αποθήκευση αντιγράφου δίπλα στο αρχικό ({e})
+choose at least one stem to write (AI Models → Settings)	επιλέξτε τουλάχιστον ένα κανάλι για εγγραφή (Μοντέλα ΤΝ → Ρυθμίσεις)
+close the tag editor first	κλείστε πρώτα τον επεξεργαστή ετικετών
+hop {hop} for this length	βήμα {hop} για αυτή τη διάρκεια
+line {line}: {key}="{v}": invalid value	γραμμή {line}: {key}="{v}": μη έγκυρη τιμή
+measuring…	μέτρηση…
+mode="{other}": invalid value	mode="{other}": μη έγκυρη τιμή
+needs a model: Local AI → AI Models…	χρειάζεται μοντέλο: Τοπική ΤΝ → Μοντέλα ΤΝ…
+needs the AI runtime: Local AI → Download AI Runtime…	χρειάζεται το περιβάλλον εκτέλεσης ΤΝ: Τοπική ΤΝ → Λήψη περιβάλλοντος εκτέλεσης ΤΝ…
+new image	νέα εικόνα
+no audio track	κανένα κανάλι ήχου
+no channels	κανένα κανάλι
+no data folder	δεν υπάρχει φάκελος δεδομένων
+no file name	κανένα όνομα αρχείου
+no file open	κανένα ανοιχτό αρχείο
+no notes were found	δεν βρέθηκαν νότες
+no sample rate	κανένας ρυθμός δειγματοληψίας
+no speech was found	δεν βρέθηκε ομιλία
+not a supported audio file ({e})	μη υποστηριζόμενο αρχείο ήχου ({e})
+not a transcription model	δεν είναι μοντέλο μεταγραφής
+not found	δεν βρέθηκε
+not found, left alone	δεν βρέθηκε, έμεινε ως έχει
+nothing to redo	τίποτα για επανάληψη
+nothing to undo	τίποτα για αναίρεση
+part of the track could not be read	μέρος του κομματιού δεν διαβάστηκε
+quality	ποιότητα
+removed	αφαιρέθηκε
+saving tags…	αποθήκευση ετικετών…
+select a part in the Edit panel	επιλέξτε ένα μέρος στον πίνακα Επεξεργασίας
+select at least half a second, or nothing for the whole track	επιλέξτε τουλάχιστον μισό δευτερόλεπτο, ή τίποτα για όλο το κομμάτι
+silent	σιωπή
+soundglass is now the default player	το soundglass είναι πλέον η προεπιλεγμένη εφαρμογή αναπαραγωγής
+the AI tool failed	το εργαλείο ΤΝ απέτυχε
+the AI tool stopped	το εργαλείο ΤΝ σταμάτησε
+the channel count changes mid-file	ο αριθμός καναλιών αλλάζει στη μέση του αρχείου
+the encoder failed	ο κωδικοποιητής απέτυχε
+the model gave an unexpected output	το μοντέλο έδωσε απρόσμενη έξοδο
+the saved file doesn't read back ({e})	το αποθηκευμένο αρχείο δεν διαβάζεται ξανά ({e})
+the saved file reads back wrong ({frames} frames, expected {expected})	το αποθηκευμένο αρχείο διαβάζεται λάθος ({frames} πλαίσια, αναμένονταν {expected})
+the settings aren't for this tool	οι ρυθμίσεις δεν είναι για αυτό το εργαλείο
+the sound device failed to open	η συσκευή ήχου δεν άνοιξε
+the tag writer failed	η εγγραφή ετικετών απέτυχε
+the track has no audio	το κομμάτι δεν έχει ήχο
+the track is still loading	το κομμάτι φορτώνεται ακόμη
+the track isn't fully loaded	το κομμάτι δεν έχει φορτωθεί πλήρως
+this file can't be decoded	αυτό το αρχείο δεν αποκωδικοποιείται
+this track	αυτό το κομμάτι
+to	έως
+track {n}	κομμάτι {n}
+unknown error	άγνωστο σφάλμα
+with unsaved edits, once loaded	με μη αποθηκευμένες επεξεργασίες, μετά τη φόρτωση
+writing the tags would change the audio, so nothing was written	η εγγραφή ετικετών θα άλλαζε τον ήχο, οπότε δεν γράφτηκε τίποτα
+{kbps} kb/s	{kbps} kb/s
+{keys} is already used by {other}	Το {keys} χρησιμοποιείται ήδη από {other}
+{key} major	{key} μείζονα
+{model} (installed)	{model} (εγκατεστημένο)
+{name} isn't an audio file soundglass plays	Το {name} δεν είναι αρχείο ήχου που αναπαράγει το soundglass
+{name} was changed by another program. Reload it?	Το {name} άλλαξε από άλλο πρόγραμμα. Επαναφόρτωση;
+{name} will be moved to the Trash.	Το {name} θα μετακινηθεί στον Κάδο απορριμμάτων.
+{name}: custom…	{name}: προσαρμοσμένο…
+{name}: whole selection	{name}: όλη η επιλογή
+{name}: {s} s	{name}: {s} δ
+{n} of {total} tracks	{n} από {total} κομμάτια
+{ok} written, {bad} failed	{ok} γράφτηκαν, {bad} απέτυχαν
+{path}: bigger than 64 KiB	{path}: μεγαλύτερο από 64 KiB
+{secs} s	{secs} δ
+{sign}{n} semitone	{sign}{n} ημιτόνιο
+{sign}{n} semitones	{sign}{n} ημιτόνια
+{task} (selection)	{task} (επιλογή)
+{what} installed.	Εγκαταστάθηκε: {what}.
+{what}: the download stopped.	{what}: η λήψη σταμάτησε.
+→ {n}	→ {n}
+−14 streaming, −23 TV	−14 streaming, −23 τηλεόραση
+−60 silence, −40 hiss	−60 σιωπή, −40 σφύριγμα

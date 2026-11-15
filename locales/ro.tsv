@@ -1,0 +1,551 @@
+ dB at most	 dB cel mult
+ semitones	 semitonuri
+0 (Normal)	0 (normal)
+0 = max	0 = maxim
+1 (mono)	1 (mono)
+16-bit	16 biți
+1× (Normal)	1× (normal)
+2 (stereo)	2 (stereo)
+24-bit	24 de biți
+32-bit float	32 de biți virgulă mobilă
+<{tag}>: invalid value	<{tag}>: valoare nevalidă
+A code such as en, es, fr, de; empty to detect it from the first speech	Un cod ca en, es, fr, de; gol pentru a-l detecta din prima vorbire
+A file with that name already exists.	Există deja un fișier cu acest nume.
+A long track: the hop is raised so the spectrogram fits in memory	Piesă lungă: pasul este mărit ca spectrograma să încapă în memorie
+AI Models	Modele AI
+AI Models…	Modele AI…
+AI runtime (ONNX Runtime)	Mediu de rulare AI (ONNX Runtime)
+About 50 MB for a 4-minute stem, for further editing	Cam 50 MB pentru o pistă de 4 minute, pentru editare ulterioară
+Accept and Continue	Acceptă și continuă
+Accept and Download	Acceptă și descarcă
+AcoustID Settings	Setări AcoustID
+AcoustID can't be reached ({e})	AcoustID nu poate fi contactat ({e})
+AcoustID: {why}	AcoustID: {why}
+Add AcoustID User Key	Adaugă cheie de utilizator AcoustID
+Add Cover	Adaugă copertă
+Add album cover?	Adaugi coperta albumului?
+Add your AcoustID application key and user key in Settings to contribute.	Adaugă cheia de aplicație și cheia de utilizator AcoustID în Setări pentru a contribui.
+Add/Replace Album Cover…	Adaugă/înlocuiește coperta albumului…
+Album	Album
+Album cover	Coperta albumului
+Album:	Album:
+All notes	Toate notele
+All {n} Tracks	Toate cele {n} piese
+Already in AcoustID; nothing was sent.	Este deja în AcoustID; nu s-a trimis nimic.
+Also find notes without a clear start	Găsește și note fără un început clar
+Analysis	Analiză
+Any graphics card with Vulkan or Direct3D 12 ({mb} MB). A weak built-in one can be slower than the CPU.	Orice placă grafică cu Vulkan sau Direct3D 12 ({mb} MB). Una integrată slabă poate fi mai lentă decât procesorul.
+Application key:	Cheie de aplicație:
+Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.	Se aplică la următoarea deschidere a soundglass; fereastra, Informații piesă și panoul Editare rămân ca la ieșire.
+Apply and Rename	Aplică și redenumește
+Apply speed and pitch	Aplică viteza și înălțimea
+Apply to All Tracks	Aplică la toate piesele
+Artist	Artist
+Artist:	Artist:
+As Apply to All Tracks, then renames each file with the Rename from Tags pattern	Ca Aplică la toate piesele, apoi redenumește fiecare fișier după modelul Redenumire din etichete
+As TV	Ca la TV
+As podcasts	Ca podcasturile
+As streaming	Ca streamingul
+As subtitles (.srt)	Ca subtitrări (.srt)
+Audio	Audio
+BPM	BPM
+BPM tag saved ({bpm})	Eticheta BPM a fost salvată ({bpm})
+Basic Pitch — any instrument, several notes at once	Basic Pitch — orice instrument, mai multe note deodată
+Basic Pitch's melodia trick	Trucul melodia al Basic Pitch
+Beat This! — beats and downbeats	Beat This! — bătăi și timpi tari
+Bit depth	Adâncime de biți
+Bitrate	Rată de biți
+Blackman–Harris	Blackman–Harris
+Blue to red	Albastru spre roșu
+C D E	C D E
+CUDA: Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050. WebGPU: Find Beats only, about 2× faster (Split into Stems was slower than the CPU). The other tools are faster on the CPU. With both installed, NVIDIA's is used	CUDA: Separă în piste și Găsește bătăile, de 2,6–3× mai rapid pe un GTX 1050. WebGPU: doar Găsește bătăile, cam de 2× mai rapid (Separă în piste era mai lent decât procesorul). Celelalte instrumente sunt mai rapide pe procesor. Cu ambele instalate se folosește cel NVIDIA
+Can't fingerprint this audio ({e})	Nu se poate crea amprenta acestui audio ({e})
+Can't read this folder: {e}	Nu se poate citi acest dosar: {e}
+Can't write tags to this format ({e})	Nu se pot scrie etichete în acest format ({e})
+Cancel	Anulează
+Change	Schimbă
+Change Keyboard Shortcuts…	Schimbă comenzile rapide…
+Change speed and pitch	Schimbă viteza și înălțimea
+Channels	Canale
+Channels: mono	Canale: mono
+Channels: stereo	Canale: stereo
+Channels: swap left and right	Canale: inversează stânga și dreapta
+Check for updates	Caută actualizări
+Chords	Acorduri
+Chords: after loading	Acorduri: după încărcare
+Chords: measuring…	Acorduri: se măsoară…
+Clicks	Clicuri
+Clicks on the found beats	Clicuri pe bătăile găsite
+Close	Închide
+Codec	Codec
+Colours	Culori
+Continue	Continuă
+Contribute	Contribuie
+Contribute to AcoustID?	Contribui la AcoustID?
+Copied the file	Fișierul a fost copiat
+Copy	Copiază
+Copy File	Copiază fișierul
+Copy Path	Copiază calea
+Couldn't bring back {name}: {e}	{name} nu a putut fi readus: {e}
+Couldn't copy the file: {e}	Fișierul nu a putut fi copiat: {e}
+Couldn't delete the file: {e}	Fișierul nu a putut fi șters: {e}
+Cover	Copertă
+Cover added to 1 track	Copertă adăugată la 1 piesă
+Cover added to {n} of {total} tracks (not: {failed})	Copertă adăugată la {n} din {total} piese (nu: {failed})
+Cover added to {n} tracks	Copertă adăugată la {n} piese
+Cover at 256 px	Copertă la 256 px
+Cover removed from 1 track	Copertă eliminată din 1 piesă
+Cover removed from {n} of {total} tracks (not: {failed})	Copertă eliminată din {n} din {total} piese (nu: {failed})
+Cover removed from {n} tracks	Copertă eliminată din {n} piese
+Crop	Decupează
+Current cover	Coperta actuală
+Custom ({value})…	Personalizat ({value})…
+Custom loudness…	Intensitate personalizată…
+Custom peak…	Vârf personalizat…
+Custom…	Personalizat…
+Cut out	Taie
+Dark	Întunecată
+Data from Discogs.	Date de la Discogs.
+Decoding…	Se decodează…
+DeepFilterNet3 — speech, 48 kHz	DeepFilterNet3 — vorbire, 48 kHz
+Delete file?	Ștergi fișierul?
+Delete…	Șterge…
+Discard edits	Renunță la editări
+Discogs can't be reached ({e})	Discogs nu poate fi contactat ({e})
+Discogs is busy; try again in a minute.	Discogs e ocupat; încearcă din nou peste un minut.
+Discogs now asks for a token; this lookup can't run.	Discogs cere acum un token; această căutare nu poate rula.
+Discogs…	Discogs…
+Do Ré Mi	Do Re Mi
+Do you want to contribute this track's fingerprint to AcoustID? AcoustID will then recognise {title} — {artist} for everyone.	Vrei să contribui cu amprenta acestei piese la AcoustID? Atunci AcoustID va recunoaște {title} — {artist} pentru toată lumea.
+Double the tempo	Dublează tempoul
+Download	Descarcă
+Download AI Runtime ({mb} MB)	Descarcă mediul de rulare AI ({mb} MB)
+Download AI Runtime ({mb} MB)…	Descarcă mediul de rulare AI ({mb} MB)…
+Download GPU Support	Descarcă suportul GPU
+Downloaded from Microsoft (ONNX Runtime's WebGPU plugin, via its official PyPI package).	Descărcat de la Microsoft (pluginul WebGPU al ONNX Runtime, prin pachetul său oficial PyPI).
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Descărcat de la Microsoft (ONNX Runtime) și NVIDIA (biblioteci CUDA, prin pachetele lor oficiale PyPI).
+Drag on the waveform to select	Trage pe formă de undă pentru a selecta
+Each stretch of speech with its start and end, to save as an .srt file	Fiecare porțiune de vorbire cu începutul și sfârșitul ei, de salvat ca fișier .srt
+Edit	Editare
+Effects	Efecte
+Europe	Europa
+FFT size	Dimensiune FFT
+FLAC (lossless)	FLAC (fără pierderi)
+Fade in	Intrare graduală
+Fade out	Ieșire graduală
+Faint noise	Zgomot slab
+Fetching details…	Se obțin detaliile…
+File	Fișier
+File changed	Fișier modificat
+File size	Dimensiune fișier
+Fill In All Tracks	Completează toate piesele
+Fill Metadata From	Completează metadatele din
+Fill from Discogs	Completează din Discogs
+Fill from Discogs…	Completează din Discogs…
+Fill from MusicBrainz	Completează din MusicBrainz
+Fill from MusicBrainz…	Completează din MusicBrainz…
+Fill from Wikipedia	Completează din Wikipedia
+Fill from Wikipedia…	Completează din Wikipedia…
+Fills Track Info's tag editor; Save… there writes the tags	Completează editorul de etichete din Informații piesă; Salvează… de acolo scrie etichetele
+Find Beats	Găsește bătăile
+Fingerprint sent to AcoustID; lookups find it once it's processed.	Amprenta a fost trimisă la AcoustID; căutările o vor găsi după procesare.
+Fingerprinting {i} of {n}: {file}	Amprentă {i} din {n}: {file}
+Fit	Potrivește
+Fit cover space	Potrivește în spațiul copertei
+Flats (Db)	Bemoli (Db)
+Folder	Dosar
+Follow system	Urmează sistemul
+Font size:	Mărime font:
+Format	Format
+Found {n} beats, ≈ {bpm} BPM. Metronome on (volume button).	{n} bătăi găsite, ≈ {bpm} BPM. Metronom pornit (butonul de volum).
+Found {n} beats. Metronome on (volume button).	{n} bătăi găsite. Metronom pornit (butonul de volum).
+Full	Complet
+Full Screen	Ecran complet
+Full takes away all the noise it finds; a limit keeps some, for a more natural sound	Complet elimină tot zgomotul găsit; o limită păstrează puțin, pentru un sunet mai natural
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel și altele, experimental)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU support	Suport GPU
+GPU support (AMD, Intel and others)	Suport GPU (AMD, Intel și altele)
+Gain	Amplificare
+Gain: custom…	Amplificare: personalizată…
+Gain: {db} dB	Amplificare: {db} dB
+General	General
+Genre	Gen
+Get a key	Obține o cheie
+Get your user key	Obține cheia de utilizator
+Gray	Gri
+HTDemucs v4 — drums, bass, other, vocals	HTDemucs v4 — tobe, bas, altele, voce
+Half the tempo	Înjumătățește tempoul
+Hamming	Hamming
+Hann	Hann
+Held notes	Note ținute
+High contrast	Contrast ridicat
+Higher: fewer, surer notes start	Mai mare: mai puține începuturi de notă, mai sigure
+Higher: notes end sooner, quiet ones are left out	Mai mare: notele se termină mai devreme, cele slabe sunt omise
+Hiss	Șuierat
+Hop	Pas
+Identify Album	Identifică albumul
+Identify Album…	Identifică albumul…
+Identify Track	Identifică piesa
+Identify Track needs one; it is free for non-commercial use.	Identifică piesa are nevoie de una; e gratuită pentru uz necomercial.
+Identify Track…	Identifică piesa…
+Image	Imagine
+In order	În ordine
+Instrument range	Ambitusul instrumentului
+It already has that name.	Are deja acest nume.
+It's all quieter than that; nothing trimmed	Totul e mai încet de atât; nu s-a tăiat nimic
+It's no longer in the Trash.	Nu mai este în Coșul de gunoi.
+Its unsaved edits will be lost.	Editările nesalvate se vor pierde.
+Keep current	Păstrează actuala
+Key	Tonalitate
+Key ≈ {key}	Tonalitate ≈ {key}
+Keyboard Shortcuts	Comenzi rapide de la tastatură
+Label size	Mărimea etichetelor
+Language	Limbă
+Language:	Limbă:
+Length	Durată
+Levels	Niveluri
+Licence ({n} of {count}) — {title}	Licență ({n} din {count}) — {title}
+Licence — {title}	Licență — {title}
+Light	Luminoasă
+Line	Linie
+Local AI	AI local
+Look up	Caută
+Looking up…	Se caută…
+Loop selection	Repetă selecția
+Loudness	Intensitate sonoră
+Lower finds more beats, also where the model is unsure	Mai mic găsește mai multe bătăi, inclusiv unde modelul e nesigur
+Lowest frequency	Cea mai joasă frecvență
+MIDI file is too big	Fișierul MIDI e prea mare
+MIDI file is too long	Fișierul MIDI e prea lung
+MIDI tempo	Tempo MIDI
+MP3 can't hold {khz} kHz audio; save as FLAC or WAV instead	MP3 nu poate conține audio la {khz} kHz; salvează ca FLAC sau WAV
+MP3 holds mono or stereo only; save as FLAC or WAV instead	MP3 conține doar mono sau stereo; salvează ca FLAC sau WAV
+MP3: LAME failed to start	MP3: LAME nu a putut porni
+Magma	Magma
+Make soundglass my default player	Fă din soundglass playerul meu implicit
+Make soundglass the default player	Fă din soundglass playerul implicit
+Matches on this album are listed first	Potrivirile de pe acest album apar primele
+Matches on this album are listed first; it isn't sent	Potrivirile de pe acest album apar primele; nu se trimite
+Melody to MIDI	Melodie în MIDI
+Metronome	Metronom
+Mono	Mono
+More overlap between the 7.8 s segments: smoother joins, slower	Mai multă suprapunere între segmentele de 7,8 s: îmbinări mai fine, mai lent
+Moved to the Trash	Mutat în Coșul de gunoi
+MusicBrainz can't be reached ({e})	MusicBrainz nu poate fi contactat ({e})
+MusicBrainz…	MusicBrainz…
+Name	Nume
+Next	Următoarea
+No album cover	Fără copertă de album
+No album found.	Niciun album găsit.
+No audio files in {name}	Niciun fișier audio în {name}
+No audio files or folders here	Aici nu sunt fișiere audio sau dosare
+No file open	Niciun fișier deschis
+No match found.	Nicio potrivire găsită.
+No silence at the start or end to trim	Nu există liniște la început sau la sfârșit de tăiat
+None	Niciunul
+None (whole range)	Niciunul (toată gama)
+None of these tags is set.	Niciuna dintre aceste etichete nu este setată.
+Normalize	Normalizează
+Normalize loudness	Normalizează intensitatea
+Normalize peak	Normalizează vârful
+Normalize: custom loudness…	Normalizează: intensitate personalizată…
+Normalize: custom peak…	Normalizează: vârf personalizat…
+Normalize: {name} ({db} dBFS)	Normalizează: {name} ({db} dBFS)
+Normalize: {name} ({lufs} LUFS)	Normalizează: {name} ({lufs} LUFS)
+Not Now	Nu acum
+Note threshold	Prag de notă
+Notes	Note
+Notes from	Note de la
+Nothing to normalize: it's silent	Nimic de normalizat: e liniște
+OK	OK
+Octave numbers	Numere de octavă
+Ogg Vorbis (q6)	Ogg Vorbis (q6)
+On the selection	Pe selecție
+On the whole track	Pe toată piesa
+Only fill empty tags	Completează doar etichetele goale
+Only how the file's beats are counted; the notes keep their times	Doar felul în care se numără bătăile fișierului; notele își păstrează timpii
+Only needed to contribute fingerprints to AcoustID.	Necesară doar pentru a contribui cu amprente la AcoustID.
+Onset threshold	Prag de început
+Open Recent	Deschide recente
+Open models folder	Deschide dosarul modelelor
+Open project page	Deschide pagina proiectului
+Open themes folder	Deschide dosarul temelor
+Open…	Deschide…
+Other lines	Alte linii
+Output	Ieșire
+Overlap	Suprapunere
+Parakeet TDT 0.6B v3 — 25 European languages, more accurate	Parakeet TDT 0.6B v3 — 25 de limbi europene, mai precis
+Pause	Pauză
+Peak	Vârf
+Peak at max	Vârf la maxim
+Peak near max	Vârf aproape de maxim
+Piano synth	Sintetizator de pian
+Pitch-preserved speed change	Schimbare de viteză cu înălțimea păstrată
+Play	Redă
+Play order, {name}	Ordine de redare, {name}
+Please read and accept the licence before downloading.	Citiți și acceptați licența înainte de descărcare.
+Position, seconds	Poziție, secunde
+Practice	Exersare
+Practice mode	Mod exersare
+Press keys… (Esc to cancel)	Apăsați tastele… (Esc pentru anulare)
+Previous	Anterioara
+Quit	Ieșire
+Rectangular	Dreptunghiulară
+Redo	Refă
+Reload	Reîncarcă
+Remember window size	Ține minte mărimea ferestrei
+Remove	Elimină
+Remove Album Cover…	Elimină coperta albumului…
+Remove Cover	Elimină coperta
+Remove Noise	Elimină zgomotul
+Remove album cover	Elimină coperta albumului
+Remove the cover from this track only, or from {what}? The music itself isn't changed.	Elimini coperta doar din această piesă sau din {what}? Muzica în sine nu se schimbă.
+Remove the cover from this track? The music itself isn't changed.	Elimini coperta din această piesă? Muzica în sine nu se schimbă.
+Rename	Redenumește
+Rename from Tags	Redenumire din etichete
+Rename from Tags…	Redenumire din etichete…
+Renamed to {name}	Redenumit în {name}
+Rename…	Redenumește…
+Repeat track	Repetă piesa
+Replace…	Înlocuiește…
+Reset	Resetează
+Reset All Shortcuts	Resetează toate comenzile rapide
+Reset to defaults	Revino la implicite
+Restart soundglass to start using the GPU.	Repornește soundglass pentru a începe să folosești GPU-ul.
+Reverse	Inversează
+Run the AI tools on the graphics card ({mb} MB, NVIDIA's CUDA libraries).	Rulează instrumentele AI pe placa grafică ({mb} MB, bibliotecile CUDA ale NVIDIA).
+Running on the CPU…	Rulează pe procesor…
+Running on the GPU…	Rulează pe GPU…
+Same ({rate})	La fel ({rate})
+Sample rate	Rată de eșantionare
+Save As	Salvează ca
+Save As…	Salvează ca…
+Save Copy	Salvează o copie
+Save Cover	Salvează coperta
+Save as Subtitles…	Salvează ca subtitrări…
+Save as Text…	Salvează ca text…
+Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed.	Salvezi {name} drept copertă a acestei piese sau a {what}? Orice copertă existentă este înlocuită. Muzica în sine nu se schimbă.
+Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed.	Salvezi {name} drept copertă a acestei piese? Coperta existentă este înlocuită. Muzica în sine nu se schimbă.
+Saved {name}	Salvat: {name}
+Saved {name}, but the tags could not be copied	{name} salvat, dar etichetele nu au putut fi copiate
+Save…	Salvează…
+Saving failed	Salvarea a eșuat
+Saving {name}…	Se salvează {name}…
+Scale shown	Gamă afișată
+Seek bar:	Bară de poziție:
+Sends each file's fingerprint and length to AcoustID, one a second, and one recording's ID to MusicBrainz for the genre. Nothing else leaves this computer.	Trimite amprenta și durata fiecărui fișier la AcoustID, câte una pe secundă, și ID-ul unei înregistrări la MusicBrainz pentru gen. Nimic altceva nu părăsește acest computer.
+Sends the fingerprint, its length and the MusicBrainz recording ID to AcoustID, with your user key. It is sent only if AcoustID doesn't know this fingerprint yet.	Trimite amprenta, durata ei și ID-ul înregistrării MusicBrainz la AcoustID, cu cheia ta de utilizator. Se trimite doar dacă AcoustID nu cunoaște încă această amprentă.
+Sends the title and artist to Discogs, and the chosen release's ID for its track list. Nothing else leaves this computer.	Trimite titlul și artistul la Discogs și ID-ul ediției alese pentru lista de piese. Nimic altceva nu părăsește acest computer.
+Sends the title and artist to English Wikipedia. Nothing else leaves this computer.	Trimite titlul și artistul la Wikipedia în engleză. Nimic altceva nu părăsește acest computer.
+Sends the title, artist and album to MusicBrainz, and the chosen match's ID for its genre. Nothing else leaves this computer.	Trimite titlul, artistul și albumul la MusicBrainz și ID-ul potrivirii alese pentru gen. Nimic altceva nu părăsește acest computer.
+Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer.	Trimite amprenta și durata acestui fișier la AcoustID și ID-ul potrivirii alese la MusicBrainz. Nimic altceva nu părăsește acest computer.
+Sensitivity	Sensibilitate
+Settings	Setări
+Settings: {model}	Setări: {model}
+Settings…	Setări…
+Sharps (C#)	Diezi (C#)
+Shortest note	Cea mai scurtă notă
+Show Log	Afișează jurnalul
+Show in Explorer	Arată în Explorer
+Show in File Manager	Arată în managerul de fișiere
+Show or hide the chords along the top	Arată sau ascunde acordurile de sus
+Show or hide the note lines	Arată sau ascunde liniile notelor
+Show the notes of {major} major	Arată notele din {major} major
+Show the notes of {major} major, which {key} shares	Arată notele din {major} major, comune cu {key}
+Show the whole track	Arată toată piesa
+Show the whole track and all frequencies	Arată toată piesa și toate frecvențele
+Shuffle	Amestecă
+Silence	Liniște
+Silent pieces are left out, so nothing is made up there	Porțiunile tăcute sunt omise, deci acolo nu se inventează nimic
+Skip quieter than	Omite sub
+Small: about 6 MB for a 4-minute stem	Mic: cam 6 MB pentru o pistă de 4 minute
+Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed.	Spațiu, ←, →, Page Up, Page Down, L (Repetă selecția), Esc și Enter sunt fixe.
+Space, ←, →, Page Up, Page Down, L, Esc, Enter and Ctrl+C/X/V	Spațiu, ←, →, Page Up, Page Down, L, Esc, Enter și Ctrl+C/X/V
+Spectrogram	Spectrogramă
+Spectrogram settings	Setări spectrogramă
+Spectrogram — {name}	Spectrogramă — {name}
+Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around	Spectrogramă: clic pentru a reda de acolo, trage pentru a selecta, derulează pentru zoom, Ctrl+derulare pentru zoom pe frecvențe, trage cu dreapta pentru a te deplasa
+Split into Stems	Separă în piste
+Split into Stems takes mono or stereo tracks	Separă în piste acceptă piese mono sau stereo
+Stereo	Stereo
+Stopped after {i} of {n}	Oprit după {i} din {n}
+Strength	Intensitate
+Subtitles	Subtitrări
+Swap left and right	Inversează stânga și dreapta
+Tags	Etichete
+Tags saved	Etichete salvate
+Task	Sarcină
+Tempo	Tempo
+Tenor sax	Saxofon tenor
+Text	Text
+That image can't be read.	Imaginea nu poate fi citită.
+That image can't be used as a cover.	Imaginea nu poate fi folosită drept copertă.
+That is the original file; choose another name. The original is never changed.	Acesta e fișierul original; alege alt nume. Originalul nu este modificat niciodată.
+That isn't a valid file name.	Acesta nu este un nume de fișier valid.
+The AI runtime isn't installed yet.	Mediul de rulare AI nu este încă instalat.
+The GPU couldn't be used, so the CPU is: {e}	GPU-ul nu a putut fi folosit, așa că se folosește procesorul: {e}
+The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face.	Fișierul ONNX este exportul StemSplit (ponderi stocate la jumătate de precizie), pe Hugging Face.
+The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face.	Fișierul ONNX este exportul torchDF pentru streaming al lui grazder, găzduit de KimtOS pe Hugging Face.
+The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face.	Fișierul ONNX este exportul făcut de musetric al punctului de control final0 al JKU, pe Hugging Face.
+The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face.	Fișierele ONNX sunt conversia int8 a lui istupakov pentru onnx-asr, pe Hugging Face.
+The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.	Fișierele ONNX sunt exportul int8 al sherpa-onnx (k2-fsa), pe Hugging Face.
+The audio changes format partway.	Formatul audio se schimbă pe parcurs.
+The cover couldn't be written ({failed})	Coperta nu a putut fi scrisă ({failed})
+The file has no audio.	Fișierul nu are audio.
+The file is too short to identify.	Fișierul e prea scurt pentru a fi identificat.
+The image is larger than 10 MB.	Imaginea e mai mare de 10 MB.
+The key spells its notes	Tonalitatea își scrie notele
+The lookup stopped.	Căutarea s-a oprit.
+The original file is never changed.	Fișierul original nu este modificat niciodată.
+The reply couldn't be read ({e})	Răspunsul nu a putut fi citit ({e})
+The reply wasn't understood.	Răspunsul nu a fost înțeles.
+Theme:	Temă:
+This Track	Această piesă
+This file's tags can't be read.	Etichetele acestui fișier nu pot fi citite.
+This match has no MusicBrainz recording to link to.	Această potrivire nu are o înregistrare MusicBrainz de legat.
+This track has edits that aren't saved. The original file is never changed.	Această piesă are editări nesalvate. Fișierul original nu este modificat niciodată.
+This track has no cover. Save {name} as the cover of {what}?	Această piesă nu are copertă. Salvezi {name} drept copertă a {what}?
+Time marks	Marcaje de timp
+Time-preserved pitch change	Schimbare de înălțime cu durata păstrată
+Title	Titlu
+Title:	Titlu:
+Tonic line width	Grosimea liniei tonicii
+Tonic lines (C for all notes)	Liniile tonicii (C pentru toate notele)
+Too short or too quiet to measure its loudness	Prea scurt sau prea încet pentru a-i măsura intensitatea
+Tools for musicians: loops, the spectrogram, tempo, key and chords	Instrumente pentru muzicieni: bucle, spectrogramă, tempo, tonalitate și acorduri
+Track	Piesă
+Track Info	Informații piesă
+Tracks that already have a cover get this one instead. The music itself isn't changed.	Piesele care au deja copertă o primesc pe aceasta în loc. Muzica în sine nu se schimbă.
+Transcribe	Transcrie
+Transcribe Speech	Transcrie vorbirea
+Transcript	Transcriere
+Translate to English	Tradu în engleză
+Trim silence	Taie liniștea
+Trim silence below	Taie liniștea sub
+Trim silence: custom…	Taie liniștea: personalizat…
+Trim silence: {name} ({db} dB)	Taie liniștea: {name} ({db} dB)
+Trumpet	Trompetă
+Tuning A4	Acordaj A4
+Type a title to search for.	Scrie un titlu de căutat.
+Undo	Anulează acțiunea
+Unsaved edits	Editări nesalvate
+Up one folder	Un dosar mai sus
+Use Match	Folosește potrivirea
+Use the GPU	Folosește GPU-ul
+Use the estimated key, {key}	Folosește tonalitatea estimată, {key}
+Use the estimated tempo	Folosește tempoul estimat
+User key:	Cheie de utilizator:
+View	Vizualizare
+Visualiser	Vizualizare
+Volume	Volum
+Volume, {percent} %	Volum, {percent} %
+Volume, {percent} %, metronome on	Volum, {percent} %, metronom pornit
+Waveform	Formă de undă
+Waveform position	Poziție pe forma de undă
+Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along	Formă de undă: clic pentru a reda de acolo, trage pentru a selecta, derulează pentru zoom, trage cu dreapta pentru a te deplasa
+Welcome to soundglass	Bun venit în soundglass
+Whisper large-v3-turbo — 99 languages, best, slow on a CPU	Whisper large-v3-turbo — 99 de limbi, cel mai bun, lent pe procesor
+Whisper small — 99 languages	Whisper small — 99 de limbi
+Whole selection	Toată selecția
+Wikipedia can't be reached ({e})	Wikipedia nu poate fi contactată ({e})
+Wikipedia…	Wikipedia…
+Window function	Funcție fereastră
+Window size	Lungimea ferestrei
+Window size:	Mărimea ferestrei:
+Worldwide	Întreaga lume
+Write	Scrie
+Write tags	Scrie etichetele
+Write the tags into {name}? The audio isn't changed.	Scrii etichetele în {name}? Audio nu se schimbă.
+Writes only the tags that are empty in each file	Scrie doar etichetele goale din fiecare fișier
+Writes the album's tags into every matched file, replacing the tags there	Scrie etichetele albumului în fiecare fișier potrivit, înlocuind etichetele de acolo
+Writes the tags into the file; the audio isn't changed	Scrie etichetele în fișier; audio nu se schimbă
+Writing the tags failed	Scrierea etichetelor a eșuat
+Writing {i} of {n}	Se scrie {i} din {n}
+Year	An
+Your own themes go in the themes folder. Choosing a theme again reloads its file.	Temele tale merg în dosarul de teme. Alegerea din nou a unei teme îi reîncarcă fișierul.
+Zoom in (scroll; right-drag to move along)	Mărește (derulare; trage cu dreapta pentru a te deplasa)
+Zoom out	Micșorează
+a GPU library was missing from the download	o bibliotecă GPU lipsea din descărcare
+add an AcoustID key in Settings	adaugă o cheie AcoustID în Setări
+after Local AI → Find Beats	după AI local → Găsește bătăile
+after loading	după încărcare
+all {n} tracks in this folder	toate cele {n} piese din acest dosar
+already normal	deja normal
+another AI tool is running	rulează alt instrument AI
+as it is	așa cum e
+can't make a folder next to the track ({e})	nu se poate crea un dosar lângă piesă ({e})
+can't save a copy next to the original ({e})	nu se poate salva o copie lângă original ({e})
+choose at least one stem to write (AI Models → Settings)	alege cel puțin o pistă de scris (Modele AI → Setări)
+close the tag editor first	închide mai întâi editorul de etichete
+hop {hop} for this length	pas {hop} pentru această durată
+line {line}: {key}="{v}": invalid value	linia {line}: {key}="{v}": valoare nevalidă
+measuring…	se măsoară…
+mode="{other}": invalid value	mode="{other}": valoare nevalidă
+needs a model: Local AI → AI Models…	necesită un model: AI local → Modele AI…
+needs the AI runtime: Local AI → Download AI Runtime…	necesită mediul de rulare AI: AI local → Descarcă mediul de rulare AI…
+new image	imagine nouă
+no audio track	nicio pistă audio
+no channels	niciun canal
+no data folder	niciun dosar de date
+no file name	niciun nume de fișier
+no file open	niciun fișier deschis
+no notes were found	nu s-au găsit note
+no sample rate	nicio rată de eșantionare
+no speech was found	nu s-a găsit vorbire
+not a supported audio file ({e})	nu e un fișier audio acceptat ({e})
+not a transcription model	nu e un model de transcriere
+not found	negăsit
+not found, left alone	negăsit, lăsat neschimbat
+nothing to redo	nimic de refăcut
+nothing to undo	nimic de anulat
+part of the track could not be read	o parte din piesă nu a putut fi citită
+quality	calitate
+removed	eliminată
+saving tags…	se salvează etichetele…
+select a part in the Edit panel	selectează o parte în panoul Editare
+select at least half a second, or nothing for the whole track	selectează cel puțin o jumătate de secundă, sau nimic pentru toată piesa
+silent	liniște
+soundglass is now the default player	soundglass este acum playerul implicit
+the AI tool failed	instrumentul AI a eșuat
+the AI tool stopped	instrumentul AI s-a oprit
+the channel count changes mid-file	numărul de canale se schimbă în mijlocul fișierului
+the encoder failed	codificatorul a eșuat
+the model gave an unexpected output	modelul a dat un rezultat neașteptat
+the saved file doesn't read back ({e})	fișierul salvat nu poate fi recitit ({e})
+the saved file reads back wrong ({frames} frames, expected {expected})	fișierul salvat se recitește greșit ({frames} cadre, se așteptau {expected})
+the settings aren't for this tool	setările nu sunt pentru acest instrument
+the sound device failed to open	dispozitivul de sunet nu a putut fi deschis
+the tag writer failed	scrierea etichetelor a eșuat
+the track has no audio	piesa nu are audio
+the track is still loading	piesa încă se încarcă
+the track isn't fully loaded	piesa nu e încărcată complet
+this file can't be decoded	acest fișier nu poate fi decodat
+this track	această piesă
+to	la
+track {n}	piesa {n}
+unknown error	eroare necunoscută
+with unsaved edits, once loaded	cu editări nesalvate, după încărcare
+writing the tags would change the audio, so nothing was written	scrierea etichetelor ar schimba sunetul, deci nu s-a scris nimic
+{kbps} kb/s	{kbps} kb/s
+{keys} is already used by {other}	{keys} este deja folosit de {other}
+{key} major	{key} major
+{model} (installed)	{model} (instalat)
+{name} isn't an audio file soundglass plays	{name} nu e un fișier audio pe care soundglass îl redă
+{name} was changed by another program. Reload it?	{name} a fost modificat de alt program. Reîncarci?
+{name} will be moved to the Trash.	{name} va fi mutat în Coșul de gunoi.
+{name}: custom…	{name}: personalizat…
+{name}: whole selection	{name}: toată selecția
+{name}: {s} s	{name}: {s} s
+{n} of {total} tracks	{n} din {total} piese
+{ok} written, {bad} failed	{ok} scrise, {bad} eșuate
+{path}: bigger than 64 KiB	{path}: mai mare de 64 KiB
+{secs} s	{secs} s
+{sign}{n} semitone	{sign}{n} semiton
+{sign}{n} semitones	{sign}{n} semitonuri
+{task} (selection)	{task} (selecție)
+{what} installed.	{what} instalat.
+{what}: the download stopped.	{what}: descărcarea s-a oprit.
+→ {n}	→ {n}
+−14 streaming, −23 TV	−14 streaming, −23 TV
+−60 silence, −40 hiss	−60 liniște, −40 șuierat

@@ -1,0 +1,551 @@
+ dB at most	 dB legfeljebb
+ semitones	 félhang
+0 (Normal)	0 (normál)
+0 = max	0 = maximum
+1 (mono)	1 (mono)
+16-bit	16 bites
+1× (Normal)	1× (normál)
+2 (stereo)	2 (sztereó)
+24-bit	24 bites
+32-bit float	32 bites lebegőpontos
+<{tag}>: invalid value	<{tag}>: érvénytelen érték
+A code such as en, es, fr, de; empty to detect it from the first speech	Egy kód, például en, es, fr, de; üresen az első beszédből ismeri fel
+A file with that name already exists.	Már van ilyen nevű fájl.
+A long track: the hop is raised so the spectrogram fits in memory	Hosszú szám: a lépésköz nagyobb, hogy a spektrogram elférjen a memóriában
+AI Models	MI-modellek
+AI Models…	MI-modellek…
+AI runtime (ONNX Runtime)	MI-futtatókörnyezet (ONNX Runtime)
+About 50 MB for a 4-minute stem, for further editing	Kb. 50 MB egy 4 perces sávra, további szerkesztéshez
+Accept and Continue	Elfogadás és folytatás
+Accept and Download	Elfogadás és letöltés
+AcoustID Settings	AcoustID-beállítások
+AcoustID can't be reached ({e})	Az AcoustID nem érhető el ({e})
+AcoustID: {why}	AcoustID: {why}
+Add AcoustID User Key	AcoustID-felhasználókulcs hozzáadása
+Add Cover	Borító hozzáadása
+Add album cover?	Hozzáadja az albumborítót?
+Add your AcoustID application key and user key in Settings to contribute.	A hozzájáruláshoz adja meg az AcoustID-alkalmazáskulcsát és felhasználókulcsát a Beállításokban.
+Add/Replace Album Cover…	Albumborító hozzáadása/cseréje…
+Album	Album
+Album cover	Albumborító
+Album:	Album:
+All notes	Minden hang
+All {n} Tracks	Mind a(z) {n} szám
+Already in AcoustID; nothing was sent.	Már szerepel az AcoustID-ben; semmi sem lett elküldve.
+Also find notes without a clear start	Egyértelmű kezdet nélküli hangok keresése is
+Analysis	Elemzés
+Any graphics card with Vulkan or Direct3D 12 ({mb} MB). A weak built-in one can be slower than the CPU.	Bármely Vulkan vagy Direct3D 12 képes videokártya ({mb} MB). Egy gyenge beépített lassabb lehet a processzornál.
+Application key:	Alkalmazáskulcs:
+Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.	A soundglass következő indításakor lép életbe; az ablak, a Számadatok és a Szerkesztés panel a kilépéskori állapotban marad.
+Apply and Rename	Alkalmazás és átnevezés
+Apply speed and pitch	Sebesség és hangmagasság alkalmazása
+Apply to All Tracks	Alkalmazás minden számra
+Artist	Előadó
+Artist:	Előadó:
+As Apply to All Tracks, then renames each file with the Rename from Tags pattern	Mint az Alkalmazás minden számra, majd minden fájlt átnevez a Átnevezés címkékből mintája szerint
+As TV	Mint a tévé
+As podcasts	Mint a podcastok
+As streaming	Mint a streaming
+As subtitles (.srt)	Feliratként (.srt)
+Audio	Hang
+BPM	BPM
+BPM tag saved ({bpm})	BPM-címke mentve ({bpm})
+Basic Pitch — any instrument, several notes at once	Basic Pitch — bármilyen hangszer, egyszerre több hang
+Basic Pitch's melodia trick	A Basic Pitch melodia-trükkje
+Beat This! — beats and downbeats	Beat This! — ütések és ütemkezdetek
+Bit depth	Bitmélység
+Bitrate	Bitráta
+Blackman–Harris	Blackman–Harris
+Blue to red	Kéktől pirosig
+C D E	C D E
+CUDA: Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050. WebGPU: Find Beats only, about 2× faster (Split into Stems was slower than the CPU). The other tools are faster on the CPU. With both installed, NVIDIA's is used	CUDA: Sávokra bontás és Ütések keresése 2,6–3× gyorsabb egy GTX 1050-en. WebGPU: csak Ütések keresése, kb. 2× gyorsabb (a Sávokra bontás lassabb volt a processzornál). A többi eszköz a processzoron gyorsabb. Ha mindkettő telepítve van, az NVIDIA-é működik
+Can't fingerprint this audio ({e})	Ennek a hangnak nem készíthető ujjlenyomat ({e})
+Can't read this folder: {e}	Ez a mappa nem olvasható: {e}
+Can't write tags to this format ({e})	Ebbe a formátumba nem írhatók címkék ({e})
+Cancel	Mégse
+Change	Módosítás
+Change Keyboard Shortcuts…	Billentyűparancsok módosítása…
+Change speed and pitch	Sebesség és hangmagasság módosítása
+Channels	Csatornák
+Channels: mono	Csatornák: mono
+Channels: stereo	Csatornák: sztereó
+Channels: swap left and right	Csatornák: bal és jobb felcserélése
+Check for updates	Frissítések keresése
+Chords	Akkordok
+Chords: after loading	Akkordok: betöltés után
+Chords: measuring…	Akkordok: mérés…
+Clicks	Kattanások
+Clicks on the found beats	Kattanás a talált ütéseken
+Close	Bezárás
+Codec	Kodek
+Colours	Színek
+Continue	Folytatás
+Contribute	Hozzájárulás
+Contribute to AcoustID?	Hozzájárul az AcoustID-hez?
+Copied the file	Fájl másolva
+Copy	Másolás
+Copy File	Fájl másolása
+Copy Path	Útvonal másolása
+Couldn't bring back {name}: {e}	{name} nem állítható vissza: {e}
+Couldn't copy the file: {e}	Nem sikerült másolni a fájlt: {e}
+Couldn't delete the file: {e}	A fájl nem törölhető: {e}
+Cover	Borító
+Cover added to 1 track	Borító hozzáadva 1 számhoz
+Cover added to {n} of {total} tracks (not: {failed})	Borító hozzáadva {total} számból {n} számhoz (nem: {failed})
+Cover added to {n} tracks	Borító hozzáadva {n} számhoz
+Cover at 256 px	Borító 256 px-ben
+Cover removed from 1 track	Borító eltávolítva 1 számból
+Cover removed from {n} of {total} tracks (not: {failed})	Borító eltávolítva {total} számból {n} számból (nem: {failed})
+Cover removed from {n} tracks	Borító eltávolítva {n} számból
+Crop	Körbevágás
+Current cover	Jelenlegi borító
+Custom ({value})…	Egyéni ({value})…
+Custom loudness…	Egyéni hangosság…
+Custom peak…	Egyéni csúcs…
+Custom…	Egyéni…
+Cut out	Kivágás
+Dark	Sötét
+Data from Discogs.	Adatok a Discogsból.
+Decoding…	Dekódolás…
+DeepFilterNet3 — speech, 48 kHz	DeepFilterNet3 — beszéd, 48 kHz
+Delete file?	Törli a fájlt?
+Delete…	Törlés…
+Discard edits	Szerkesztések elvetése
+Discogs can't be reached ({e})	A Discogs nem érhető el ({e})
+Discogs is busy; try again in a minute.	A Discogs foglalt; próbálja újra egy perc múlva.
+Discogs now asks for a token; this lookup can't run.	A Discogs mostantól tokent kér; ez a keresés nem futtatható.
+Discogs…	Discogs…
+Do Ré Mi	Dó Ré Mi
+Do you want to contribute this track's fingerprint to AcoustID? AcoustID will then recognise {title} — {artist} for everyone.	Hozzájárul ennek a számnak az ujjlenyomatával az AcoustID-hez? Ezután az AcoustID mindenkinek felismeri: {title} — {artist}.
+Double the tempo	Tempó duplázása
+Download	Letöltés
+Download AI Runtime ({mb} MB)	MI-futtatókörnyezet letöltése ({mb} MB)
+Download AI Runtime ({mb} MB)…	MI-futtatókörnyezet letöltése ({mb} MB)…
+Download GPU Support	GPU-támogatás letöltése
+Downloaded from Microsoft (ONNX Runtime's WebGPU plugin, via its official PyPI package).	A Microsofttól letöltve (az ONNX Runtime WebGPU-bővítménye, a hivatalos PyPI-csomagján keresztül).
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Letöltve a Microsofttól (ONNX Runtime) és az NVIDIA-tól (CUDA-könyvtárak, a hivatalos PyPI-csomagjaikon keresztül).
+Drag on the waveform to select	Húzzon a hullámformán a kijelöléshez
+Each stretch of speech with its start and end, to save as an .srt file	Minden beszédszakasz a kezdetével és végével, .srt fájlként menthető
+Edit	Szerkesztés
+Effects	Effektek
+Europe	Európa
+FFT size	FFT-méret
+FLAC (lossless)	FLAC (veszteségmentes)
+Fade in	Felúsztatás
+Fade out	Leúsztatás
+Faint noise	Halk zaj
+Fetching details…	Részletek lekérése…
+File	Fájl
+File changed	A fájl megváltozott
+File size	Fájlméret
+Fill In All Tracks	Minden szám kitöltése
+Fill Metadata From	Metaadatok kitöltése innen
+Fill from Discogs	Kitöltés a Discogsból
+Fill from Discogs…	Kitöltés a Discogsból…
+Fill from MusicBrainz	Kitöltés a MusicBrainzből
+Fill from MusicBrainz…	Kitöltés a MusicBrainzből…
+Fill from Wikipedia	Kitöltés a Wikipédiából
+Fill from Wikipedia…	Kitöltés a Wikipédiából…
+Fills Track Info's tag editor; Save… there writes the tags	Kitölti a Számadatok címkeszerkesztőjét; ott a Mentés… írja be a címkéket
+Find Beats	Ütések keresése
+Fingerprint sent to AcoustID; lookups find it once it's processed.	Ujjlenyomat elküldve az AcoustID-nek; feldolgozás után a keresések megtalálják.
+Fingerprinting {i} of {n}: {file}	Ujjlenyomat {i}/{n}: {file}
+Fit	Igazítás
+Fit cover space	Igazítás a borító helyéhez
+Flats (Db)	Bék (Db)
+Folder	Mappa
+Follow system	Rendszer szerint
+Font size:	Betűméret:
+Format	Formátum
+Found {n} beats, ≈ {bpm} BPM. Metronome on (volume button).	{n} ütés találva, ≈ {bpm} BPM. Metronóm be (hangerő gomb).
+Found {n} beats. Metronome on (volume button).	{n} ütés találva. Metronóm be (hangerő gomb).
+Full	Teljes
+Full Screen	Teljes képernyő
+Full takes away all the noise it finds; a limit keeps some, for a more natural sound	A Teljes minden talált zajt eltávolít; egy korlát meghagy valamennyit, a természetesebb hangért
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel és mások, kísérleti)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU support	GPU-támogatás
+GPU support (AMD, Intel and others)	GPU-támogatás (AMD, Intel és mások)
+Gain	Erősítés
+Gain: custom…	Erősítés: egyéni…
+Gain: {db} dB	Erősítés: {db} dB
+General	Általános
+Genre	Műfaj
+Get a key	Kulcs igénylése
+Get your user key	Felhasználókulcs igénylése
+Gray	Szürke
+HTDemucs v4 — drums, bass, other, vocals	HTDemucs v4 — dob, basszus, egyéb, ének
+Half the tempo	Tempó felezése
+Hamming	Hamming
+Hann	Hann
+Held notes	Kitartott hangok
+High contrast	Nagy kontraszt
+Higher: fewer, surer notes start	Magasabb: kevesebb, biztosabb hangkezdet
+Higher: notes end sooner, quiet ones are left out	Magasabb: a hangok hamarabb érnek véget, a halkak kimaradnak
+Hiss	Sistergés
+Hop	Lépésköz
+Identify Album	Album felismerése
+Identify Album…	Album felismerése…
+Identify Track	Szám felismerése
+Identify Track needs one; it is free for non-commercial use.	A Szám felismeréséhez kell; nem kereskedelmi használatra ingyenes.
+Identify Track…	Szám felismerése…
+Image	Kép
+In order	Sorrendben
+Instrument range	Hangszer hangterjedelme
+It already has that name.	Már ez a neve.
+It's all quieter than that; nothing trimmed	Minden ennél halkabb; semmi sem lett levágva
+It's no longer in the Trash.	Már nincs a Kukában.
+Its unsaved edits will be lost.	A nem mentett szerkesztései elvesznek.
+Keep current	Jelenlegi megtartása
+Key	Hangnem
+Key ≈ {key}	Hangnem ≈ {key}
+Keyboard Shortcuts	Billentyűparancsok
+Label size	Címkék mérete
+Language	Nyelv
+Language:	Nyelv:
+Length	Hossz
+Levels	Szintek
+Licence ({n} of {count}) — {title}	Licenc ({n}/{count}) — {title}
+Licence — {title}	Licenc — {title}
+Light	Világos
+Line	Vonal
+Local AI	Helyi MI
+Look up	Keresés
+Looking up…	Keresés…
+Loop selection	Kijelölés ismétlése
+Loudness	Hangosság
+Lower finds more beats, also where the model is unsure	Alacsonyabb érték több ütést talál, ott is, ahol a modell bizonytalan
+Lowest frequency	Legalacsonyabb frekvencia
+MIDI file is too big	A MIDI-fájl túl nagy
+MIDI file is too long	A MIDI-fájl túl hosszú
+MIDI tempo	MIDI-tempó
+MP3 can't hold {khz} kHz audio; save as FLAC or WAV instead	Az MP3 nem tud {khz} kHz-es hangot tárolni; mentse FLAC vagy WAV formátumban
+MP3 holds mono or stereo only; save as FLAC or WAV instead	Az MP3 csak monót vagy sztereót tárol; mentse FLAC vagy WAV formátumban
+MP3: LAME failed to start	MP3: a LAME nem indult el
+Magma	Magma
+Make soundglass my default player	A soundglass legyen az alapértelmezett lejátszóm
+Make soundglass the default player	A soundglass legyen az alapértelmezett lejátszó
+Matches on this album are listed first	Az ezen az albumon lévő találatok vannak elöl
+Matches on this album are listed first; it isn't sent	Az ezen az albumon lévő találatok vannak elöl; nem lesz elküldve
+Melody to MIDI	Dallamból MIDI
+Metronome	Metronóm
+Mono	Mono
+More overlap between the 7.8 s segments: smoother joins, slower	Több átfedés a 7,8 mp-es szakaszok között: simább illesztés, lassabb
+Moved to the Trash	Áthelyezve a Kukába
+MusicBrainz can't be reached ({e})	A MusicBrainz nem érhető el ({e})
+MusicBrainz…	MusicBrainz…
+Name	Név
+Next	Következő
+No album cover	Nincs albumborító
+No album found.	Nem található album.
+No audio files in {name}	Nincs hangfájl itt: {name}
+No audio files or folders here	Itt nincs hangfájl vagy mappa
+No file open	Nincs megnyitott fájl
+No match found.	Nincs találat.
+No silence at the start or end to trim	Nincs levágható csend az elején vagy a végén
+None	Nincs
+None (whole range)	Nincs (teljes tartomány)
+None of these tags is set.	E címkék egyike sincs kitöltve.
+Normalize	Normalizálás
+Normalize loudness	Hangosság normalizálása
+Normalize peak	Csúcs normalizálása
+Normalize: custom loudness…	Normalizálás: egyéni hangosság…
+Normalize: custom peak…	Normalizálás: egyéni csúcs…
+Normalize: {name} ({db} dBFS)	Normalizálás: {name} ({db} dBFS)
+Normalize: {name} ({lufs} LUFS)	Normalizálás: {name} ({lufs} LUFS)
+Not Now	Most nem
+Note threshold	Hangküszöb
+Notes	Hangok
+Notes from	Hangok ettől
+Nothing to normalize: it's silent	Nincs mit normalizálni: csend
+OK	OK
+Octave numbers	Oktávszámok
+Ogg Vorbis (q6)	Ogg Vorbis (q6)
+On the selection	A kijelölésen
+On the whole track	Az egész számon
+Only fill empty tags	Csak az üres címkék kitöltése
+Only how the file's beats are counted; the notes keep their times	Csak a fájl ütéseinek számolása; a hangok megtartják idejüket
+Only needed to contribute fingerprints to AcoustID.	Csak ujjlenyomatok AcoustID-hez való beküldéséhez kell.
+Onset threshold	Kezdetküszöb
+Open Recent	Legutóbbiak megnyitása
+Open models folder	Modellmappa megnyitása
+Open project page	Projektoldal megnyitása
+Open themes folder	Témamappa megnyitása
+Open…	Megnyitás…
+Other lines	Egyéb vonalak
+Output	Kimenet
+Overlap	Átfedés
+Parakeet TDT 0.6B v3 — 25 European languages, more accurate	Parakeet TDT 0.6B v3 — 25 európai nyelv, pontosabb
+Pause	Szünet
+Peak	Csúcs
+Peak at max	Csúcs a maximumon
+Peak near max	Csúcs a maximum közelében
+Piano synth	Zongoraszintetizátor
+Pitch-preserved speed change	Sebességváltás azonos hangmagassággal
+Play	Lejátszás
+Play order, {name}	Lejátszási sorrend, {name}
+Please read and accept the licence before downloading.	Letöltés előtt olvassa el és fogadja el a licencet.
+Position, seconds	Pozíció, másodperc
+Practice	Gyakorlás
+Practice mode	Gyakorló mód
+Press keys… (Esc to cancel)	Nyomja le a billentyűket… (Esc a megszakításhoz)
+Previous	Előző
+Quit	Kilépés
+Rectangular	Négyszögletes
+Redo	Mégis
+Reload	Újratöltés
+Remember window size	Ablakméret megjegyzése
+Remove	Eltávolítás
+Remove Album Cover…	Albumborító eltávolítása…
+Remove Cover	Borító eltávolítása
+Remove Noise	Zaj eltávolítása
+Remove album cover	Albumborító eltávolítása
+Remove the cover from this track only, or from {what}? The music itself isn't changed.	Csak ebből a számból távolítja el a borítót, vagy ebből: {what}? Maga a zene nem változik.
+Remove the cover from this track? The music itself isn't changed.	Eltávolítja a borítót ebből a számból? Maga a zene nem változik.
+Rename	Átnevezés
+Rename from Tags	Átnevezés címkékből
+Rename from Tags…	Átnevezés címkékből…
+Renamed to {name}	Átnevezve erre: {name}
+Rename…	Átnevezés…
+Repeat track	Szám ismétlése
+Replace…	Csere…
+Reset	Visszaállítás
+Reset All Shortcuts	Minden billentyűparancs visszaállítása
+Reset to defaults	Alapértékek visszaállítása
+Restart soundglass to start using the GPU.	Indítsa újra a soundglasst a GPU használatához.
+Reverse	Visszafelé
+Run the AI tools on the graphics card ({mb} MB, NVIDIA's CUDA libraries).	Az MI-eszközök futtatása a videokártyán ({mb} MB, az NVIDIA CUDA-könyvtárai).
+Running on the CPU…	Fut a processzoron…
+Running on the GPU…	Fut a GPU-n…
+Same ({rate})	Azonos ({rate})
+Sample rate	Mintavételi frekvencia
+Save As	Mentés másként
+Save As…	Mentés másként…
+Save Copy	Másolat mentése
+Save Cover	Borító mentése
+Save as Subtitles…	Mentés feliratként…
+Save as Text…	Mentés szövegként…
+Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed.	Menti a(z) {name} fájlt ennek a számnak a borítójaként, vagy ennek: {what}? A meglévő borítók lecserélődnek. Maga a zene nem változik.
+Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed.	Menti a(z) {name} fájlt ennek a számnak a borítójaként? A meglévő borító lecserélődik. Maga a zene nem változik.
+Saved {name}	Mentve: {name}
+Saved {name}, but the tags could not be copied	{name} mentve, de a címkéket nem sikerült átmásolni
+Save…	Mentés…
+Saving failed	A mentés nem sikerült
+Saving {name}…	{name} mentése…
+Scale shown	Mutatott skála
+Seek bar:	Pozíciósáv:
+Sends each file's fingerprint and length to AcoustID, one a second, and one recording's ID to MusicBrainz for the genre. Nothing else leaves this computer.	Minden fájl ujjlenyomatát és hosszát elküldi az AcoustID-nek, másodpercenként egyet, és egy felvétel azonosítóját a MusicBrainznek a műfajért. Más semmi sem hagyja el ezt a számítógépet.
+Sends the fingerprint, its length and the MusicBrainz recording ID to AcoustID, with your user key. It is sent only if AcoustID doesn't know this fingerprint yet.	Az ujjlenyomatot, a hosszát és a MusicBrainz-felvétel azonosítóját elküldi az AcoustID-nek a felhasználókulcsával. Csak akkor küldi el, ha az AcoustID még nem ismeri ezt az ujjlenyomatot.
+Sends the title and artist to Discogs, and the chosen release's ID for its track list. Nothing else leaves this computer.	A címet és az előadót elküldi a Discogsnak, és a választott kiadás azonosítóját a számlistáért. Más semmi sem hagyja el ezt a számítógépet.
+Sends the title and artist to English Wikipedia. Nothing else leaves this computer.	A címet és az előadót elküldi az angol Wikipédiának. Más semmi sem hagyja el ezt a számítógépet.
+Sends the title, artist and album to MusicBrainz, and the chosen match's ID for its genre. Nothing else leaves this computer.	A címet, az előadót és az albumot elküldi a MusicBrainznek, és a választott találat azonosítóját a műfajért. Más semmi sem hagyja el ezt a számítógépet.
+Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer.	Ennek a fájlnak az ujjlenyomatát és hosszát elküldi az AcoustID-nek, a választott találat azonosítóját pedig a MusicBrainznek. Más semmi sem hagyja el ezt a számítógépet.
+Sensitivity	Érzékenység
+Settings	Beállítások
+Settings: {model}	Beállítások: {model}
+Settings…	Beállítások…
+Sharps (C#)	Keresztek (C#)
+Shortest note	Legrövidebb hang
+Show Log	Napló megjelenítése
+Show in Explorer	Megjelenítés az Intézőben
+Show in File Manager	Megjelenítés a fájlkezelőben
+Show or hide the chords along the top	Akkordok mutatása vagy elrejtése felül
+Show or hide the note lines	Hangvonalak mutatása vagy elrejtése
+Show the notes of {major} major	A(z) {major}-dúr hangjainak mutatása
+Show the notes of {major} major, which {key} shares	A(z) {major}-dúr hangjainak mutatása, amelyeken {key} osztozik
+Show the whole track	Az egész szám mutatása
+Show the whole track and all frequencies	Az egész szám és minden frekvencia mutatása
+Shuffle	Keverés
+Silence	Csend
+Silent pieces are left out, so nothing is made up there	A csendes részek kimaradnak, így ott semmi sem lesz kitalálva
+Skip quieter than	Kihagyás, ha halkabb, mint
+Small: about 6 MB for a 4-minute stem	Kicsi: kb. 6 MB egy 4 perces sávra
+Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed.	Szóköz, ←, →, Page Up, Page Down, L (Kijelölés ismétlése), Esc és Enter rögzített.
+Space, ←, →, Page Up, Page Down, L, Esc, Enter and Ctrl+C/X/V	Szóköz, ←, →, Page Up, Page Down, L, Esc, Enter és Ctrl+C/X/V
+Spectrogram	Spektrogram
+Spectrogram settings	Spektrogram-beállítások
+Spectrogram — {name}	Spektrogram — {name}
+Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around	Spektrogram: kattintás onnan lejátszik, húzás kijelöl, görgetés nagyít, Ctrl+görgetés a frekvenciákat nagyítja, jobb gombos húzás mozgat
+Split into Stems	Sávokra bontás
+Split into Stems takes mono or stereo tracks	A Sávokra bontás mono vagy sztereó számokat fogad
+Stereo	Sztereó
+Stopped after {i} of {n}	Leállítva ennyi után: {i}/{n}
+Strength	Erősség
+Subtitles	Feliratok
+Swap left and right	Bal és jobb felcserélése
+Tags	Címkék
+Tags saved	Címkék mentve
+Task	Feladat
+Tempo	Tempó
+Tenor sax	Tenorszaxofon
+Text	Szöveg
+That image can't be read.	A kép nem olvasható.
+That image can't be used as a cover.	A kép nem használható borítóként.
+That is the original file; choose another name. The original is never changed.	Ez az eredeti fájl; válasszon másik nevet. Az eredeti soha nem változik.
+That isn't a valid file name.	Ez nem érvényes fájlnév.
+The AI runtime isn't installed yet.	Az MI-futtatókörnyezet még nincs telepítve.
+The GPU couldn't be used, so the CPU is: {e}	A GPU nem használható, ezért a processzor fut: {e}
+The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face.	Az ONNX-fájl a StemSplit exportja (félpontosságú súlyokkal), a Hugging Face-en.
+The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face.	Az ONNX-fájl grazder torchDF streaming exportja, a KimtOS tárolja a Hugging Face-en.
+The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face.	Az ONNX-fájl a JKU final0 ellenőrzőpontjának musetric által készített exportja, a Hugging Face-en.
+The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face.	Az ONNX-fájlok istupakov int8-átalakításai az onnx-asr számára, a Hugging Face-en.
+The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.	Az ONNX-fájlok a sherpa-onnx (k2-fsa) int8-exportjai, a Hugging Face-en.
+The audio changes format partway.	A hang formátuma menet közben változik.
+The cover couldn't be written ({failed})	A borítót nem sikerült kiírni ({failed})
+The file has no audio.	A fájlban nincs hang.
+The file is too short to identify.	A fájl túl rövid a felismeréshez.
+The image is larger than 10 MB.	A kép nagyobb 10 MB-nál.
+The key spells its notes	A hangnem szerinti hangjelölés
+The lookup stopped.	A keresés leállt.
+The original file is never changed.	Az eredeti fájl soha nem változik.
+The reply couldn't be read ({e})	A válasz nem olvasható ({e})
+The reply wasn't understood.	A válasz nem értelmezhető.
+Theme:	Téma:
+This Track	Ez a szám
+This file's tags can't be read.	A fájl címkéi nem olvashatók.
+This match has no MusicBrainz recording to link to.	Ehhez a találathoz nincs csatolható MusicBrainz-felvétel.
+This track has edits that aren't saved. The original file is never changed.	Ennek a számnak nem mentett szerkesztései vannak. Az eredeti fájl soha nem változik.
+This track has no cover. Save {name} as the cover of {what}?	Ennek a számnak nincs borítója. Menti a(z) {name} fájlt ennek borítójaként: {what}?
+Time marks	Időjelölők
+Time-preserved pitch change	Hangmagasság-váltás azonos hosszal
+Title	Cím
+Title:	Cím:
+Tonic line width	Alaphang-vonal vastagsága
+Tonic lines (C for all notes)	Alaphang-vonalak (C minden hangnál)
+Too short or too quiet to measure its loudness	Túl rövid vagy túl halk a hangosság méréséhez
+Tools for musicians: loops, the spectrogram, tempo, key and chords	Eszközök zenészeknek: hurkok, spektrogram, tempó, hangnem és akkordok
+Track	Szám
+Track Info	Számadatok
+Tracks that already have a cover get this one instead. The music itself isn't changed.	A már borítóval rendelkező számok ezt kapják helyette. Maga a zene nem változik.
+Transcribe	Átírás
+Transcribe Speech	Beszéd átírása
+Transcript	Átirat
+Translate to English	Fordítás angolra
+Trim silence	Csend levágása
+Trim silence below	Csend levágása ez alatt
+Trim silence: custom…	Csend levágása: egyéni…
+Trim silence: {name} ({db} dB)	Csend levágása: {name} ({db} dB)
+Trumpet	Trombita
+Tuning A4	A4 hangolás
+Type a title to search for.	Írjon be egy címet a kereséshez.
+Undo	Visszavonás
+Unsaved edits	Nem mentett szerkesztések
+Up one folder	Egy mappával feljebb
+Use Match	Találat használata
+Use the GPU	GPU használata
+Use the estimated key, {key}	A becsült hangnem használata: {key}
+Use the estimated tempo	A becsült tempó használata
+User key:	Felhasználókulcs:
+View	Nézet
+Visualiser	Vizualizáció
+Volume	Hangerő
+Volume, {percent} %	Hangerő, {percent} %
+Volume, {percent} %, metronome on	Hangerő, {percent} %, metronóm be
+Waveform	Hullámforma
+Waveform position	Pozíció a hullámformán
+Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along	Hullámforma: kattintás onnan lejátszik, húzás kijelöl, görgetés nagyít, jobb gombos húzás mozgat
+Welcome to soundglass	Üdvözli a soundglass
+Whisper large-v3-turbo — 99 languages, best, slow on a CPU	Whisper large-v3-turbo — 99 nyelv, a legjobb, processzoron lassú
+Whisper small — 99 languages	Whisper small — 99 nyelv
+Whole selection	Teljes kijelölés
+Wikipedia can't be reached ({e})	A Wikipédia nem érhető el ({e})
+Wikipedia…	Wikipédia…
+Window function	Ablakfüggvény
+Window size	Ablakhossz
+Window size:	Ablakméret:
+Worldwide	Világszerte
+Write	Írás
+Write tags	Címkék írása
+Write the tags into {name}? The audio isn't changed.	Beírja a címkéket ide: {name}? A hang nem változik.
+Writes only the tags that are empty in each file	Csak az egyes fájlokban üres címkéket írja
+Writes the album's tags into every matched file, replacing the tags there	Az album címkéit minden egyező fájlba beírja, lecserélve az ott lévőket
+Writes the tags into the file; the audio isn't changed	A címkéket a fájlba írja; a hang nem változik
+Writing the tags failed	A címkék írása nem sikerült
+Writing {i} of {n}	Írás: {i}/{n}
+Year	Év
+Your own themes go in the themes folder. Choosing a theme again reloads its file.	A saját témák a témák mappájába kerülnek. Egy téma újbóli választása újraolvassa a fájlját.
+Zoom in (scroll; right-drag to move along)	Nagyítás (görgetés; jobb gombos húzás mozgat)
+Zoom out	Kicsinyítés
+a GPU library was missing from the download	egy GPU-könyvtár hiányzott a letöltésből
+add an AcoustID key in Settings	adjon meg egy AcoustID-kulcsot a Beállításokban
+after Local AI → Find Beats	a Helyi MI → Ütések keresése után
+after loading	betöltés után
+all {n} tracks in this folder	a mappa mind a(z) {n} száma
+already normal	már normál
+another AI tool is running	egy másik MI-eszköz fut
+as it is	ahogy van
+can't make a folder next to the track ({e})	nem hozható létre mappa a szám mellett ({e})
+can't save a copy next to the original ({e})	nem menthető másolat az eredeti mellé ({e})
+choose at least one stem to write (AI Models → Settings)	válasszon legalább egy írandó sávot (MI-modellek → Beállítások)
+close the tag editor first	előbb zárja be a címkeszerkesztőt
+hop {hop} for this length	lépésköz {hop} ehhez a hosszhoz
+line {line}: {key}="{v}": invalid value	{line}. sor: {key}="{v}": érvénytelen érték
+measuring…	mérés…
+mode="{other}": invalid value	mode="{other}": érvénytelen érték
+needs a model: Local AI → AI Models…	modell kell: Helyi MI → MI-modellek…
+needs the AI runtime: Local AI → Download AI Runtime…	MI-futtatókörnyezet kell: Helyi MI → MI-futtatókörnyezet letöltése…
+new image	új kép
+no audio track	nincs hangsáv
+no channels	nincsenek csatornák
+no data folder	nincs adatmappa
+no file name	nincs fájlnév
+no file open	nincs megnyitott fájl
+no notes were found	nem található hang
+no sample rate	nincs mintavételi frekvencia
+no speech was found	nem található beszéd
+not a supported audio file ({e})	nem támogatott hangfájl ({e})
+not a transcription model	nem átíró modell
+not found	nem található
+not found, left alone	nem található, változatlanul hagyva
+nothing to redo	nincs mit ismételni
+nothing to undo	nincs mit visszavonni
+part of the track could not be read	a szám egy része nem olvasható
+quality	minőség
+removed	eltávolítva
+saving tags…	címkék mentése…
+select a part in the Edit panel	jelöljön ki egy részt a Szerkesztés panelen
+select at least half a second, or nothing for the whole track	jelöljön ki legalább fél másodpercet, vagy semmit az egész számhoz
+silent	csend
+soundglass is now the default player	a soundglass most az alapértelmezett lejátszó
+the AI tool failed	az MI-eszköz hibát adott
+the AI tool stopped	az MI-eszköz leállt
+the channel count changes mid-file	a csatornák száma a fájl közepén változik
+the encoder failed	a kódoló hibát adott
+the model gave an unexpected output	a modell váratlan kimenetet adott
+the saved file doesn't read back ({e})	a mentett fájl nem olvasható vissza ({e})
+the saved file reads back wrong ({frames} frames, expected {expected})	a mentett fájl hibásan olvasható vissza ({frames} keret, várt {expected})
+the settings aren't for this tool	a beállítások nem ehhez az eszközhöz tartoznak
+the sound device failed to open	a hangeszközt nem sikerült megnyitni
+the tag writer failed	a címkeíró hibát adott
+the track has no audio	a számban nincs hang
+the track is still loading	a szám még töltődik
+the track isn't fully loaded	a szám nincs teljesen betöltve
+this file can't be decoded	ez a fájl nem dekódolható
+this track	ez a szám
+to	–
+track {n}	{n}. szám
+unknown error	ismeretlen hiba
+with unsaved edits, once loaded	nem mentett szerkesztésekkel, betöltés után
+writing the tags would change the audio, so nothing was written	a címkék írása megváltoztatná a hangot, ezért semmi sem lett írva
+{kbps} kb/s	{kbps} kb/s
+{keys} is already used by {other}	{keys} már foglalt: {other}
+{key} major	{key}-dúr
+{model} (installed)	{model} (telepítve)
+{name} isn't an audio file soundglass plays	{name} nem olyan hangfájl, amelyet a soundglass lejátszik
+{name} was changed by another program. Reload it?	{name} fájlt egy másik program módosította. Újratölti?
+{name} will be moved to the Trash.	{name} a Kukába kerül.
+{name}: custom…	{name}: egyéni…
+{name}: whole selection	{name}: teljes kijelölés
+{name}: {s} s	{name}: {s} mp
+{n} of {total} tracks	{total} számból {n}
+{ok} written, {bad} failed	{ok} kiírva, {bad} sikertelen
+{path}: bigger than 64 KiB	{path}: nagyobb 64 KiB-nál
+{secs} s	{secs} mp
+{sign}{n} semitone	{sign}{n} félhang
+{sign}{n} semitones	{sign}{n} félhang
+{task} (selection)	{task} (kijelölés)
+{what} installed.	{what} telepítve.
+{what}: the download stopped.	{what}: a letöltés leállt.
+→ {n}	→ {n}
+−14 streaming, −23 TV	−14 streaming, −23 tévé
+−60 silence, −40 hiss	−60 csend, −40 sistergés

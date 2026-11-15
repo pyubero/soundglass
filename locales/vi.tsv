@@ -1,0 +1,551 @@
+ dB at most	 dB tối đa
+ semitones	 nửa cung
+0 (Normal)	0 (Bình thường)
+0 = max	0 = tối đa
+1 (mono)	1 (mono)
+16-bit	16-bit
+1× (Normal)	1× (Bình thường)
+2 (stereo)	2 (stereo)
+24-bit	24-bit
+32-bit float	32-bit số thực
+<{tag}>: invalid value	<{tag}>: giá trị không hợp lệ
+A code such as en, es, fr, de; empty to detect it from the first speech	Mã như en, es, fr, de; để trống để nhận diện từ lời nói đầu tiên
+A file with that name already exists.	Đã có tệp trùng tên.
+A long track: the hop is raised so the spectrogram fits in memory	Bản nhạc dài: bước nhảy được tăng để phổ đồ vừa bộ nhớ
+AI Models	Mô hình AI
+AI Models…	Mô hình AI…
+AI runtime (ONNX Runtime)	Bộ chạy AI (ONNX Runtime)
+About 50 MB for a 4-minute stem, for further editing	Khoảng 50 MB cho một stem dài 4 phút, để chỉnh sửa tiếp
+Accept and Continue	Chấp nhận và tiếp tục
+Accept and Download	Chấp nhận và tải xuống
+AcoustID Settings	Cài đặt AcoustID
+AcoustID can't be reached ({e})	Không kết nối được AcoustID ({e})
+AcoustID: {why}	AcoustID: {why}
+Add AcoustID User Key	Thêm khóa người dùng AcoustID
+Add Cover	Thêm ảnh bìa
+Add album cover?	Thêm ảnh bìa album?
+Add your AcoustID application key and user key in Settings to contribute.	Hãy thêm khóa ứng dụng và khóa người dùng AcoustID trong Cài đặt để đóng góp.
+Add/Replace Album Cover…	Thêm/Thay ảnh bìa album…
+Album	Album
+Album cover	Ảnh bìa album
+Album:	Album:
+All notes	Mọi nốt
+All {n} Tracks	Tất cả {n} bản nhạc
+Already in AcoustID; nothing was sent.	Đã có trong AcoustID; không gửi gì.
+Also find notes without a clear start	Tìm cả nốt không có điểm bắt đầu rõ
+Analysis	Phân tích
+Any graphics card with Vulkan or Direct3D 12 ({mb} MB). A weak built-in one can be slower than the CPU.	Mọi card đồ họa có Vulkan hoặc Direct3D 12 ({mb} MB). Card tích hợp yếu có thể chậm hơn CPU.
+Application key:	Khóa ứng dụng:
+Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.	Áp dụng vào lần mở soundglass tới; cửa sổ, Thông tin bản nhạc và bảng Sửa giữ nguyên như lúc thoát.
+Apply and Rename	Áp dụng và đổi tên
+Apply speed and pitch	Áp dụng tốc độ và cao độ
+Apply to All Tracks	Áp dụng cho mọi bản nhạc
+Artist	Nghệ sĩ
+Artist:	Nghệ sĩ:
+As Apply to All Tracks, then renames each file with the Rename from Tags pattern	Như Áp dụng cho mọi bản nhạc, rồi đổi tên từng tệp theo mẫu của Đổi tên theo thẻ
+As TV	Như TV
+As podcasts	Như podcast
+As streaming	Như dịch vụ phát trực tuyến
+As subtitles (.srt)	Dạng phụ đề (.srt)
+Audio	Âm thanh
+BPM	BPM
+BPM tag saved ({bpm})	Đã lưu thẻ BPM ({bpm})
+Basic Pitch — any instrument, several notes at once	Basic Pitch — mọi nhạc cụ, nhiều nốt cùng lúc
+Basic Pitch's melodia trick	Mẹo melodia của Basic Pitch
+Beat This! — beats and downbeats	Beat This! — phách và phách đầu ô nhịp
+Bit depth	Độ sâu bit
+Bitrate	Tốc độ bit
+Blackman–Harris	Blackman–Harris
+Blue to red	Xanh sang đỏ
+C D E	C D E
+CUDA: Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050. WebGPU: Find Beats only, about 2× faster (Split into Stems was slower than the CPU). The other tools are faster on the CPU. With both installed, NVIDIA's is used	CUDA: Tách thành stem và Tìm phách nhanh hơn 2,6–3 lần trên GTX 1050. WebGPU: chỉ Tìm phách, nhanh hơn khoảng 2 lần (Tách thành stem chậm hơn CPU). Các công cụ khác nhanh hơn trên CPU. Nếu cài cả hai, dùng của NVIDIA
+Can't fingerprint this audio ({e})	Không thể lấy vân tay âm thanh này ({e})
+Can't read this folder: {e}	Không đọc được thư mục này: {e}
+Can't write tags to this format ({e})	Không ghi được thẻ vào định dạng này ({e})
+Cancel	Hủy
+Change	Đổi
+Change Keyboard Shortcuts…	Đổi phím tắt…
+Change speed and pitch	Đổi tốc độ và cao độ
+Channels	Kênh
+Channels: mono	Kênh: mono
+Channels: stereo	Kênh: stereo
+Channels: swap left and right	Kênh: đổi trái và phải
+Check for updates	Kiểm tra cập nhật
+Chords	Hợp âm
+Chords: after loading	Hợp âm: sau khi tải
+Chords: measuring…	Hợp âm: đang đo…
+Clicks	Tiếng gõ
+Clicks on the found beats	Tiếng gõ trên các phách tìm được
+Close	Đóng
+Codec	Codec
+Colours	Màu sắc
+Continue	Tiếp tục
+Contribute	Đóng góp
+Contribute to AcoustID?	Đóng góp cho AcoustID?
+Copied the file	Đã sao chép tệp
+Copy	Sao chép
+Copy File	Sao chép tệp
+Copy Path	Sao chép đường dẫn
+Couldn't bring back {name}: {e}	Không khôi phục được {name}: {e}
+Couldn't copy the file: {e}	Không thể sao chép tệp: {e}
+Couldn't delete the file: {e}	Không xóa được tệp: {e}
+Cover	Ảnh bìa
+Cover added to 1 track	Đã thêm ảnh bìa vào 1 bản nhạc
+Cover added to {n} of {total} tracks (not: {failed})	Đã thêm ảnh bìa vào {n} trên {total} bản nhạc (không được: {failed})
+Cover added to {n} tracks	Đã thêm ảnh bìa vào {n} bản nhạc
+Cover at 256 px	Ảnh bìa 256 px
+Cover removed from 1 track	Đã gỡ ảnh bìa khỏi 1 bản nhạc
+Cover removed from {n} of {total} tracks (not: {failed})	Đã gỡ ảnh bìa khỏi {n} trên {total} bản nhạc (không được: {failed})
+Cover removed from {n} tracks	Đã gỡ ảnh bìa khỏi {n} bản nhạc
+Crop	Cắt ảnh
+Current cover	Ảnh bìa hiện tại
+Custom ({value})…	Tùy chỉnh ({value})…
+Custom loudness…	Độ ồn tùy chỉnh…
+Custom peak…	Đỉnh tùy chỉnh…
+Custom…	Tùy chỉnh…
+Cut out	Cắt bỏ
+Dark	Tối
+Data from Discogs.	Dữ liệu từ Discogs.
+Decoding…	Đang giải mã…
+DeepFilterNet3 — speech, 48 kHz	DeepFilterNet3 — giọng nói, 48 kHz
+Delete file?	Xóa tệp?
+Delete…	Xóa…
+Discard edits	Bỏ các chỉnh sửa
+Discogs can't be reached ({e})	Không kết nối được Discogs ({e})
+Discogs is busy; try again in a minute.	Discogs đang bận; thử lại sau một phút.
+Discogs now asks for a token; this lookup can't run.	Discogs giờ yêu cầu token; không thể tra cứu.
+Discogs…	Discogs…
+Do Ré Mi	Đô Rê Mi
+Do you want to contribute this track's fingerprint to AcoustID? AcoustID will then recognise {title} — {artist} for everyone.	Bạn có muốn đóng góp vân tay của bản nhạc này cho AcoustID? Khi đó AcoustID sẽ nhận ra {title} — {artist} cho mọi người.
+Double the tempo	Nhân đôi nhịp độ
+Download	Tải xuống
+Download AI Runtime ({mb} MB)	Tải bộ chạy AI ({mb} MB)
+Download AI Runtime ({mb} MB)…	Tải bộ chạy AI ({mb} MB)…
+Download GPU Support	Tải hỗ trợ GPU
+Downloaded from Microsoft (ONNX Runtime's WebGPU plugin, via its official PyPI package).	Tải từ Microsoft (plugin WebGPU của ONNX Runtime, qua gói PyPI chính thức).
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Tải từ Microsoft (ONNX Runtime) và NVIDIA (thư viện CUDA, qua các gói PyPI chính thức của họ).
+Drag on the waveform to select	Kéo trên dạng sóng để chọn
+Each stretch of speech with its start and end, to save as an .srt file	Từng đoạn lời nói với thời điểm bắt đầu và kết thúc, để lưu thành tệp .srt
+Edit	Sửa
+Effects	Hiệu ứng
+Europe	Châu Âu
+FFT size	Kích thước FFT
+FLAC (lossless)	FLAC (không mất dữ liệu)
+Fade in	Tăng dần
+Fade out	Giảm dần
+Faint noise	Nhiễu nhẹ
+Fetching details…	Đang lấy chi tiết…
+File	Tệp
+File changed	Tệp đã thay đổi
+File size	Kích thước tệp
+Fill In All Tracks	Điền mọi bản nhạc
+Fill Metadata From	Điền siêu dữ liệu từ
+Fill from Discogs	Điền từ Discogs
+Fill from Discogs…	Điền từ Discogs…
+Fill from MusicBrainz	Điền từ MusicBrainz
+Fill from MusicBrainz…	Điền từ MusicBrainz…
+Fill from Wikipedia	Điền từ Wikipedia
+Fill from Wikipedia…	Điền từ Wikipedia…
+Fills Track Info's tag editor; Save… there writes the tags	Điền trình sửa thẻ của Thông tin bản nhạc; Lưu… ở đó sẽ ghi thẻ
+Find Beats	Tìm phách
+Fingerprint sent to AcoustID; lookups find it once it's processed.	Đã gửi vân tay cho AcoustID; tra cứu sẽ thấy sau khi xử lý xong.
+Fingerprinting {i} of {n}: {file}	Lấy vân tay {i} trên {n}: {file}
+Fit	Vừa khít
+Fit cover space	Vừa khung ảnh bìa
+Flats (Db)	Giáng (Db)
+Folder	Thư mục
+Follow system	Theo hệ thống
+Font size:	Cỡ chữ:
+Format	Định dạng
+Found {n} beats, ≈ {bpm} BPM. Metronome on (volume button).	Tìm được {n} phách, ≈ {bpm} BPM. Đã bật máy đếm nhịp (nút âm lượng).
+Found {n} beats. Metronome on (volume button).	Tìm được {n} phách. Đã bật máy đếm nhịp (nút âm lượng).
+Full	Toàn bộ
+Full Screen	Toàn màn hình
+Full takes away all the noise it finds; a limit keeps some, for a more natural sound	Toàn bộ sẽ xóa hết nhiễu tìm thấy; đặt giới hạn sẽ giữ lại một ít, cho âm thanh tự nhiên hơn
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel và hãng khác, thử nghiệm)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU support	Hỗ trợ GPU
+GPU support (AMD, Intel and others)	Hỗ trợ GPU (AMD, Intel và khác)
+Gain	Độ lợi
+Gain: custom…	Độ lợi: tùy chỉnh…
+Gain: {db} dB	Độ lợi: {db} dB
+General	Chung
+Genre	Thể loại
+Get a key	Lấy khóa
+Get your user key	Lấy khóa người dùng
+Gray	Xám
+HTDemucs v4 — drums, bass, other, vocals	HTDemucs v4 — trống, bass, khác, giọng hát
+Half the tempo	Giảm nửa nhịp độ
+Hamming	Hamming
+Hann	Hann
+Held notes	Nốt ngân
+High contrast	Tương phản cao
+Higher: fewer, surer notes start	Cao hơn: ít điểm bắt đầu nốt hơn, chắc chắn hơn
+Higher: notes end sooner, quiet ones are left out	Cao hơn: nốt kết thúc sớm hơn, nốt nhỏ bị bỏ
+Hiss	Tiếng xì
+Hop	Bước nhảy
+Identify Album	Nhận diện album
+Identify Album…	Nhận diện album…
+Identify Track	Nhận diện bản nhạc
+Identify Track needs one; it is free for non-commercial use.	Nhận diện bản nhạc cần khóa này; miễn phí cho mục đích phi thương mại.
+Identify Track…	Nhận diện bản nhạc…
+Image	Ảnh
+In order	Theo thứ tự
+Instrument range	Âm vực nhạc cụ
+It already has that name.	Nó đã có tên đó.
+It's all quieter than that; nothing trimmed	Tất cả đều nhỏ hơn mức đó; không cắt gì
+It's no longer in the Trash.	Nó không còn trong Thùng rác.
+Its unsaved edits will be lost.	Các chỉnh sửa chưa lưu sẽ mất.
+Keep current	Giữ ảnh hiện tại
+Key	Giọng
+Key ≈ {key}	Giọng ≈ {key}
+Keyboard Shortcuts	Phím tắt
+Label size	Cỡ nhãn
+Language	Ngôn ngữ
+Language:	Ngôn ngữ:
+Length	Độ dài
+Levels	Mức
+Licence ({n} of {count}) — {title}	Giấy phép ({n} trên {count}) — {title}
+Licence — {title}	Giấy phép — {title}
+Light	Sáng
+Line	Đường thẳng
+Local AI	AI cục bộ
+Look up	Tra cứu
+Looking up…	Đang tra cứu…
+Loop selection	Lặp vùng chọn
+Loudness	Độ ồn
+Lower finds more beats, also where the model is unsure	Thấp hơn tìm được nhiều phách hơn, cả chỗ mô hình không chắc
+Lowest frequency	Tần số thấp nhất
+MIDI file is too big	Tệp MIDI quá lớn
+MIDI file is too long	Tệp MIDI quá dài
+MIDI tempo	Nhịp độ MIDI
+MP3 can't hold {khz} kHz audio; save as FLAC or WAV instead	MP3 không chứa được âm thanh {khz} kHz; hãy lưu dạng FLAC hoặc WAV
+MP3 holds mono or stereo only; save as FLAC or WAV instead	MP3 chỉ chứa mono hoặc stereo; hãy lưu dạng FLAC hoặc WAV
+MP3: LAME failed to start	MP3: không khởi động được LAME
+Magma	Magma
+Make soundglass my default player	Đặt soundglass làm trình phát mặc định của tôi
+Make soundglass the default player	Đặt soundglass làm trình phát mặc định
+Matches on this album are listed first	Kết quả trong album này được xếp trước
+Matches on this album are listed first; it isn't sent	Kết quả trong album này được xếp trước; không gửi đi
+Melody to MIDI	Giai điệu sang MIDI
+Metronome	Máy đếm nhịp
+Mono	Mono
+More overlap between the 7.8 s segments: smoother joins, slower	Chồng lấn nhiều hơn giữa các đoạn 7,8 giây: nối mượt hơn, chậm hơn
+Moved to the Trash	Đã chuyển vào Thùng rác
+MusicBrainz can't be reached ({e})	Không kết nối được MusicBrainz ({e})
+MusicBrainz…	MusicBrainz…
+Name	Tên
+Next	Tiếp
+No album cover	Không có ảnh bìa album
+No album found.	Không tìm thấy album.
+No audio files in {name}	Không có tệp âm thanh trong {name}
+No audio files or folders here	Ở đây không có tệp âm thanh hay thư mục
+No file open	Chưa mở tệp
+No match found.	Không tìm thấy kết quả.
+No silence at the start or end to trim	Không có khoảng lặng ở đầu hay cuối để cắt
+None	Không
+None (whole range)	Không (toàn dải)
+None of these tags is set.	Chưa đặt thẻ nào trong số này.
+Normalize	Chuẩn hóa
+Normalize loudness	Chuẩn hóa độ ồn
+Normalize peak	Chuẩn hóa đỉnh
+Normalize: custom loudness…	Chuẩn hóa: độ ồn tùy chỉnh…
+Normalize: custom peak…	Chuẩn hóa: đỉnh tùy chỉnh…
+Normalize: {name} ({db} dBFS)	Chuẩn hóa: {name} ({db} dBFS)
+Normalize: {name} ({lufs} LUFS)	Chuẩn hóa: {name} ({lufs} LUFS)
+Not Now	Để sau
+Note threshold	Ngưỡng nốt
+Notes	Nốt
+Notes from	Nốt từ
+Nothing to normalize: it's silent	Không có gì để chuẩn hóa: im lặng
+OK	OK
+Octave numbers	Số quãng tám
+Ogg Vorbis (q6)	Ogg Vorbis (q6)
+On the selection	Trên vùng chọn
+On the whole track	Trên cả bản nhạc
+Only fill empty tags	Chỉ điền thẻ trống
+Only how the file's beats are counted; the notes keep their times	Chỉ đổi cách đếm phách của tệp; các nốt giữ nguyên thời điểm
+Only needed to contribute fingerprints to AcoustID.	Chỉ cần khi đóng góp vân tay cho AcoustID.
+Onset threshold	Ngưỡng bắt đầu
+Open Recent	Mở gần đây
+Open models folder	Mở thư mục mô hình
+Open project page	Mở trang dự án
+Open themes folder	Mở thư mục giao diện
+Open…	Mở…
+Other lines	Đường khác
+Output	Đầu ra
+Overlap	Chồng lấn
+Parakeet TDT 0.6B v3 — 25 European languages, more accurate	Parakeet TDT 0.6B v3 — 25 ngôn ngữ châu Âu, chính xác hơn
+Pause	Tạm dừng
+Peak	Đỉnh
+Peak at max	Đỉnh ở mức tối đa
+Peak near max	Đỉnh gần tối đa
+Piano synth	Piano tổng hợp
+Pitch-preserved speed change	Đổi tốc độ giữ nguyên cao độ
+Play	Phát
+Play order, {name}	Thứ tự phát, {name}
+Please read and accept the licence before downloading.	Vui lòng đọc và chấp nhận giấy phép trước khi tải xuống.
+Position, seconds	Vị trí, giây
+Practice	Luyện tập
+Practice mode	Chế độ luyện tập
+Press keys… (Esc to cancel)	Nhấn phím… (Esc để hủy)
+Previous	Trước
+Quit	Thoát
+Rectangular	Chữ nhật
+Redo	Làm lại
+Reload	Tải lại
+Remember window size	Nhớ kích thước cửa sổ
+Remove	Gỡ
+Remove Album Cover…	Gỡ ảnh bìa album…
+Remove Cover	Gỡ ảnh bìa
+Remove Noise	Khử nhiễu
+Remove album cover	Gỡ ảnh bìa album
+Remove the cover from this track only, or from {what}? The music itself isn't changed.	Gỡ ảnh bìa chỉ khỏi bản nhạc này, hay khỏi {what}? Bản thân âm nhạc không đổi.
+Remove the cover from this track? The music itself isn't changed.	Gỡ ảnh bìa khỏi bản nhạc này? Bản thân âm nhạc không đổi.
+Rename	Đổi tên
+Rename from Tags	Đổi tên theo thẻ
+Rename from Tags…	Đổi tên theo thẻ…
+Renamed to {name}	Đã đổi tên thành {name}
+Rename…	Đổi tên…
+Repeat track	Lặp bản nhạc
+Replace…	Thay…
+Reset	Đặt lại
+Reset All Shortcuts	Đặt lại mọi phím tắt
+Reset to defaults	Đặt lại mặc định
+Restart soundglass to start using the GPU.	Khởi động lại soundglass để bắt đầu dùng GPU.
+Reverse	Đảo ngược
+Run the AI tools on the graphics card ({mb} MB, NVIDIA's CUDA libraries).	Chạy công cụ AI trên card đồ họa ({mb} MB, thư viện CUDA của NVIDIA).
+Running on the CPU…	Đang chạy trên CPU…
+Running on the GPU…	Đang chạy trên GPU…
+Same ({rate})	Giữ nguyên ({rate})
+Sample rate	Tần số lấy mẫu
+Save As	Lưu thành
+Save As…	Lưu thành…
+Save Copy	Lưu bản sao
+Save Cover	Lưu ảnh bìa
+Save as Subtitles…	Lưu dạng phụ đề…
+Save as Text…	Lưu dạng văn bản…
+Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed.	Lưu {name} làm ảnh bìa cho bản nhạc này, hay cho {what}? Mọi ảnh bìa hiện có sẽ bị thay. Bản thân âm nhạc không đổi.
+Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed.	Lưu {name} làm ảnh bìa cho bản nhạc này? Ảnh bìa hiện có sẽ bị thay. Bản thân âm nhạc không đổi.
+Saved {name}	Đã lưu {name}
+Saved {name}, but the tags could not be copied	Đã lưu {name}, nhưng không sao chép được thẻ
+Save…	Lưu…
+Saving failed	Lưu thất bại
+Saving {name}…	Đang lưu {name}…
+Scale shown	Âm giai hiển thị
+Seek bar:	Thanh vị trí:
+Sends each file's fingerprint and length to AcoustID, one a second, and one recording's ID to MusicBrainz for the genre. Nothing else leaves this computer.	Gửi vân tay và độ dài của từng tệp tới AcoustID, mỗi giây một tệp, và ID của một bản thu tới MusicBrainz để lấy thể loại. Ngoài ra không có gì rời khỏi máy tính này.
+Sends the fingerprint, its length and the MusicBrainz recording ID to AcoustID, with your user key. It is sent only if AcoustID doesn't know this fingerprint yet.	Gửi vân tay, độ dài và ID bản thu MusicBrainz tới AcoustID, kèm khóa người dùng của bạn. Chỉ gửi nếu AcoustID chưa biết vân tay này.
+Sends the title and artist to Discogs, and the chosen release's ID for its track list. Nothing else leaves this computer.	Gửi tiêu đề và nghệ sĩ tới Discogs, và ID của bản phát hành đã chọn để lấy danh sách bài. Ngoài ra không có gì rời khỏi máy tính này.
+Sends the title and artist to English Wikipedia. Nothing else leaves this computer.	Gửi tiêu đề và nghệ sĩ tới Wikipedia tiếng Anh. Ngoài ra không có gì rời khỏi máy tính này.
+Sends the title, artist and album to MusicBrainz, and the chosen match's ID for its genre. Nothing else leaves this computer.	Gửi tiêu đề, nghệ sĩ và album tới MusicBrainz, và ID của kết quả đã chọn để lấy thể loại. Ngoài ra không có gì rời khỏi máy tính này.
+Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer.	Gửi vân tay và độ dài của tệp này tới AcoustID, và ID của kết quả đã chọn tới MusicBrainz. Ngoài ra không có gì rời khỏi máy tính này.
+Sensitivity	Độ nhạy
+Settings	Cài đặt
+Settings: {model}	Cài đặt: {model}
+Settings…	Cài đặt…
+Sharps (C#)	Thăng (C#)
+Shortest note	Nốt ngắn nhất
+Show Log	Hiện nhật ký
+Show in Explorer	Hiện trong Explorer
+Show in File Manager	Hiện trong trình quản lý tệp
+Show or hide the chords along the top	Hiện hoặc ẩn hợp âm ở trên cùng
+Show or hide the note lines	Hiện hoặc ẩn các đường nốt
+Show the notes of {major} major	Hiện các nốt của {major} trưởng
+Show the notes of {major} major, which {key} shares	Hiện các nốt của {major} trưởng, chung với {key}
+Show the whole track	Hiện cả bản nhạc
+Show the whole track and all frequencies	Hiện cả bản nhạc và mọi tần số
+Shuffle	Ngẫu nhiên
+Silence	Im lặng
+Silent pieces are left out, so nothing is made up there	Các đoạn im lặng bị bỏ qua, nên không có gì được bịa ra ở đó
+Skip quieter than	Bỏ qua nếu nhỏ hơn
+Small: about 6 MB for a 4-minute stem	Nhỏ: khoảng 6 MB cho một stem dài 4 phút
+Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed.	Space, ←, →, Page Up, Page Down, L (Lặp vùng chọn), Esc và Enter là cố định.
+Space, ←, →, Page Up, Page Down, L, Esc, Enter and Ctrl+C/X/V	Space, ←, →, Page Up, Page Down, L, Esc, Enter và Ctrl+C/X/V
+Spectrogram	Phổ đồ
+Spectrogram settings	Cài đặt phổ đồ
+Spectrogram — {name}	Phổ đồ — {name}
+Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around	Phổ đồ: bấm để phát từ đó, kéo để chọn, cuộn để phóng to, Ctrl+cuộn để phóng to tần số, kéo chuột phải để di chuyển
+Split into Stems	Tách thành stem
+Split into Stems takes mono or stereo tracks	Tách thành stem nhận bản nhạc mono hoặc stereo
+Stereo	Stereo
+Stopped after {i} of {n}	Đã dừng sau {i} trên {n}
+Strength	Cường độ
+Subtitles	Phụ đề
+Swap left and right	Đổi trái và phải
+Tags	Thẻ
+Tags saved	Đã lưu thẻ
+Task	Tác vụ
+Tempo	Nhịp độ
+Tenor sax	Saxophone tenor
+Text	Chữ
+That image can't be read.	Không đọc được ảnh đó.
+That image can't be used as a cover.	Ảnh đó không dùng làm ảnh bìa được.
+That is the original file; choose another name. The original is never changed.	Đó là tệp gốc; hãy chọn tên khác. Tệp gốc không bao giờ bị thay đổi.
+That isn't a valid file name.	Đó không phải tên tệp hợp lệ.
+The AI runtime isn't installed yet.	Bộ chạy AI chưa được cài.
+The GPU couldn't be used, so the CPU is: {e}	Không dùng được GPU nên dùng CPU: {e}
+The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face.	Tệp ONNX là bản xuất của StemSplit (trọng số lưu ở độ chính xác một nửa), trên Hugging Face.
+The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face.	Tệp ONNX là bản xuất phát trực tuyến torchDF của grazder, do KimtOS lưu trữ trên Hugging Face.
+The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face.	Tệp ONNX là bản xuất của musetric từ checkpoint final0 của JKU, trên Hugging Face.
+The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face.	Các tệp ONNX là bản chuyển đổi int8 của istupakov cho onnx-asr, trên Hugging Face.
+The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.	Các tệp ONNX là bản xuất int8 của sherpa-onnx (k2-fsa), trên Hugging Face.
+The audio changes format partway.	Định dạng âm thanh thay đổi giữa chừng.
+The cover couldn't be written ({failed})	Không ghi được ảnh bìa ({failed})
+The file has no audio.	Tệp không có âm thanh.
+The file is too short to identify.	Tệp quá ngắn để nhận diện.
+The image is larger than 10 MB.	Ảnh lớn hơn 10 MB.
+The key spells its notes	Giọng quyết định cách viết nốt
+The lookup stopped.	Đã dừng tra cứu.
+The original file is never changed.	Tệp gốc không bao giờ bị thay đổi.
+The reply couldn't be read ({e})	Không đọc được phản hồi ({e})
+The reply wasn't understood.	Không hiểu được phản hồi.
+Theme:	Giao diện:
+This Track	Bản nhạc này
+This file's tags can't be read.	Không đọc được thẻ của tệp này.
+This match has no MusicBrainz recording to link to.	Kết quả này không có bản thu MusicBrainz để liên kết.
+This track has edits that aren't saved. The original file is never changed.	Bản nhạc này có chỉnh sửa chưa lưu. Tệp gốc không bao giờ bị thay đổi.
+This track has no cover. Save {name} as the cover of {what}?	Bản nhạc này không có ảnh bìa. Lưu {name} làm ảnh bìa cho {what}?
+Time marks	Mốc thời gian
+Time-preserved pitch change	Đổi cao độ giữ nguyên thời lượng
+Title	Tiêu đề
+Title:	Tiêu đề:
+Tonic line width	Độ dày đường chủ âm
+Tonic lines (C for all notes)	Đường chủ âm (C cho mọi nốt)
+Too short or too quiet to measure its loudness	Quá ngắn hoặc quá nhỏ để đo độ ồn
+Tools for musicians: loops, the spectrogram, tempo, key and chords	Công cụ cho nhạc sĩ: vòng lặp, phổ đồ, nhịp độ, giọng và hợp âm
+Track	Bản nhạc
+Track Info	Thông tin bản nhạc
+Tracks that already have a cover get this one instead. The music itself isn't changed.	Bản nhạc đã có ảnh bìa sẽ nhận ảnh này thay thế. Bản thân âm nhạc không đổi.
+Transcribe	Chép lời
+Transcribe Speech	Chép lời nói
+Transcript	Bản chép lời
+Translate to English	Dịch sang tiếng Anh
+Trim silence	Cắt khoảng lặng
+Trim silence below	Cắt khoảng lặng dưới
+Trim silence: custom…	Cắt khoảng lặng: tùy chỉnh…
+Trim silence: {name} ({db} dB)	Cắt khoảng lặng: {name} ({db} dB)
+Trumpet	Kèn trumpet
+Tuning A4	Chỉnh âm A4
+Type a title to search for.	Nhập tiêu đề để tìm.
+Undo	Hoàn tác
+Unsaved edits	Chỉnh sửa chưa lưu
+Up one folder	Lên một thư mục
+Use Match	Dùng kết quả này
+Use the GPU	Dùng GPU
+Use the estimated key, {key}	Dùng giọng ước tính, {key}
+Use the estimated tempo	Dùng nhịp độ ước tính
+User key:	Khóa người dùng:
+View	Xem
+Visualiser	Hiệu ứng hình ảnh
+Volume	Âm lượng
+Volume, {percent} %	Âm lượng, {percent} %
+Volume, {percent} %, metronome on	Âm lượng, {percent} %, bật máy đếm nhịp
+Waveform	Dạng sóng
+Waveform position	Vị trí dạng sóng
+Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along	Dạng sóng: bấm để phát từ đó, kéo để chọn, cuộn để phóng to, kéo chuột phải để di chuyển
+Welcome to soundglass	Chào mừng đến với soundglass
+Whisper large-v3-turbo — 99 languages, best, slow on a CPU	Whisper large-v3-turbo — 99 ngôn ngữ, tốt nhất, chậm trên CPU
+Whisper small — 99 languages	Whisper small — 99 ngôn ngữ
+Whole selection	Toàn bộ vùng chọn
+Wikipedia can't be reached ({e})	Không kết nối được Wikipedia ({e})
+Wikipedia…	Wikipedia…
+Window function	Hàm cửa sổ
+Window size	Độ dài cửa sổ
+Window size:	Kích thước cửa sổ:
+Worldwide	Toàn thế giới
+Write	Ghi
+Write tags	Ghi thẻ
+Write the tags into {name}? The audio isn't changed.	Ghi thẻ vào {name}? Âm thanh không đổi.
+Writes only the tags that are empty in each file	Chỉ ghi những thẻ còn trống trong từng tệp
+Writes the album's tags into every matched file, replacing the tags there	Ghi thẻ của album vào từng tệp khớp, thay các thẻ đang có
+Writes the tags into the file; the audio isn't changed	Ghi thẻ vào tệp; âm thanh không đổi
+Writing the tags failed	Ghi thẻ thất bại
+Writing {i} of {n}	Đang ghi {i} trên {n}
+Year	Năm
+Your own themes go in the themes folder. Choosing a theme again reloads its file.	Giao diện riêng của bạn nằm trong thư mục giao diện. Chọn lại một giao diện sẽ tải lại tệp của nó.
+Zoom in (scroll; right-drag to move along)	Phóng to (cuộn; kéo chuột phải để di chuyển)
+Zoom out	Thu nhỏ
+a GPU library was missing from the download	thiếu một thư viện GPU trong bản tải
+add an AcoustID key in Settings	hãy thêm khóa AcoustID trong Cài đặt
+after Local AI → Find Beats	sau AI cục bộ → Tìm phách
+after loading	sau khi tải
+all {n} tracks in this folder	tất cả {n} bản nhạc trong thư mục này
+already normal	đã bình thường
+another AI tool is running	một công cụ AI khác đang chạy
+as it is	giữ nguyên
+can't make a folder next to the track ({e})	không tạo được thư mục cạnh bản nhạc ({e})
+can't save a copy next to the original ({e})	không lưu được bản sao cạnh tệp gốc ({e})
+choose at least one stem to write (AI Models → Settings)	hãy chọn ít nhất một stem để ghi (Mô hình AI → Cài đặt)
+close the tag editor first	hãy đóng trình sửa thẻ trước
+hop {hop} for this length	bước nhảy {hop} cho độ dài này
+line {line}: {key}="{v}": invalid value	dòng {line}: {key}="{v}": giá trị không hợp lệ
+measuring…	đang đo…
+mode="{other}": invalid value	mode="{other}": giá trị không hợp lệ
+needs a model: Local AI → AI Models…	cần một mô hình: AI cục bộ → Mô hình AI…
+needs the AI runtime: Local AI → Download AI Runtime…	cần bộ chạy AI: AI cục bộ → Tải bộ chạy AI…
+new image	ảnh mới
+no audio track	không có rãnh âm thanh
+no channels	không có kênh
+no data folder	không có thư mục dữ liệu
+no file name	không có tên tệp
+no file open	chưa mở tệp
+no notes were found	không tìm thấy nốt nào
+no sample rate	không có tần số lấy mẫu
+no speech was found	không tìm thấy lời nói
+not a supported audio file ({e})	không phải tệp âm thanh được hỗ trợ ({e})
+not a transcription model	không phải mô hình chép lời
+not found	không tìm thấy
+not found, left alone	không tìm thấy, giữ nguyên
+nothing to redo	không có gì để làm lại
+nothing to undo	không có gì để hoàn tác
+part of the track could not be read	không đọc được một phần bản nhạc
+quality	chất lượng
+removed	đã gỡ
+saving tags…	đang lưu thẻ…
+select a part in the Edit panel	hãy chọn một phần trong bảng Sửa
+select at least half a second, or nothing for the whole track	hãy chọn ít nhất nửa giây, hoặc không chọn gì cho cả bản nhạc
+silent	im lặng
+soundglass is now the default player	soundglass giờ là trình phát mặc định
+the AI tool failed	công cụ AI thất bại
+the AI tool stopped	công cụ AI đã dừng
+the channel count changes mid-file	số kênh thay đổi giữa tệp
+the encoder failed	bộ mã hóa thất bại
+the model gave an unexpected output	mô hình cho kết quả không mong đợi
+the saved file doesn't read back ({e})	không đọc lại được tệp đã lưu ({e})
+the saved file reads back wrong ({frames} frames, expected {expected})	tệp đã lưu đọc lại sai ({frames} khung, cần {expected})
+the settings aren't for this tool	cài đặt này không dành cho công cụ này
+the sound device failed to open	không mở được thiết bị âm thanh
+the tag writer failed	trình ghi thẻ thất bại
+the track has no audio	bản nhạc không có âm thanh
+the track is still loading	bản nhạc vẫn đang tải
+the track isn't fully loaded	bản nhạc chưa tải xong
+this file can't be decoded	không giải mã được tệp này
+this track	bản nhạc này
+to	đến
+track {n}	bản nhạc {n}
+unknown error	lỗi không xác định
+with unsaved edits, once loaded	có chỉnh sửa chưa lưu, sau khi tải
+writing the tags would change the audio, so nothing was written	ghi thẻ sẽ làm đổi âm thanh, nên không ghi gì
+{kbps} kb/s	{kbps} kb/s
+{keys} is already used by {other}	{keys} đã được {other} dùng
+{key} major	{key} trưởng
+{model} (installed)	{model} (đã cài)
+{name} isn't an audio file soundglass plays	{name} không phải tệp âm thanh soundglass phát được
+{name} was changed by another program. Reload it?	{name} đã bị chương trình khác thay đổi. Tải lại?
+{name} will be moved to the Trash.	{name} sẽ được chuyển vào Thùng rác.
+{name}: custom…	{name}: tùy chỉnh…
+{name}: whole selection	{name}: toàn bộ vùng chọn
+{name}: {s} s	{name}: {s} giây
+{n} of {total} tracks	{n} trên {total} bản nhạc
+{ok} written, {bad} failed	{ok} đã ghi, {bad} thất bại
+{path}: bigger than 64 KiB	{path}: lớn hơn 64 KiB
+{secs} s	{secs} giây
+{sign}{n} semitone	{sign}{n} nửa cung
+{sign}{n} semitones	{sign}{n} nửa cung
+{task} (selection)	{task} (vùng chọn)
+{what} installed.	Đã cài {what}.
+{what}: the download stopped.	{what}: tải xuống đã dừng.
+→ {n}	→ {n}
+−14 streaming, −23 TV	−14 phát trực tuyến, −23 TV
+−60 silence, −40 hiss	−60 im lặng, −40 tiếng xì

@@ -1,0 +1,551 @@
+ dB at most	 dB como máximo
+ semitones	 semitonos
+0 (Normal)	0 (normal)
+0 = max	0 = máximo
+1 (mono)	1 (mono)
+16-bit	16 bits
+1× (Normal)	1× (normal)
+2 (stereo)	2 (estéreo)
+24-bit	24 bits
+32-bit float	32 bits flotante
+<{tag}>: invalid value	<{tag}>: valor no válido
+A code such as en, es, fr, de; empty to detect it from the first speech	Un código como en, es, fr, de; vacío para detectarlo en la primera voz
+A file with that name already exists.	Ya existe un archivo con ese nombre.
+A long track: the hop is raised so the spectrogram fits in memory	Pista larga: se aumenta el salto para que el espectrograma quepa en memoria
+AI Models	Modelos de IA
+AI Models…	Modelos de IA…
+AI runtime (ONNX Runtime)	Motor de IA (ONNX Runtime)
+About 50 MB for a 4-minute stem, for further editing	Unos 50 MB por pista separada de 4 minutos, para seguir editando
+Accept and Continue	Aceptar y continuar
+Accept and Download	Aceptar y descargar
+AcoustID Settings	Ajustes de AcoustID
+AcoustID can't be reached ({e})	No se puede conectar con AcoustID ({e})
+AcoustID: {why}	AcoustID: {why}
+Add AcoustID User Key	Añadir clave de usuario de AcoustID
+Add Cover	Añadir portada
+Add album cover?	¿Añadir portada del álbum?
+Add your AcoustID application key and user key in Settings to contribute.	Añade tu clave de aplicación y tu clave de usuario de AcoustID en Ajustes para contribuir.
+Add/Replace Album Cover…	Añadir o reemplazar portada del álbum…
+Album	Álbum
+Album cover	Portada del álbum
+Album:	Álbum:
+All notes	Todas las notas
+All {n} Tracks	Las {n} pistas
+Already in AcoustID; nothing was sent.	Ya está en AcoustID; no se ha enviado nada.
+Also find notes without a clear start	Buscar también notas sin un inicio claro
+Analysis	Análisis
+Any graphics card with Vulkan or Direct3D 12 ({mb} MB). A weak built-in one can be slower than the CPU.	Cualquier tarjeta gráfica con Vulkan o Direct3D 12 ({mb} MB). Una integrada poco potente puede ser más lenta que la CPU.
+Application key:	Clave de aplicación:
+Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.	Se aplica la próxima vez que se abra soundglass; se conservan la ventana, Información de pista y el panel Editar tal como estén al salir.
+Apply and Rename	Aplicar y renombrar
+Apply speed and pitch	Aplicar velocidad y tono
+Apply to All Tracks	Aplicar a todas las pistas
+Artist	Artista
+Artist:	Artista:
+As Apply to All Tracks, then renames each file with the Rename from Tags pattern	Como Aplicar a todas las pistas, y luego renombra cada archivo con el patrón de Renombrar desde etiquetas
+As TV	Como la TV
+As podcasts	Como los pódcasts
+As streaming	Como el streaming
+As subtitles (.srt)	Como subtítulos (.srt)
+Audio	Audio
+BPM	BPM
+BPM tag saved ({bpm})	Etiqueta BPM guardada ({bpm})
+Basic Pitch — any instrument, several notes at once	Basic Pitch — cualquier instrumento, varias notas a la vez
+Basic Pitch's melodia trick	Truco «melodia» de Basic Pitch
+Beat This! — beats and downbeats	Beat This! — pulsos y tiempos fuertes
+Bit depth	Profundidad de bits
+Bitrate	Tasa de bits
+Blackman–Harris	Blackman–Harris
+Blue to red	Azul a rojo
+C D E	C D E
+CUDA: Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050. WebGPU: Find Beats only, about 2× faster (Split into Stems was slower than the CPU). The other tools are faster on the CPU. With both installed, NVIDIA's is used	CUDA: Separar en pistas y Buscar pulsos, de 2,6 a 3 veces más rápido en una GTX 1050. WebGPU: solo Buscar pulsos, unas 2 veces más rápido (Separar en pistas era más lento que la CPU). Las demás herramientas son más rápidas en la CPU. Con ambos instalados se usa el de NVIDIA
+Can't fingerprint this audio ({e})	No se puede calcular la huella de este audio ({e})
+Can't read this folder: {e}	No se puede leer esta carpeta: {e}
+Can't write tags to this format ({e})	No se pueden escribir etiquetas en este formato ({e})
+Cancel	Cancelar
+Change	Cambiar
+Change Keyboard Shortcuts…	Cambiar atajos de teclado…
+Change speed and pitch	Cambiar velocidad y tono
+Channels	Canales
+Channels: mono	Canales: mono
+Channels: stereo	Canales: estéreo
+Channels: swap left and right	Canales: intercambiar izquierdo y derecho
+Check for updates	Buscar actualizaciones
+Chords	Acordes
+Chords: after loading	Acordes: tras cargar
+Chords: measuring…	Acordes: midiendo…
+Clicks	Clics
+Clicks on the found beats	Clics en los pulsos encontrados
+Close	Cerrar
+Codec	Códec
+Colours	Colores
+Continue	Continuar
+Contribute	Contribuir
+Contribute to AcoustID?	¿Contribuir a AcoustID?
+Copied the file	Archivo copiado
+Copy	Copiar
+Copy File	Copiar archivo
+Copy Path	Copiar ruta
+Couldn't bring back {name}: {e}	No se pudo recuperar {name}: {e}
+Couldn't copy the file: {e}	No se pudo copiar el archivo: {e}
+Couldn't delete the file: {e}	No se pudo eliminar el archivo: {e}
+Cover	Portada
+Cover added to 1 track	Portada añadida a 1 pista
+Cover added to {n} of {total} tracks (not: {failed})	Portada añadida a {n} de {total} pistas (no: {failed})
+Cover added to {n} tracks	Portada añadida a {n} pistas
+Cover at 256 px	Portada a 256 px
+Cover removed from 1 track	Portada quitada de 1 pista
+Cover removed from {n} of {total} tracks (not: {failed})	Portada quitada de {n} de {total} pistas (no: {failed})
+Cover removed from {n} tracks	Portada quitada de {n} pistas
+Crop	Recortar
+Current cover	Portada actual
+Custom ({value})…	Personalizado ({value})…
+Custom loudness…	Sonoridad personalizada…
+Custom peak…	Pico personalizado…
+Custom…	Personalizado…
+Cut out	Recortar fuera
+Dark	Oscuro
+Data from Discogs.	Datos de Discogs.
+Decoding…	Decodificando…
+DeepFilterNet3 — speech, 48 kHz	DeepFilterNet3 — voz, 48 kHz
+Delete file?	¿Eliminar el archivo?
+Delete…	Eliminar…
+Discard edits	Descartar ediciones
+Discogs can't be reached ({e})	No se puede conectar con Discogs ({e})
+Discogs is busy; try again in a minute.	Discogs está ocupado; inténtalo de nuevo en un minuto.
+Discogs now asks for a token; this lookup can't run.	Discogs pide ahora un token; esta búsqueda no puede hacerse.
+Discogs…	Discogs…
+Do Ré Mi	Do Re Mi
+Do you want to contribute this track's fingerprint to AcoustID? AcoustID will then recognise {title} — {artist} for everyone.	¿Quieres contribuir con la huella de esta pista a AcoustID? AcoustID reconocerá entonces {title} — {artist} para todo el mundo.
+Double the tempo	Doblar el tempo
+Download	Descargar
+Download AI Runtime ({mb} MB)	Descargar motor de IA ({mb} MB)
+Download AI Runtime ({mb} MB)…	Descargar motor de IA ({mb} MB)…
+Download GPU Support	Descargar soporte para GPU
+Downloaded from Microsoft (ONNX Runtime's WebGPU plugin, via its official PyPI package).	Descargado de Microsoft (el complemento WebGPU de ONNX Runtime, mediante su paquete oficial de PyPI).
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Se descarga de Microsoft (ONNX Runtime) y NVIDIA (bibliotecas CUDA, mediante sus paquetes oficiales de PyPI).
+Drag on the waveform to select	Arrastra sobre la forma de onda para seleccionar
+Each stretch of speech with its start and end, to save as an .srt file	Cada tramo de voz con su inicio y su final, para guardarlo como archivo .srt
+Edit	Editar
+Effects	Efectos
+Europe	Europa
+FFT size	Tamaño de la FFT
+FLAC (lossless)	FLAC (sin pérdida)
+Fade in	Fundido de entrada
+Fade out	Fundido de salida
+Faint noise	Ruido leve
+Fetching details…	Obteniendo detalles…
+File	Archivo
+File changed	Archivo modificado
+File size	Tamaño de archivo
+Fill In All Tracks	Rellenar todas las pistas
+Fill Metadata From	Rellenar metadatos desde
+Fill from Discogs	Rellenar desde Discogs
+Fill from Discogs…	Rellenar desde Discogs…
+Fill from MusicBrainz	Rellenar desde MusicBrainz
+Fill from MusicBrainz…	Rellenar desde MusicBrainz…
+Fill from Wikipedia	Rellenar desde Wikipedia
+Fill from Wikipedia…	Rellenar desde Wikipedia…
+Fills Track Info's tag editor; Save… there writes the tags	Rellena el editor de etiquetas de Información de pista; Guardar… allí escribe las etiquetas
+Find Beats	Buscar pulsos
+Fingerprint sent to AcoustID; lookups find it once it's processed.	Huella enviada a AcoustID; las búsquedas la encontrarán cuando se procese.
+Fingerprinting {i} of {n}: {file}	Calculando huella {i} de {n}: {file}
+Fit	Ajustar
+Fit cover space	Ajustar al espacio de la portada
+Flats (Db)	Bemoles (Db)
+Folder	Carpeta
+Follow system	Según el sistema
+Font size:	Tamaño de letra:
+Format	Formato
+Found {n} beats, ≈ {bpm} BPM. Metronome on (volume button).	{n} pulsos encontrados, ≈ {bpm} BPM. Metrónomo activado (botón de volumen).
+Found {n} beats. Metronome on (volume button).	{n} pulsos encontrados. Metrónomo activado (botón de volumen).
+Full	Total
+Full Screen	Pantalla completa
+Full takes away all the noise it finds; a limit keeps some, for a more natural sound	Total quita todo el ruido que encuentra; un límite deja algo, para un sonido más natural
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel y otras, experimental)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU support	Soporte para GPU
+GPU support (AMD, Intel and others)	Soporte de GPU (AMD, Intel y otras)
+Gain	Ganancia
+Gain: custom…	Ganancia: personalizada…
+Gain: {db} dB	Ganancia: {db} dB
+General	General
+Genre	Género
+Get a key	Obtener una clave
+Get your user key	Obtén tu clave de usuario
+Gray	Gris
+HTDemucs v4 — drums, bass, other, vocals	HTDemucs v4 — batería, bajo, otros, voz
+Half the tempo	La mitad del tempo
+Hamming	Hamming
+Hann	Hann
+Held notes	Notas sostenidas
+High contrast	Alto contraste
+Higher: fewer, surer notes start	Más alto: empiezan menos notas, más seguras
+Higher: notes end sooner, quiet ones are left out	Más alto: las notas acaban antes y se omiten las suaves
+Hiss	Siseo
+Hop	Salto
+Identify Album	Identificar álbum
+Identify Album…	Identificar álbum…
+Identify Track	Identificar pista
+Identify Track needs one; it is free for non-commercial use.	Identificar pista la necesita; es gratuita para uso no comercial.
+Identify Track…	Identificar pista…
+Image	Imagen
+In order	En orden
+Instrument range	Registro del instrumento
+It already has that name.	Ya tiene ese nombre.
+It's all quieter than that; nothing trimmed	Todo es más silencioso que eso; no se ha recortado nada
+It's no longer in the Trash.	Ya no está en la papelera.
+Its unsaved edits will be lost.	Se perderán sus ediciones sin guardar.
+Keep current	Mantener la actual
+Key	Tonalidad
+Key ≈ {key}	Tonalidad ≈ {key}
+Keyboard Shortcuts	Atajos de teclado
+Label size	Tamaño de las etiquetas
+Language	Idioma
+Language:	Idioma:
+Length	Duración
+Levels	Niveles
+Licence ({n} of {count}) — {title}	Licencia ({n} de {count}) — {title}
+Licence — {title}	Licencia — {title}
+Light	Claro
+Line	Línea
+Local AI	IA local
+Look up	Buscar
+Looking up…	Buscando…
+Loop selection	Repetir selección
+Loudness	Sonoridad
+Lower finds more beats, also where the model is unsure	Más bajo encuentra más pulsos, también donde el modelo duda
+Lowest frequency	Frecuencia más baja
+MIDI file is too big	El archivo MIDI es demasiado grande
+MIDI file is too long	El archivo MIDI es demasiado largo
+MIDI tempo	Tempo MIDI
+MP3 can't hold {khz} kHz audio; save as FLAC or WAV instead	MP3 no admite audio a {khz} kHz; guarda como FLAC o WAV
+MP3 holds mono or stereo only; save as FLAC or WAV instead	MP3 solo admite mono o estéreo; guarda como FLAC o WAV
+MP3: LAME failed to start	MP3: LAME no pudo arrancar
+Magma	Magma
+Make soundglass my default player	Hacer de soundglass mi reproductor predeterminado
+Make soundglass the default player	Hacer de soundglass el reproductor predeterminado
+Matches on this album are listed first	Las coincidencias de este álbum aparecen primero
+Matches on this album are listed first; it isn't sent	Las coincidencias de este álbum aparecen primero; no se envía
+Melody to MIDI	Melodía a MIDI
+Metronome	Metrónomo
+Mono	Mono
+More overlap between the 7.8 s segments: smoother joins, slower	Más solapamiento entre los segmentos de 7,8 s: uniones más suaves, más lento
+Moved to the Trash	Movido a la papelera
+MusicBrainz can't be reached ({e})	No se puede conectar con MusicBrainz ({e})
+MusicBrainz…	MusicBrainz…
+Name	Nombre
+Next	Siguiente
+No album cover	Sin portada del álbum
+No album found.	No se ha encontrado ningún álbum.
+No audio files in {name}	No hay archivos de audio en {name}
+No audio files or folders here	Aquí no hay archivos de audio ni carpetas
+No file open	Ningún archivo abierto
+No match found.	No se ha encontrado ninguna coincidencia.
+No silence at the start or end to trim	No hay silencio al principio ni al final que recortar
+None	Ninguno
+None (whole range)	Ninguno (todo el rango)
+None of these tags is set.	Ninguna de estas etiquetas tiene valor.
+Normalize	Normalizar
+Normalize loudness	Normalizar sonoridad
+Normalize peak	Normalizar pico
+Normalize: custom loudness…	Normalizar: sonoridad personalizada…
+Normalize: custom peak…	Normalizar: pico personalizado…
+Normalize: {name} ({db} dBFS)	Normalizar: {name} ({db} dBFS)
+Normalize: {name} ({lufs} LUFS)	Normalizar: {name} ({lufs} LUFS)
+Not Now	Ahora no
+Note threshold	Umbral de nota
+Notes	Notas
+Notes from	Notas desde
+Nothing to normalize: it's silent	Nada que normalizar: es silencio
+OK	Aceptar
+Octave numbers	Números de octava
+Ogg Vorbis (q6)	Ogg Vorbis (q6)
+On the selection	En la selección
+On the whole track	En toda la pista
+Only fill empty tags	Rellenar solo etiquetas vacías
+Only how the file's beats are counted; the notes keep their times	Solo cómo se cuentan los pulsos del archivo; las notas mantienen sus tiempos
+Only needed to contribute fingerprints to AcoustID.	Solo hace falta para contribuir con huellas a AcoustID.
+Onset threshold	Umbral de inicio
+Open Recent	Abrir reciente
+Open models folder	Abrir carpeta de modelos
+Open project page	Abrir página del proyecto
+Open themes folder	Abrir carpeta de temas
+Open…	Abrir…
+Other lines	Otras líneas
+Output	Salida
+Overlap	Solapamiento
+Parakeet TDT 0.6B v3 — 25 European languages, more accurate	Parakeet TDT 0.6B v3 — 25 idiomas europeos, más preciso
+Pause	Pausa
+Peak	Pico
+Peak at max	Pico al máximo
+Peak near max	Pico cerca del máximo
+Piano synth	Piano sintetizado
+Pitch-preserved speed change	Cambio de velocidad sin cambiar el tono
+Play	Reproducir
+Play order, {name}	Orden de reproducción, {name}
+Please read and accept the licence before downloading.	Lee y acepta la licencia antes de descargar.
+Position, seconds	Posición, segundos
+Practice	Práctica
+Practice mode	Modo práctica
+Press keys… (Esc to cancel)	Pulsa las teclas… (Esc para cancelar)
+Previous	Anterior
+Quit	Salir
+Rectangular	Rectangular
+Redo	Rehacer
+Reload	Recargar
+Remember window size	Recordar tamaño de ventana
+Remove	Quitar
+Remove Album Cover…	Quitar portada del álbum…
+Remove Cover	Quitar portada
+Remove Noise	Quitar ruido
+Remove album cover	Quitar portada del álbum
+Remove the cover from this track only, or from {what}? The music itself isn't changed.	¿Quitar la portada solo de esta pista, o de {what}? La música en sí no cambia.
+Remove the cover from this track? The music itself isn't changed.	¿Quitar la portada de esta pista? La música en sí no cambia.
+Rename	Renombrar
+Rename from Tags	Renombrar desde etiquetas
+Rename from Tags…	Renombrar desde etiquetas…
+Renamed to {name}	Renombrado a {name}
+Rename…	Renombrar…
+Repeat track	Repetir pista
+Replace…	Reemplazar…
+Reset	Restablecer
+Reset All Shortcuts	Restablecer todos los atajos
+Reset to defaults	Restablecer valores predeterminados
+Restart soundglass to start using the GPU.	Reinicia soundglass para empezar a usar la GPU.
+Reverse	Invertir
+Run the AI tools on the graphics card ({mb} MB, NVIDIA's CUDA libraries).	Ejecutar las herramientas de IA en la tarjeta gráfica ({mb} MB, bibliotecas CUDA de NVIDIA).
+Running on the CPU…	Ejecutando en la CPU…
+Running on the GPU…	Ejecutando en la GPU…
+Same ({rate})	Igual ({rate})
+Sample rate	Frecuencia de muestreo
+Save As	Guardar como
+Save As…	Guardar como…
+Save Copy	Guardar copia
+Save Cover	Guardar portada
+Save as Subtitles…	Guardar como subtítulos…
+Save as Text…	Guardar como texto…
+Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed.	¿Guardar {name} como portada de esta pista, o de {what}? Se reemplaza cualquier portada que tengan ahora. La música en sí no cambia.
+Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed.	¿Guardar {name} como portada de esta pista? Se reemplaza la portada que tenga ahora. La música en sí no cambia.
+Saved {name}	Guardado: {name}
+Saved {name}, but the tags could not be copied	Guardado {name}, pero no se pudieron copiar las etiquetas
+Save…	Guardar…
+Saving failed	Error al guardar
+Saving {name}…	Guardando {name}…
+Scale shown	Escala mostrada
+Seek bar:	Barra de posición:
+Sends each file's fingerprint and length to AcoustID, one a second, and one recording's ID to MusicBrainz for the genre. Nothing else leaves this computer.	Envía la huella y la duración de cada archivo a AcoustID, una por segundo, y el ID de una grabación a MusicBrainz para el género. Nada más sale de este ordenador.
+Sends the fingerprint, its length and the MusicBrainz recording ID to AcoustID, with your user key. It is sent only if AcoustID doesn't know this fingerprint yet.	Envía la huella, su duración y el ID de grabación de MusicBrainz a AcoustID, con tu clave de usuario. Solo se envía si AcoustID aún no conoce esta huella.
+Sends the title and artist to Discogs, and the chosen release's ID for its track list. Nothing else leaves this computer.	Envía el título y el artista a Discogs, y el ID de la edición elegida para obtener su lista de pistas. Nada más sale de este ordenador.
+Sends the title and artist to English Wikipedia. Nothing else leaves this computer.	Envía el título y el artista a la Wikipedia en inglés. Nada más sale de este ordenador.
+Sends the title, artist and album to MusicBrainz, and the chosen match's ID for its genre. Nothing else leaves this computer.	Envía el título, el artista y el álbum a MusicBrainz, y el ID de la coincidencia elegida para su género. Nada más sale de este ordenador.
+Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer.	Envía la huella y la duración de este archivo a AcoustID, y el ID de la coincidencia elegida a MusicBrainz. Nada más sale de este ordenador.
+Sensitivity	Sensibilidad
+Settings	Ajustes
+Settings: {model}	Ajustes: {model}
+Settings…	Ajustes…
+Sharps (C#)	Sostenidos (C#)
+Shortest note	Nota más corta
+Show Log	Mostrar el registro
+Show in Explorer	Mostrar en el Explorador
+Show in File Manager	Mostrar en el gestor de archivos
+Show or hide the chords along the top	Mostrar u ocultar los acordes en la parte superior
+Show or hide the note lines	Mostrar u ocultar las líneas de notas
+Show the notes of {major} major	Mostrar las notas de {major} mayor
+Show the notes of {major} major, which {key} shares	Mostrar las notas de {major} mayor, que comparte {key}
+Show the whole track	Mostrar toda la pista
+Show the whole track and all frequencies	Mostrar toda la pista y todas las frecuencias
+Shuffle	Aleatorio
+Silence	Silencio
+Silent pieces are left out, so nothing is made up there	Los trozos en silencio se omiten, así que ahí no se inventa nada
+Skip quieter than	Omitir lo más suave que
+Small: about 6 MB for a 4-minute stem	Pequeño: unos 6 MB por pista separada de 4 minutos
+Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed.	Espacio, ←, →, Re Pág, Av Pág, L (Repetir selección), Esc e Intro son fijas.
+Space, ←, →, Page Up, Page Down, L, Esc, Enter and Ctrl+C/X/V	Espacio, ←, →, Re Pág, Av Pág, L, Esc, Intro y Ctrl+C/X/V
+Spectrogram	Espectrograma
+Spectrogram settings	Ajustes del espectrograma
+Spectrogram — {name}	Espectrograma — {name}
+Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around	Espectrograma: haz clic para reproducir desde ahí, arrastra para seleccionar, desplaza para ampliar, Ctrl+desplazar para ampliar las frecuencias, arrastra con el botón derecho para moverte
+Split into Stems	Separar en pistas
+Split into Stems takes mono or stereo tracks	Separar en pistas admite pistas mono o estéreo
+Stereo	Estéreo
+Stopped after {i} of {n}	Detenido tras {i} de {n}
+Strength	Intensidad
+Subtitles	Subtítulos
+Swap left and right	Intercambiar izquierdo y derecho
+Tags	Etiquetas
+Tags saved	Etiquetas guardadas
+Task	Tarea
+Tempo	Tempo
+Tenor sax	Saxo tenor
+Text	Texto
+That image can't be read.	No se puede leer esa imagen.
+That image can't be used as a cover.	Esa imagen no se puede usar como portada.
+That is the original file; choose another name. The original is never changed.	Ese es el archivo original; elige otro nombre. El original nunca se modifica.
+That isn't a valid file name.	Ese no es un nombre de archivo válido.
+The AI runtime isn't installed yet.	El motor de IA aún no está instalado.
+The GPU couldn't be used, so the CPU is: {e}	No se ha podido usar la GPU, así que se usa la CPU: {e}
+The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face.	El archivo ONNX es la exportación de StemSplit (pesos guardados a media precisión), en Hugging Face.
+The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face.	El archivo ONNX es la exportación en streaming de torchDF de grazder, alojada por KimtOS en Hugging Face.
+The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face.	El archivo ONNX es la exportación de musetric del punto de control final0 de JKU, en Hugging Face.
+The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face.	Los archivos ONNX son la conversión int8 de istupakov para onnx-asr, en Hugging Face.
+The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.	Los archivos ONNX son la exportación int8 de sherpa-onnx (k2-fsa), en Hugging Face.
+The audio changes format partway.	El audio cambia de formato a mitad.
+The cover couldn't be written ({failed})	No se pudo escribir la portada ({failed})
+The file has no audio.	El archivo no tiene audio.
+The file is too short to identify.	El archivo es demasiado corto para identificarlo.
+The image is larger than 10 MB.	La imagen ocupa más de 10 MB.
+The key spells its notes	La tonalidad escribe sus notas
+The lookup stopped.	La búsqueda se ha detenido.
+The original file is never changed.	El archivo original nunca se modifica.
+The reply couldn't be read ({e})	No se pudo leer la respuesta ({e})
+The reply wasn't understood.	No se entendió la respuesta.
+Theme:	Tema:
+This Track	Esta pista
+This file's tags can't be read.	No se pueden leer las etiquetas de este archivo.
+This match has no MusicBrainz recording to link to.	Esta coincidencia no tiene una grabación de MusicBrainz a la que enlazar.
+This track has edits that aren't saved. The original file is never changed.	Esta pista tiene ediciones sin guardar. El archivo original nunca se modifica.
+This track has no cover. Save {name} as the cover of {what}?	Esta pista no tiene portada. ¿Guardar {name} como portada de {what}?
+Time marks	Marcas de tiempo
+Time-preserved pitch change	Cambio de tono sin cambiar la duración
+Title	Título
+Title:	Título:
+Tonic line width	Grosor de la línea de tónica
+Tonic lines (C for all notes)	Líneas de tónica (C para todas las notas)
+Too short or too quiet to measure its loudness	Demasiado corto o silencioso para medir su sonoridad
+Tools for musicians: loops, the spectrogram, tempo, key and chords	Herramientas para músicos: bucles, espectrograma, tempo, tonalidad y acordes
+Track	Pista
+Track Info	Información de pista
+Tracks that already have a cover get this one instead. The music itself isn't changed.	Las pistas que ya tienen portada reciben esta en su lugar. La música en sí no cambia.
+Transcribe	Transcribir
+Transcribe Speech	Transcribir voz
+Transcript	Transcripción
+Translate to English	Traducir al inglés
+Trim silence	Recortar silencio
+Trim silence below	Recortar silencio por debajo de
+Trim silence: custom…	Recortar silencio: personalizado…
+Trim silence: {name} ({db} dB)	Recortar silencio: {name} ({db} dB)
+Trumpet	Trompeta
+Tuning A4	Afinación A4
+Type a title to search for.	Escribe un título para buscar.
+Undo	Deshacer
+Unsaved edits	Ediciones sin guardar
+Up one folder	Subir una carpeta
+Use Match	Usar coincidencia
+Use the GPU	Usar la GPU
+Use the estimated key, {key}	Usar la tonalidad estimada, {key}
+Use the estimated tempo	Usar el tempo estimado
+User key:	Clave de usuario:
+View	Ver
+Visualiser	Visualizador
+Volume	Volumen
+Volume, {percent} %	Volumen, {percent} %
+Volume, {percent} %, metronome on	Volumen, {percent} %, metrónomo activado
+Waveform	Forma de onda
+Waveform position	Posición en la forma de onda
+Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along	Forma de onda: haz clic para reproducir desde ahí, arrastra para seleccionar, desplaza para ampliar, arrastra con el botón derecho para moverte
+Welcome to soundglass	Bienvenido a soundglass
+Whisper large-v3-turbo — 99 languages, best, slow on a CPU	Whisper large-v3-turbo — 99 idiomas, el mejor, lento en CPU
+Whisper small — 99 languages	Whisper small — 99 idiomas
+Whole selection	Toda la selección
+Wikipedia can't be reached ({e})	No se puede conectar con Wikipedia ({e})
+Wikipedia…	Wikipedia…
+Window function	Función de ventana
+Window size	Tamaño de ventana
+Window size:	Tamaño de ventana:
+Worldwide	Todo el mundo
+Write	Escribir
+Write tags	Escribir etiquetas
+Write the tags into {name}? The audio isn't changed.	¿Escribir las etiquetas en {name}? El audio no cambia.
+Writes only the tags that are empty in each file	Escribe solo las etiquetas que están vacías en cada archivo
+Writes the album's tags into every matched file, replacing the tags there	Escribe las etiquetas del álbum en cada archivo coincidente, reemplazando las que tenga
+Writes the tags into the file; the audio isn't changed	Escribe las etiquetas en el archivo; el audio no cambia
+Writing the tags failed	Error al escribir las etiquetas
+Writing {i} of {n}	Escribiendo {i} de {n}
+Year	Año
+Your own themes go in the themes folder. Choosing a theme again reloads its file.	Tus propios temas van en la carpeta de temas. Elegir un tema de nuevo recarga su archivo.
+Zoom in (scroll; right-drag to move along)	Ampliar (desplazar; arrastrar con el botón derecho para moverse)
+Zoom out	Reducir
+a GPU library was missing from the download	faltaba una biblioteca de GPU en la descarga
+add an AcoustID key in Settings	añade una clave de AcoustID en Ajustes
+after Local AI → Find Beats	tras IA local → Buscar pulsos
+after loading	tras cargar
+all {n} tracks in this folder	las {n} pistas de esta carpeta
+already normal	ya es normal
+another AI tool is running	hay otra herramienta de IA en marcha
+as it is	tal cual
+can't make a folder next to the track ({e})	no se puede crear una carpeta junto a la pista ({e})
+can't save a copy next to the original ({e})	no se puede guardar una copia junto al original ({e})
+choose at least one stem to write (AI Models → Settings)	elige al menos una pista para escribir (Modelos de IA → Ajustes)
+close the tag editor first	cierra primero el editor de etiquetas
+hop {hop} for this length	salto {hop} para esta duración
+line {line}: {key}="{v}": invalid value	línea {line}: {key}="{v}": valor no válido
+measuring…	midiendo…
+mode="{other}": invalid value	mode="{other}": valor no válido
+needs a model: Local AI → AI Models…	necesita un modelo: IA local → Modelos de IA…
+needs the AI runtime: Local AI → Download AI Runtime…	necesita el motor de IA: IA local → Descargar motor de IA…
+new image	imagen nueva
+no audio track	no hay pista de audio
+no channels	sin canales
+no data folder	no hay carpeta de datos
+no file name	sin nombre de archivo
+no file open	ningún archivo abierto
+no notes were found	no se encontraron notas
+no sample rate	sin frecuencia de muestreo
+no speech was found	no se encontró voz
+not a supported audio file ({e})	no es un archivo de audio compatible ({e})
+not a transcription model	no es un modelo de transcripción
+not found	no encontrado
+not found, left alone	no encontrado, sin cambios
+nothing to redo	nada que rehacer
+nothing to undo	nada que deshacer
+part of the track could not be read	no se pudo leer parte de la pista
+quality	calidad
+removed	quitada
+saving tags…	guardando etiquetas…
+select a part in the Edit panel	selecciona una parte en el panel Editar
+select at least half a second, or nothing for the whole track	selecciona al menos medio segundo, o nada para toda la pista
+silent	silencio
+soundglass is now the default player	soundglass es ahora el reproductor predeterminado
+the AI tool failed	la herramienta de IA falló
+the AI tool stopped	la herramienta de IA se detuvo
+the channel count changes mid-file	el número de canales cambia a mitad del archivo
+the encoder failed	el codificador falló
+the model gave an unexpected output	el modelo dio una salida inesperada
+the saved file doesn't read back ({e})	el archivo guardado no se puede volver a leer ({e})
+the saved file reads back wrong ({frames} frames, expected {expected})	el archivo guardado se lee mal ({frames} muestras, se esperaban {expected})
+the settings aren't for this tool	los ajustes no son de esta herramienta
+the sound device failed to open	no se pudo abrir el dispositivo de sonido
+the tag writer failed	el escritor de etiquetas falló
+the track has no audio	la pista no tiene audio
+the track is still loading	la pista aún se está cargando
+the track isn't fully loaded	la pista no está cargada del todo
+this file can't be decoded	este archivo no se puede decodificar
+this track	esta pista
+to	a
+track {n}	pista {n}
+unknown error	error desconocido
+with unsaved edits, once loaded	con ediciones sin guardar, una vez cargada
+writing the tags would change the audio, so nothing was written	escribir las etiquetas cambiaría el audio, así que no se escribió nada
+{kbps} kb/s	{kbps} kb/s
+{keys} is already used by {other}	{keys} ya lo usa {other}
+{key} major	{key} mayor
+{model} (installed)	{model} (instalado)
+{name} isn't an audio file soundglass plays	{name} no es un archivo de audio que soundglass reproduzca
+{name} was changed by another program. Reload it?	{name} lo ha cambiado otro programa. ¿Recargarlo?
+{name} will be moved to the Trash.	{name} se moverá a la papelera.
+{name}: custom…	{name}: personalizado…
+{name}: whole selection	{name}: toda la selección
+{name}: {s} s	{name}: {s} s
+{n} of {total} tracks	{n} de {total} pistas
+{ok} written, {bad} failed	{ok} escritos, {bad} fallidos
+{path}: bigger than 64 KiB	{path}: mayor de 64 KiB
+{secs} s	{secs} s
+{sign}{n} semitone	{sign}{n} semitono
+{sign}{n} semitones	{sign}{n} semitonos
+{task} (selection)	{task} (selección)
+{what} installed.	{what} instalado.
+{what}: the download stopped.	{what}: la descarga se detuvo.
+→ {n}	→ {n}
+−14 streaming, −23 TV	−14 streaming, −23 TV
+−60 silence, −40 hiss	−60 silencio, −40 siseo

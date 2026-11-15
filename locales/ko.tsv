@@ -1,0 +1,551 @@
+ dB at most	 dB 이하
+ semitones	 반음
+0 (Normal)	0 (보통)
+0 = max	0 = 최대
+1 (mono)	1 (모노)
+16-bit	16비트
+1× (Normal)	1× (보통)
+2 (stereo)	2 (스테레오)
+24-bit	24비트
+32-bit float	32비트 부동소수점
+<{tag}>: invalid value	<{tag}>: 잘못된 값
+A code such as en, es, fr, de; empty to detect it from the first speech	en, es, fr, de 같은 코드. 비워 두면 첫 음성에서 감지합니다
+A file with that name already exists.	같은 이름의 파일이 이미 있습니다.
+A long track: the hop is raised so the spectrogram fits in memory	긴 트랙: 스펙트로그램이 메모리에 들어가도록 홉을 늘렸습니다
+AI Models	AI 모델
+AI Models…	AI 모델…
+AI runtime (ONNX Runtime)	AI 런타임 (ONNX Runtime)
+About 50 MB for a 4-minute stem, for further editing	4분 스템 하나에 약 50 MB, 추가 편집용
+Accept and Continue	동의하고 계속
+Accept and Download	동의하고 다운로드
+AcoustID Settings	AcoustID 설정
+AcoustID can't be reached ({e})	AcoustID에 연결할 수 없습니다 ({e})
+AcoustID: {why}	AcoustID: {why}
+Add AcoustID User Key	AcoustID 사용자 키 추가
+Add Cover	커버 추가
+Add album cover?	앨범 커버를 추가할까요?
+Add your AcoustID application key and user key in Settings to contribute.	기여하려면 설정에서 AcoustID 애플리케이션 키와 사용자 키를 추가하세요.
+Add/Replace Album Cover…	앨범 커버 추가/교체…
+Album	앨범
+Album cover	앨범 커버
+Album:	앨범:
+All notes	모든 음
+All {n} Tracks	전체 {n}개 트랙
+Already in AcoustID; nothing was sent.	이미 AcoustID에 있습니다. 아무것도 보내지 않았습니다.
+Also find notes without a clear start	시작이 뚜렷하지 않은 음도 찾기
+Analysis	분석
+Any graphics card with Vulkan or Direct3D 12 ({mb} MB). A weak built-in one can be slower than the CPU.	Vulkan 또는 Direct3D 12를 지원하는 그래픽 카드 ({mb} MB). 성능이 낮은 내장 그래픽은 CPU보다 느릴 수 있습니다.
+Application key:	애플리케이션 키:
+Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.	다음에 soundglass를 열 때 적용됩니다. 창, 트랙 정보, 편집 패널은 종료할 때 그대로 유지됩니다.
+Apply and Rename	적용하고 이름 바꾸기
+Apply speed and pitch	속도와 음높이 적용
+Apply to All Tracks	모든 트랙에 적용
+Artist	아티스트
+Artist:	아티스트:
+As Apply to All Tracks, then renames each file with the Rename from Tags pattern	「모든 트랙에 적용」 후 「태그로 이름 바꾸기」 패턴으로 각 파일의 이름을 바꿉니다
+As TV	TV처럼
+As podcasts	팟캐스트처럼
+As streaming	스트리밍처럼
+As subtitles (.srt)	자막으로 (.srt)
+Audio	오디오
+BPM	BPM
+BPM tag saved ({bpm})	BPM 태그를 저장했습니다 ({bpm})
+Basic Pitch — any instrument, several notes at once	Basic Pitch — 모든 악기, 여러 음 동시에
+Basic Pitch's melodia trick	Basic Pitch의 melodia 기법
+Beat This! — beats and downbeats	Beat This! — 박자와 강박
+Bit depth	비트 심도
+Bitrate	비트레이트
+Blackman–Harris	블랙맨–해리스
+Blue to red	파랑에서 빨강
+C D E	C D E
+CUDA: Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050. WebGPU: Find Beats only, about 2× faster (Split into Stems was slower than the CPU). The other tools are faster on the CPU. With both installed, NVIDIA's is used	CUDA: 스템으로 분리와 비트 찾기가 GTX 1050에서 2.6–3배 빠름. WebGPU: 비트 찾기만 약 2배 빠름 (스템으로 분리는 CPU보다 느렸음). 다른 도구는 CPU에서 더 빠릅니다. 둘 다 설치되어 있으면 NVIDIA 것을 사용합니다
+Can't fingerprint this audio ({e})	이 오디오의 지문을 만들 수 없습니다 ({e})
+Can't read this folder: {e}	이 폴더를 읽을 수 없습니다: {e}
+Can't write tags to this format ({e})	이 형식에는 태그를 쓸 수 없습니다 ({e})
+Cancel	취소
+Change	변경
+Change Keyboard Shortcuts…	키보드 단축키 변경…
+Change speed and pitch	속도와 음높이 바꾸기
+Channels	채널
+Channels: mono	채널: 모노
+Channels: stereo	채널: 스테레오
+Channels: swap left and right	채널: 좌우 바꾸기
+Check for updates	업데이트 확인
+Chords	코드
+Chords: after loading	코드: 불러온 후
+Chords: measuring…	코드: 측정 중…
+Clicks	클릭음
+Clicks on the found beats	찾은 비트에 클릭음
+Close	닫기
+Codec	코덱
+Colours	색상
+Continue	계속
+Contribute	기여
+Contribute to AcoustID?	AcoustID에 기여할까요?
+Copied the file	파일을 복사함
+Copy	복사
+Copy File	파일 복사
+Copy Path	경로 복사
+Couldn't bring back {name}: {e}	{name}을(를) 되돌리지 못했습니다: {e}
+Couldn't copy the file: {e}	파일을 복사할 수 없습니다: {e}
+Couldn't delete the file: {e}	파일을 삭제하지 못했습니다: {e}
+Cover	커버
+Cover added to 1 track	트랙 1개에 커버를 추가했습니다
+Cover added to {n} of {total} tracks (not: {failed})	트랙 {total}개 중 {n}개에 커버를 추가했습니다 (실패: {failed})
+Cover added to {n} tracks	트랙 {n}개에 커버를 추가했습니다
+Cover at 256 px	256 px 커버
+Cover removed from 1 track	트랙 1개에서 커버를 제거했습니다
+Cover removed from {n} of {total} tracks (not: {failed})	트랙 {total}개 중 {n}개에서 커버를 제거했습니다 (실패: {failed})
+Cover removed from {n} tracks	트랙 {n}개에서 커버를 제거했습니다
+Crop	자르기
+Current cover	현재 커버
+Custom ({value})…	사용자 지정 ({value})…
+Custom loudness…	사용자 지정 라우드니스…
+Custom peak…	사용자 지정 피크…
+Custom…	사용자 지정…
+Cut out	잘라내기
+Dark	어둡게
+Data from Discogs.	Discogs의 데이터입니다.
+Decoding…	디코딩 중…
+DeepFilterNet3 — speech, 48 kHz	DeepFilterNet3 — 음성, 48 kHz
+Delete file?	파일을 삭제할까요?
+Delete…	삭제…
+Discard edits	편집 버리기
+Discogs can't be reached ({e})	Discogs에 연결할 수 없습니다 ({e})
+Discogs is busy; try again in a minute.	Discogs가 바쁩니다. 1분 후에 다시 시도하세요.
+Discogs now asks for a token; this lookup can't run.	이제 Discogs가 토큰을 요구하므로 이 검색을 할 수 없습니다.
+Discogs…	Discogs…
+Do Ré Mi	도 레 미
+Do you want to contribute this track's fingerprint to AcoustID? AcoustID will then recognise {title} — {artist} for everyone.	이 트랙의 지문을 AcoustID에 기여할까요? 그러면 AcoustID가 모든 사람에게 {title} — {artist}을(를) 인식해 줍니다.
+Double the tempo	템포 두 배
+Download	다운로드
+Download AI Runtime ({mb} MB)	AI 런타임 다운로드 ({mb} MB)
+Download AI Runtime ({mb} MB)…	AI 런타임 다운로드 ({mb} MB)…
+Download GPU Support	GPU 지원 다운로드
+Downloaded from Microsoft (ONNX Runtime's WebGPU plugin, via its official PyPI package).	Microsoft에서 다운로드합니다 (ONNX Runtime의 WebGPU 플러그인, 공식 PyPI 패키지를 통해).
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Microsoft (ONNX Runtime)와 NVIDIA (CUDA 라이브러리, 공식 PyPI 패키지를 통해)에서 다운로드합니다.
+Drag on the waveform to select	파형을 드래그해 선택
+Each stretch of speech with its start and end, to save as an .srt file	음성 구간마다 시작과 끝, .srt 파일로 저장
+Edit	편집
+Effects	효과
+Europe	유럽
+FFT size	FFT 크기
+FLAC (lossless)	FLAC (무손실)
+Fade in	페이드 인
+Fade out	페이드 아웃
+Faint noise	희미한 잡음
+Fetching details…	세부 정보를 가져오는 중…
+File	파일
+File changed	파일이 변경됨
+File size	파일 크기
+Fill In All Tracks	모든 트랙 채우기
+Fill Metadata From	메타데이터 채우기 출처
+Fill from Discogs	Discogs에서 채우기
+Fill from Discogs…	Discogs에서 채우기…
+Fill from MusicBrainz	MusicBrainz에서 채우기
+Fill from MusicBrainz…	MusicBrainz에서 채우기…
+Fill from Wikipedia	위키백과에서 채우기
+Fill from Wikipedia…	위키백과에서 채우기…
+Fills Track Info's tag editor; Save… there writes the tags	트랙 정보의 태그 편집기를 채웁니다. 거기서 「저장…」하면 태그를 씁니다
+Find Beats	비트 찾기
+Fingerprint sent to AcoustID; lookups find it once it's processed.	지문을 AcoustID에 보냈습니다. 처리되면 검색에서 찾을 수 있습니다.
+Fingerprinting {i} of {n}: {file}	지문 {i}/{n}: {file}
+Fit	맞춤
+Fit cover space	커버 공간에 맞춤
+Flats (Db)	플랫 (Db)
+Folder	폴더
+Follow system	시스템 설정 따르기
+Font size:	글꼴 크기:
+Format	형식
+Found {n} beats, ≈ {bpm} BPM. Metronome on (volume button).	비트 {n}개 찾음, ≈ {bpm} BPM. 메트로놈 켜짐 (볼륨 버튼).
+Found {n} beats. Metronome on (volume button).	비트 {n}개 찾음. 메트로놈 켜짐 (볼륨 버튼).
+Full	완전
+Full Screen	전체 화면
+Full takes away all the noise it finds; a limit keeps some, for a more natural sound	「완전」은 찾은 잡음을 모두 없애고, 한도를 두면 조금 남겨 더 자연스러운 소리가 됩니다
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel 등, 실험적)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU support	GPU 지원
+GPU support (AMD, Intel and others)	GPU 지원 (AMD, Intel 등)
+Gain	게인
+Gain: custom…	게인: 사용자 지정…
+Gain: {db} dB	게인: {db} dB
+General	일반
+Genre	장르
+Get a key	키 받기
+Get your user key	사용자 키 받기
+Gray	회색
+HTDemucs v4 — drums, bass, other, vocals	HTDemucs v4 — 드럼, 베이스, 기타, 보컬
+Half the tempo	템포 절반
+Hamming	해밍
+Hann	한
+Held notes	지속음
+High contrast	고대비
+Higher: fewer, surer notes start	높을수록: 음 시작이 적고 더 확실함
+Higher: notes end sooner, quiet ones are left out	높을수록: 음이 더 일찍 끝나고 작은 음은 빠짐
+Hiss	히스 잡음
+Hop	홉
+Identify Album	앨범 식별
+Identify Album…	앨범 식별…
+Identify Track	트랙 식별
+Identify Track needs one; it is free for non-commercial use.	트랙 식별에 필요합니다. 비상업적 용도는 무료입니다.
+Identify Track…	트랙 식별…
+Image	이미지
+In order	순서대로
+Instrument range	악기 음역
+It already has that name.	이미 그 이름입니다.
+It's all quieter than that; nothing trimmed	모두 그보다 작아서 아무것도 자르지 않았습니다
+It's no longer in the Trash.	더 이상 휴지통에 없습니다.
+Its unsaved edits will be lost.	저장하지 않은 편집이 사라집니다.
+Keep current	현재 것 유지
+Key	조
+Key ≈ {key}	조 ≈ {key}
+Keyboard Shortcuts	키보드 단축키
+Label size	레이블 크기
+Language	언어
+Language:	언어:
+Length	길이
+Levels	레벨
+Licence ({n} of {count}) — {title}	라이선스 ({n}/{count}) — {title}
+Licence — {title}	라이선스 — {title}
+Light	밝게
+Line	선
+Local AI	로컬 AI
+Look up	찾아보기
+Looking up…	찾는 중…
+Loop selection	선택 영역 반복
+Loudness	라우드니스
+Lower finds more beats, also where the model is unsure	낮을수록 비트를 더 많이 찾습니다. 모델이 확신하지 못하는 곳도 포함합니다
+Lowest frequency	최저 주파수
+MIDI file is too big	MIDI 파일이 너무 큽니다
+MIDI file is too long	MIDI 파일이 너무 깁니다
+MIDI tempo	MIDI 템포
+MP3 can't hold {khz} kHz audio; save as FLAC or WAV instead	MP3에는 {khz} kHz 오디오를 담을 수 없습니다. FLAC나 WAV로 저장하세요
+MP3 holds mono or stereo only; save as FLAC or WAV instead	MP3는 모노나 스테레오만 담을 수 있습니다. FLAC나 WAV로 저장하세요
+MP3: LAME failed to start	MP3: LAME을 시작하지 못했습니다
+Magma	마그마
+Make soundglass my default player	soundglass를 내 기본 플레이어로
+Make soundglass the default player	soundglass를 기본 플레이어로
+Matches on this album are listed first	이 앨범에 있는 일치 항목이 먼저 나옵니다
+Matches on this album are listed first; it isn't sent	이 앨범에 있는 일치 항목이 먼저 나옵니다. 보내지는 않습니다
+Melody to MIDI	멜로디를 MIDI로
+Metronome	메트로놈
+Mono	모노
+More overlap between the 7.8 s segments: smoother joins, slower	7.8초 구간 사이를 더 겹침: 이음매가 부드러워지고 느려집니다
+Moved to the Trash	휴지통으로 옮겼습니다
+MusicBrainz can't be reached ({e})	MusicBrainz에 연결할 수 없습니다 ({e})
+MusicBrainz…	MusicBrainz…
+Name	이름
+Next	다음
+No album cover	앨범 커버 없음
+No album found.	앨범을 찾지 못했습니다.
+No audio files in {name}	{name}에 오디오 파일이 없습니다
+No audio files or folders here	여기에는 오디오 파일이나 폴더가 없습니다
+No file open	열린 파일 없음
+No match found.	일치 항목을 찾지 못했습니다.
+No silence at the start or end to trim	시작이나 끝에 자를 무음이 없습니다
+None	없음
+None (whole range)	없음 (전체 범위)
+None of these tags is set.	이 태그 중 설정된 것이 없습니다.
+Normalize	노멀라이즈
+Normalize loudness	라우드니스 노멀라이즈
+Normalize peak	피크 노멀라이즈
+Normalize: custom loudness…	노멀라이즈: 사용자 지정 라우드니스…
+Normalize: custom peak…	노멀라이즈: 사용자 지정 피크…
+Normalize: {name} ({db} dBFS)	노멀라이즈: {name} ({db} dBFS)
+Normalize: {name} ({lufs} LUFS)	노멀라이즈: {name} ({lufs} LUFS)
+Not Now	나중에
+Note threshold	음 임계값
+Notes	음
+Notes from	음 범위
+Nothing to normalize: it's silent	노멀라이즈할 것이 없습니다: 무음입니다
+OK	확인
+Octave numbers	옥타브 번호
+Ogg Vorbis (q6)	Ogg Vorbis (q6)
+On the selection	선택 영역에
+On the whole track	트랙 전체에
+Only fill empty tags	빈 태그만 채우기
+Only how the file's beats are counted; the notes keep their times	파일의 비트를 세는 방식만 바뀌고, 음은 시간을 유지합니다
+Only needed to contribute fingerprints to AcoustID.	AcoustID에 지문을 기여할 때만 필요합니다.
+Onset threshold	시작 임계값
+Open Recent	최근 파일 열기
+Open models folder	모델 폴더 열기
+Open project page	프로젝트 페이지 열기
+Open themes folder	테마 폴더 열기
+Open…	열기…
+Other lines	기타 선
+Output	출력
+Overlap	겹침
+Parakeet TDT 0.6B v3 — 25 European languages, more accurate	Parakeet TDT 0.6B v3 — 유럽 25개 언어, 더 정확함
+Pause	일시 정지
+Peak	피크
+Peak at max	피크를 최대로
+Peak near max	피크를 최대 근처로
+Piano synth	피아노 신스
+Pitch-preserved speed change	음높이를 유지한 속도 변경
+Play	재생
+Play order, {name}	재생 순서, {name}
+Please read and accept the licence before downloading.	다운로드하기 전에 라이선스를 읽고 동의해 주세요.
+Position, seconds	위치, 초
+Practice	연습
+Practice mode	연습 모드
+Press keys… (Esc to cancel)	키를 누르세요… (Esc로 취소)
+Previous	이전
+Quit	종료
+Rectangular	사각형
+Redo	다시 실행
+Reload	다시 불러오기
+Remember window size	창 크기 기억
+Remove	제거
+Remove Album Cover…	앨범 커버 제거…
+Remove Cover	커버 제거
+Remove Noise	잡음 제거
+Remove album cover	앨범 커버 제거
+Remove the cover from this track only, or from {what}? The music itself isn't changed.	이 트랙에서만 커버를 제거할까요, 아니면 {what}에서 제거할까요? 음악 자체는 바뀌지 않습니다.
+Remove the cover from this track? The music itself isn't changed.	이 트랙에서 커버를 제거할까요? 음악 자체는 바뀌지 않습니다.
+Rename	이름 바꾸기
+Rename from Tags	태그로 이름 바꾸기
+Rename from Tags…	태그로 이름 바꾸기…
+Renamed to {name}	{name}(으)로 이름을 바꿨습니다
+Rename…	이름 바꾸기…
+Repeat track	트랙 반복
+Replace…	교체…
+Reset	초기화
+Reset All Shortcuts	모든 단축키 초기화
+Reset to defaults	기본값으로 재설정
+Restart soundglass to start using the GPU.	GPU를 사용하려면 soundglass를 다시 시작하세요.
+Reverse	거꾸로
+Run the AI tools on the graphics card ({mb} MB, NVIDIA's CUDA libraries).	그래픽 카드에서 AI 도구 실행 ({mb} MB, NVIDIA의 CUDA 라이브러리).
+Running on the CPU…	CPU에서 실행 중…
+Running on the GPU…	GPU에서 실행 중…
+Same ({rate})	동일 ({rate})
+Sample rate	샘플 레이트
+Save As	다른 이름으로 저장
+Save As…	다른 이름으로 저장…
+Save Copy	사본 저장
+Save Cover	커버 저장
+Save as Subtitles…	자막으로 저장…
+Save as Text…	텍스트로 저장…
+Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed.	{name}을(를) 이 트랙의 커버로 저장할까요, 아니면 {what}의 커버로 저장할까요? 지금 있는 커버는 교체됩니다. 음악 자체는 바뀌지 않습니다.
+Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed.	{name}을(를) 이 트랙의 커버로 저장할까요? 지금 있는 커버는 교체됩니다. 음악 자체는 바뀌지 않습니다.
+Saved {name}	{name} 저장함
+Saved {name}, but the tags could not be copied	{name}을(를) 저장했지만 태그를 복사하지 못했습니다
+Save…	저장…
+Saving failed	저장 실패
+Saving {name}…	{name} 저장 중…
+Scale shown	표시할 음계
+Seek bar:	탐색 막대:
+Sends each file's fingerprint and length to AcoustID, one a second, and one recording's ID to MusicBrainz for the genre. Nothing else leaves this computer.	각 파일의 지문과 길이를 초당 하나씩 AcoustID에 보내고, 장르를 위해 녹음 하나의 ID를 MusicBrainz에 보냅니다. 그 밖에는 아무것도 이 컴퓨터를 떠나지 않습니다.
+Sends the fingerprint, its length and the MusicBrainz recording ID to AcoustID, with your user key. It is sent only if AcoustID doesn't know this fingerprint yet.	지문, 그 길이, MusicBrainz 녹음 ID를 사용자 키와 함께 AcoustID에 보냅니다. AcoustID가 이 지문을 아직 모를 때만 보냅니다.
+Sends the title and artist to Discogs, and the chosen release's ID for its track list. Nothing else leaves this computer.	제목과 아티스트를 Discogs에 보내고, 트랙 목록을 위해 고른 발매의 ID를 보냅니다. 그 밖에는 아무것도 이 컴퓨터를 떠나지 않습니다.
+Sends the title and artist to English Wikipedia. Nothing else leaves this computer.	제목과 아티스트를 영어 위키백과에 보냅니다. 그 밖에는 아무것도 이 컴퓨터를 떠나지 않습니다.
+Sends the title, artist and album to MusicBrainz, and the chosen match's ID for its genre. Nothing else leaves this computer.	제목, 아티스트, 앨범을 MusicBrainz에 보내고, 장르를 위해 고른 일치 항목의 ID를 보냅니다. 그 밖에는 아무것도 이 컴퓨터를 떠나지 않습니다.
+Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer.	이 파일의 지문과 길이를 AcoustID에, 고른 일치 항목의 ID를 MusicBrainz에 보냅니다. 그 밖에는 아무것도 이 컴퓨터를 떠나지 않습니다.
+Sensitivity	감도
+Settings	설정
+Settings: {model}	설정: {model}
+Settings…	설정…
+Sharps (C#)	샤프 (C#)
+Shortest note	가장 짧은 음
+Show Log	로그 보기
+Show in Explorer	탐색기에서 보기
+Show in File Manager	파일 관리자에서 보기
+Show or hide the chords along the top	위쪽 코드 표시/숨기기
+Show or hide the note lines	음 선 표시/숨기기
+Show the notes of {major} major	{major} 장조의 음 표시
+Show the notes of {major} major, which {key} shares	{key}와(과) 같은 {major} 장조의 음 표시
+Show the whole track	트랙 전체 보기
+Show the whole track and all frequencies	트랙 전체와 모든 주파수 보기
+Shuffle	셔플
+Silence	무음
+Silent pieces are left out, so nothing is made up there	무음 구간은 빼므로 그곳에 아무것도 지어내지 않습니다
+Skip quieter than	이보다 작으면 건너뛰기
+Small: about 6 MB for a 4-minute stem	작게: 4분 스템 하나에 약 6 MB
+Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed.	Space, ←, →, Page Up, Page Down, L (선택 영역 반복), Esc, Enter는 고정입니다.
+Space, ←, →, Page Up, Page Down, L, Esc, Enter and Ctrl+C/X/V	Space, ←, →, Page Up, Page Down, L, Esc, Enter, Ctrl+C/X/V
+Spectrogram	스펙트로그램
+Spectrogram settings	스펙트로그램 설정
+Spectrogram — {name}	스펙트로그램 — {name}
+Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around	스펙트로그램: 클릭하면 거기서 재생, 드래그하면 선택, 스크롤하면 확대/축소, Ctrl+스크롤하면 주파수 확대/축소, 오른쪽 드래그하면 이동
+Split into Stems	스템으로 분리
+Split into Stems takes mono or stereo tracks	스템으로 분리는 모노나 스테레오 트랙만 받습니다
+Stereo	스테레오
+Stopped after {i} of {n}	{n}개 중 {i}개 후 중지됨
+Strength	강도
+Subtitles	자막
+Swap left and right	좌우 바꾸기
+Tags	태그
+Tags saved	태그를 저장했습니다
+Task	작업
+Tempo	템포
+Tenor sax	테너 색소폰
+Text	텍스트
+That image can't be read.	그 이미지를 읽을 수 없습니다.
+That image can't be used as a cover.	그 이미지는 커버로 쓸 수 없습니다.
+That is the original file; choose another name. The original is never changed.	원본 파일입니다. 다른 이름을 고르세요. 원본은 절대 바뀌지 않습니다.
+That isn't a valid file name.	올바른 파일 이름이 아닙니다.
+The AI runtime isn't installed yet.	AI 런타임이 아직 설치되지 않았습니다.
+The GPU couldn't be used, so the CPU is: {e}	GPU를 사용할 수 없어 CPU를 사용합니다: {e}
+The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face.	ONNX 파일은 StemSplit의 내보내기(가중치는 반정밀도)이며 Hugging Face에 있습니다.
+The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face.	ONNX 파일은 grazder의 torchDF 스트리밍 내보내기이며 KimtOS가 Hugging Face에 올려 두었습니다.
+The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face.	ONNX 파일은 musetric이 JKU의 final0 체크포인트를 내보낸 것이며 Hugging Face에 있습니다.
+The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face.	ONNX 파일은 istupakov가 onnx-asr용으로 int8 변환한 것이며 Hugging Face에 있습니다.
+The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.	ONNX 파일은 sherpa-onnx (k2-fsa)의 int8 내보내기이며 Hugging Face에 있습니다.
+The audio changes format partway.	오디오 형식이 중간에 바뀝니다.
+The cover couldn't be written ({failed})	커버를 쓰지 못했습니다 ({failed})
+The file has no audio.	파일에 오디오가 없습니다.
+The file is too short to identify.	파일이 너무 짧아 식별할 수 없습니다.
+The image is larger than 10 MB.	이미지가 10 MB보다 큽니다.
+The key spells its notes	조에 맞춘 음 이름 표기
+The lookup stopped.	검색이 중지되었습니다.
+The original file is never changed.	원본 파일은 절대 바뀌지 않습니다.
+The reply couldn't be read ({e})	응답을 읽지 못했습니다 ({e})
+The reply wasn't understood.	응답을 이해하지 못했습니다.
+Theme:	테마:
+This Track	이 트랙
+This file's tags can't be read.	이 파일의 태그를 읽을 수 없습니다.
+This match has no MusicBrainz recording to link to.	이 일치 항목에는 연결할 MusicBrainz 녹음이 없습니다.
+This track has edits that aren't saved. The original file is never changed.	이 트랙에 저장하지 않은 편집이 있습니다. 원본 파일은 절대 바뀌지 않습니다.
+This track has no cover. Save {name} as the cover of {what}?	이 트랙에는 커버가 없습니다. {name}을(를) {what}의 커버로 저장할까요?
+Time marks	타임스탬프
+Time-preserved pitch change	길이를 유지한 음높이 변경
+Title	제목
+Title:	제목:
+Tonic line width	으뜸음 선 두께
+Tonic lines (C for all notes)	으뜸음 선 (모든 음에서 C)
+Too short or too quiet to measure its loudness	너무 짧거나 작아서 라우드니스를 잴 수 없습니다
+Tools for musicians: loops, the spectrogram, tempo, key and chords	음악가를 위한 도구: 반복, 스펙트로그램, 템포, 조, 코드
+Track	트랙
+Track Info	트랙 정보
+Tracks that already have a cover get this one instead. The music itself isn't changed.	이미 커버가 있는 트랙은 이 커버로 바뀝니다. 음악 자체는 바뀌지 않습니다.
+Transcribe	받아쓰기
+Transcribe Speech	음성 받아쓰기
+Transcript	받아쓴 내용
+Translate to English	영어로 번역
+Trim silence	무음 자르기
+Trim silence below	이보다 작은 무음 자르기
+Trim silence: custom…	무음 자르기: 사용자 지정…
+Trim silence: {name} ({db} dB)	무음 자르기: {name} ({db} dB)
+Trumpet	트럼펫
+Tuning A4	기준음 A4
+Type a title to search for.	검색할 제목을 입력하세요.
+Undo	실행 취소
+Unsaved edits	저장하지 않은 편집
+Up one folder	상위 폴더로
+Use Match	이 항목 사용
+Use the GPU	GPU 사용
+Use the estimated key, {key}	추정한 조 사용, {key}
+Use the estimated tempo	추정한 템포 사용
+User key:	사용자 키:
+View	보기
+Visualiser	시각화
+Volume	볼륨
+Volume, {percent} %	볼륨, {percent} %
+Volume, {percent} %, metronome on	볼륨, {percent} %, 메트로놈 켜짐
+Waveform	파형
+Waveform position	파형 위치
+Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along	파형: 클릭하면 거기서 재생, 드래그하면 선택, 스크롤하면 확대/축소, 오른쪽 드래그하면 이동
+Welcome to soundglass	soundglass에 오신 것을 환영합니다
+Whisper large-v3-turbo — 99 languages, best, slow on a CPU	Whisper large-v3-turbo — 99개 언어, 최고, CPU에서는 느림
+Whisper small — 99 languages	Whisper small — 99개 언어
+Whole selection	선택 영역 전체
+Wikipedia can't be reached ({e})	위키백과에 연결할 수 없습니다 ({e})
+Wikipedia…	위키백과…
+Window function	창 함수
+Window size	창 길이
+Window size:	창 크기:
+Worldwide	전 세계
+Write	쓰기
+Write tags	태그 쓰기
+Write the tags into {name}? The audio isn't changed.	{name}에 태그를 쓸까요? 오디오는 바뀌지 않습니다.
+Writes only the tags that are empty in each file	각 파일에서 비어 있는 태그만 씁니다
+Writes the album's tags into every matched file, replacing the tags there	일치한 각 파일에 앨범 태그를 써서 기존 태그를 교체합니다
+Writes the tags into the file; the audio isn't changed	파일에 태그를 씁니다. 오디오는 바뀌지 않습니다
+Writing the tags failed	태그 쓰기 실패
+Writing {i} of {n}	쓰는 중 {i}/{n}
+Year	연도
+Your own themes go in the themes folder. Choosing a theme again reloads its file.	직접 만든 테마는 테마 폴더에 넣습니다. 테마를 다시 고르면 파일을 다시 불러옵니다.
+Zoom in (scroll; right-drag to move along)	확대 (스크롤, 오른쪽 드래그로 이동)
+Zoom out	축소
+a GPU library was missing from the download	다운로드에 GPU 라이브러리가 빠져 있습니다
+add an AcoustID key in Settings	설정에서 AcoustID 키를 추가하세요
+after Local AI → Find Beats	로컬 AI → 비트 찾기 후
+after loading	불러온 후
+all {n} tracks in this folder	이 폴더의 트랙 {n}개 전체
+already normal	이미 보통입니다
+another AI tool is running	다른 AI 도구가 실행 중입니다
+as it is	그대로
+can't make a folder next to the track ({e})	트랙 옆에 폴더를 만들 수 없습니다 ({e})
+can't save a copy next to the original ({e})	원본 옆에 사본을 저장할 수 없습니다 ({e})
+choose at least one stem to write (AI Models → Settings)	쓸 스템을 하나 이상 고르세요 (AI 모델 → 설정)
+close the tag editor first	먼저 태그 편집기를 닫으세요
+hop {hop} for this length	이 길이에서는 홉 {hop}
+line {line}: {key}="{v}": invalid value	{line}행: {key}="{v}": 잘못된 값
+measuring…	측정 중…
+mode="{other}": invalid value	mode="{other}": 잘못된 값
+needs a model: Local AI → AI Models…	모델이 필요합니다: 로컬 AI → AI 모델…
+needs the AI runtime: Local AI → Download AI Runtime…	AI 런타임이 필요합니다: 로컬 AI → AI 런타임 다운로드…
+new image	새 이미지
+no audio track	오디오 트랙 없음
+no channels	채널 없음
+no data folder	데이터 폴더 없음
+no file name	파일 이름 없음
+no file open	열린 파일 없음
+no notes were found	음을 찾지 못했습니다
+no sample rate	샘플 레이트 없음
+no speech was found	음성을 찾지 못했습니다
+not a supported audio file ({e})	지원하지 않는 오디오 파일입니다 ({e})
+not a transcription model	받아쓰기 모델이 아닙니다
+not found	찾지 못함
+not found, left alone	찾지 못해 그대로 둠
+nothing to redo	다시 실행할 것이 없습니다
+nothing to undo	실행 취소할 것이 없습니다
+part of the track could not be read	트랙 일부를 읽지 못했습니다
+quality	품질
+removed	제거됨
+saving tags…	태그 저장 중…
+select a part in the Edit panel	편집 패널에서 일부를 선택하세요
+select at least half a second, or nothing for the whole track	0.5초 이상을 선택하거나, 트랙 전체라면 아무것도 선택하지 마세요
+silent	무음
+soundglass is now the default player	이제 soundglass가 기본 플레이어입니다
+the AI tool failed	AI 도구가 실패했습니다
+the AI tool stopped	AI 도구가 중지되었습니다
+the channel count changes mid-file	파일 중간에 채널 수가 바뀝니다
+the encoder failed	인코더가 실패했습니다
+the model gave an unexpected output	모델이 예상치 못한 출력을 냈습니다
+the saved file doesn't read back ({e})	저장한 파일을 다시 읽을 수 없습니다 ({e})
+the saved file reads back wrong ({frames} frames, expected {expected})	저장한 파일을 다시 읽은 결과가 틀립니다 ({frames} 프레임, 예상 {expected})
+the settings aren't for this tool	이 설정은 이 도구용이 아닙니다
+the sound device failed to open	사운드 장치를 열지 못했습니다
+the tag writer failed	태그 쓰기가 실패했습니다
+the track has no audio	트랙에 오디오가 없습니다
+the track is still loading	트랙을 아직 불러오는 중입니다
+the track isn't fully loaded	트랙을 다 불러오지 않았습니다
+this file can't be decoded	이 파일은 디코딩할 수 없습니다
+this track	이 트랙
+to	~
+track {n}	트랙 {n}
+unknown error	알 수 없는 오류
+with unsaved edits, once loaded	불러온 후, 저장하지 않은 편집과 함께
+writing the tags would change the audio, so nothing was written	태그를 쓰면 오디오가 바뀌므로 아무것도 쓰지 않았습니다
+{kbps} kb/s	{kbps} kb/s
+{keys} is already used by {other}	{keys}은(는) 이미 {other}에서 사용 중입니다
+{key} major	{key} 장조
+{model} (installed)	{model} (설치됨)
+{name} isn't an audio file soundglass plays	{name}은(는) soundglass가 재생하는 오디오 파일이 아닙니다
+{name} was changed by another program. Reload it?	{name}이(가) 다른 프로그램에서 바뀌었습니다. 다시 불러올까요?
+{name} will be moved to the Trash.	{name}을(를) 휴지통으로 옮깁니다.
+{name}: custom…	{name}: 사용자 지정…
+{name}: whole selection	{name}: 선택 영역 전체
+{name}: {s} s	{name}: {s}초
+{n} of {total} tracks	트랙 {total}개 중 {n}개
+{ok} written, {bad} failed	{ok}개 씀, {bad}개 실패
+{path}: bigger than 64 KiB	{path}: 64 KiB보다 큼
+{secs} s	{secs}초
+{sign}{n} semitone	{sign}{n} 반음
+{sign}{n} semitones	{sign}{n} 반음
+{task} (selection)	{task} (선택 영역)
+{what} installed.	{what} 설치됨.
+{what}: the download stopped.	{what}: 다운로드가 중지되었습니다.
+→ {n}	→ {n}
+−14 streaming, −23 TV	−14 스트리밍, −23 TV
+−60 silence, −40 hiss	−60 무음, −40 히스 잡음

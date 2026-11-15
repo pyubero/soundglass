@@ -246,8 +246,16 @@ gives no times of its own, so its cues are whole pieces of up to 29 s.
 
 ## Languages, shortcuts and accessibility
 
-- **Languages.** English only for now; every text is ready for translations
-  ([`TRANSLATING.md`](TRANSLATING.md)).
+- **Twenty-eight languages:** English, Spanish, French, German, Italian, Portuguese, Polish, Dutch,
+  Russian, Japanese, Chinese (Simplified and Traditional), Korean, Ukrainian, Turkish, Indonesian,
+  Vietnamese, Czech, Swedish, Hungarian, Romanian, Greek, Danish, Finnish, Norwegian (Bokmål),
+  Catalan (also used for Valencian), Basque and Galician, picked in File → Settings…. soundglass
+  starts in your system's language. All but English are machine translations, partly reused from
+  lightview: corrections are welcome ([`TRANSLATING.md`](TRANSLATING.md)).
+- **Chinese, Japanese and Korean** are drawn with your system's CJK font (on Linux the one
+  fontconfig picks, such as Noto Sans CJK from the `fonts-noto-cjk` package; on Windows the one
+  built in). Without one, those texts show as boxes. The font is loaded once per start, so after
+  switching between two of these languages, restart soundglass for the new one's character style.
 - **Keyboard shortcuts.** File → Settings… → Change Keyboard Shortcuts…: every menu item, effect
   preset and speed preset can get a key, and the defaults can be changed or removed. Space, ←, →,
   Page Up/Down, L, Esc and Enter are fixed. Changes are kept in the settings.

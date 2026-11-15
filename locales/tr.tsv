@@ -1,0 +1,551 @@
+ dB at most	 dB en fazla
+ semitones	 yarım ton
+0 (Normal)	0 (normal)
+0 = max	0 = en yüksek
+1 (mono)	1 (mono)
+16-bit	16 bit
+1× (Normal)	1× (normal)
+2 (stereo)	2 (stereo)
+24-bit	24 bit
+32-bit float	32 bit kayan nokta
+<{tag}>: invalid value	<{tag}>: geçersiz değer
+A code such as en, es, fr, de; empty to detect it from the first speech	en, es, fr, de gibi bir kod; ilk konuşmadan algılamak için boş bırakın
+A file with that name already exists.	Bu adda bir dosya zaten var.
+A long track: the hop is raised so the spectrogram fits in memory	Uzun parça: spektrogram belleğe sığsın diye adım büyütüldü
+AI Models	Yapay Zekâ Modelleri
+AI Models…	Yapay Zekâ Modelleri…
+AI runtime (ONNX Runtime)	Yapay zekâ çalışma ortamı (ONNX Runtime)
+About 50 MB for a 4-minute stem, for further editing	4 dakikalık bir kanal için yaklaşık 50 MB, sonradan düzenlemek için
+Accept and Continue	Kabul Et ve Devam Et
+Accept and Download	Kabul Et ve İndir
+AcoustID Settings	AcoustID Ayarları
+AcoustID can't be reached ({e})	AcoustID'ye ulaşılamıyor ({e})
+AcoustID: {why}	AcoustID: {why}
+Add AcoustID User Key	AcoustID Kullanıcı Anahtarı Ekle
+Add Cover	Kapak Ekle
+Add album cover?	Albüm kapağı eklensin mi?
+Add your AcoustID application key and user key in Settings to contribute.	Katkıda bulunmak için Ayarlar'a AcoustID uygulama anahtarınızı ve kullanıcı anahtarınızı ekleyin.
+Add/Replace Album Cover…	Albüm Kapağı Ekle/Değiştir…
+Album	Albüm
+Album cover	Albüm kapağı
+Album:	Albüm:
+All notes	Tüm notalar
+All {n} Tracks	Tüm {n} Parça
+Already in AcoustID; nothing was sent.	Zaten AcoustID'de; hiçbir şey gönderilmedi.
+Also find notes without a clear start	Belirgin başlangıcı olmayan notaları da bul
+Analysis	Analiz
+Any graphics card with Vulkan or Direct3D 12 ({mb} MB). A weak built-in one can be slower than the CPU.	Vulkan veya Direct3D 12 destekli herhangi bir ekran kartı ({mb} MB). Zayıf bir dahili kart işlemciden yavaş olabilir.
+Application key:	Uygulama anahtarı:
+Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.	soundglass bir sonraki açılışında uygulanır; pencere, Parça Bilgisi ve Düzenle paneli çıkıştaki gibi kalır.
+Apply and Rename	Uygula ve Yeniden Adlandır
+Apply speed and pitch	Hız ve perdeyi uygula
+Apply to All Tracks	Tüm Parçalara Uygula
+Artist	Sanatçı
+Artist:	Sanatçı:
+As Apply to All Tracks, then renames each file with the Rename from Tags pattern	Tüm Parçalara Uygula gibi, ardından her dosyayı Etiketlerden Yeniden Adlandır kalıbıyla yeniden adlandırır
+As TV	TV gibi
+As podcasts	Podcast gibi
+As streaming	Akış hizmeti gibi
+As subtitles (.srt)	Altyazı olarak (.srt)
+Audio	Ses
+BPM	BPM
+BPM tag saved ({bpm})	BPM etiketi kaydedildi ({bpm})
+Basic Pitch — any instrument, several notes at once	Basic Pitch — her çalgı, aynı anda birkaç nota
+Basic Pitch's melodia trick	Basic Pitch'in melodia hilesi
+Beat This! — beats and downbeats	Beat This! — vuruşlar ve ölçü başları
+Bit depth	Bit derinliği
+Bitrate	Bit hızı
+Blackman–Harris	Blackman–Harris
+Blue to red	Maviden kırmızıya
+C D E	C D E
+CUDA: Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050. WebGPU: Find Beats only, about 2× faster (Split into Stems was slower than the CPU). The other tools are faster on the CPU. With both installed, NVIDIA's is used	CUDA: Kanallara Ayır ve Vuruşları Bul, GTX 1050'de 2,6–3 kat hızlı. WebGPU: yalnızca Vuruşları Bul, yaklaşık 2 kat hızlı (Kanallara Ayır işlemciden yavaştı). Diğer araçlar işlemcide daha hızlı. İkisi de kuruluysa NVIDIA'nınki kullanılır
+Can't fingerprint this audio ({e})	Bu sesin parmak izi çıkarılamıyor ({e})
+Can't read this folder: {e}	Bu klasör okunamıyor: {e}
+Can't write tags to this format ({e})	Bu biçime etiket yazılamıyor ({e})
+Cancel	İptal
+Change	Değiştir
+Change Keyboard Shortcuts…	Klavye Kısayollarını Değiştir…
+Change speed and pitch	Hızı ve perdeyi değiştir
+Channels	Kanallar
+Channels: mono	Kanallar: mono
+Channels: stereo	Kanallar: stereo
+Channels: swap left and right	Kanallar: sol ve sağı değiştir
+Check for updates	Güncellemeleri denetle
+Chords	Akorlar
+Chords: after loading	Akorlar: yüklendikten sonra
+Chords: measuring…	Akorlar: ölçülüyor…
+Clicks	Tıklamalar
+Clicks on the found beats	Bulunan vuruşlarda tıklama
+Close	Kapat
+Codec	Kodek
+Colours	Renkler
+Continue	Devam
+Contribute	Katkıda Bulun
+Contribute to AcoustID?	AcoustID'ye katkıda bulunulsun mu?
+Copied the file	Dosya kopyalandı
+Copy	Kopyala
+Copy File	Dosyayı Kopyala
+Copy Path	Yolu Kopyala
+Couldn't bring back {name}: {e}	{name} geri getirilemedi: {e}
+Couldn't copy the file: {e}	Dosya kopyalanamadı: {e}
+Couldn't delete the file: {e}	Dosya silinemedi: {e}
+Cover	Kapak
+Cover added to 1 track	Kapak 1 parçaya eklendi
+Cover added to {n} of {total} tracks (not: {failed})	Kapak {total} parçanın {n} tanesine eklendi (eklenemeyen: {failed})
+Cover added to {n} tracks	Kapak {n} parçaya eklendi
+Cover at 256 px	256 px kapak
+Cover removed from 1 track	Kapak 1 parçadan kaldırıldı
+Cover removed from {n} of {total} tracks (not: {failed})	Kapak {total} parçanın {n} tanesinden kaldırıldı (kaldırılamayan: {failed})
+Cover removed from {n} tracks	Kapak {n} parçadan kaldırıldı
+Crop	Kırp
+Current cover	Geçerli kapak
+Custom ({value})…	Özel ({value})…
+Custom loudness…	Özel ses yüksekliği…
+Custom peak…	Özel tepe…
+Custom…	Özel…
+Cut out	Kes
+Dark	Koyu
+Data from Discogs.	Veriler Discogs'tan.
+Decoding…	Çözülüyor…
+DeepFilterNet3 — speech, 48 kHz	DeepFilterNet3 — konuşma, 48 kHz
+Delete file?	Dosya silinsin mi?
+Delete…	Sil…
+Discard edits	Düzenlemeleri at
+Discogs can't be reached ({e})	Discogs'a ulaşılamıyor ({e})
+Discogs is busy; try again in a minute.	Discogs meşgul; bir dakika sonra yeniden deneyin.
+Discogs now asks for a token; this lookup can't run.	Discogs artık bir belirteç istiyor; bu arama yapılamıyor.
+Discogs…	Discogs…
+Do Ré Mi	Do Re Mi
+Do you want to contribute this track's fingerprint to AcoustID? AcoustID will then recognise {title} — {artist} for everyone.	Bu parçanın parmak izini AcoustID'ye vermek ister misiniz? AcoustID böylece {title} — {artist} parçasını herkes için tanıyacak.
+Double the tempo	Tempoyu ikiye katla
+Download	İndir
+Download AI Runtime ({mb} MB)	Yapay Zekâ Çalışma Ortamını İndir ({mb} MB)
+Download AI Runtime ({mb} MB)…	Yapay Zekâ Çalışma Ortamını İndir ({mb} MB)…
+Download GPU Support	GPU Desteğini İndir
+Downloaded from Microsoft (ONNX Runtime's WebGPU plugin, via its official PyPI package).	Microsoft'tan indirilir (ONNX Runtime'ın WebGPU eklentisi, resmi PyPI paketi üzerinden).
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Microsoft'tan (ONNX Runtime) ve NVIDIA'dan (CUDA kitaplıkları, resmî PyPI paketleri üzerinden) indirilir.
+Drag on the waveform to select	Seçmek için dalga biçimi üzerinde sürükleyin
+Each stretch of speech with its start and end, to save as an .srt file	Her konuşma bölümü başı ve sonuyla, .srt dosyası olarak kaydetmek için
+Edit	Düzen
+Effects	Efektler
+Europe	Avrupa
+FFT size	FFT boyutu
+FLAC (lossless)	FLAC (kayıpsız)
+Fade in	Giriş yumuşatma
+Fade out	Çıkış yumuşatma
+Faint noise	Hafif gürültü
+Fetching details…	Ayrıntılar alınıyor…
+File	Dosya
+File changed	Dosya değişti
+File size	Dosya boyutu
+Fill In All Tracks	Tüm Parçaları Doldur
+Fill Metadata From	Üst Verileri Şuradan Doldur
+Fill from Discogs	Discogs'tan doldur
+Fill from Discogs…	Discogs'tan doldur…
+Fill from MusicBrainz	MusicBrainz'den doldur
+Fill from MusicBrainz…	MusicBrainz'den doldur…
+Fill from Wikipedia	Vikipedi'den doldur
+Fill from Wikipedia…	Vikipedi'den doldur…
+Fills Track Info's tag editor; Save… there writes the tags	Parça Bilgisi'nin etiket düzenleyicisini doldurur; oradaki Kaydet… etiketleri yazar
+Find Beats	Vuruşları Bul
+Fingerprint sent to AcoustID; lookups find it once it's processed.	Parmak izi AcoustID'ye gönderildi; işlendiğinde aramalarda bulunur.
+Fingerprinting {i} of {n}: {file}	Parmak izi {i} / {n}: {file}
+Fit	Sığdır
+Fit cover space	Kapak alanına sığdır
+Flats (Db)	Bemoller (Db)
+Folder	Klasör
+Follow system	Sistemi izle
+Font size:	Yazı tipi boyutu:
+Format	Biçim
+Found {n} beats, ≈ {bpm} BPM. Metronome on (volume button).	{n} vuruş bulundu, ≈ {bpm} BPM. Metronom açık (ses düğmesi).
+Found {n} beats. Metronome on (volume button).	{n} vuruş bulundu. Metronom açık (ses düğmesi).
+Full	Tam
+Full Screen	Tam Ekran
+Full takes away all the noise it finds; a limit keeps some, for a more natural sound	Tam, bulduğu tüm gürültüyü giderir; bir sınır biraz bırakır, daha doğal bir ses için
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel ve diğerleri, deneysel)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU support	GPU desteği
+GPU support (AMD, Intel and others)	GPU desteği (AMD, Intel ve diğerleri)
+Gain	Kazanç
+Gain: custom…	Kazanç: özel…
+Gain: {db} dB	Kazanç: {db} dB
+General	Genel
+Genre	Tür
+Get a key	Anahtar al
+Get your user key	Kullanıcı anahtarınızı alın
+Gray	Gri
+HTDemucs v4 — drums, bass, other, vocals	HTDemucs v4 — davul, bas, diğer, vokal
+Half the tempo	Tempoyu yarıya indir
+Hamming	Hamming
+Hann	Hann
+Held notes	Uzatılan notalar
+High contrast	Yüksek karşıtlık
+Higher: fewer, surer notes start	Daha yüksek: daha az, daha kesin nota başlangıcı
+Higher: notes end sooner, quiet ones are left out	Daha yüksek: notalar daha erken biter, kısık olanlar atlanır
+Hiss	Hışırtı
+Hop	Adım
+Identify Album	Albümü Tanı
+Identify Album…	Albümü Tanı…
+Identify Track	Parçayı Tanı
+Identify Track needs one; it is free for non-commercial use.	Parçayı Tanı için gereklidir; ticari olmayan kullanım için ücretsizdir.
+Identify Track…	Parçayı Tanı…
+Image	Görüntü
+In order	Sırayla
+Instrument range	Çalgı aralığı
+It already has that name.	Zaten bu adı taşıyor.
+It's all quieter than that; nothing trimmed	Hepsi bundan daha kısık; hiçbir şey kırpılmadı
+It's no longer in the Trash.	Artık Çöp Kutusu'nda değil.
+Its unsaved edits will be lost.	Kaydedilmemiş düzenlemeleri kaybolacak.
+Keep current	Geçerliyi koru
+Key	Ton
+Key ≈ {key}	Ton ≈ {key}
+Keyboard Shortcuts	Klavye Kısayolları
+Label size	Etiket boyutu
+Language	Dil
+Language:	Dil:
+Length	Uzunluk
+Levels	Düzeyler
+Licence ({n} of {count}) — {title}	Lisans ({n} / {count}) — {title}
+Licence — {title}	Lisans — {title}
+Light	Açık
+Line	Çizgi
+Local AI	Yerel Yapay Zekâ
+Look up	Ara
+Looking up…	Aranıyor…
+Loop selection	Seçimi döngüye al
+Loudness	Ses yüksekliği
+Lower finds more beats, also where the model is unsure	Düşük değer daha çok vuruş bulur, modelin emin olmadığı yerlerde de
+Lowest frequency	En düşük frekans
+MIDI file is too big	MIDI dosyası çok büyük
+MIDI file is too long	MIDI dosyası çok uzun
+MIDI tempo	MIDI temposu
+MP3 can't hold {khz} kHz audio; save as FLAC or WAV instead	MP3 {khz} kHz ses taşıyamaz; FLAC veya WAV olarak kaydedin
+MP3 holds mono or stereo only; save as FLAC or WAV instead	MP3 yalnızca mono veya stereo taşır; FLAC veya WAV olarak kaydedin
+MP3: LAME failed to start	MP3: LAME başlatılamadı
+Magma	Magma
+Make soundglass my default player	soundglass'ı varsayılan oynatıcım yap
+Make soundglass the default player	soundglass'ı varsayılan oynatıcı yap
+Matches on this album are listed first	Bu albümdeki eşleşmeler önce listelenir
+Matches on this album are listed first; it isn't sent	Bu albümdeki eşleşmeler önce listelenir; gönderilmez
+Melody to MIDI	Melodiden MIDI'ye
+Metronome	Metronom
+Mono	Mono
+More overlap between the 7.8 s segments: smoother joins, slower	7,8 sn'lik bölümler arasında daha çok örtüşme: daha yumuşak geçişler, daha yavaş
+Moved to the Trash	Çöp Kutusu'na taşındı
+MusicBrainz can't be reached ({e})	MusicBrainz'e ulaşılamıyor ({e})
+MusicBrainz…	MusicBrainz…
+Name	Ad
+Next	Sonraki
+No album cover	Albüm kapağı yok
+No album found.	Albüm bulunamadı.
+No audio files in {name}	{name} içinde ses dosyası yok
+No audio files or folders here	Burada ses dosyası veya klasör yok
+No file open	Açık dosya yok
+No match found.	Eşleşme bulunamadı.
+No silence at the start or end to trim	Başta veya sonda kırpılacak sessizlik yok
+None	Yok
+None (whole range)	Yok (tüm aralık)
+None of these tags is set.	Bu etiketlerin hiçbiri ayarlı değil.
+Normalize	Normalleştir
+Normalize loudness	Ses yüksekliğini normalleştir
+Normalize peak	Tepeyi normalleştir
+Normalize: custom loudness…	Normalleştir: özel ses yüksekliği…
+Normalize: custom peak…	Normalleştir: özel tepe…
+Normalize: {name} ({db} dBFS)	Normalleştir: {name} ({db} dBFS)
+Normalize: {name} ({lufs} LUFS)	Normalleştir: {name} ({lufs} LUFS)
+Not Now	Şimdi Değil
+Note threshold	Nota eşiği
+Notes	Notalar
+Notes from	Notalar şuradan
+Nothing to normalize: it's silent	Normalleştirecek bir şey yok: sessiz
+OK	Tamam
+Octave numbers	Oktav numaraları
+Ogg Vorbis (q6)	Ogg Vorbis (q6)
+On the selection	Seçimde
+On the whole track	Tüm parçada
+Only fill empty tags	Yalnızca boş etiketleri doldur
+Only how the file's beats are counted; the notes keep their times	Yalnızca dosyanın vuruşlarının nasıl sayıldığı; notalar zamanlarını korur
+Only needed to contribute fingerprints to AcoustID.	Yalnızca AcoustID'ye parmak izi vermek için gerekir.
+Onset threshold	Başlangıç eşiği
+Open Recent	Son Kullanılanlar
+Open models folder	Modeller klasörünü aç
+Open project page	Proje sayfasını aç
+Open themes folder	Temalar klasörünü aç
+Open…	Aç…
+Other lines	Diğer çizgiler
+Output	Çıktı
+Overlap	Örtüşme
+Parakeet TDT 0.6B v3 — 25 European languages, more accurate	Parakeet TDT 0.6B v3 — 25 Avrupa dili, daha doğru
+Pause	Duraklat
+Peak	Tepe
+Peak at max	Tepe en yüksekte
+Peak near max	Tepe en yükseğe yakın
+Piano synth	Piyano sentezleyici
+Pitch-preserved speed change	Perdeyi koruyan hız değişimi
+Play	Oynat
+Play order, {name}	Çalma sırası, {name}
+Please read and accept the licence before downloading.	İndirmeden önce lütfen lisansı okuyup kabul edin.
+Position, seconds	Konum, saniye
+Practice	Alıştırma
+Practice mode	Alıştırma modu
+Press keys… (Esc to cancel)	Tuşlara basın… (İptal için Esc)
+Previous	Önceki
+Quit	Çık
+Rectangular	Dikdörtgen
+Redo	Yinele
+Reload	Yeniden Yükle
+Remember window size	Pencere boyutunu hatırla
+Remove	Kaldır
+Remove Album Cover…	Albüm Kapağını Kaldır…
+Remove Cover	Kapağı Kaldır
+Remove Noise	Gürültüyü Gider
+Remove album cover	Albüm kapağını kaldır
+Remove the cover from this track only, or from {what}? The music itself isn't changed.	Kapak yalnızca bu parçadan mı, yoksa {what} mı kaldırılsın? Müziğin kendisi değişmez.
+Remove the cover from this track? The music itself isn't changed.	Kapak bu parçadan kaldırılsın mı? Müziğin kendisi değişmez.
+Rename	Yeniden Adlandır
+Rename from Tags	Etiketlerden Yeniden Adlandır
+Rename from Tags…	Etiketlerden Yeniden Adlandır…
+Renamed to {name}	{name} olarak yeniden adlandırıldı
+Rename…	Yeniden Adlandır…
+Repeat track	Parçayı tekrarla
+Replace…	Değiştir…
+Reset	Sıfırla
+Reset All Shortcuts	Tüm Kısayolları Sıfırla
+Reset to defaults	Varsayılanlara sıfırla
+Restart soundglass to start using the GPU.	GPU'yu kullanmaya başlamak için soundglass'ı yeniden başlatın.
+Reverse	Tersine çevir
+Run the AI tools on the graphics card ({mb} MB, NVIDIA's CUDA libraries).	Yapay zekâ araçlarını ekran kartında çalıştır ({mb} MB, NVIDIA'nın CUDA kitaplıkları).
+Running on the CPU…	İşlemcide çalışıyor…
+Running on the GPU…	GPU'da çalışıyor…
+Same ({rate})	Aynı ({rate})
+Sample rate	Örnekleme hızı
+Save As	Farklı Kaydet
+Save As…	Farklı Kaydet…
+Save Copy	Kopyayı Kaydet
+Save Cover	Kapağı Kaydet
+Save as Subtitles…	Altyazı Olarak Kaydet…
+Save as Text…	Metin Olarak Kaydet…
+Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed.	{name} bu parçanın mı, yoksa {what} kapağı olarak mı kaydedilsin? Şu anki kapakların yerini alır. Müziğin kendisi değişmez.
+Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed.	{name} bu parçanın kapağı olarak kaydedilsin mi? Şu anki kapağın yerini alır. Müziğin kendisi değişmez.
+Saved {name}	{name} kaydedildi
+Saved {name}, but the tags could not be copied	{name} kaydedildi, ancak etiketler kopyalanamadı
+Save…	Kaydet…
+Saving failed	Kaydetme başarısız
+Saving {name}…	{name} kaydediliyor…
+Scale shown	Gösterilen dizi
+Seek bar:	Konum çubuğu:
+Sends each file's fingerprint and length to AcoustID, one a second, and one recording's ID to MusicBrainz for the genre. Nothing else leaves this computer.	Her dosyanın parmak izini ve uzunluğunu saniyede bir AcoustID'ye, tür için bir kaydın kimliğini MusicBrainz'e gönderir. Bu bilgisayardan başka hiçbir şey çıkmaz.
+Sends the fingerprint, its length and the MusicBrainz recording ID to AcoustID, with your user key. It is sent only if AcoustID doesn't know this fingerprint yet.	Parmak izini, uzunluğunu ve MusicBrainz kayıt kimliğini kullanıcı anahtarınızla AcoustID'ye gönderir. Yalnızca AcoustID bu parmak izini henüz bilmiyorsa gönderilir.
+Sends the title and artist to Discogs, and the chosen release's ID for its track list. Nothing else leaves this computer.	Başlığı ve sanatçıyı Discogs'a, parça listesi için seçilen yayının kimliğini gönderir. Bu bilgisayardan başka hiçbir şey çıkmaz.
+Sends the title and artist to English Wikipedia. Nothing else leaves this computer.	Başlığı ve sanatçıyı İngilizce Vikipedi'ye gönderir. Bu bilgisayardan başka hiçbir şey çıkmaz.
+Sends the title, artist and album to MusicBrainz, and the chosen match's ID for its genre. Nothing else leaves this computer.	Başlığı, sanatçıyı ve albümü MusicBrainz'e, tür için seçilen eşleşmenin kimliğini gönderir. Bu bilgisayardan başka hiçbir şey çıkmaz.
+Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer.	Bu dosyanın parmak izini ve uzunluğunu AcoustID'ye, seçilen eşleşmenin kimliğini MusicBrainz'e gönderir. Bu bilgisayardan başka hiçbir şey çıkmaz.
+Sensitivity	Duyarlılık
+Settings	Ayarlar
+Settings: {model}	Ayarlar: {model}
+Settings…	Ayarlar…
+Sharps (C#)	Diyezler (C#)
+Shortest note	En kısa nota
+Show Log	Günlüğü Göster
+Show in Explorer	Gezgin'de Göster
+Show in File Manager	Dosya Yöneticisinde Göster
+Show or hide the chords along the top	Üstteki akorları göster veya gizle
+Show or hide the note lines	Nota çizgilerini göster veya gizle
+Show the notes of {major} major	{major} majörün notalarını göster
+Show the notes of {major} major, which {key} shares	{key} ile ortak olan {major} majörün notalarını göster
+Show the whole track	Tüm parçayı göster
+Show the whole track and all frequencies	Tüm parçayı ve tüm frekansları göster
+Shuffle	Karıştır
+Silence	Sessizlik
+Silent pieces are left out, so nothing is made up there	Sessiz bölümler atlanır, böylece orada hiçbir şey uydurulmaz
+Skip quieter than	Bundan kısık olanı atla
+Small: about 6 MB for a 4-minute stem	Küçük: 4 dakikalık bir kanal için yaklaşık 6 MB
+Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed.	Boşluk, ←, →, Page Up, Page Down, L (Seçimi döngüye al), Esc ve Enter sabittir.
+Space, ←, →, Page Up, Page Down, L, Esc, Enter and Ctrl+C/X/V	Boşluk, ←, →, Page Up, Page Down, L, Esc, Enter ve Ctrl+C/X/V
+Spectrogram	Spektrogram
+Spectrogram settings	Spektrogram ayarları
+Spectrogram — {name}	Spektrogram — {name}
+Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around	Spektrogram: oradan çalmak için tıklayın, seçmek için sürükleyin, yakınlaştırmak için kaydırın, frekansları yakınlaştırmak için Ctrl+kaydırın, gezinmek için sağ tuşla sürükleyin
+Split into Stems	Kanallara Ayır
+Split into Stems takes mono or stereo tracks	Kanallara Ayır mono veya stereo parçaları kabul eder
+Stereo	Stereo
+Stopped after {i} of {n}	{n} içinden {i} sonrasında durduruldu
+Strength	Güç
+Subtitles	Altyazılar
+Swap left and right	Sol ve sağı değiştir
+Tags	Etiketler
+Tags saved	Etiketler kaydedildi
+Task	Görev
+Tempo	Tempo
+Tenor sax	Tenor saksafon
+Text	Metin
+That image can't be read.	Bu görüntü okunamıyor.
+That image can't be used as a cover.	Bu görüntü kapak olarak kullanılamaz.
+That is the original file; choose another name. The original is never changed.	Bu özgün dosya; başka bir ad seçin. Özgün dosya asla değiştirilmez.
+That isn't a valid file name.	Bu geçerli bir dosya adı değil.
+The AI runtime isn't installed yet.	Yapay zekâ çalışma ortamı henüz kurulmadı.
+The GPU couldn't be used, so the CPU is: {e}	GPU kullanılamadı, bu yüzden CPU kullanılıyor: {e}
+The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face.	ONNX dosyası StemSplit'in dışa aktarımıdır (ağırlıklar yarım duyarlıkta), Hugging Face'te.
+The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face.	ONNX dosyası grazder'in torchDF akış dışa aktarımıdır, KimtOS tarafından Hugging Face'te barındırılır.
+The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face.	ONNX dosyası musetric'in JKU final0 denetim noktası dışa aktarımıdır, Hugging Face'te.
+The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face.	ONNX dosyaları istupakov'un onnx-asr için int8 dönüşümüdür, Hugging Face'te.
+The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.	ONNX dosyaları sherpa-onnx'in (k2-fsa) int8 dışa aktarımıdır, Hugging Face'te.
+The audio changes format partway.	Ses biçimi yarıda değişiyor.
+The cover couldn't be written ({failed})	Kapak yazılamadı ({failed})
+The file has no audio.	Dosyada ses yok.
+The file is too short to identify.	Dosya tanınmak için çok kısa.
+The image is larger than 10 MB.	Görüntü 10 MB'tan büyük.
+The key spells its notes	Ton notalarını kendine göre yazar
+The lookup stopped.	Arama durdu.
+The original file is never changed.	Özgün dosya asla değiştirilmez.
+The reply couldn't be read ({e})	Yanıt okunamadı ({e})
+The reply wasn't understood.	Yanıt anlaşılamadı.
+Theme:	Tema:
+This Track	Bu Parça
+This file's tags can't be read.	Bu dosyanın etiketleri okunamıyor.
+This match has no MusicBrainz recording to link to.	Bu eşleşmenin bağlanacak bir MusicBrainz kaydı yok.
+This track has edits that aren't saved. The original file is never changed.	Bu parçada kaydedilmemiş düzenlemeler var. Özgün dosya asla değiştirilmez.
+This track has no cover. Save {name} as the cover of {what}?	Bu parçanın kapağı yok. {name}, {what} kapağı olarak kaydedilsin mi?
+Time marks	Zaman damgaları
+Time-preserved pitch change	Süreyi koruyan perde değişimi
+Title	Başlık
+Title:	Başlık:
+Tonic line width	Ana ses çizgisi kalınlığı
+Tonic lines (C for all notes)	Ana ses çizgileri (tüm notalar için C)
+Too short or too quiet to measure its loudness	Ses yüksekliğini ölçmek için çok kısa veya çok kısık
+Tools for musicians: loops, the spectrogram, tempo, key and chords	Müzisyenler için araçlar: döngüler, spektrogram, tempo, ton ve akorlar
+Track	Parça
+Track Info	Parça Bilgisi
+Tracks that already have a cover get this one instead. The music itself isn't changed.	Zaten kapağı olan parçalar bunun yerine bu kapağı alır. Müziğin kendisi değişmez.
+Transcribe	Yazıya Dök
+Transcribe Speech	Konuşmayı Yazıya Dök
+Transcript	Döküm
+Translate to English	İngilizceye çevir
+Trim silence	Sessizliği kırp
+Trim silence below	Şunun altındaki sessizliği kırp
+Trim silence: custom…	Sessizliği kırp: özel…
+Trim silence: {name} ({db} dB)	Sessizliği kırp: {name} ({db} dB)
+Trumpet	Trompet
+Tuning A4	A4 akordu
+Type a title to search for.	Aramak için bir başlık yazın.
+Undo	Geri Al
+Unsaved edits	Kaydedilmemiş düzenlemeler
+Up one folder	Bir üst klasör
+Use Match	Eşleşmeyi Kullan
+Use the GPU	GPU'yu kullan
+Use the estimated key, {key}	Tahmin edilen tonu kullan, {key}
+Use the estimated tempo	Tahmin edilen tempoyu kullan
+User key:	Kullanıcı anahtarı:
+View	Görünüm
+Visualiser	Görselleştirici
+Volume	Ses düzeyi
+Volume, {percent} %	Ses düzeyi, %{percent}
+Volume, {percent} %, metronome on	Ses düzeyi, %{percent}, metronom açık
+Waveform	Dalga biçimi
+Waveform position	Dalga biçimi konumu
+Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along	Dalga biçimi: oradan çalmak için tıklayın, seçmek için sürükleyin, yakınlaştırmak için kaydırın, gezinmek için sağ tuşla sürükleyin
+Welcome to soundglass	soundglass'a hoş geldiniz
+Whisper large-v3-turbo — 99 languages, best, slow on a CPU	Whisper large-v3-turbo — 99 dil, en iyisi, işlemcide yavaş
+Whisper small — 99 languages	Whisper small — 99 dil
+Whole selection	Tüm seçim
+Wikipedia can't be reached ({e})	Vikipedi'ye ulaşılamıyor ({e})
+Wikipedia…	Vikipedi…
+Window function	Pencere işlevi
+Window size	Pencere uzunluğu
+Window size:	Pencere boyutu:
+Worldwide	Tüm dünya
+Write	Yaz
+Write tags	Etiketleri yaz
+Write the tags into {name}? The audio isn't changed.	Etiketler {name} dosyasına yazılsın mı? Ses değişmez.
+Writes only the tags that are empty in each file	Her dosyada yalnızca boş olan etiketleri yazar
+Writes the album's tags into every matched file, replacing the tags there	Albümün etiketlerini eşleşen her dosyaya yazar, oradaki etiketlerin yerini alır
+Writes the tags into the file; the audio isn't changed	Etiketleri dosyaya yazar; ses değişmez
+Writing the tags failed	Etiketler yazılamadı
+Writing {i} of {n}	Yazılıyor {i} / {n}
+Year	Yıl
+Your own themes go in the themes folder. Choosing a theme again reloads its file.	Kendi temalarınız tema klasörüne konur. Bir temayı yeniden seçmek dosyasını yeniden yükler.
+Zoom in (scroll; right-drag to move along)	Yakınlaştır (kaydırma; gezinmek için sağ tuşla sürükleme)
+Zoom out	Uzaklaştır
+a GPU library was missing from the download	indirilen dosyalarda bir GPU kitaplığı eksikti
+add an AcoustID key in Settings	Ayarlar'a bir AcoustID anahtarı ekleyin
+after Local AI → Find Beats	Yerel Yapay Zekâ → Vuruşları Bul sonrasında
+after loading	yüklendikten sonra
+all {n} tracks in this folder	bu klasördeki tüm {n} parça
+already normal	zaten normal
+another AI tool is running	başka bir yapay zekâ aracı çalışıyor
+as it is	olduğu gibi
+can't make a folder next to the track ({e})	parçanın yanında klasör oluşturulamıyor ({e})
+can't save a copy next to the original ({e})	özgün dosyanın yanına kopya kaydedilemiyor ({e})
+choose at least one stem to write (AI Models → Settings)	yazılacak en az bir kanal seçin (Yapay Zekâ Modelleri → Ayarlar)
+close the tag editor first	önce etiket düzenleyicisini kapatın
+hop {hop} for this length	bu uzunluk için adım {hop}
+line {line}: {key}="{v}": invalid value	satır {line}: {key}="{v}": geçersiz değer
+measuring…	ölçülüyor…
+mode="{other}": invalid value	mode="{other}": geçersiz değer
+needs a model: Local AI → AI Models…	bir model gerekiyor: Yerel Yapay Zekâ → Yapay Zekâ Modelleri…
+needs the AI runtime: Local AI → Download AI Runtime…	yapay zekâ çalışma ortamı gerekiyor: Yerel Yapay Zekâ → Yapay Zekâ Çalışma Ortamını İndir…
+new image	yeni görüntü
+no audio track	ses parçası yok
+no channels	kanal yok
+no data folder	veri klasörü yok
+no file name	dosya adı yok
+no file open	açık dosya yok
+no notes were found	nota bulunamadı
+no sample rate	örnekleme hızı yok
+no speech was found	konuşma bulunamadı
+not a supported audio file ({e})	desteklenen bir ses dosyası değil ({e})
+not a transcription model	bir yazıya dökme modeli değil
+not found	bulunamadı
+not found, left alone	bulunamadı, olduğu gibi bırakıldı
+nothing to redo	yinelenecek bir şey yok
+nothing to undo	geri alınacak bir şey yok
+part of the track could not be read	parçanın bir bölümü okunamadı
+quality	kalite
+removed	kaldırıldı
+saving tags…	etiketler kaydediliyor…
+select a part in the Edit panel	Düzenle panelinde bir bölüm seçin
+select at least half a second, or nothing for the whole track	en az yarım saniye seçin veya tüm parça için hiçbir şey seçmeyin
+silent	sessiz
+soundglass is now the default player	soundglass artık varsayılan oynatıcı
+the AI tool failed	yapay zekâ aracı başarısız oldu
+the AI tool stopped	yapay zekâ aracı durdu
+the channel count changes mid-file	kanal sayısı dosyanın ortasında değişiyor
+the encoder failed	kodlayıcı başarısız oldu
+the model gave an unexpected output	model beklenmedik bir çıktı verdi
+the saved file doesn't read back ({e})	kaydedilen dosya geri okunamıyor ({e})
+the saved file reads back wrong ({frames} frames, expected {expected})	kaydedilen dosya yanlış okunuyor ({frames} kare, beklenen {expected})
+the settings aren't for this tool	bu ayarlar bu araç için değil
+the sound device failed to open	ses aygıtı açılamadı
+the tag writer failed	etiket yazıcısı başarısız oldu
+the track has no audio	parçada ses yok
+the track is still loading	parça hâlâ yükleniyor
+the track isn't fully loaded	parça tam yüklenmedi
+this file can't be decoded	bu dosya çözülemiyor
+this track	bu parça
+to	ile
+track {n}	parça {n}
+unknown error	bilinmeyen hata
+with unsaved edits, once loaded	kaydedilmemiş düzenlemelerle, yüklendikten sonra
+writing the tags would change the audio, so nothing was written	etiketleri yazmak sesi değiştirirdi, bu yüzden hiçbir şey yazılmadı
+{kbps} kb/s	{kbps} kb/s
+{keys} is already used by {other}	{keys} zaten {other} tarafından kullanılıyor
+{key} major	{key} majör
+{model} (installed)	{model} (kurulu)
+{name} isn't an audio file soundglass plays	{name}, soundglass'ın çaldığı bir ses dosyası değil
+{name} was changed by another program. Reload it?	{name} başka bir program tarafından değiştirildi. Yeniden yüklensin mi?
+{name} will be moved to the Trash.	{name} Çöp Kutusu'na taşınacak.
+{name}: custom…	{name}: özel…
+{name}: whole selection	{name}: tüm seçim
+{name}: {s} s	{name}: {s} sn
+{n} of {total} tracks	{total} parçanın {n} tanesi
+{ok} written, {bad} failed	{ok} yazıldı, {bad} başarısız
+{path}: bigger than 64 KiB	{path}: 64 KiB'tan büyük
+{secs} s	{secs} sn
+{sign}{n} semitone	{sign}{n} yarım ton
+{sign}{n} semitones	{sign}{n} yarım ton
+{task} (selection)	{task} (seçim)
+{what} installed.	{what} kuruldu.
+{what}: the download stopped.	{what}: indirme durdu.
+→ {n}	→ {n}
+−14 streaming, −23 TV	−14 akış, −23 TV
+−60 silence, −40 hiss	−60 sessizlik, −40 hışırtı

@@ -46,6 +46,8 @@ what each release brings, and [`PRODUCT_BRIEF.md`](docs/PRODUCT_BRIEF.md) has th
   helps you report bugs; it's never sent anywhere.
 - **Your keys, your colours.** Every menu item can get its own keyboard shortcut, the font size is
   adjustable, and themes (including high contrast) are plain XML files.
+- **28 languages.** It starts in your system's language; all but English are machine translations,
+  and corrections are welcome.
 
 Every feature, and the supported formats, are described in [`FEATURES.md`](docs/FEATURES.md).
 

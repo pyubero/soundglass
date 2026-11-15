@@ -13,6 +13,9 @@ versions follow [Semantic Versioning](https://semver.org/).
 - A log for bug reports, `soundglass.log` in the data folder (the most recent 0.5–1 MB): files,
   commands, timings, slow or frozen frames, sound dropouts, errors and panics. It stays on your
   computer and is never sent anywhere; File → Show Log opens its folder.
+- 27 more languages, as in lightview (machine translations; File → Settings… → Language).
+  soundglass starts in the system's language, on Windows too, and a Chinese, Japanese or Korean
+  interface uses the system font in its own regional style.
 
 ### Fixed
 

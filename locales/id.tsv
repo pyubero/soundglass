@@ -1,0 +1,551 @@
+ dB at most	 dB paling tinggi
+ semitones	 semiton
+0 (Normal)	0 (Normal)
+0 = max	0 = maks
+1 (mono)	1 (mono)
+16-bit	16-bit
+1× (Normal)	1× (Normal)
+2 (stereo)	2 (stereo)
+24-bit	24-bit
+32-bit float	32-bit float
+<{tag}>: invalid value	<{tag}>: nilai tidak valid
+A code such as en, es, fr, de; empty to detect it from the first speech	Kode seperti en, es, fr, de; kosongkan untuk mendeteksinya dari ucapan pertama
+A file with that name already exists.	File dengan nama itu sudah ada.
+A long track: the hop is raised so the spectrogram fits in memory	Trek panjang: hop dinaikkan agar spektrogram muat di memori
+AI Models	Model AI
+AI Models…	Model AI…
+AI runtime (ONNX Runtime)	Runtime AI (ONNX Runtime)
+About 50 MB for a 4-minute stem, for further editing	Sekitar 50 MB untuk stem 4 menit, untuk diedit lebih lanjut
+Accept and Continue	Terima dan Lanjutkan
+Accept and Download	Terima dan Unduh
+AcoustID Settings	Pengaturan AcoustID
+AcoustID can't be reached ({e})	AcoustID tidak dapat dihubungi ({e})
+AcoustID: {why}	AcoustID: {why}
+Add AcoustID User Key	Tambah Kunci Pengguna AcoustID
+Add Cover	Tambah Sampul
+Add album cover?	Tambahkan sampul album?
+Add your AcoustID application key and user key in Settings to contribute.	Tambahkan kunci aplikasi dan kunci pengguna AcoustID Anda di Pengaturan untuk berkontribusi.
+Add/Replace Album Cover…	Tambah/Ganti Sampul Album…
+Album	Album
+Album cover	Sampul album
+Album:	Album:
+All notes	Semua not
+All {n} Tracks	Semua {n} Trek
+Already in AcoustID; nothing was sent.	Sudah ada di AcoustID; tidak ada yang dikirim.
+Also find notes without a clear start	Temukan juga not tanpa awal yang jelas
+Analysis	Analisis
+Any graphics card with Vulkan or Direct3D 12 ({mb} MB). A weak built-in one can be slower than the CPU.	Kartu grafis apa pun dengan Vulkan atau Direct3D 12 ({mb} MB). Grafis bawaan yang lemah bisa lebih lambat daripada CPU.
+Application key:	Kunci aplikasi:
+Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.	Berlaku saat soundglass dibuka berikutnya; jendela, Info Trek, dan panel Edit tetap seperti saat keluar.
+Apply and Rename	Terapkan dan Ganti Nama
+Apply speed and pitch	Terapkan kecepatan dan nada
+Apply to All Tracks	Terapkan ke Semua Trek
+Artist	Artis
+Artist:	Artis:
+As Apply to All Tracks, then renames each file with the Rename from Tags pattern	Seperti Terapkan ke Semua Trek, lalu mengganti nama setiap file dengan pola Ganti Nama dari Tag
+As TV	Seperti TV
+As podcasts	Seperti podcast
+As streaming	Seperti streaming
+As subtitles (.srt)	Sebagai subtitle (.srt)
+Audio	Audio
+BPM	BPM
+BPM tag saved ({bpm})	Tag BPM disimpan ({bpm})
+Basic Pitch — any instrument, several notes at once	Basic Pitch — instrumen apa pun, beberapa not sekaligus
+Basic Pitch's melodia trick	Trik melodia Basic Pitch
+Beat This! — beats and downbeats	Beat This! — ketukan dan ketukan pertama birama
+Bit depth	Kedalaman bit
+Bitrate	Bitrate
+Blackman–Harris	Blackman–Harris
+Blue to red	Biru ke merah
+C D E	C D E
+CUDA: Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050. WebGPU: Find Beats only, about 2× faster (Split into Stems was slower than the CPU). The other tools are faster on the CPU. With both installed, NVIDIA's is used	CUDA: Pisahkan Menjadi Stem dan Temukan Ketukan, 2,6–3× lebih cepat di GTX 1050. WebGPU: hanya Temukan Ketukan, sekitar 2× lebih cepat (Pisahkan Menjadi Stem lebih lambat daripada CPU). Alat lain lebih cepat di CPU. Jika keduanya terpasang, milik NVIDIA yang dipakai
+Can't fingerprint this audio ({e})	Tidak dapat membuat sidik jari audio ini ({e})
+Can't read this folder: {e}	Tidak dapat membaca folder ini: {e}
+Can't write tags to this format ({e})	Tidak dapat menulis tag ke format ini ({e})
+Cancel	Batal
+Change	Ubah
+Change Keyboard Shortcuts…	Ubah Pintasan Keyboard…
+Change speed and pitch	Ubah kecepatan dan nada
+Channels	Kanal
+Channels: mono	Kanal: mono
+Channels: stereo	Kanal: stereo
+Channels: swap left and right	Kanal: tukar kiri dan kanan
+Check for updates	Periksa pembaruan
+Chords	Akor
+Chords: after loading	Akor: setelah dimuat
+Chords: measuring…	Akor: mengukur…
+Clicks	Klik
+Clicks on the found beats	Klik pada ketukan yang ditemukan
+Close	Tutup
+Codec	Codec
+Colours	Warna
+Continue	Lanjutkan
+Contribute	Kontribusi
+Contribute to AcoustID?	Berkontribusi ke AcoustID?
+Copied the file	Berkas disalin
+Copy	Salin
+Copy File	Salin Berkas
+Copy Path	Salin Jalur
+Couldn't bring back {name}: {e}	Tidak dapat mengembalikan {name}: {e}
+Couldn't copy the file: {e}	Tidak dapat menyalin berkas: {e}
+Couldn't delete the file: {e}	Tidak dapat menghapus file: {e}
+Cover	Sampul
+Cover added to 1 track	Sampul ditambahkan ke 1 trek
+Cover added to {n} of {total} tracks (not: {failed})	Sampul ditambahkan ke {n} dari {total} trek (gagal: {failed})
+Cover added to {n} tracks	Sampul ditambahkan ke {n} trek
+Cover at 256 px	Sampul 256 px
+Cover removed from 1 track	Sampul dihapus dari 1 trek
+Cover removed from {n} of {total} tracks (not: {failed})	Sampul dihapus dari {n} dari {total} trek (gagal: {failed})
+Cover removed from {n} tracks	Sampul dihapus dari {n} trek
+Crop	Potong
+Current cover	Sampul saat ini
+Custom ({value})…	Kustom ({value})…
+Custom loudness…	Kenyaringan kustom…
+Custom peak…	Puncak kustom…
+Custom…	Kustom…
+Cut out	Potong buang
+Dark	Gelap
+Data from Discogs.	Data dari Discogs.
+Decoding…	Mendekode…
+DeepFilterNet3 — speech, 48 kHz	DeepFilterNet3 — ucapan, 48 kHz
+Delete file?	Hapus file?
+Delete…	Hapus…
+Discard edits	Buang suntingan
+Discogs can't be reached ({e})	Discogs tidak dapat dihubungi ({e})
+Discogs is busy; try again in a minute.	Discogs sedang sibuk; coba lagi dalam satu menit.
+Discogs now asks for a token; this lookup can't run.	Discogs kini meminta token; pencarian ini tidak dapat dijalankan.
+Discogs…	Discogs…
+Do Ré Mi	Do Re Mi
+Do you want to contribute this track's fingerprint to AcoustID? AcoustID will then recognise {title} — {artist} for everyone.	Apakah Anda ingin menyumbangkan sidik jari trek ini ke AcoustID? AcoustID lalu akan mengenali {title} — {artist} untuk semua orang.
+Double the tempo	Gandakan tempo
+Download	Unduh
+Download AI Runtime ({mb} MB)	Unduh Runtime AI ({mb} MB)
+Download AI Runtime ({mb} MB)…	Unduh Runtime AI ({mb} MB)…
+Download GPU Support	Unduh Dukungan GPU
+Downloaded from Microsoft (ONNX Runtime's WebGPU plugin, via its official PyPI package).	Diunduh dari Microsoft (plugin WebGPU ONNX Runtime, melalui paket PyPI resminya).
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Diunduh dari Microsoft (ONNX Runtime) dan NVIDIA (pustaka CUDA, melalui paket PyPI resmi mereka).
+Drag on the waveform to select	Seret pada gelombang untuk memilih
+Each stretch of speech with its start and end, to save as an .srt file	Setiap bagian ucapan dengan awal dan akhirnya, untuk disimpan sebagai file .srt
+Edit	Edit
+Effects	Efek
+Europe	Eropa
+FFT size	Ukuran FFT
+FLAC (lossless)	FLAC (lossless)
+Fade in	Fade in
+Fade out	Fade out
+Faint noise	Derau samar
+Fetching details…	Mengambil detail…
+File	Berkas
+File changed	File berubah
+File size	Ukuran berkas
+Fill In All Tracks	Isi Semua Trek
+Fill Metadata From	Isi Metadata Dari
+Fill from Discogs	Isi dari Discogs
+Fill from Discogs…	Isi dari Discogs…
+Fill from MusicBrainz	Isi dari MusicBrainz
+Fill from MusicBrainz…	Isi dari MusicBrainz…
+Fill from Wikipedia	Isi dari Wikipedia
+Fill from Wikipedia…	Isi dari Wikipedia…
+Fills Track Info's tag editor; Save… there writes the tags	Mengisi editor tag di Info Trek; Simpan… di sana menulis tag
+Find Beats	Temukan Ketukan
+Fingerprint sent to AcoustID; lookups find it once it's processed.	Sidik jari dikirim ke AcoustID; pencarian akan menemukannya setelah diproses.
+Fingerprinting {i} of {n}: {file}	Sidik jari {i} dari {n}: {file}
+Fit	Paskan
+Fit cover space	Paskan ke ruang sampul
+Flats (Db)	Mol (Db)
+Folder	Folder
+Follow system	Ikuti sistem
+Font size:	Ukuran fon:
+Format	Format
+Found {n} beats, ≈ {bpm} BPM. Metronome on (volume button).	Ditemukan {n} ketukan, ≈ {bpm} BPM. Metronom aktif (tombol volume).
+Found {n} beats. Metronome on (volume button).	Ditemukan {n} ketukan. Metronom aktif (tombol volume).
+Full	Penuh
+Full Screen	Layar Penuh
+Full takes away all the noise it finds; a limit keeps some, for a more natural sound	Penuh menghapus semua derau yang ditemukan; batas menyisakan sedikit, agar suara lebih alami
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel, dan lainnya, eksperimental)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU support	Dukungan GPU
+GPU support (AMD, Intel and others)	Dukungan GPU (AMD, Intel, dan lainnya)
+Gain	Penguatan
+Gain: custom…	Penguatan: kustom…
+Gain: {db} dB	Penguatan: {db} dB
+General	Umum
+Genre	Genre
+Get a key	Dapatkan kunci
+Get your user key	Dapatkan kunci pengguna Anda
+Gray	Abu-abu
+HTDemucs v4 — drums, bass, other, vocals	HTDemucs v4 — drum, bas, lainnya, vokal
+Half the tempo	Separuh tempo
+Hamming	Hamming
+Hann	Hann
+Held notes	Not tahan
+High contrast	Kontras tinggi
+Higher: fewer, surer notes start	Lebih tinggi: awal not lebih sedikit dan lebih pasti
+Higher: notes end sooner, quiet ones are left out	Lebih tinggi: not berakhir lebih cepat, yang pelan diabaikan
+Hiss	Desis
+Hop	Hop
+Identify Album	Kenali Album
+Identify Album…	Kenali Album…
+Identify Track	Kenali Trek
+Identify Track needs one; it is free for non-commercial use.	Kenali Trek membutuhkannya; gratis untuk penggunaan nonkomersial.
+Identify Track…	Kenali Trek…
+Image	Gambar
+In order	Berurutan
+Instrument range	Rentang instrumen
+It already has that name.	Namanya sudah itu.
+It's all quieter than that; nothing trimmed	Semuanya lebih pelan dari itu; tidak ada yang dipangkas
+It's no longer in the Trash.	Sudah tidak ada di Tempat Sampah.
+Its unsaved edits will be lost.	Suntingannya yang belum disimpan akan hilang.
+Keep current	Pertahankan yang sekarang
+Key	Kunci nada
+Key ≈ {key}	Kunci nada ≈ {key}
+Keyboard Shortcuts	Pintasan Keyboard
+Label size	Ukuran label
+Language	Bahasa
+Language:	Bahasa:
+Length	Panjang
+Levels	Level
+Licence ({n} of {count}) — {title}	Lisensi ({n} dari {count}) — {title}
+Licence — {title}	Lisensi — {title}
+Light	Terang
+Line	Garis
+Local AI	AI Lokal
+Look up	Cari
+Looking up…	Mencari…
+Loop selection	Ulangi pilihan
+Loudness	Kenyaringan
+Lower finds more beats, also where the model is unsure	Lebih rendah menemukan lebih banyak ketukan, juga saat model tidak yakin
+Lowest frequency	Frekuensi terendah
+MIDI file is too big	File MIDI terlalu besar
+MIDI file is too long	File MIDI terlalu panjang
+MIDI tempo	Tempo MIDI
+MP3 can't hold {khz} kHz audio; save as FLAC or WAV instead	MP3 tidak dapat menampung audio {khz} kHz; simpan sebagai FLAC atau WAV
+MP3 holds mono or stereo only; save as FLAC or WAV instead	MP3 hanya menampung mono atau stereo; simpan sebagai FLAC atau WAV
+MP3: LAME failed to start	MP3: LAME gagal dimulai
+Magma	Magma
+Make soundglass my default player	Jadikan soundglass pemutar bawaan saya
+Make soundglass the default player	Jadikan soundglass pemutar bawaan
+Matches on this album are listed first	Kecocokan di album ini ditampilkan lebih dulu
+Matches on this album are listed first; it isn't sent	Kecocokan di album ini ditampilkan lebih dulu; tidak dikirim
+Melody to MIDI	Melodi ke MIDI
+Metronome	Metronom
+Mono	Mono
+More overlap between the 7.8 s segments: smoother joins, slower	Lebih banyak tumpang tindih antar segmen 7,8 dtk: sambungan lebih halus, lebih lambat
+Moved to the Trash	Dipindahkan ke Tempat Sampah
+MusicBrainz can't be reached ({e})	MusicBrainz tidak dapat dihubungi ({e})
+MusicBrainz…	MusicBrainz…
+Name	Nama
+Next	Berikutnya
+No album cover	Tanpa sampul album
+No album found.	Album tidak ditemukan.
+No audio files in {name}	Tidak ada file audio di {name}
+No audio files or folders here	Tidak ada file audio atau folder di sini
+No file open	Tidak ada file yang dibuka
+No match found.	Tidak ada kecocokan.
+No silence at the start or end to trim	Tidak ada hening di awal atau akhir untuk dipangkas
+None	Tidak ada
+None (whole range)	Tidak ada (seluruh rentang)
+None of these tags is set.	Tidak ada tag ini yang diisi.
+Normalize	Normalisasi
+Normalize loudness	Normalisasi kenyaringan
+Normalize peak	Normalisasi puncak
+Normalize: custom loudness…	Normalisasi: kenyaringan kustom…
+Normalize: custom peak…	Normalisasi: puncak kustom…
+Normalize: {name} ({db} dBFS)	Normalisasi: {name} ({db} dBFS)
+Normalize: {name} ({lufs} LUFS)	Normalisasi: {name} ({lufs} LUFS)
+Not Now	Jangan Sekarang
+Note threshold	Ambang not
+Notes	Not
+Notes from	Not dari
+Nothing to normalize: it's silent	Tidak ada yang dinormalisasi: hening
+OK	OK
+Octave numbers	Nomor oktaf
+Ogg Vorbis (q6)	Ogg Vorbis (q6)
+On the selection	Pada pilihan
+On the whole track	Pada seluruh trek
+Only fill empty tags	Hanya isi tag yang kosong
+Only how the file's beats are counted; the notes keep their times	Hanya cara ketukan file dihitung; not tetap pada waktunya
+Only needed to contribute fingerprints to AcoustID.	Hanya diperlukan untuk menyumbangkan sidik jari ke AcoustID.
+Onset threshold	Ambang awal
+Open Recent	Buka Terbaru
+Open models folder	Buka folder model
+Open project page	Buka halaman proyek
+Open themes folder	Buka folder tema
+Open…	Buka…
+Other lines	Garis lain
+Output	Keluaran
+Overlap	Tumpang tindih
+Parakeet TDT 0.6B v3 — 25 European languages, more accurate	Parakeet TDT 0.6B v3 — 25 bahasa Eropa, lebih akurat
+Pause	Jeda
+Peak	Puncak
+Peak at max	Puncak di maksimum
+Peak near max	Puncak dekat maksimum
+Piano synth	Synth piano
+Pitch-preserved speed change	Ubah kecepatan dengan nada tetap
+Play	Putar
+Play order, {name}	Urutan putar, {name}
+Please read and accept the licence before downloading.	Harap baca dan terima lisensi sebelum mengunduh.
+Position, seconds	Posisi, detik
+Practice	Latihan
+Practice mode	Mode latihan
+Press keys… (Esc to cancel)	Tekan tombol… (Esc untuk membatalkan)
+Previous	Sebelumnya
+Quit	Keluar
+Rectangular	Persegi
+Redo	Ulangi
+Reload	Muat Ulang
+Remember window size	Ingat ukuran jendela
+Remove	Hapus
+Remove Album Cover…	Hapus Sampul Album…
+Remove Cover	Hapus Sampul
+Remove Noise	Hapus Derau
+Remove album cover	Hapus sampul album
+Remove the cover from this track only, or from {what}? The music itself isn't changed.	Hapus sampul dari trek ini saja, atau dari {what}? Musiknya sendiri tidak berubah.
+Remove the cover from this track? The music itself isn't changed.	Hapus sampul dari trek ini? Musiknya sendiri tidak berubah.
+Rename	Ganti Nama
+Rename from Tags	Ganti Nama dari Tag
+Rename from Tags…	Ganti Nama dari Tag…
+Renamed to {name}	Nama diganti menjadi {name}
+Rename…	Ganti Nama…
+Repeat track	Ulangi trek
+Replace…	Ganti…
+Reset	Atur Ulang
+Reset All Shortcuts	Atur Ulang Semua Pintasan
+Reset to defaults	Kembalikan ke bawaan
+Restart soundglass to start using the GPU.	Mulai ulang soundglass untuk mulai memakai GPU.
+Reverse	Balik
+Run the AI tools on the graphics card ({mb} MB, NVIDIA's CUDA libraries).	Jalankan alat AI di kartu grafis ({mb} MB, pustaka CUDA NVIDIA).
+Running on the CPU…	Berjalan di CPU…
+Running on the GPU…	Berjalan di GPU…
+Same ({rate})	Sama ({rate})
+Sample rate	Laju sampel
+Save As	Simpan Sebagai
+Save As…	Simpan Sebagai…
+Save Copy	Simpan Salinan
+Save Cover	Simpan Sampul
+Save as Subtitles…	Simpan sebagai Subtitle…
+Save as Text…	Simpan sebagai Teks…
+Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed.	Simpan {name} sebagai sampul trek ini, atau {what}? Sampul yang ada sekarang akan diganti. Musiknya sendiri tidak berubah.
+Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed.	Simpan {name} sebagai sampul trek ini? Sampul yang ada sekarang akan diganti. Musiknya sendiri tidak berubah.
+Saved {name}	Disimpan: {name}
+Saved {name}, but the tags could not be copied	{name} disimpan, tetapi tag tidak dapat disalin
+Save…	Simpan…
+Saving failed	Gagal menyimpan
+Saving {name}…	Menyimpan {name}…
+Scale shown	Tangga nada ditampilkan
+Seek bar:	Bilah posisi:
+Sends each file's fingerprint and length to AcoustID, one a second, and one recording's ID to MusicBrainz for the genre. Nothing else leaves this computer.	Mengirim sidik jari dan panjang setiap file ke AcoustID, satu per detik, dan ID satu rekaman ke MusicBrainz untuk genre. Tidak ada hal lain yang keluar dari komputer ini.
+Sends the fingerprint, its length and the MusicBrainz recording ID to AcoustID, with your user key. It is sent only if AcoustID doesn't know this fingerprint yet.	Mengirim sidik jari, panjangnya, dan ID rekaman MusicBrainz ke AcoustID, dengan kunci pengguna Anda. Hanya dikirim jika AcoustID belum mengenal sidik jari ini.
+Sends the title and artist to Discogs, and the chosen release's ID for its track list. Nothing else leaves this computer.	Mengirim judul dan artis ke Discogs, dan ID rilis yang dipilih untuk daftar treknya. Tidak ada hal lain yang keluar dari komputer ini.
+Sends the title and artist to English Wikipedia. Nothing else leaves this computer.	Mengirim judul dan artis ke Wikipedia bahasa Inggris. Tidak ada hal lain yang keluar dari komputer ini.
+Sends the title, artist and album to MusicBrainz, and the chosen match's ID for its genre. Nothing else leaves this computer.	Mengirim judul, artis, dan album ke MusicBrainz, dan ID kecocokan yang dipilih untuk genrenya. Tidak ada hal lain yang keluar dari komputer ini.
+Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer.	Mengirim sidik jari dan panjang file ini ke AcoustID, dan ID kecocokan yang dipilih ke MusicBrainz. Tidak ada hal lain yang keluar dari komputer ini.
+Sensitivity	Sensitivitas
+Settings	Pengaturan
+Settings: {model}	Pengaturan: {model}
+Settings…	Pengaturan…
+Sharps (C#)	Kres (C#)
+Shortest note	Not terpendek
+Show Log	Tampilkan Log
+Show in Explorer	Tampilkan di Explorer
+Show in File Manager	Tampilkan di Pengelola Berkas
+Show or hide the chords along the top	Tampilkan atau sembunyikan akor di atas
+Show or hide the note lines	Tampilkan atau sembunyikan garis not
+Show the notes of {major} major	Tampilkan not {major} mayor
+Show the notes of {major} major, which {key} shares	Tampilkan not {major} mayor, yang sama dengan {key}
+Show the whole track	Tampilkan seluruh trek
+Show the whole track and all frequencies	Tampilkan seluruh trek dan semua frekuensi
+Shuffle	Acak
+Silence	Hening
+Silent pieces are left out, so nothing is made up there	Bagian hening dilewati, jadi tidak ada yang dikarang di sana
+Skip quieter than	Lewati yang lebih pelan dari
+Small: about 6 MB for a 4-minute stem	Kecil: sekitar 6 MB untuk stem 4 menit
+Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed.	Spasi, ←, →, Page Up, Page Down, L (Ulangi pilihan), Esc, dan Enter tetap.
+Space, ←, →, Page Up, Page Down, L, Esc, Enter and Ctrl+C/X/V	Spasi, ←, →, Page Up, Page Down, L, Esc, Enter, dan Ctrl+C/X/V
+Spectrogram	Spektrogram
+Spectrogram settings	Pengaturan spektrogram
+Spectrogram — {name}	Spektrogram — {name}
+Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around	Spektrogram: klik untuk memutar dari situ, seret untuk memilih, gulir untuk zoom, Ctrl+gulir untuk zoom frekuensi, seret kanan untuk berpindah
+Split into Stems	Pisahkan Menjadi Stem
+Split into Stems takes mono or stereo tracks	Pisahkan Menjadi Stem menerima trek mono atau stereo
+Stereo	Stereo
+Stopped after {i} of {n}	Berhenti setelah {i} dari {n}
+Strength	Kekuatan
+Subtitles	Subtitle
+Swap left and right	Tukar kiri dan kanan
+Tags	Tag
+Tags saved	Tag disimpan
+Task	Tugas
+Tempo	Tempo
+Tenor sax	Saksofon tenor
+Text	Teks
+That image can't be read.	Gambar itu tidak dapat dibaca.
+That image can't be used as a cover.	Gambar itu tidak dapat dipakai sebagai sampul.
+That is the original file; choose another name. The original is never changed.	Itu file asli; pilih nama lain. File asli tidak pernah diubah.
+That isn't a valid file name.	Itu bukan nama file yang valid.
+The AI runtime isn't installed yet.	Runtime AI belum terpasang.
+The GPU couldn't be used, so the CPU is: {e}	GPU tidak dapat digunakan, jadi CPU yang dipakai: {e}
+The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face.	File ONNX adalah ekspor StemSplit (bobot disimpan dalam presisi setengah), di Hugging Face.
+The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face.	File ONNX adalah ekspor streaming torchDF milik grazder, dihosting oleh KimtOS di Hugging Face.
+The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face.	File ONNX adalah ekspor musetric dari checkpoint final0 JKU, di Hugging Face.
+The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face.	File ONNX adalah konversi int8 istupakov untuk onnx-asr, di Hugging Face.
+The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.	File ONNX adalah ekspor int8 sherpa-onnx (k2-fsa), di Hugging Face.
+The audio changes format partway.	Format audio berubah di tengah jalan.
+The cover couldn't be written ({failed})	Sampul tidak dapat ditulis ({failed})
+The file has no audio.	File tidak berisi audio.
+The file is too short to identify.	File terlalu pendek untuk dikenali.
+The image is larger than 10 MB.	Gambar lebih besar dari 10 MB.
+The key spells its notes	Kunci nada menentukan ejaan notnya
+The lookup stopped.	Pencarian berhenti.
+The original file is never changed.	File asli tidak pernah diubah.
+The reply couldn't be read ({e})	Balasan tidak dapat dibaca ({e})
+The reply wasn't understood.	Balasan tidak dipahami.
+Theme:	Tema:
+This Track	Trek Ini
+This file's tags can't be read.	Tag file ini tidak dapat dibaca.
+This match has no MusicBrainz recording to link to.	Kecocokan ini tidak punya rekaman MusicBrainz untuk ditautkan.
+This track has edits that aren't saved. The original file is never changed.	Trek ini punya suntingan yang belum disimpan. File asli tidak pernah diubah.
+This track has no cover. Save {name} as the cover of {what}?	Trek ini tidak punya sampul. Simpan {name} sebagai sampul {what}?
+Time marks	Penanda waktu
+Time-preserved pitch change	Ubah nada dengan durasi tetap
+Title	Judul
+Title:	Judul:
+Tonic line width	Lebar garis tonika
+Tonic lines (C for all notes)	Garis tonika (C untuk semua not)
+Too short or too quiet to measure its loudness	Terlalu pendek atau terlalu pelan untuk diukur kenyaringannya
+Tools for musicians: loops, the spectrogram, tempo, key and chords	Alat untuk musisi: loop, spektrogram, tempo, kunci nada, dan akor
+Track	Trek
+Track Info	Info Trek
+Tracks that already have a cover get this one instead. The music itself isn't changed.	Trek yang sudah punya sampul mendapat sampul ini sebagai gantinya. Musiknya sendiri tidak berubah.
+Transcribe	Transkripsi
+Transcribe Speech	Transkripsi Ucapan
+Transcript	Transkrip
+Translate to English	Terjemahkan ke bahasa Inggris
+Trim silence	Pangkas hening
+Trim silence below	Pangkas hening di bawah
+Trim silence: custom…	Pangkas hening: kustom…
+Trim silence: {name} ({db} dB)	Pangkas hening: {name} ({db} dB)
+Trumpet	Trompet
+Tuning A4	Penyetelan A4
+Type a title to search for.	Ketik judul untuk dicari.
+Undo	Urungkan
+Unsaved edits	Suntingan belum disimpan
+Up one folder	Naik satu folder
+Use Match	Gunakan Kecocokan
+Use the GPU	Gunakan GPU
+Use the estimated key, {key}	Gunakan kunci nada perkiraan, {key}
+Use the estimated tempo	Gunakan tempo perkiraan
+User key:	Kunci pengguna:
+View	Tampilan
+Visualiser	Visualisasi
+Volume	Volume
+Volume, {percent} %	Volume, {percent} %
+Volume, {percent} %, metronome on	Volume, {percent} %, metronom aktif
+Waveform	Gelombang
+Waveform position	Posisi gelombang
+Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along	Gelombang: klik untuk memutar dari situ, seret untuk memilih, gulir untuk zoom, seret kanan untuk bergeser
+Welcome to soundglass	Selamat datang di soundglass
+Whisper large-v3-turbo — 99 languages, best, slow on a CPU	Whisper large-v3-turbo — 99 bahasa, terbaik, lambat di CPU
+Whisper small — 99 languages	Whisper small — 99 bahasa
+Whole selection	Seluruh pilihan
+Wikipedia can't be reached ({e})	Wikipedia tidak dapat dihubungi ({e})
+Wikipedia…	Wikipedia…
+Window function	Fungsi jendela
+Window size	Panjang jendela
+Window size:	Ukuran jendela:
+Worldwide	Seluruh dunia
+Write	Tulis
+Write tags	Tulis tag
+Write the tags into {name}? The audio isn't changed.	Tulis tag ke {name}? Audionya tidak berubah.
+Writes only the tags that are empty in each file	Hanya menulis tag yang kosong di setiap file
+Writes the album's tags into every matched file, replacing the tags there	Menulis tag album ke setiap file yang cocok, mengganti tag yang ada
+Writes the tags into the file; the audio isn't changed	Menulis tag ke file; audionya tidak berubah
+Writing the tags failed	Gagal menulis tag
+Writing {i} of {n}	Menulis {i} dari {n}
+Year	Tahun
+Your own themes go in the themes folder. Choosing a theme again reloads its file.	Tema Anda sendiri ditaruh di folder tema. Memilih tema lagi memuat ulang filenya.
+Zoom in (scroll; right-drag to move along)	Perbesar (gulir; seret kanan untuk bergeser)
+Zoom out	Perkecil
+a GPU library was missing from the download	sebuah pustaka GPU tidak ada dalam unduhan
+add an AcoustID key in Settings	tambahkan kunci AcoustID di Pengaturan
+after Local AI → Find Beats	setelah AI Lokal → Temukan Ketukan
+after loading	setelah dimuat
+all {n} tracks in this folder	semua {n} trek di folder ini
+already normal	sudah normal
+another AI tool is running	alat AI lain sedang berjalan
+as it is	apa adanya
+can't make a folder next to the track ({e})	tidak dapat membuat folder di samping trek ({e})
+can't save a copy next to the original ({e})	tidak dapat menyimpan salinan di samping file asli ({e})
+choose at least one stem to write (AI Models → Settings)	pilih setidaknya satu stem untuk ditulis (Model AI → Pengaturan)
+close the tag editor first	tutup editor tag dulu
+hop {hop} for this length	hop {hop} untuk panjang ini
+line {line}: {key}="{v}": invalid value	baris {line}: {key}="{v}": nilai tidak valid
+measuring…	mengukur…
+mode="{other}": invalid value	mode="{other}": nilai tidak valid
+needs a model: Local AI → AI Models…	perlu model: AI Lokal → Model AI…
+needs the AI runtime: Local AI → Download AI Runtime…	perlu runtime AI: AI Lokal → Unduh Runtime AI…
+new image	gambar baru
+no audio track	tidak ada trek audio
+no channels	tidak ada kanal
+no data folder	tidak ada folder data
+no file name	tidak ada nama file
+no file open	tidak ada file yang dibuka
+no notes were found	tidak ada not yang ditemukan
+no sample rate	tidak ada laju sampel
+no speech was found	tidak ada ucapan yang ditemukan
+not a supported audio file ({e})	bukan file audio yang didukung ({e})
+not a transcription model	bukan model transkripsi
+not found	tidak ditemukan
+not found, left alone	tidak ditemukan, dibiarkan
+nothing to redo	tidak ada yang bisa diulang
+nothing to undo	tidak ada yang bisa dibatalkan
+part of the track could not be read	sebagian trek tidak dapat dibaca
+quality	kualitas
+removed	dihapus
+saving tags…	menyimpan tag…
+select a part in the Edit panel	pilih bagian di panel Edit
+select at least half a second, or nothing for the whole track	pilih setidaknya setengah detik, atau tidak sama sekali untuk seluruh trek
+silent	hening
+soundglass is now the default player	soundglass kini pemutar bawaan
+the AI tool failed	alat AI gagal
+the AI tool stopped	alat AI berhenti
+the channel count changes mid-file	jumlah kanal berubah di tengah file
+the encoder failed	encoder gagal
+the model gave an unexpected output	model memberi keluaran tak terduga
+the saved file doesn't read back ({e})	file yang disimpan tidak dapat dibaca kembali ({e})
+the saved file reads back wrong ({frames} frames, expected {expected})	file yang disimpan terbaca salah ({frames} frame, diharapkan {expected})
+the settings aren't for this tool	pengaturan ini bukan untuk alat ini
+the sound device failed to open	perangkat suara gagal dibuka
+the tag writer failed	penulis tag gagal
+the track has no audio	trek tidak berisi audio
+the track is still loading	trek masih dimuat
+the track isn't fully loaded	trek belum dimuat sepenuhnya
+this file can't be decoded	file ini tidak dapat didekode
+this track	trek ini
+to	sampai
+track {n}	trek {n}
+unknown error	galat tidak dikenal
+with unsaved edits, once loaded	dengan suntingan belum disimpan, setelah dimuat
+writing the tags would change the audio, so nothing was written	menulis tag akan mengubah audio, jadi tidak ada yang ditulis
+{kbps} kb/s	{kbps} kb/s
+{keys} is already used by {other}	{keys} sudah dipakai oleh {other}
+{key} major	{key} mayor
+{model} (installed)	{model} (terpasang)
+{name} isn't an audio file soundglass plays	{name} bukan file audio yang diputar soundglass
+{name} was changed by another program. Reload it?	{name} diubah oleh program lain. Muat ulang?
+{name} will be moved to the Trash.	{name} akan dipindahkan ke Tempat Sampah.
+{name}: custom…	{name}: kustom…
+{name}: whole selection	{name}: seluruh pilihan
+{name}: {s} s	{name}: {s} dtk
+{n} of {total} tracks	{n} dari {total} trek
+{ok} written, {bad} failed	{ok} ditulis, {bad} gagal
+{path}: bigger than 64 KiB	{path}: lebih dari 64 KiB
+{secs} s	{secs} dtk
+{sign}{n} semitone	{sign}{n} semiton
+{sign}{n} semitones	{sign}{n} semiton
+{task} (selection)	{task} (pilihan)
+{what} installed.	{what} terpasang.
+{what}: the download stopped.	{what}: unduhan berhenti.
+→ {n}	→ {n}
+−14 streaming, −23 TV	−14 streaming, −23 TV
+−60 silence, −40 hiss	−60 hening, −40 desis

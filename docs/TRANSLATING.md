@@ -1,8 +1,9 @@
 # Translating soundglass
 
-soundglass is in English only for now, but every text in it is ready to translate: each goes
-through `tr` or `trf` in `src/i18n.rs`, with the English text as its key. There is no `locales/`
-folder yet; the first translation creates it.
+soundglass speaks 28 languages. Every text goes through `tr` or `trf` in `src/i18n.rs`, with the
+English text as its key, and each language's translations are one file in `locales/`. All of
+them are machine translations, partly reused from lightview, so corrections from native speakers
+are the most useful help.
 
 ## The file
 
@@ -25,20 +26,20 @@ Couldn't save {name}: {e}	No se pudo guardar {name}: {e}
   and a setting, for instance); it gets one translation.
 - **Left in English on purpose:** units (dB, Hz, kb/s), note names, the AI models' own error messages
   and the licence texts.
-- **Characters.** The UI font is Roboto, which covers Latin, Greek and Cyrillic. Chinese, Japanese
-  and Korean tags are drawn with the system's CJK font; a CJK translation of the interface hasn't
-  been tried yet. Right-to-left scripts (Arabic, Hebrew) and scripts that need shaping (Hindi, Thai)
-  aren't supported.
+- **Characters.** The UI font is Roboto, which covers Latin, Greek and Cyrillic, but not ♯ or ♭
+  (write C#, Db). Chinese, Japanese and Korean are drawn with the system's CJK font, in the regional
+  style of the interface language (`cjk_tag()` in `src/i18n.rs`). Right-to-left scripts (Arabic,
+  Hebrew) and scripts that need shaping (Hindi, Thai) aren't supported.
 
 ## Adding a language
 
 1. Make `locales/<code>.tsv` with one line for each text in the code. The test below lists any that
    are missing.
 2. In `src/i18n.rs`: add the language to `Language` and to `Language::ALL`, its own name in
-   `name()`, its locale code in `from_locale()`, and the file in `source()`
-   (`include_str!("../locales/<code>.tsv")`). Add it to `TRANSLATED` in the tests.
-3. In `soundglass.desktop`, add `GenericName[<code>]` and `Comment[<code>]` (Spanish is already
-   there).
+   `name()`, its locale code in `from_locale()`, the file in `source()`
+   (`include_str!("../locales/<code>.tsv")`), and its fontconfig tag in `cjk_tag()` if it needs a
+   CJK font. Add it to `TRANSLATED` and to `locale_names_map_to_languages` in the tests.
+3. In `soundglass.desktop`, add `GenericName[<code>]` and `Comment[<code>]`.
 4. Run `cargo test i18n`; it fails until the file has exactly the texts in the code.
 5. Start soundglass and pick the language in File → Settings…. Settings are saved when soundglass
    closes, so to keep your own untouched, start it with a throwaway data folder:

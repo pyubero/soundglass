@@ -1,0 +1,551 @@
+ dB at most	 dB enintään
+ semitones	 puolisävelaskelta
+0 (Normal)	0 (normaali)
+0 = max	0 = enintään
+1 (mono)	1 (mono)
+16-bit	16-bittinen
+1× (Normal)	1× (normaali)
+2 (stereo)	2 (stereo)
+24-bit	24-bittinen
+32-bit float	32-bittinen liukuluku
+<{tag}>: invalid value	<{tag}>: virheellinen arvo
+A code such as en, es, fr, de; empty to detect it from the first speech	Koodi, kuten en, es, fr, de; tyhjä tunnistaa sen ensimmäisestä puheesta
+A file with that name already exists.	Samanniminen tiedosto on jo olemassa.
+A long track: the hop is raised so the spectrogram fits in memory	Pitkä kappale: hyppyä kasvatetaan, jotta spektrogrammi mahtuu muistiin
+AI Models	Tekoälymallit
+AI Models…	Tekoälymallit…
+AI runtime (ONNX Runtime)	Tekoälyn ajoympäristö (ONNX Runtime)
+About 50 MB for a 4-minute stem, for further editing	Noin 50 Mt 4 minuutin raitaa kohden, jatkomuokkausta varten
+Accept and Continue	Hyväksy ja jatka
+Accept and Download	Hyväksy ja lataa
+AcoustID Settings	AcoustID-asetukset
+AcoustID can't be reached ({e})	AcoustIDiin ei saada yhteyttä ({e})
+AcoustID: {why}	AcoustID: {why}
+Add AcoustID User Key	Lisää AcoustID-käyttäjäavain
+Add Cover	Lisää kansikuva
+Add album cover?	Lisätäänkö albumin kansikuva?
+Add your AcoustID application key and user key in Settings to contribute.	Lisää AcoustID-sovellusavaimesi ja käyttäjäavaimesi Asetuksiin osallistuaksesi.
+Add/Replace Album Cover…	Lisää/korvaa albumin kansikuva…
+Album	Albumi
+Album cover	Albumin kansikuva
+Album:	Albumi:
+All notes	Kaikki sävelet
+All {n} Tracks	Kaikki {n} kappaletta
+Already in AcoustID; nothing was sent.	On jo AcoustIDissä; mitään ei lähetetty.
+Also find notes without a clear start	Etsi myös sävelet, joilla ei ole selvää alkua
+Analysis	Analyysi
+Any graphics card with Vulkan or Direct3D 12 ({mb} MB). A weak built-in one can be slower than the CPU.	Mikä tahansa näytönohjain, jossa on Vulkan tai Direct3D 12 ({mb} Mt). Heikko sisäinen voi olla prosessoria hitaampi.
+Application key:	Sovellusavain:
+Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.	Tulee voimaan, kun soundglass avataan seuraavan kerran; ikkuna, Kappaleen tiedot ja Muokkaa-paneeli säilyvät lopetushetken mukaisina.
+Apply and Rename	Käytä ja nimeä uudelleen
+Apply speed and pitch	Käytä nopeutta ja sävelkorkeutta
+Apply to All Tracks	Käytä kaikkiin kappaleisiin
+Artist	Esittäjä
+Artist:	Esittäjä:
+As Apply to All Tracks, then renames each file with the Rename from Tags pattern	Kuten Käytä kaikkiin kappaleisiin, ja nimeää sitten jokaisen tiedoston Nimeä tunnisteista -mallin mukaan
+As TV	Kuten TV
+As podcasts	Kuten podcastit
+As streaming	Kuten suoratoisto
+As subtitles (.srt)	Tekstityksenä (.srt)
+Audio	Ääni
+BPM	BPM
+BPM tag saved ({bpm})	BPM-tunniste tallennettu ({bpm})
+Basic Pitch — any instrument, several notes at once	Basic Pitch — mikä tahansa soitin, useita säveliä kerralla
+Basic Pitch's melodia trick	Basic Pitchin melodia-temppu
+Beat This! — beats and downbeats	Beat This! — iskut ja tahdin ensi-iskut
+Bit depth	Bittisyvyys
+Bitrate	Bittinopeus
+Blackman–Harris	Blackman–Harris
+Blue to red	Sinisestä punaiseen
+C D E	C D E
+CUDA: Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050. WebGPU: Find Beats only, about 2× faster (Split into Stems was slower than the CPU). The other tools are faster on the CPU. With both installed, NVIDIA's is used	CUDA: Erottele raidoiksi ja Etsi iskut 2,6–3× nopeammin GTX 1050:llä. WebGPU: vain Etsi iskut, noin 2× nopeammin (Erottele raidoiksi oli prosessoria hitaampi). Muut työkalut ovat nopeampia prosessorilla. Jos molemmat on asennettu, käytetään NVIDIAn
+Can't fingerprint this audio ({e})	Tästä äänestä ei voi ottaa sormenjälkeä ({e})
+Can't read this folder: {e}	Tätä kansiota ei voi lukea: {e}
+Can't write tags to this format ({e})	Tähän muotoon ei voi kirjoittaa tunnisteita ({e})
+Cancel	Peruuta
+Change	Muuta
+Change Keyboard Shortcuts…	Muuta pikanäppäimiä…
+Change speed and pitch	Muuta nopeutta ja sävelkorkeutta
+Channels	Kanavat
+Channels: mono	Kanavat: mono
+Channels: stereo	Kanavat: stereo
+Channels: swap left and right	Kanavat: vaihda vasen ja oikea
+Check for updates	Tarkista päivitykset
+Chords	Soinnut
+Chords: after loading	Soinnut: latauksen jälkeen
+Chords: measuring…	Soinnut: mitataan…
+Clicks	Naksaukset
+Clicks on the found beats	Naksaukset löydetyissä iskuissa
+Close	Sulje
+Codec	Koodekki
+Colours	Värit
+Continue	Jatka
+Contribute	Osallistu
+Contribute to AcoustID?	Osallistutaanko AcoustIDiin?
+Copied the file	Tiedosto kopioitu
+Copy	Kopioi
+Copy File	Kopioi tiedosto
+Copy Path	Kopioi polku
+Couldn't bring back {name}: {e}	Kohdetta {name} ei voitu palauttaa: {e}
+Couldn't copy the file: {e}	Tiedostoa ei voitu kopioida: {e}
+Couldn't delete the file: {e}	Tiedostoa ei voitu poistaa: {e}
+Cover	Kansikuva
+Cover added to 1 track	Kansikuva lisätty 1 kappaleeseen
+Cover added to {n} of {total} tracks (not: {failed})	Kansikuva lisätty {n}/{total} kappaleeseen (ei: {failed})
+Cover added to {n} tracks	Kansikuva lisätty {n} kappaleeseen
+Cover at 256 px	Kansikuva 256 px
+Cover removed from 1 track	Kansikuva poistettu 1 kappaleesta
+Cover removed from {n} of {total} tracks (not: {failed})	Kansikuva poistettu {n}/{total} kappaleesta (ei: {failed})
+Cover removed from {n} tracks	Kansikuva poistettu {n} kappaleesta
+Crop	Rajaa
+Current cover	Nykyinen kansikuva
+Custom ({value})…	Mukautettu ({value})…
+Custom loudness…	Mukautettu äänekkyys…
+Custom peak…	Mukautettu huippu…
+Custom…	Mukautettu…
+Cut out	Leikkaa pois
+Dark	Tumma
+Data from Discogs.	Tiedot Discogsista.
+Decoding…	Puretaan…
+DeepFilterNet3 — speech, 48 kHz	DeepFilterNet3 — puhe, 48 kHz
+Delete file?	Poistetaanko tiedosto?
+Delete…	Poista…
+Discard edits	Hylkää muokkaukset
+Discogs can't be reached ({e})	Discogsiin ei saada yhteyttä ({e})
+Discogs is busy; try again in a minute.	Discogs on kiireinen; yritä uudelleen minuutin päästä.
+Discogs now asks for a token; this lookup can't run.	Discogs vaatii nyt tunnuksen; tätä hakua ei voi tehdä.
+Discogs…	Discogs…
+Do Ré Mi	Do Re Mi
+Do you want to contribute this track's fingerprint to AcoustID? AcoustID will then recognise {title} — {artist} for everyone.	Haluatko antaa tämän kappaleen sormenjäljen AcoustIDille? Silloin AcoustID tunnistaa {title} — {artist} kaikille.
+Double the tempo	Kaksinkertainen tempo
+Download	Lataa
+Download AI Runtime ({mb} MB)	Lataa tekoälyn ajoympäristö ({mb} Mt)
+Download AI Runtime ({mb} MB)…	Lataa tekoälyn ajoympäristö ({mb} Mt)…
+Download GPU Support	Lataa GPU-tuki
+Downloaded from Microsoft (ONNX Runtime's WebGPU plugin, via its official PyPI package).	Ladataan Microsoftilta (ONNX Runtimen WebGPU-lisäosa, sen virallisen PyPI-paketin kautta).
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Ladattu Microsoftilta (ONNX Runtime) ja NVIDIAlta (CUDA-kirjastot niiden virallisten PyPI-pakettien kautta).
+Drag on the waveform to select	Valitse vetämällä aaltomuodon päällä
+Each stretch of speech with its start and end, to save as an .srt file	Jokainen puhejakso alkuineen ja loppuineen, tallennettavaksi .srt-tiedostona
+Edit	Muokkaa
+Effects	Tehosteet
+Europe	Eurooppa
+FFT size	FFT-koko
+FLAC (lossless)	FLAC (häviötön)
+Fade in	Häivytys sisään
+Fade out	Häivytys ulos
+Faint noise	Heikko kohina
+Fetching details…	Haetaan tietoja…
+File	Tiedosto
+File changed	Tiedosto muuttui
+File size	Tiedostokoko
+Fill In All Tracks	Täytä kaikki kappaleet
+Fill Metadata From	Täytä metatiedot lähteestä
+Fill from Discogs	Täytä Discogsista
+Fill from Discogs…	Täytä Discogsista…
+Fill from MusicBrainz	Täytä MusicBrainzista
+Fill from MusicBrainz…	Täytä MusicBrainzista…
+Fill from Wikipedia	Täytä Wikipediasta
+Fill from Wikipedia…	Täytä Wikipediasta…
+Fills Track Info's tag editor; Save… there writes the tags	Täyttää Kappaleen tietojen tunnistemuokkaimen; siellä Tallenna… kirjoittaa tunnisteet
+Find Beats	Etsi iskut
+Fingerprint sent to AcoustID; lookups find it once it's processed.	Sormenjälki lähetetty AcoustIDille; haut löytävät sen, kun se on käsitelty.
+Fingerprinting {i} of {n}: {file}	Sormenjälki {i}/{n}: {file}
+Fit	Sovita
+Fit cover space	Sovita kansikuvan tilaan
+Flats (Db)	Alennukset (Db)
+Folder	Kansio
+Follow system	Järjestelmän mukaan
+Font size:	Fonttikoko:
+Format	Muoto
+Found {n} beats, ≈ {bpm} BPM. Metronome on (volume button).	Löytyi {n} iskua, ≈ {bpm} BPM. Metronomi päällä (äänenvoimakkuuspainike).
+Found {n} beats. Metronome on (volume button).	Löytyi {n} iskua. Metronomi päällä (äänenvoimakkuuspainike).
+Full	Täysi
+Full Screen	Koko näyttö
+Full takes away all the noise it finds; a limit keeps some, for a more natural sound	Täysi poistaa kaiken löytämänsä kohinan; raja jättää hieman, luonnollisemman äänen vuoksi
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel ja muut, kokeellinen)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU support	GPU-tuki
+GPU support (AMD, Intel and others)	GPU-tuki (AMD, Intel ja muut)
+Gain	Vahvistus
+Gain: custom…	Vahvistus: mukautettu…
+Gain: {db} dB	Vahvistus: {db} dB
+General	Yleiset
+Genre	Tyylilaji
+Get a key	Hanki avain
+Get your user key	Hanki käyttäjäavaimesi
+Gray	Harmaa
+HTDemucs v4 — drums, bass, other, vocals	HTDemucs v4 — rummut, basso, muut, laulu
+Half the tempo	Puolita tempo
+Hamming	Hamming
+Hann	Hann
+Held notes	Pidetyt sävelet
+High contrast	Suuri kontrasti
+Higher: fewer, surer notes start	Suurempi: vähemmän, varmempia sävelen alkuja
+Higher: notes end sooner, quiet ones are left out	Suurempi: sävelet loppuvat aiemmin, hiljaiset jätetään pois
+Hiss	Suhina
+Hop	Hyppy
+Identify Album	Tunnista albumi
+Identify Album…	Tunnista albumi…
+Identify Track	Tunnista kappale
+Identify Track needs one; it is free for non-commercial use.	Tunnista kappale tarvitsee sen; se on maksuton ei-kaupalliseen käyttöön.
+Identify Track…	Tunnista kappale…
+Image	Kuva
+In order	Järjestyksessä
+Instrument range	Soittimen ala
+It already has that name.	Sillä on jo tuo nimi.
+It's all quieter than that; nothing trimmed	Kaikki on sitä hiljaisempaa; mitään ei trimmattu
+It's no longer in the Trash.	Se ei ole enää roskakorissa.
+Its unsaved edits will be lost.	Sen tallentamattomat muokkaukset menetetään.
+Keep current	Säilytä nykyinen
+Key	Sävellaji
+Key ≈ {key}	Sävellaji ≈ {key}
+Keyboard Shortcuts	Pikanäppäimet
+Label size	Nimiöiden koko
+Language	Kieli
+Language:	Kieli:
+Length	Kesto
+Levels	Tasot
+Licence ({n} of {count}) — {title}	Lisenssi ({n}/{count}) — {title}
+Licence — {title}	Lisenssi — {title}
+Light	Vaalea
+Line	Viiva
+Local AI	Paikallinen tekoäly
+Look up	Hae
+Looking up…	Haetaan…
+Loop selection	Toista valintaa
+Loudness	Äänekkyys
+Lower finds more beats, also where the model is unsure	Pienempi löytää enemmän iskuja, myös siellä missä malli on epävarma
+Lowest frequency	Matalin taajuus
+MIDI file is too big	MIDI-tiedosto on liian suuri
+MIDI file is too long	MIDI-tiedosto on liian pitkä
+MIDI tempo	MIDI-tempo
+MP3 can't hold {khz} kHz audio; save as FLAC or WAV instead	MP3 ei voi sisältää {khz} kHz:n ääntä; tallenna FLAC- tai WAV-muodossa
+MP3 holds mono or stereo only; save as FLAC or WAV instead	MP3 sisältää vain monon tai stereon; tallenna FLAC- tai WAV-muodossa
+MP3: LAME failed to start	MP3: LAMEa ei voitu käynnistää
+Magma	Magma
+Make soundglass my default player	Tee soundglassista oletussoittimeni
+Make soundglass the default player	Tee soundglassista oletussoitin
+Matches on this album are listed first	Tämän albumin osumat näytetään ensin
+Matches on this album are listed first; it isn't sent	Tämän albumin osumat näytetään ensin; sitä ei lähetetä
+Melody to MIDI	Melodia MIDIksi
+Metronome	Metronomi
+Mono	Mono
+More overlap between the 7.8 s segments: smoother joins, slower	Enemmän limitystä 7,8 s:n osien välillä: pehmeämmät saumat, hitaampi
+Moved to the Trash	Siirretty roskakoriin
+MusicBrainz can't be reached ({e})	MusicBrainziin ei saada yhteyttä ({e})
+MusicBrainz…	MusicBrainz…
+Name	Nimi
+Next	Seuraava
+No album cover	Ei albumin kansikuvaa
+No album found.	Albumia ei löytynyt.
+No audio files in {name}	Kohteessa {name} ei ole äänitiedostoja
+No audio files or folders here	Täällä ei ole äänitiedostoja eikä kansioita
+No file open	Ei avointa tiedostoa
+No match found.	Osumaa ei löytynyt.
+No silence at the start or end to trim	Alussa tai lopussa ei ole trimmattavaa hiljaisuutta
+None	Ei mitään
+None (whole range)	Ei mitään (koko alue)
+None of these tags is set.	Mitään näistä tunnisteista ei ole asetettu.
+Normalize	Normalisoi
+Normalize loudness	Normalisoi äänekkyys
+Normalize peak	Normalisoi huippu
+Normalize: custom loudness…	Normalisoi: mukautettu äänekkyys…
+Normalize: custom peak…	Normalisoi: mukautettu huippu…
+Normalize: {name} ({db} dBFS)	Normalisoi: {name} ({db} dBFS)
+Normalize: {name} ({lufs} LUFS)	Normalisoi: {name} ({lufs} LUFS)
+Not Now	Ei nyt
+Note threshold	Sävelen kynnys
+Notes	Sävelet
+Notes from	Sävelet alkaen
+Nothing to normalize: it's silent	Ei normalisoitavaa: se on hiljaista
+OK	OK
+Octave numbers	Oktaavinumerot
+Ogg Vorbis (q6)	Ogg Vorbis (q6)
+On the selection	Valintaan
+On the whole track	Koko kappaleeseen
+Only fill empty tags	Täytä vain tyhjät tunnisteet
+Only how the file's beats are counted; the notes keep their times	Vain se, miten tiedoston iskut lasketaan; sävelet säilyttävät aikansa
+Only needed to contribute fingerprints to AcoustID.	Tarvitaan vain sormenjälkien antamiseen AcoustIDille.
+Onset threshold	Alun kynnys
+Open Recent	Avaa viimeaikainen
+Open models folder	Avaa mallikansio
+Open project page	Avaa projektin sivu
+Open themes folder	Avaa teemakansio
+Open…	Avaa…
+Other lines	Muut viivat
+Output	Tuloste
+Overlap	Limitys
+Parakeet TDT 0.6B v3 — 25 European languages, more accurate	Parakeet TDT 0.6B v3 — 25 eurooppalaista kieltä, tarkempi
+Pause	Tauko
+Peak	Huippu
+Peak at max	Huippu maksimissa
+Peak near max	Huippu lähellä maksimia
+Piano synth	Pianosyntetisaattori
+Pitch-preserved speed change	Nopeuden muutos sävelkorkeus säilyttäen
+Play	Toista
+Play order, {name}	Toistojärjestys, {name}
+Please read and accept the licence before downloading.	Lue ja hyväksy lisenssi ennen lataamista.
+Position, seconds	Sijainti, sekuntia
+Practice	Harjoittelu
+Practice mode	Harjoitustila
+Press keys… (Esc to cancel)	Paina näppäimiä… (Esc peruuttaa)
+Previous	Edellinen
+Quit	Lopeta
+Rectangular	Suorakulmainen
+Redo	Tee uudelleen
+Reload	Lataa uudelleen
+Remember window size	Muista ikkunan koko
+Remove	Poista
+Remove Album Cover…	Poista albumin kansikuva…
+Remove Cover	Poista kansikuva
+Remove Noise	Poista kohina
+Remove album cover	Poista albumin kansikuva
+Remove the cover from this track only, or from {what}? The music itself isn't changed.	Poistetaanko kansikuva vain tästä kappaleesta vai kohteesta {what}? Itse musiikki ei muutu.
+Remove the cover from this track? The music itself isn't changed.	Poistetaanko kansikuva tästä kappaleesta? Itse musiikki ei muutu.
+Rename	Nimeä uudelleen
+Rename from Tags	Nimeä tunnisteista
+Rename from Tags…	Nimeä tunnisteista…
+Renamed to {name}	Uusi nimi: {name}
+Rename…	Nimeä uudelleen…
+Repeat track	Toista kappaletta
+Replace…	Korvaa…
+Reset	Palauta
+Reset All Shortcuts	Palauta kaikki pikanäppäimet
+Reset to defaults	Palauta oletukset
+Restart soundglass to start using the GPU.	Käynnistä soundglass uudelleen, jotta GPU otetaan käyttöön.
+Reverse	Takaperin
+Run the AI tools on the graphics card ({mb} MB, NVIDIA's CUDA libraries).	Suorita tekoälytyökalut näytönohjaimella ({mb} Mt, NVIDIAn CUDA-kirjastot).
+Running on the CPU…	Käynnissä prosessorilla…
+Running on the GPU…	Käynnissä GPU:lla…
+Same ({rate})	Sama ({rate})
+Sample rate	Näytteenottotaajuus
+Save As	Tallenna nimellä
+Save As…	Tallenna nimellä…
+Save Copy	Tallenna kopio
+Save Cover	Tallenna kansikuva
+Save as Subtitles…	Tallenna tekstityksenä…
+Save as Text…	Tallenna tekstinä…
+Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed.	Tallennetaanko {name} tämän kappaleen vai kohteen {what} kansikuvaksi? Nykyiset kansikuvat korvataan. Itse musiikki ei muutu.
+Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed.	Tallennetaanko {name} tämän kappaleen kansikuvaksi? Nykyinen kansikuva korvataan. Itse musiikki ei muutu.
+Saved {name}	Tallennettu: {name}
+Saved {name}, but the tags could not be copied	{name} tallennettu, mutta tunnisteita ei voitu kopioida
+Save…	Tallenna…
+Saving failed	Tallennus epäonnistui
+Saving {name}…	Tallennetaan {name}…
+Scale shown	Näytetty asteikko
+Seek bar:	Sijaintipalkki:
+Sends each file's fingerprint and length to AcoustID, one a second, and one recording's ID to MusicBrainz for the genre. Nothing else leaves this computer.	Lähettää jokaisen tiedoston sormenjäljen ja pituuden AcoustIDille, yhden sekunnissa, ja yhden äänitteen tunnuksen MusicBrainziin tyylilajia varten. Mitään muuta ei lähde tältä tietokoneelta.
+Sends the fingerprint, its length and the MusicBrainz recording ID to AcoustID, with your user key. It is sent only if AcoustID doesn't know this fingerprint yet.	Lähettää sormenjäljen, sen pituuden ja MusicBrainz-äänitteen tunnuksen AcoustIDille käyttäjäavaimesi kanssa. Se lähetetään vain, jos AcoustID ei vielä tunne tätä sormenjälkeä.
+Sends the title and artist to Discogs, and the chosen release's ID for its track list. Nothing else leaves this computer.	Lähettää nimen ja esittäjän Discogsiin sekä valitun julkaisun tunnuksen kappalelistaa varten. Mitään muuta ei lähde tältä tietokoneelta.
+Sends the title and artist to English Wikipedia. Nothing else leaves this computer.	Lähettää nimen ja esittäjän englanninkieliseen Wikipediaan. Mitään muuta ei lähde tältä tietokoneelta.
+Sends the title, artist and album to MusicBrainz, and the chosen match's ID for its genre. Nothing else leaves this computer.	Lähettää nimen, esittäjän ja albumin MusicBrainziin sekä valitun osuman tunnuksen tyylilajia varten. Mitään muuta ei lähde tältä tietokoneelta.
+Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer.	Lähettää tämän tiedoston sormenjäljen ja pituuden AcoustIDille ja valitun osuman tunnuksen MusicBrainziin. Mitään muuta ei lähde tältä tietokoneelta.
+Sensitivity	Herkkyys
+Settings	Asetukset
+Settings: {model}	Asetukset: {model}
+Settings…	Asetukset…
+Sharps (C#)	Ylennykset (C#)
+Shortest note	Lyhin sävel
+Show Log	Näytä loki
+Show in Explorer	Näytä Resurssienhallinnassa
+Show in File Manager	Näytä tiedostonhallinnassa
+Show or hide the chords along the top	Näytä tai piilota soinnut ylhäällä
+Show or hide the note lines	Näytä tai piilota sävelviivat
+Show the notes of {major} major	Näytä {major}-duurin sävelet
+Show the notes of {major} major, which {key} shares	Näytä {major}-duurin sävelet, jotka {key} jakaa
+Show the whole track	Näytä koko kappale
+Show the whole track and all frequencies	Näytä koko kappale ja kaikki taajuudet
+Shuffle	Satunnainen
+Silence	Hiljaisuus
+Silent pieces are left out, so nothing is made up there	Hiljaiset kohdat jätetään pois, joten niihin ei keksitä mitään
+Skip quieter than	Ohita hiljaisempi kuin
+Small: about 6 MB for a 4-minute stem	Pieni: noin 6 Mt 4 minuutin raitaa kohden
+Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed.	Välilyönti, ←, →, Page Up, Page Down, L (Toista valintaa), Esc ja Enter ovat kiinteitä.
+Space, ←, →, Page Up, Page Down, L, Esc, Enter and Ctrl+C/X/V	Välilyönti, ←, →, Page Up, Page Down, L, Esc, Enter ja Ctrl+C/X/V
+Spectrogram	Spektrogrammi
+Spectrogram settings	Spektrogrammin asetukset
+Spectrogram — {name}	Spektrogrammi — {name}
+Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around	Spektrogrammi: napsauta toistaaksesi siitä, vedä valitaksesi, vieritä zoomataksesi, Ctrl+vieritys zoomaa taajuuksia, oikealla vetäen liikut
+Split into Stems	Erottele raidoiksi
+Split into Stems takes mono or stereo tracks	Erottele raidoiksi ottaa mono- tai stereokappaleita
+Stereo	Stereo
+Stopped after {i} of {n}	Pysäytetty, kun {i}/{n} valmiina
+Strength	Voimakkuus
+Subtitles	Tekstitys
+Swap left and right	Vaihda vasen ja oikea
+Tags	Tunnisteet
+Tags saved	Tunnisteet tallennettu
+Task	Tehtävä
+Tempo	Tempo
+Tenor sax	Tenorisaksofoni
+Text	Teksti
+That image can't be read.	Kuvaa ei voi lukea.
+That image can't be used as a cover.	Kuvaa ei voi käyttää kansikuvana.
+That is the original file; choose another name. The original is never changed.	Se on alkuperäinen tiedosto; valitse toinen nimi. Alkuperäistä ei koskaan muuteta.
+That isn't a valid file name.	Se ei ole kelvollinen tiedostonimi.
+The AI runtime isn't installed yet.	Tekoälyn ajoympäristöä ei ole vielä asennettu.
+The GPU couldn't be used, so the CPU is: {e}	GPU:ta ei voitu käyttää, joten käytetään suoritinta: {e}
+The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face.	ONNX-tiedosto on StemSplitin vienti (painot puolitarkkuudella), Hugging Facessa.
+The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face.	ONNX-tiedosto on grazderin torchDF-suoratoistovienti, KimtOS:n ylläpitämä Hugging Facessa.
+The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face.	ONNX-tiedosto on musetricin vienti JKU:n final0-tarkistuspisteestä, Hugging Facessa.
+The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face.	ONNX-tiedostot ovat istupakovin int8-muunnos onnx-asr:ää varten, Hugging Facessa.
+The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.	ONNX-tiedostot ovat sherpa-onnxin int8-vienti (k2-fsa), Hugging Facessa.
+The audio changes format partway.	Äänen muoto vaihtuu kesken.
+The cover couldn't be written ({failed})	Kansikuvaa ei voitu kirjoittaa ({failed})
+The file has no audio.	Tiedostossa ei ole ääntä.
+The file is too short to identify.	Tiedosto on liian lyhyt tunnistettavaksi.
+The image is larger than 10 MB.	Kuva on yli 10 Mt.
+The key spells its notes	Sävellaji määrää sävelten kirjoitusasun
+The lookup stopped.	Haku pysähtyi.
+The original file is never changed.	Alkuperäistä tiedostoa ei koskaan muuteta.
+The reply couldn't be read ({e})	Vastausta ei voitu lukea ({e})
+The reply wasn't understood.	Vastausta ei ymmärretty.
+Theme:	Teema:
+This Track	Tämä kappale
+This file's tags can't be read.	Tämän tiedoston tunnisteita ei voi lukea.
+This match has no MusicBrainz recording to link to.	Tällä osumalla ei ole linkitettävää MusicBrainz-äänitettä.
+This track has edits that aren't saved. The original file is never changed.	Tässä kappaleessa on tallentamattomia muokkauksia. Alkuperäistä tiedostoa ei koskaan muuteta.
+This track has no cover. Save {name} as the cover of {what}?	Tällä kappaleella ei ole kansikuvaa. Tallennetaanko {name} kohteen {what} kansikuvaksi?
+Time marks	Aikaleimat
+Time-preserved pitch change	Sävelkorkeuden muutos keston säilyttäen
+Title	Nimi
+Title:	Nimi:
+Tonic line width	Perussävelviivan leveys
+Tonic lines (C for all notes)	Perussävelviivat (C kaikille sävelille)
+Too short or too quiet to measure its loudness	Liian lyhyt tai hiljainen äänekkyyden mittaamiseen
+Tools for musicians: loops, the spectrogram, tempo, key and chords	Työkaluja muusikoille: luupit, spektrogrammi, tempo, sävellaji ja soinnut
+Track	Kappale
+Track Info	Kappaleen tiedot
+Tracks that already have a cover get this one instead. The music itself isn't changed.	Kappaleet, joilla on jo kansikuva, saavat tämän sen tilalle. Itse musiikki ei muutu.
+Transcribe	Litteroi
+Transcribe Speech	Litteroi puhe
+Transcript	Litterointi
+Translate to English	Käännä englanniksi
+Trim silence	Trimmaa hiljaisuus
+Trim silence below	Trimmaa hiljaisuus alle
+Trim silence: custom…	Trimmaa hiljaisuus: mukautettu…
+Trim silence: {name} ({db} dB)	Trimmaa hiljaisuus: {name} ({db} dB)
+Trumpet	Trumpetti
+Tuning A4	Viritys A4
+Type a title to search for.	Kirjoita haettava nimi.
+Undo	Kumoa
+Unsaved edits	Tallentamattomat muokkaukset
+Up one folder	Kansio ylöspäin
+Use Match	Käytä osumaa
+Use the GPU	Käytä GPU:ta
+Use the estimated key, {key}	Käytä arvioitua sävellajia, {key}
+Use the estimated tempo	Käytä arvioitua tempoa
+User key:	Käyttäjäavain:
+View	Näytä
+Visualiser	Visualisointi
+Volume	Äänenvoimakkuus
+Volume, {percent} %	Äänenvoimakkuus, {percent} %
+Volume, {percent} %, metronome on	Äänenvoimakkuus, {percent} %, metronomi päällä
+Waveform	Aaltomuoto
+Waveform position	Sijainti aaltomuodossa
+Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along	Aaltomuoto: napsauta toistaaksesi siitä, vedä valitaksesi, vieritä zoomataksesi, oikealla vetäen liikut
+Welcome to soundglass	Tervetuloa soundglassiin
+Whisper large-v3-turbo — 99 languages, best, slow on a CPU	Whisper large-v3-turbo — 99 kieltä, paras, hidas prosessorilla
+Whisper small — 99 languages	Whisper small — 99 kieltä
+Whole selection	Koko valinta
+Wikipedia can't be reached ({e})	Wikipediaan ei saada yhteyttä ({e})
+Wikipedia…	Wikipedia…
+Window function	Ikkunafunktio
+Window size	Ikkunan pituus
+Window size:	Ikkunan koko:
+Worldwide	Koko maailma
+Write	Kirjoita
+Write tags	Kirjoita tunnisteet
+Write the tags into {name}? The audio isn't changed.	Kirjoitetaanko tunnisteet tiedostoon {name}? Ääni ei muutu.
+Writes only the tags that are empty in each file	Kirjoittaa vain kunkin tiedoston tyhjät tunnisteet
+Writes the album's tags into every matched file, replacing the tags there	Kirjoittaa albumin tunnisteet jokaiseen osuneeseen tiedostoon ja korvaa siellä olevat
+Writes the tags into the file; the audio isn't changed	Kirjoittaa tunnisteet tiedostoon; ääni ei muutu
+Writing the tags failed	Tunnisteiden kirjoitus epäonnistui
+Writing {i} of {n}	Kirjoitetaan {i}/{n}
+Year	Vuosi
+Your own themes go in the themes folder. Choosing a theme again reloads its file.	Omat teemasi kuuluvat teemakansioon. Teeman valitseminen uudelleen lataa sen tiedoston uudelleen.
+Zoom in (scroll; right-drag to move along)	Lähennä (vieritys; oikealla vetäen liikut)
+Zoom out	Loitonna
+a GPU library was missing from the download	latauksesta puuttui GPU-kirjasto
+add an AcoustID key in Settings	lisää AcoustID-avain Asetuksiin
+after Local AI → Find Beats	Paikallinen tekoäly → Etsi iskut -toiminnon jälkeen
+after loading	latauksen jälkeen
+all {n} tracks in this folder	kaikki tämän kansion {n} kappaletta
+already normal	jo normaali
+another AI tool is running	toinen tekoälytyökalu on käynnissä
+as it is	ennallaan
+can't make a folder next to the track ({e})	kappaleen viereen ei voi luoda kansiota ({e})
+can't save a copy next to the original ({e})	alkuperäisen viereen ei voi tallentaa kopiota ({e})
+choose at least one stem to write (AI Models → Settings)	valitse vähintään yksi kirjoitettava raita (Tekoälymallit → Asetukset)
+close the tag editor first	sulje ensin tunnistemuokkain
+hop {hop} for this length	hyppy {hop} tälle pituudelle
+line {line}: {key}="{v}": invalid value	rivi {line}: {key}="{v}": virheellinen arvo
+measuring…	mitataan…
+mode="{other}": invalid value	mode="{other}": virheellinen arvo
+needs a model: Local AI → AI Models…	tarvitaan malli: Paikallinen tekoäly → Tekoälymallit…
+needs the AI runtime: Local AI → Download AI Runtime…	tarvitaan tekoälyn ajoympäristö: Paikallinen tekoäly → Lataa tekoälyn ajoympäristö…
+new image	uusi kuva
+no audio track	ei ääniraitaa
+no channels	ei kanavia
+no data folder	ei datakansiota
+no file name	ei tiedostonimeä
+no file open	ei avointa tiedostoa
+no notes were found	säveliä ei löytynyt
+no sample rate	ei näytteenottotaajuutta
+no speech was found	puhetta ei löytynyt
+not a supported audio file ({e})	ei tuettu äänitiedosto ({e})
+not a transcription model	ei litterointimalli
+not found	ei löytynyt
+not found, left alone	ei löytynyt, jätetty ennalleen
+nothing to redo	ei mitään tehtävää uudelleen
+nothing to undo	ei mitään kumottavaa
+part of the track could not be read	osaa kappaleesta ei voitu lukea
+quality	laatu
+removed	poistettu
+saving tags…	tallennetaan tunnisteita…
+select a part in the Edit panel	valitse osa Muokkaa-paneelissa
+select at least half a second, or nothing for the whole track	valitse vähintään puoli sekuntia tai ei mitään koko kappaleelle
+silent	hiljainen
+soundglass is now the default player	soundglass on nyt oletussoitin
+the AI tool failed	tekoälytyökalu epäonnistui
+the AI tool stopped	tekoälytyökalu pysähtyi
+the channel count changes mid-file	kanavien määrä muuttuu kesken tiedoston
+the encoder failed	kooderi epäonnistui
+the model gave an unexpected output	malli antoi odottamattoman tuloksen
+the saved file doesn't read back ({e})	tallennettua tiedostoa ei voi lukea takaisin ({e})
+the saved file reads back wrong ({frames} frames, expected {expected})	tallennettu tiedosto luetaan väärin ({frames} kehystä, odotettiin {expected})
+the settings aren't for this tool	asetukset eivät ole tälle työkalulle
+the sound device failed to open	äänilaitetta ei voitu avata
+the tag writer failed	tunnisteiden kirjoitin epäonnistui
+the track has no audio	kappaleessa ei ole ääntä
+the track is still loading	kappale latautuu vielä
+the track isn't fully loaded	kappale ei ole kokonaan ladattu
+this file can't be decoded	tätä tiedostoa ei voi purkaa
+this track	tämä kappale
+to	–
+track {n}	kappale {n}
+unknown error	tuntematon virhe
+with unsaved edits, once loaded	tallentamattomin muokkauksin, latauksen jälkeen
+writing the tags would change the audio, so nothing was written	tunnisteiden kirjoittaminen muuttaisi ääntä, joten mitään ei kirjoitettu
+{kbps} kb/s	{kbps} kb/s
+{keys} is already used by {other}	{keys} on jo käytössä: {other}
+{key} major	{key}-duuri
+{model} (installed)	{model} (asennettu)
+{name} isn't an audio file soundglass plays	{name} ei ole äänitiedosto, jota soundglass toistaa
+{name} was changed by another program. Reload it?	Toinen ohjelma muutti tiedostoa {name}. Ladataanko uudelleen?
+{name} will be moved to the Trash.	{name} siirretään roskakoriin.
+{name}: custom…	{name}: mukautettu…
+{name}: whole selection	{name}: koko valinta
+{name}: {s} s	{name}: {s} s
+{n} of {total} tracks	{n}/{total} kappaletta
+{ok} written, {bad} failed	{ok} kirjoitettu, {bad} epäonnistui
+{path}: bigger than 64 KiB	{path}: yli 64 KiB
+{secs} s	{secs} s
+{sign}{n} semitone	{sign}{n} puolisävelaskel
+{sign}{n} semitones	{sign}{n} puolisävelaskelta
+{task} (selection)	{task} (valinta)
+{what} installed.	{what} asennettu.
+{what}: the download stopped.	{what}: lataus pysähtyi.
+→ {n}	→ {n}
+−14 streaming, −23 TV	−14 suoratoisto, −23 TV
+−60 silence, −40 hiss	−60 hiljaisuus, −40 suhina

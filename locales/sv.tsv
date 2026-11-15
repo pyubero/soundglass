@@ -1,0 +1,551 @@
+ dB at most	 dB som mest
+ semitones	 halvtoner
+0 (Normal)	0 (normal)
+0 = max	0 = max
+1 (mono)	1 (mono)
+16-bit	16 bitar
+1× (Normal)	1× (normal)
+2 (stereo)	2 (stereo)
+24-bit	24 bitar
+32-bit float	32 bitar flyttal
+<{tag}>: invalid value	<{tag}>: ogiltigt värde
+A code such as en, es, fr, de; empty to detect it from the first speech	En kod som en, es, fr, de; tomt för att känna igen det från första talet
+A file with that name already exists.	Det finns redan en fil med det namnet.
+A long track: the hop is raised so the spectrogram fits in memory	Långt spår: hoppet ökas så att spektrogrammet ryms i minnet
+AI Models	AI-modeller
+AI Models…	AI-modeller…
+AI runtime (ONNX Runtime)	AI-körmiljö (ONNX Runtime)
+About 50 MB for a 4-minute stem, for further editing	Cirka 50 MB för ett 4 minuter långt delspår, för vidare redigering
+Accept and Continue	Godkänn och fortsätt
+Accept and Download	Godkänn och ladda ner
+AcoustID Settings	AcoustID-inställningar
+AcoustID can't be reached ({e})	AcoustID kan inte nås ({e})
+AcoustID: {why}	AcoustID: {why}
+Add AcoustID User Key	Lägg till AcoustID-användarnyckel
+Add Cover	Lägg till omslag
+Add album cover?	Lägga till albumomslag?
+Add your AcoustID application key and user key in Settings to contribute.	Lägg till din AcoustID-applikationsnyckel och användarnyckel i Inställningar för att bidra.
+Add/Replace Album Cover…	Lägg till/ersätt albumomslag…
+Album	Album
+Album cover	Albumomslag
+Album:	Album:
+All notes	Alla toner
+All {n} Tracks	Alla {n} spår
+Already in AcoustID; nothing was sent.	Redan i AcoustID; inget skickades.
+Also find notes without a clear start	Hitta även toner utan tydlig början
+Analysis	Analys
+Any graphics card with Vulkan or Direct3D 12 ({mb} MB). A weak built-in one can be slower than the CPU.	Alla grafikkort med Vulkan eller Direct3D 12 ({mb} MB). Ett svagt inbyggt kan vara långsammare än processorn.
+Application key:	Applikationsnyckel:
+Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.	Gäller nästa gång soundglass öppnas; fönstret, Spårinfo och Redigera-panelen behålls som när du avslutade.
+Apply and Rename	Verkställ och byt namn
+Apply speed and pitch	Verkställ hastighet och tonhöjd
+Apply to All Tracks	Verkställ på alla spår
+Artist	Artist
+Artist:	Artist:
+As Apply to All Tracks, then renames each file with the Rename from Tags pattern	Som Verkställ på alla spår, och byter sedan namn på varje fil med mönstret från Byt namn från taggar
+As TV	Som tv
+As podcasts	Som poddar
+As streaming	Som streaming
+As subtitles (.srt)	Som undertexter (.srt)
+Audio	Ljud
+BPM	BPM
+BPM tag saved ({bpm})	BPM-taggen sparad ({bpm})
+Basic Pitch — any instrument, several notes at once	Basic Pitch — alla instrument, flera toner samtidigt
+Basic Pitch's melodia trick	Basic Pitchs melodia-trick
+Beat This! — beats and downbeats	Beat This! — slag och taktslag ett
+Bit depth	Bitdjup
+Bitrate	Bithastighet
+Blackman–Harris	Blackman–Harris
+Blue to red	Blått till rött
+C D E	C D E
+CUDA: Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050. WebGPU: Find Beats only, about 2× faster (Split into Stems was slower than the CPU). The other tools are faster on the CPU. With both installed, NVIDIA's is used	CUDA: Dela upp i delspår och Hitta slag 2,6–3× snabbare på ett GTX 1050. WebGPU: bara Hitta slag, cirka 2× snabbare (Dela upp i delspår var långsammare än processorn). Övriga verktyg är snabbare på processorn. Med båda installerade används NVIDIAs
+Can't fingerprint this audio ({e})	Kan inte ta fingeravtryck av detta ljud ({e})
+Can't read this folder: {e}	Kan inte läsa den här mappen: {e}
+Can't write tags to this format ({e})	Kan inte skriva taggar i detta format ({e})
+Cancel	Avbryt
+Change	Ändra
+Change Keyboard Shortcuts…	Ändra kortkommandon…
+Change speed and pitch	Ändra hastighet och tonhöjd
+Channels	Kanaler
+Channels: mono	Kanaler: mono
+Channels: stereo	Kanaler: stereo
+Channels: swap left and right	Kanaler: byt vänster och höger
+Check for updates	Sök efter uppdateringar
+Chords	Ackord
+Chords: after loading	Ackord: efter inläsning
+Chords: measuring…	Ackord: mäter…
+Clicks	Klick
+Clicks on the found beats	Klick på de hittade slagen
+Close	Stäng
+Codec	Kodek
+Colours	Färger
+Continue	Fortsätt
+Contribute	Bidra
+Contribute to AcoustID?	Bidra till AcoustID?
+Copied the file	Kopierade filen
+Copy	Kopiera
+Copy File	Kopiera fil
+Copy Path	Kopiera sökväg
+Couldn't bring back {name}: {e}	Kunde inte återställa {name}: {e}
+Couldn't copy the file: {e}	Kunde inte kopiera filen: {e}
+Couldn't delete the file: {e}	Kunde inte ta bort filen: {e}
+Cover	Omslag
+Cover added to 1 track	Omslag tillagt i 1 spår
+Cover added to {n} of {total} tracks (not: {failed})	Omslag tillagt i {n} av {total} spår (inte: {failed})
+Cover added to {n} tracks	Omslag tillagt i {n} spår
+Cover at 256 px	Omslag i 256 px
+Cover removed from 1 track	Omslag borttaget från 1 spår
+Cover removed from {n} of {total} tracks (not: {failed})	Omslag borttaget från {n} av {total} spår (inte: {failed})
+Cover removed from {n} tracks	Omslag borttaget från {n} spår
+Crop	Beskär
+Current cover	Nuvarande omslag
+Custom ({value})…	Anpassad ({value})…
+Custom loudness…	Anpassad ljudstyrka…
+Custom peak…	Anpassad topp…
+Custom…	Anpassad…
+Cut out	Klipp bort
+Dark	Mörkt
+Data from Discogs.	Data från Discogs.
+Decoding…	Avkodar…
+DeepFilterNet3 — speech, 48 kHz	DeepFilterNet3 — tal, 48 kHz
+Delete file?	Ta bort filen?
+Delete…	Ta bort…
+Discard edits	Kasta ändringar
+Discogs can't be reached ({e})	Discogs kan inte nås ({e})
+Discogs is busy; try again in a minute.	Discogs är upptaget; försök igen om en minut.
+Discogs now asks for a token; this lookup can't run.	Discogs kräver nu en token; den här sökningen kan inte köras.
+Discogs…	Discogs…
+Do Ré Mi	Do Re Mi
+Do you want to contribute this track's fingerprint to AcoustID? AcoustID will then recognise {title} — {artist} for everyone.	Vill du bidra med spårets fingeravtryck till AcoustID? AcoustID känner då igen {title} — {artist} för alla.
+Double the tempo	Dubbla tempot
+Download	Ladda ner
+Download AI Runtime ({mb} MB)	Ladda ner AI-körmiljö ({mb} MB)
+Download AI Runtime ({mb} MB)…	Ladda ner AI-körmiljö ({mb} MB)…
+Download GPU Support	Ladda ner GPU-stöd
+Downloaded from Microsoft (ONNX Runtime's WebGPU plugin, via its official PyPI package).	Hämtas från Microsoft (ONNX Runtimes WebGPU-tillägg, via dess officiella PyPI-paket).
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Nedladdat från Microsoft (ONNX Runtime) och NVIDIA (CUDA-bibliotek, via deras officiella PyPI-paket).
+Drag on the waveform to select	Dra över vågformen för att markera
+Each stretch of speech with its start and end, to save as an .srt file	Varje stycke tal med start och slut, att spara som .srt-fil
+Edit	Redigera
+Effects	Effekter
+Europe	Europa
+FFT size	FFT-storlek
+FLAC (lossless)	FLAC (förlustfri)
+Fade in	Tona in
+Fade out	Tona ut
+Faint noise	Svagt brus
+Fetching details…	Hämtar detaljer…
+File	Arkiv
+File changed	Filen ändrad
+File size	Filstorlek
+Fill In All Tracks	Fyll i alla spår
+Fill Metadata From	Fyll i metadata från
+Fill from Discogs	Fyll i från Discogs
+Fill from Discogs…	Fyll i från Discogs…
+Fill from MusicBrainz	Fyll i från MusicBrainz
+Fill from MusicBrainz…	Fyll i från MusicBrainz…
+Fill from Wikipedia	Fyll i från Wikipedia
+Fill from Wikipedia…	Fyll i från Wikipedia…
+Fills Track Info's tag editor; Save… there writes the tags	Fyller i taggredigeraren i Spårinfo; Spara… där skriver taggarna
+Find Beats	Hitta slag
+Fingerprint sent to AcoustID; lookups find it once it's processed.	Fingeravtryck skickat till AcoustID; sökningar hittar det när det har behandlats.
+Fingerprinting {i} of {n}: {file}	Fingeravtryck {i} av {n}: {file}
+Fit	Anpassa
+Fit cover space	Anpassa till omslagsytan
+Flats (Db)	B-förtecken (Db)
+Folder	Mapp
+Follow system	Följ systemet
+Font size:	Teckenstorlek:
+Format	Format
+Found {n} beats, ≈ {bpm} BPM. Metronome on (volume button).	Hittade {n} slag, ≈ {bpm} BPM. Metronom på (volymknappen).
+Found {n} beats. Metronome on (volume button).	Hittade {n} slag. Metronom på (volymknappen).
+Full	Full
+Full Screen	Helskärm
+Full takes away all the noise it finds; a limit keeps some, for a more natural sound	Full tar bort allt brus den hittar; en gräns behåller lite, för ett naturligare ljud
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel och andra, experimentellt)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU support	GPU-stöd
+GPU support (AMD, Intel and others)	GPU-stöd (AMD, Intel och andra)
+Gain	Förstärkning
+Gain: custom…	Förstärkning: anpassad…
+Gain: {db} dB	Förstärkning: {db} dB
+General	Allmänt
+Genre	Genre
+Get a key	Skaffa en nyckel
+Get your user key	Skaffa din användarnyckel
+Gray	Grå
+HTDemucs v4 — drums, bass, other, vocals	HTDemucs v4 — trummor, bas, övrigt, sång
+Half the tempo	Halva tempot
+Hamming	Hamming
+Hann	Hann
+Held notes	Hållna toner
+High contrast	Hög kontrast
+Higher: fewer, surer notes start	Högre: färre, säkrare tonstarter
+Higher: notes end sooner, quiet ones are left out	Högre: toner slutar tidigare, svaga utelämnas
+Hiss	Brus
+Hop	Hopp
+Identify Album	Identifiera album
+Identify Album…	Identifiera album…
+Identify Track	Identifiera spår
+Identify Track needs one; it is free for non-commercial use.	Identifiera spår behöver en; den är gratis för icke-kommersiellt bruk.
+Identify Track…	Identifiera spår…
+Image	Bild
+In order	I ordning
+Instrument range	Instrumentets omfång
+It already has that name.	Den har redan det namnet.
+It's all quieter than that; nothing trimmed	Allt är tystare än så; inget trimmades
+It's no longer in the Trash.	Den finns inte längre i papperskorgen.
+Its unsaved edits will be lost.	Dess osparade ändringar går förlorade.
+Keep current	Behåll nuvarande
+Key	Tonart
+Key ≈ {key}	Tonart ≈ {key}
+Keyboard Shortcuts	Kortkommandon
+Label size	Etikettstorlek
+Language	Språk
+Language:	Språk:
+Length	Längd
+Levels	Nivåer
+Licence ({n} of {count}) — {title}	Licens ({n} av {count}) — {title}
+Licence — {title}	Licens — {title}
+Light	Ljust
+Line	Linje
+Local AI	Lokal AI
+Look up	Slå upp
+Looking up…	Söker…
+Loop selection	Upprepa markering
+Loudness	Ljudstyrka
+Lower finds more beats, also where the model is unsure	Lägre hittar fler slag, även där modellen är osäker
+Lowest frequency	Lägsta frekvens
+MIDI file is too big	MIDI-filen är för stor
+MIDI file is too long	MIDI-filen är för lång
+MIDI tempo	MIDI-tempo
+MP3 can't hold {khz} kHz audio; save as FLAC or WAV instead	MP3 kan inte rymma ljud i {khz} kHz; spara som FLAC eller WAV
+MP3 holds mono or stereo only; save as FLAC or WAV instead	MP3 rymmer bara mono eller stereo; spara som FLAC eller WAV
+MP3: LAME failed to start	MP3: LAME kunde inte starta
+Magma	Magma
+Make soundglass my default player	Gör soundglass till min standardspelare
+Make soundglass the default player	Gör soundglass till standardspelare
+Matches on this album are listed first	Träffar på det här albumet listas först
+Matches on this album are listed first; it isn't sent	Träffar på det här albumet listas först; det skickas inte
+Melody to MIDI	Melodi till MIDI
+Metronome	Metronom
+Mono	Mono
+More overlap between the 7.8 s segments: smoother joins, slower	Mer överlapp mellan de 7,8 s långa segmenten: mjukare skarvar, långsammare
+Moved to the Trash	Flyttad till papperskorgen
+MusicBrainz can't be reached ({e})	MusicBrainz kan inte nås ({e})
+MusicBrainz…	MusicBrainz…
+Name	Namn
+Next	Nästa
+No album cover	Inget albumomslag
+No album found.	Inget album hittades.
+No audio files in {name}	Inga ljudfiler i {name}
+No audio files or folders here	Inga ljudfiler eller mappar här
+No file open	Ingen fil öppen
+No match found.	Ingen träff hittades.
+No silence at the start or end to trim	Ingen tystnad i början eller slutet att trimma
+None	Ingen
+None (whole range)	Ingen (hela omfånget)
+None of these tags is set.	Ingen av de här taggarna är ifylld.
+Normalize	Normalisera
+Normalize loudness	Normalisera ljudstyrka
+Normalize peak	Normalisera topp
+Normalize: custom loudness…	Normalisera: anpassad ljudstyrka…
+Normalize: custom peak…	Normalisera: anpassad topp…
+Normalize: {name} ({db} dBFS)	Normalisera: {name} ({db} dBFS)
+Normalize: {name} ({lufs} LUFS)	Normalisera: {name} ({lufs} LUFS)
+Not Now	Inte nu
+Note threshold	Tontröskel
+Notes	Toner
+Notes from	Toner från
+Nothing to normalize: it's silent	Inget att normalisera: det är tyst
+OK	OK
+Octave numbers	Oktavnummer
+Ogg Vorbis (q6)	Ogg Vorbis (q6)
+On the selection	På markeringen
+On the whole track	På hela spåret
+Only fill empty tags	Fyll bara i tomma taggar
+Only how the file's beats are counted; the notes keep their times	Bara hur filens slag räknas; tonerna behåller sina tider
+Only needed to contribute fingerprints to AcoustID.	Behövs bara för att bidra med fingeravtryck till AcoustID.
+Onset threshold	Starttröskel
+Open Recent	Öppna senaste
+Open models folder	Öppna modellmappen
+Open project page	Öppna projektsidan
+Open themes folder	Öppna temamappen
+Open…	Öppna…
+Other lines	Övriga linjer
+Output	Utdata
+Overlap	Överlapp
+Parakeet TDT 0.6B v3 — 25 European languages, more accurate	Parakeet TDT 0.6B v3 — 25 europeiska språk, noggrannare
+Pause	Paus
+Peak	Topp
+Peak at max	Topp på max
+Peak near max	Topp nära max
+Piano synth	Pianosynt
+Pitch-preserved speed change	Hastighetsändring med bibehållen tonhöjd
+Play	Spela
+Play order, {name}	Spelordning, {name}
+Please read and accept the licence before downloading.	Läs och godkänn licensen innan du laddar ner.
+Position, seconds	Position, sekunder
+Practice	Övning
+Practice mode	Övningsläge
+Press keys… (Esc to cancel)	Tryck på tangenter… (Esc för att avbryta)
+Previous	Föregående
+Quit	Avsluta
+Rectangular	Rektangulär
+Redo	Gör om
+Reload	Läs in igen
+Remember window size	Kom ihåg fönsterstorlek
+Remove	Ta bort
+Remove Album Cover…	Ta bort albumomslag…
+Remove Cover	Ta bort omslag
+Remove Noise	Ta bort brus
+Remove album cover	Ta bort albumomslag
+Remove the cover from this track only, or from {what}? The music itself isn't changed.	Ta bort omslaget bara från det här spåret, eller från {what}? Själva musiken ändras inte.
+Remove the cover from this track? The music itself isn't changed.	Ta bort omslaget från det här spåret? Själva musiken ändras inte.
+Rename	Byt namn
+Rename from Tags	Byt namn från taggar
+Rename from Tags…	Byt namn från taggar…
+Renamed to {name}	Namnet ändrat till {name}
+Rename…	Byt namn…
+Repeat track	Upprepa spår
+Replace…	Ersätt…
+Reset	Återställ
+Reset All Shortcuts	Återställ alla kortkommandon
+Reset to defaults	Återställ standard
+Restart soundglass to start using the GPU.	Starta om soundglass för att börja använda GPU:n.
+Reverse	Baklänges
+Run the AI tools on the graphics card ({mb} MB, NVIDIA's CUDA libraries).	Kör AI-verktygen på grafikkortet ({mb} MB, NVIDIAs CUDA-bibliotek).
+Running on the CPU…	Körs på processorn…
+Running on the GPU…	Körs på GPU:n…
+Same ({rate})	Samma ({rate})
+Sample rate	Samplingsfrekvens
+Save As	Spara som
+Save As…	Spara som…
+Save Copy	Spara kopia
+Save Cover	Spara omslag
+Save as Subtitles…	Spara som undertexter…
+Save as Text…	Spara som text…
+Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed.	Spara {name} som omslag för det här spåret, eller för {what}? Befintliga omslag ersätts. Själva musiken ändras inte.
+Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed.	Spara {name} som omslag för det här spåret? Ett befintligt omslag ersätts. Själva musiken ändras inte.
+Saved {name}	Sparade {name}
+Saved {name}, but the tags could not be copied	{name} sparad, men taggarna kunde inte kopieras
+Save…	Spara…
+Saving failed	Det gick inte att spara
+Saving {name}…	Sparar {name}…
+Scale shown	Visad skala
+Seek bar:	Positionslist:
+Sends each file's fingerprint and length to AcoustID, one a second, and one recording's ID to MusicBrainz for the genre. Nothing else leaves this computer.	Skickar varje fils fingeravtryck och längd till AcoustID, en per sekund, och en inspelnings-ID till MusicBrainz för genren. Inget annat lämnar den här datorn.
+Sends the fingerprint, its length and the MusicBrainz recording ID to AcoustID, with your user key. It is sent only if AcoustID doesn't know this fingerprint yet.	Skickar fingeravtrycket, dess längd och MusicBrainz-inspelningens ID till AcoustID, med din användarnyckel. Det skickas bara om AcoustID inte redan känner till fingeravtrycket.
+Sends the title and artist to Discogs, and the chosen release's ID for its track list. Nothing else leaves this computer.	Skickar titeln och artisten till Discogs, och den valda utgåvans ID för låtlistan. Inget annat lämnar den här datorn.
+Sends the title and artist to English Wikipedia. Nothing else leaves this computer.	Skickar titeln och artisten till engelska Wikipedia. Inget annat lämnar den här datorn.
+Sends the title, artist and album to MusicBrainz, and the chosen match's ID for its genre. Nothing else leaves this computer.	Skickar titeln, artisten och albumet till MusicBrainz, och den valda träffens ID för genren. Inget annat lämnar den här datorn.
+Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer.	Skickar filens fingeravtryck och längd till AcoustID, och den valda träffens ID till MusicBrainz. Inget annat lämnar den här datorn.
+Sensitivity	Känslighet
+Settings	Inställningar
+Settings: {model}	Inställningar: {model}
+Settings…	Inställningar…
+Sharps (C#)	Korsförtecken (C#)
+Shortest note	Kortaste ton
+Show Log	Visa logg
+Show in Explorer	Visa i Utforskaren
+Show in File Manager	Visa i filhanteraren
+Show or hide the chords along the top	Visa eller dölj ackorden överst
+Show or hide the note lines	Visa eller dölj tonlinjerna
+Show the notes of {major} major	Visa tonerna i {major}-dur
+Show the notes of {major} major, which {key} shares	Visa tonerna i {major}-dur, som {key} delar
+Show the whole track	Visa hela spåret
+Show the whole track and all frequencies	Visa hela spåret och alla frekvenser
+Shuffle	Blanda
+Silence	Tystnad
+Silent pieces are left out, so nothing is made up there	Tysta partier utelämnas, så inget hittas på där
+Skip quieter than	Hoppa över tystare än
+Small: about 6 MB for a 4-minute stem	Liten: cirka 6 MB för ett 4 minuter långt delspår
+Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed.	Mellanslag, ←, →, Page Up, Page Down, L (Upprepa markering), Esc och Enter är fasta.
+Space, ←, →, Page Up, Page Down, L, Esc, Enter and Ctrl+C/X/V	Mellanslag, ←, →, Page Up, Page Down, L, Esc, Enter och Ctrl+C/X/V
+Spectrogram	Spektrogram
+Spectrogram settings	Spektrograminställningar
+Spectrogram — {name}	Spektrogram — {name}
+Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around	Spektrogram: klicka för att spela därifrån, dra för att markera, scrolla för att zooma, Ctrl+scroll zoomar frekvenserna, högerdra för att flytta runt
+Split into Stems	Dela upp i delspår
+Split into Stems takes mono or stereo tracks	Dela upp i delspår tar mono- eller stereospår
+Stereo	Stereo
+Stopped after {i} of {n}	Stoppade efter {i} av {n}
+Strength	Styrka
+Subtitles	Undertexter
+Swap left and right	Byt vänster och höger
+Tags	Taggar
+Tags saved	Taggar sparade
+Task	Uppgift
+Tempo	Tempo
+Tenor sax	Tenorsax
+Text	Text
+That image can't be read.	Bilden kan inte läsas.
+That image can't be used as a cover.	Bilden kan inte användas som omslag.
+That is the original file; choose another name. The original is never changed.	Det är originalfilen; välj ett annat namn. Originalet ändras aldrig.
+That isn't a valid file name.	Det är inte ett giltigt filnamn.
+The AI runtime isn't installed yet.	AI-körmiljön är inte installerad än.
+The GPU couldn't be used, so the CPU is: {e}	GPU:n kunde inte användas, så processorn används: {e}
+The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face.	ONNX-filen är StemSplits export (vikter lagrade i halv precision), på Hugging Face.
+The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face.	ONNX-filen är grazders torchDF-strömningsexport, värd KimtOS på Hugging Face.
+The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face.	ONNX-filen är musetrics export av JKU:s final0-kontrollpunkt, på Hugging Face.
+The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face.	ONNX-filerna är istupakovs int8-konvertering för onnx-asr, på Hugging Face.
+The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.	ONNX-filerna är sherpa-onnx int8-export (k2-fsa), på Hugging Face.
+The audio changes format partway.	Ljudet byter format halvvägs.
+The cover couldn't be written ({failed})	Omslaget kunde inte skrivas ({failed})
+The file has no audio.	Filen har inget ljud.
+The file is too short to identify.	Filen är för kort för att identifieras.
+The image is larger than 10 MB.	Bilden är större än 10 MB.
+The key spells its notes	Tonarten stavar sina toner
+The lookup stopped.	Sökningen stoppades.
+The original file is never changed.	Originalfilen ändras aldrig.
+The reply couldn't be read ({e})	Svaret kunde inte läsas ({e})
+The reply wasn't understood.	Svaret förstods inte.
+Theme:	Tema:
+This Track	Det här spåret
+This file's tags can't be read.	Filens taggar kan inte läsas.
+This match has no MusicBrainz recording to link to.	Träffen har ingen MusicBrainz-inspelning att länka till.
+This track has edits that aren't saved. The original file is never changed.	Det här spåret har osparade ändringar. Originalfilen ändras aldrig.
+This track has no cover. Save {name} as the cover of {what}?	Det här spåret har inget omslag. Spara {name} som omslag för {what}?
+Time marks	Tidsmarkeringar
+Time-preserved pitch change	Tonhöjdsändring med bibehållen längd
+Title	Titel
+Title:	Titel:
+Tonic line width	Tonikalinjens bredd
+Tonic lines (C for all notes)	Tonikalinjer (C för alla toner)
+Too short or too quiet to measure its loudness	För kort eller för tyst för att mäta ljudstyrkan
+Tools for musicians: loops, the spectrogram, tempo, key and chords	Verktyg för musiker: loopar, spektrogram, tempo, tonart och ackord
+Track	Spår
+Track Info	Spårinfo
+Tracks that already have a cover get this one instead. The music itself isn't changed.	Spår som redan har ett omslag får det här i stället. Själva musiken ändras inte.
+Transcribe	Transkribera
+Transcribe Speech	Transkribera tal
+Transcript	Transkription
+Translate to English	Översätt till engelska
+Trim silence	Trimma tystnad
+Trim silence below	Trimma tystnad under
+Trim silence: custom…	Trimma tystnad: anpassad…
+Trim silence: {name} ({db} dB)	Trimma tystnad: {name} ({db} dB)
+Trumpet	Trumpet
+Tuning A4	Stämning A4
+Type a title to search for.	Skriv en titel att söka efter.
+Undo	Ångra
+Unsaved edits	Osparade ändringar
+Up one folder	Upp en mapp
+Use Match	Använd träff
+Use the GPU	Använd GPU:n
+Use the estimated key, {key}	Använd den uppskattade tonarten, {key}
+Use the estimated tempo	Använd det uppskattade tempot
+User key:	Användarnyckel:
+View	Visa
+Visualiser	Visualisering
+Volume	Volym
+Volume, {percent} %	Volym, {percent} %
+Volume, {percent} %, metronome on	Volym, {percent} %, metronom på
+Waveform	Vågform
+Waveform position	Position i vågformen
+Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along	Vågform: klicka för att spela därifrån, dra för att markera, scrolla för att zooma, högerdra för att flytta längs
+Welcome to soundglass	Välkommen till soundglass
+Whisper large-v3-turbo — 99 languages, best, slow on a CPU	Whisper large-v3-turbo — 99 språk, bäst, långsam på en processor
+Whisper small — 99 languages	Whisper small — 99 språk
+Whole selection	Hela markeringen
+Wikipedia can't be reached ({e})	Wikipedia kan inte nås ({e})
+Wikipedia…	Wikipedia…
+Window function	Fönsterfunktion
+Window size	Fönsterlängd
+Window size:	Fönsterstorlek:
+Worldwide	Hela världen
+Write	Skriv
+Write tags	Skriv taggar
+Write the tags into {name}? The audio isn't changed.	Skriva taggarna i {name}? Ljudet ändras inte.
+Writes only the tags that are empty in each file	Skriver bara de taggar som är tomma i varje fil
+Writes the album's tags into every matched file, replacing the tags there	Skriver albumets taggar i varje matchad fil och ersätter taggarna där
+Writes the tags into the file; the audio isn't changed	Skriver taggarna i filen; ljudet ändras inte
+Writing the tags failed	Det gick inte att skriva taggarna
+Writing {i} of {n}	Skriver {i} av {n}
+Year	År
+Your own themes go in the themes folder. Choosing a theme again reloads its file.	Egna teman läggs i temamappen. Att välja ett tema igen läser in filen på nytt.
+Zoom in (scroll; right-drag to move along)	Zooma in (scrolla; högerdra för att flytta längs)
+Zoom out	Zooma ut
+a GPU library was missing from the download	ett GPU-bibliotek saknades i nedladdningen
+add an AcoustID key in Settings	lägg till en AcoustID-nyckel i Inställningar
+after Local AI → Find Beats	efter Lokal AI → Hitta slag
+after loading	efter inläsning
+all {n} tracks in this folder	alla {n} spår i den här mappen
+already normal	redan normal
+another AI tool is running	ett annat AI-verktyg körs
+as it is	som det är
+can't make a folder next to the track ({e})	kan inte skapa en mapp bredvid spåret ({e})
+can't save a copy next to the original ({e})	kan inte spara en kopia bredvid originalet ({e})
+choose at least one stem to write (AI Models → Settings)	välj minst ett delspår att skriva (AI-modeller → Inställningar)
+close the tag editor first	stäng taggredigeraren först
+hop {hop} for this length	hopp {hop} för den här längden
+line {line}: {key}="{v}": invalid value	rad {line}: {key}="{v}": ogiltigt värde
+measuring…	mäter…
+mode="{other}": invalid value	mode="{other}": ogiltigt värde
+needs a model: Local AI → AI Models…	behöver en modell: Lokal AI → AI-modeller…
+needs the AI runtime: Local AI → Download AI Runtime…	behöver AI-körmiljön: Lokal AI → Ladda ner AI-körmiljö…
+new image	ny bild
+no audio track	inget ljudspår
+no channels	inga kanaler
+no data folder	ingen datamapp
+no file name	inget filnamn
+no file open	ingen fil öppen
+no notes were found	inga toner hittades
+no sample rate	ingen samplingsfrekvens
+no speech was found	inget tal hittades
+not a supported audio file ({e})	inte en ljudfil som stöds ({e})
+not a transcription model	inte en transkriptionsmodell
+not found	hittades inte
+not found, left alone	hittades inte, lämnades orörd
+nothing to redo	inget att göra om
+nothing to undo	inget att ångra
+part of the track could not be read	en del av spåret kunde inte läsas
+quality	kvalitet
+removed	borttaget
+saving tags…	sparar taggar…
+select a part in the Edit panel	markera en del i Redigera-panelen
+select at least half a second, or nothing for the whole track	markera minst en halv sekund, eller inget för hela spåret
+silent	tyst
+soundglass is now the default player	soundglass är nu standardspelaren
+the AI tool failed	AI-verktyget misslyckades
+the AI tool stopped	AI-verktyget stoppades
+the channel count changes mid-file	antalet kanaler ändras mitt i filen
+the encoder failed	kodaren misslyckades
+the model gave an unexpected output	modellen gav oväntad utdata
+the saved file doesn't read back ({e})	den sparade filen kan inte läsas tillbaka ({e})
+the saved file reads back wrong ({frames} frames, expected {expected})	den sparade filen läses tillbaka fel ({frames} ramar, väntade {expected})
+the settings aren't for this tool	inställningarna är inte för det här verktyget
+the sound device failed to open	ljudenheten kunde inte öppnas
+the tag writer failed	taggskrivaren misslyckades
+the track has no audio	spåret har inget ljud
+the track is still loading	spåret läses fortfarande in
+the track isn't fully loaded	spåret är inte helt inläst
+this file can't be decoded	den här filen kan inte avkodas
+this track	det här spåret
+to	till
+track {n}	spår {n}
+unknown error	okänt fel
+with unsaved edits, once loaded	med osparade ändringar, när det lästs in
+writing the tags would change the audio, so nothing was written	att skriva taggarna skulle ändra ljudet, så inget skrevs
+{kbps} kb/s	{kbps} kb/s
+{keys} is already used by {other}	{keys} används redan av {other}
+{key} major	{key}-dur
+{model} (installed)	{model} (installerad)
+{name} isn't an audio file soundglass plays	{name} är inte en ljudfil som soundglass spelar
+{name} was changed by another program. Reload it?	{name} ändrades av ett annat program. Läsa in igen?
+{name} will be moved to the Trash.	{name} flyttas till papperskorgen.
+{name}: custom…	{name}: anpassad…
+{name}: whole selection	{name}: hela markeringen
+{name}: {s} s	{name}: {s} s
+{n} of {total} tracks	{n} av {total} spår
+{ok} written, {bad} failed	{ok} skrivna, {bad} misslyckades
+{path}: bigger than 64 KiB	{path}: större än 64 KiB
+{secs} s	{secs} s
+{sign}{n} semitone	{sign}{n} halvton
+{sign}{n} semitones	{sign}{n} halvtoner
+{task} (selection)	{task} (markering)
+{what} installed.	{what} installerad.
+{what}: the download stopped.	{what}: hämtningen stoppades.
+→ {n}	→ {n}
+−14 streaming, −23 TV	−14 streaming, −23 tv
+−60 silence, −40 hiss	−60 tystnad, −40 brus

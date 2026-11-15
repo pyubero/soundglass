@@ -117,11 +117,19 @@ fn main() -> eframe::Result {
         if !track.path.as_os_str().is_empty() {
             push_recent(&mut recent, &track.path);
         }
-        cc.egui_ctx.set_fonts(fonts(None));
-        let egui_ctx = cc.egui_ctx.clone();
-        std::thread::spawn(move || if let Some(cjk) = cjk_font() {
-            egui_ctx.set_fonts(fonts(Some(Arc::new(cjk))));
-        });
+        // A CJK interface needs its font before the first frame; otherwise it's only for tags, read off the UI thread.
+        // shortcut: loaded once per start, so switching between CJK languages keeps the first one's style until restart.
+        let language = settings.language.unwrap_or_default();
+        let tag = language.cjk_tag().unwrap_or("zh-cn");
+        if language.cjk_tag().is_some() {
+            cc.egui_ctx.set_fonts(fonts(cjk_font(tag).map(Arc::new)));
+        } else {
+            cc.egui_ctx.set_fonts(fonts(None));
+            let egui_ctx = cc.egui_ctx.clone();
+            std::thread::spawn(move || if let Some(cjk) = cjk_font(tag) {
+                egui_ctx.set_fonts(fonts(Some(Arc::new(cjk))));
+            });
+        }
         theme::seed_folder();
         let theme_error = theme::apply(&cc.egui_ctx, &settings.theme);
         settings::apply_font_size(&cc.egui_ctx, settings.font_size);
@@ -165,17 +173,26 @@ fn fonts(cjk: Option<Arc<egui::FontData>>) -> egui::FontDefinitions {
     fonts
 }
 
-/// The system's font for Chinese, Japanese and Korean tags, in the Chinese style. Reads ~20 MB:
-/// call it off the UI thread. shortcut: one regional style for all three; pick by the tag's script if users notice.
-fn cjk_font() -> Option<egui::FontData> {
+/// The system's font for Chinese, Japanese and Korean, in the regional style of the fontconfig tag
+/// (`ja`, `zh-cn`, `zh-tw`, `ko`). Reads ~20 MB: off the UI thread unless the UI itself needs it.
+/// shortcut: tags are drawn in the UI language's style (Chinese otherwise); pick by the tag's script if users notice.
+fn cjk_font(tag: &str) -> Option<egui::FontData> {
     #[cfg(target_os = "linux")]
     let (path, index) = {
-        let out = std::process::Command::new("fc-match").args(["-f", "%{file}\n%{index}\n%{lang}", "sans-serif:lang=zh-cn"]).output().ok()?;
-        parse_fc_match(&String::from_utf8_lossy(&out.stdout))?
+        let out = std::process::Command::new("fc-match").args(["-f", "%{file}\n%{index}\n%{lang}", &format!("sans-serif:lang={tag}")]).output().ok()?;
+        parse_fc_match(&String::from_utf8_lossy(&out.stdout), tag)?
     };
-    // Every Windows 10/11 has it, whatever its language (lightview's choice).
+    // The CJK fonts every Windows 10/11 has, whatever its language (lightview's choice).
     #[cfg(windows)]
-    let (path, index) = (PathBuf::from(std::env::var_os("WINDIR")?).join("Fonts").join("msyh.ttc"), 0);
+    let (path, index) = {
+        let file = match tag {
+            "ja" => "YuGothM.ttc",
+            "zh-tw" => "msjh.ttc",
+            "ko" => "malgun.ttf",
+            _ => "msyh.ttc",
+        };
+        (PathBuf::from(std::env::var_os("WINDIR")?).join("Fonts").join(file), 0)
+    };
     #[cfg(not(any(target_os = "linux", windows)))]
     let (path, index): (PathBuf, u32) = return None;
     let mut font = egui::FontData::from_owned(std::fs::read(path).ok()?);
@@ -183,13 +200,13 @@ fn cjk_font() -> Option<egui::FontData> {
     Some(font)
 }
 
-/// fc-match's file, face index and languages: the font only if it covers Chinese, since
-/// fontconfig answers with some font even when none does.
+/// fc-match's file, face index and languages: the font only if it covers the language `tag`,
+/// since fontconfig answers with some font even when none does.
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
-fn parse_fc_match(out: &str) -> Option<(PathBuf, u32)> {
+fn parse_fc_match(out: &str, tag: &str) -> Option<(PathBuf, u32)> {
     let mut lines = out.lines();
     let (file, index, langs) = (lines.next()?, lines.next()?.parse().ok()?, lines.next()?);
-    langs.split('|').any(|l| l == "zh-cn").then(|| (PathBuf::from(file), index))
+    langs.split('|').any(|l| l == tag).then(|| (PathBuf::from(file), index))
 }
 
 /// What the window shows with no file open: nothing to play, with no path.
@@ -4137,10 +4154,10 @@ mod tests {
     }
 
     #[test]
-    fn cjk_font_only_when_it_covers_chinese() {
-        assert_eq!(parse_fc_match("/f/NotoSansCJK.ttc\n1\nen|ja|zh-cn|zh-tw"), Some(("/f/NotoSansCJK.ttc".into(), 1)));
-        assert_eq!(parse_fc_match("/f/DejaVuSans.ttf\n0\nen|de|ru"), None);
-        assert_eq!(parse_fc_match(""), None);
+    fn cjk_font_only_when_it_covers_the_language() {
+        assert_eq!(parse_fc_match("/f/NotoSansCJK.ttc\n1\nen|ja|zh-cn|zh-tw", "zh-cn"), Some(("/f/NotoSansCJK.ttc".into(), 1)));
+        assert_eq!(parse_fc_match("/f/DejaVuSans.ttf\n0\nen|de|ru", "ja"), None);
+        assert_eq!(parse_fc_match("", "ko"), None);
     }
 
     #[test]

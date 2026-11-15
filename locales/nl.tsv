@@ -1,0 +1,551 @@
+ dB at most	 dB hoogstens
+ semitones	 halve tonen
+0 (Normal)	0 (normaal)
+0 = max	0 = maximum
+1 (mono)	1 (mono)
+16-bit	16-bit
+1× (Normal)	1× (normaal)
+2 (stereo)	2 (stereo)
+24-bit	24-bit
+32-bit float	32-bit drijvende komma
+<{tag}>: invalid value	<{tag}>: ongeldige waarde
+A code such as en, es, fr, de; empty to detect it from the first speech	Een code zoals en, es, fr, de; leeg om hem uit de eerste spraak te herkennen
+A file with that name already exists.	Er bestaat al een bestand met die naam.
+A long track: the hop is raised so the spectrogram fits in memory	Lang nummer: de stapgrootte is verhoogd zodat het spectrogram in het geheugen past
+AI Models	AI-modellen
+AI Models…	AI-modellen…
+AI runtime (ONNX Runtime)	AI-runtime (ONNX Runtime)
+About 50 MB for a 4-minute stem, for further editing	Ongeveer 50 MB per spoor van 4 minuten, om verder te bewerken
+Accept and Continue	Accepteren en doorgaan
+Accept and Download	Accepteren en downloaden
+AcoustID Settings	AcoustID-instellingen
+AcoustID can't be reached ({e})	AcoustID is niet bereikbaar ({e})
+AcoustID: {why}	AcoustID: {why}
+Add AcoustID User Key	AcoustID-gebruikerssleutel toevoegen
+Add Cover	Hoes toevoegen
+Add album cover?	Albumhoes toevoegen?
+Add your AcoustID application key and user key in Settings to contribute.	Voeg je AcoustID-applicatiesleutel en gebruikerssleutel toe in Instellingen om bij te dragen.
+Add/Replace Album Cover…	Albumhoes toevoegen/vervangen…
+Album	Album
+Album cover	Albumhoes
+Album:	Album:
+All notes	Alle noten
+All {n} Tracks	Alle {n} nummers
+Already in AcoustID; nothing was sent.	Staat al in AcoustID; er is niets verstuurd.
+Also find notes without a clear start	Ook noten zonder duidelijk begin vinden
+Analysis	Analyse
+Any graphics card with Vulkan or Direct3D 12 ({mb} MB). A weak built-in one can be slower than the CPU.	Elke videokaart met Vulkan of Direct3D 12 ({mb} MB). Een zwakke ingebouwde kan trager zijn dan de CPU.
+Application key:	Applicatiesleutel:
+Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.	Geldt de volgende keer dat soundglass opent; het venster, Nummerinfo en het Bewerken-paneel blijven zoals bij afsluiten.
+Apply and Rename	Toepassen en hernoemen
+Apply speed and pitch	Snelheid en toonhoogte toepassen
+Apply to All Tracks	Op alle nummers toepassen
+Artist	Artiest
+Artist:	Artiest:
+As Apply to All Tracks, then renames each file with the Rename from Tags pattern	Zoals Op alle nummers toepassen, en hernoemt daarna elk bestand met het patroon van Hernoemen vanuit tags
+As TV	Zoals tv
+As podcasts	Zoals podcasts
+As streaming	Zoals streaming
+As subtitles (.srt)	Als ondertitels (.srt)
+Audio	Audio
+BPM	BPM
+BPM tag saved ({bpm})	BPM-tag opgeslagen ({bpm})
+Basic Pitch — any instrument, several notes at once	Basic Pitch — elk instrument, meerdere noten tegelijk
+Basic Pitch's melodia trick	Basic Pitch' melodia-truc
+Beat This! — beats and downbeats	Beat This! — tellen en eerste tellen
+Bit depth	Bitdiepte
+Bitrate	Bitrate
+Blackman–Harris	Blackman–Harris
+Blue to red	Blauw naar rood
+C D E	C D E
+CUDA: Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050. WebGPU: Find Beats only, about 2× faster (Split into Stems was slower than the CPU). The other tools are faster on the CPU. With both installed, NVIDIA's is used	CUDA: In sporen splitsen en Tellen vinden, 2,6–3× sneller op een GTX 1050. WebGPU: alleen Tellen vinden, ongeveer 2× sneller (In sporen splitsen was trager dan de CPU). De andere tools zijn sneller op de CPU. Met beide geïnstalleerd wordt die van NVIDIA gebruikt
+Can't fingerprint this audio ({e})	Kan geen vingerafdruk van deze audio maken ({e})
+Can't read this folder: {e}	Kan deze map niet lezen: {e}
+Can't write tags to this format ({e})	Kan geen tags naar dit formaat schrijven ({e})
+Cancel	Annuleren
+Change	Wijzigen
+Change Keyboard Shortcuts…	Sneltoetsen wijzigen…
+Change speed and pitch	Snelheid en toonhoogte wijzigen
+Channels	Kanalen
+Channels: mono	Kanalen: mono
+Channels: stereo	Kanalen: stereo
+Channels: swap left and right	Kanalen: links en rechts verwisselen
+Check for updates	Controleren op updates
+Chords	Akkoorden
+Chords: after loading	Akkoorden: na laden
+Chords: measuring…	Akkoorden: meten…
+Clicks	Tikken
+Clicks on the found beats	Tikken op de gevonden tellen
+Close	Sluiten
+Codec	Codec
+Colours	Kleuren
+Continue	Doorgaan
+Contribute	Bijdragen
+Contribute to AcoustID?	Bijdragen aan AcoustID?
+Copied the file	Bestand gekopieerd
+Copy	Kopiëren
+Copy File	Bestand kopiëren
+Copy Path	Pad kopiëren
+Couldn't bring back {name}: {e}	Kon {name} niet terugzetten: {e}
+Couldn't copy the file: {e}	Kon het bestand niet kopiëren: {e}
+Couldn't delete the file: {e}	Kon het bestand niet verwijderen: {e}
+Cover	Hoes
+Cover added to 1 track	Hoes toegevoegd aan 1 nummer
+Cover added to {n} of {total} tracks (not: {failed})	Hoes toegevoegd aan {n} van {total} nummers (niet: {failed})
+Cover added to {n} tracks	Hoes toegevoegd aan {n} nummers
+Cover at 256 px	Hoes op 256 px
+Cover removed from 1 track	Hoes verwijderd uit 1 nummer
+Cover removed from {n} of {total} tracks (not: {failed})	Hoes verwijderd uit {n} van {total} nummers (niet: {failed})
+Cover removed from {n} tracks	Hoes verwijderd uit {n} nummers
+Crop	Bijsnijden
+Current cover	Huidige hoes
+Custom ({value})…	Aangepast ({value})…
+Custom loudness…	Aangepaste luidheid…
+Custom peak…	Aangepaste piek…
+Custom…	Aangepast…
+Cut out	Uitknippen
+Dark	Donker
+Data from Discogs.	Gegevens van Discogs.
+Decoding…	Decoderen…
+DeepFilterNet3 — speech, 48 kHz	DeepFilterNet3 — spraak, 48 kHz
+Delete file?	Bestand verwijderen?
+Delete…	Verwijderen…
+Discard edits	Bewerkingen weggooien
+Discogs can't be reached ({e})	Discogs is niet bereikbaar ({e})
+Discogs is busy; try again in a minute.	Discogs is bezet; probeer het over een minuut opnieuw.
+Discogs now asks for a token; this lookup can't run.	Discogs vraagt nu om een token; deze zoekopdracht kan niet.
+Discogs…	Discogs…
+Do Ré Mi	Do Re Mi
+Do you want to contribute this track's fingerprint to AcoustID? AcoustID will then recognise {title} — {artist} for everyone.	Wil je de vingerafdruk van dit nummer aan AcoustID bijdragen? AcoustID herkent dan {title} — {artist} voor iedereen.
+Double the tempo	Tempo verdubbelen
+Download	Downloaden
+Download AI Runtime ({mb} MB)	AI-runtime downloaden ({mb} MB)
+Download AI Runtime ({mb} MB)…	AI-runtime downloaden ({mb} MB)…
+Download GPU Support	GPU-ondersteuning downloaden
+Downloaded from Microsoft (ONNX Runtime's WebGPU plugin, via its official PyPI package).	Gedownload van Microsoft (de WebGPU-plug-in van ONNX Runtime, via het officiële PyPI-pakket).
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Gedownload van Microsoft (ONNX Runtime) en NVIDIA (CUDA-bibliotheken, via hun officiële PyPI-pakketten).
+Drag on the waveform to select	Sleep over de golfvorm om te selecteren
+Each stretch of speech with its start and end, to save as an .srt file	Elk stuk spraak met begin en eind, om als .srt-bestand op te slaan
+Edit	Bewerken
+Effects	Effecten
+Europe	Europa
+FFT size	FFT-grootte
+FLAC (lossless)	FLAC (verliesvrij)
+Fade in	Infaden
+Fade out	Uitfaden
+Faint noise	Zachte ruis
+Fetching details…	Details ophalen…
+File	Bestand
+File changed	Bestand gewijzigd
+File size	Bestandsgrootte
+Fill In All Tracks	Alle nummers invullen
+Fill Metadata From	Metadata invullen vanuit
+Fill from Discogs	Invullen vanuit Discogs
+Fill from Discogs…	Invullen vanuit Discogs…
+Fill from MusicBrainz	Invullen vanuit MusicBrainz
+Fill from MusicBrainz…	Invullen vanuit MusicBrainz…
+Fill from Wikipedia	Invullen vanuit Wikipedia
+Fill from Wikipedia…	Invullen vanuit Wikipedia…
+Fills Track Info's tag editor; Save… there writes the tags	Vult de tag-editor van Nummerinfo; Opslaan… daar schrijft de tags
+Find Beats	Tellen vinden
+Fingerprint sent to AcoustID; lookups find it once it's processed.	Vingerafdruk naar AcoustID gestuurd; zoekopdrachten vinden hem zodra hij verwerkt is.
+Fingerprinting {i} of {n}: {file}	Vingerafdruk {i} van {n}: {file}
+Fit	Passend
+Fit cover space	Passend in hoesruimte
+Flats (Db)	Mollen (Db)
+Folder	Map
+Follow system	Systeem volgen
+Font size:	Lettergrootte:
+Format	Formaat
+Found {n} beats, ≈ {bpm} BPM. Metronome on (volume button).	{n} tellen gevonden, ≈ {bpm} BPM. Metronoom aan (volumeknop).
+Found {n} beats. Metronome on (volume button).	{n} tellen gevonden. Metronoom aan (volumeknop).
+Full	Volledig
+Full Screen	Volledig scherm
+Full takes away all the noise it finds; a limit keeps some, for a more natural sound	Volledig haalt alle gevonden ruis weg; een limiet laat wat over, voor een natuurlijker geluid
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel en andere, experimenteel)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU support	GPU-ondersteuning
+GPU support (AMD, Intel and others)	GPU-ondersteuning (AMD, Intel en andere)
+Gain	Versterking
+Gain: custom…	Versterking: aangepast…
+Gain: {db} dB	Versterking: {db} dB
+General	Algemeen
+Genre	Genre
+Get a key	Sleutel aanvragen
+Get your user key	Je gebruikerssleutel aanvragen
+Gray	Grijs
+HTDemucs v4 — drums, bass, other, vocals	HTDemucs v4 — drums, bas, overig, zang
+Half the tempo	Tempo halveren
+Hamming	Hamming
+Hann	Hann
+Held notes	Aangehouden noten
+High contrast	Hoog contrast
+Higher: fewer, surer notes start	Hoger: minder, zekerdere notenbegin
+Higher: notes end sooner, quiet ones are left out	Hoger: noten eindigen eerder, zachte vallen weg
+Hiss	Ruis
+Hop	Stapgrootte
+Identify Album	Album herkennen
+Identify Album…	Album herkennen…
+Identify Track	Nummer herkennen
+Identify Track needs one; it is free for non-commercial use.	Nummer herkennen heeft er een nodig; gratis voor niet-commercieel gebruik.
+Identify Track…	Nummer herkennen…
+Image	Afbeelding
+In order	Op volgorde
+Instrument range	Bereik van het instrument
+It already has that name.	Het heeft die naam al.
+It's all quieter than that; nothing trimmed	Alles is zachter dan dat; niets ingekort
+It's no longer in the Trash.	Het staat niet meer in de prullenbak.
+Its unsaved edits will be lost.	De niet-opgeslagen bewerkingen gaan verloren.
+Keep current	Huidige houden
+Key	Toonsoort
+Key ≈ {key}	Toonsoort ≈ {key}
+Keyboard Shortcuts	Sneltoetsen
+Label size	Labelgrootte
+Language	Taal
+Language:	Taal:
+Length	Duur
+Levels	Niveaus
+Licence ({n} of {count}) — {title}	Licentie ({n} van {count}) — {title}
+Licence — {title}	Licentie — {title}
+Light	Licht
+Line	Lijn
+Local AI	Lokale AI
+Look up	Opzoeken
+Looking up…	Opzoeken…
+Loop selection	Selectie herhalen
+Loudness	Luidheid
+Lower finds more beats, also where the model is unsure	Lager vindt meer tellen, ook waar het model twijfelt
+Lowest frequency	Laagste frequentie
+MIDI file is too big	MIDI-bestand is te groot
+MIDI file is too long	MIDI-bestand is te lang
+MIDI tempo	MIDI-tempo
+MP3 can't hold {khz} kHz audio; save as FLAC or WAV instead	MP3 kan geen audio van {khz} kHz bevatten; sla op als FLAC of WAV
+MP3 holds mono or stereo only; save as FLAC or WAV instead	MP3 bevat alleen mono of stereo; sla op als FLAC of WAV
+MP3: LAME failed to start	MP3: LAME kon niet starten
+Magma	Magma
+Make soundglass my default player	soundglass mijn standaardspeler maken
+Make soundglass the default player	soundglass de standaardspeler maken
+Matches on this album are listed first	Resultaten op dit album staan bovenaan
+Matches on this album are listed first; it isn't sent	Resultaten op dit album staan bovenaan; het wordt niet verstuurd
+Melody to MIDI	Melodie naar MIDI
+Metronome	Metronoom
+Mono	Mono
+More overlap between the 7.8 s segments: smoother joins, slower	Meer overlap tussen de stukken van 7,8 s: vloeiendere overgangen, trager
+Moved to the Trash	Naar de prullenbak verplaatst
+MusicBrainz can't be reached ({e})	MusicBrainz is niet bereikbaar ({e})
+MusicBrainz…	MusicBrainz…
+Name	Naam
+Next	Volgende
+No album cover	Geen albumhoes
+No album found.	Geen album gevonden.
+No audio files in {name}	Geen audiobestanden in {name}
+No audio files or folders here	Geen audiobestanden of mappen hier
+No file open	Geen bestand geopend
+No match found.	Geen resultaat gevonden.
+No silence at the start or end to trim	Geen stilte aan het begin of eind om in te korten
+None	Geen
+None (whole range)	Geen (volledig bereik)
+None of these tags is set.	Geen van deze tags is ingevuld.
+Normalize	Normaliseren
+Normalize loudness	Luidheid normaliseren
+Normalize peak	Piek normaliseren
+Normalize: custom loudness…	Normaliseren: aangepaste luidheid…
+Normalize: custom peak…	Normaliseren: aangepaste piek…
+Normalize: {name} ({db} dBFS)	Normaliseren: {name} ({db} dBFS)
+Normalize: {name} ({lufs} LUFS)	Normaliseren: {name} ({lufs} LUFS)
+Not Now	Niet nu
+Note threshold	Notendrempel
+Notes	Noten
+Notes from	Noten van
+Nothing to normalize: it's silent	Niets te normaliseren: het is stil
+OK	OK
+Octave numbers	Octaafnummers
+Ogg Vorbis (q6)	Ogg Vorbis (q6)
+On the selection	Op de selectie
+On the whole track	Op het hele nummer
+Only fill empty tags	Alleen lege tags invullen
+Only how the file's beats are counted; the notes keep their times	Alleen hoe de tellen van het bestand geteld worden; de noten houden hun tijden
+Only needed to contribute fingerprints to AcoustID.	Alleen nodig om vingerafdrukken aan AcoustID bij te dragen.
+Onset threshold	Begindrempel
+Open Recent	Recent geopend
+Open models folder	Modellenmap openen
+Open project page	Projectpagina openen
+Open themes folder	Themamap openen
+Open…	Openen…
+Other lines	Andere lijnen
+Output	Uitvoer
+Overlap	Overlap
+Parakeet TDT 0.6B v3 — 25 European languages, more accurate	Parakeet TDT 0.6B v3 — 25 Europese talen, nauwkeuriger
+Pause	Pauze
+Peak	Piek
+Peak at max	Piek op maximum
+Peak near max	Piek bijna op maximum
+Piano synth	Pianosynth
+Pitch-preserved speed change	Snelheid wijzigen met gelijke toonhoogte
+Play	Afspelen
+Play order, {name}	Afspeelvolgorde, {name}
+Please read and accept the licence before downloading.	Lees en accepteer de licentie voordat je downloadt.
+Position, seconds	Positie, seconden
+Practice	Oefenen
+Practice mode	Oefenmodus
+Press keys… (Esc to cancel)	Druk op de toetsen… (Esc om te annuleren)
+Previous	Vorige
+Quit	Afsluiten
+Rectangular	Rechthoekig
+Redo	Opnieuw
+Reload	Opnieuw laden
+Remember window size	Venstergrootte onthouden
+Remove	Verwijderen
+Remove Album Cover…	Albumhoes verwijderen…
+Remove Cover	Hoes verwijderen
+Remove Noise	Ruis verwijderen
+Remove album cover	Albumhoes verwijderen
+Remove the cover from this track only, or from {what}? The music itself isn't changed.	De hoes alleen uit dit nummer verwijderen, of uit {what}? De muziek zelf verandert niet.
+Remove the cover from this track? The music itself isn't changed.	De hoes uit dit nummer verwijderen? De muziek zelf verandert niet.
+Rename	Naam wijzigen
+Rename from Tags	Hernoemen vanuit tags
+Rename from Tags…	Hernoemen vanuit tags…
+Renamed to {name}	Hernoemd naar {name}
+Rename…	Naam wijzigen…
+Repeat track	Nummer herhalen
+Replace…	Vervangen…
+Reset	Herstellen
+Reset All Shortcuts	Alle sneltoetsen herstellen
+Reset to defaults	Standaardwaarden herstellen
+Restart soundglass to start using the GPU.	Start soundglass opnieuw om de GPU te gebruiken.
+Reverse	Omkeren
+Run the AI tools on the graphics card ({mb} MB, NVIDIA's CUDA libraries).	De AI-tools op de videokaart uitvoeren ({mb} MB, NVIDIA's CUDA-bibliotheken).
+Running on the CPU…	Draait op de CPU…
+Running on the GPU…	Draait op de GPU…
+Same ({rate})	Gelijk ({rate})
+Sample rate	Samplefrequentie
+Save As	Opslaan als
+Save As…	Opslaan als…
+Save Copy	Kopie opslaan
+Save Cover	Hoes opslaan
+Save as Subtitles…	Opslaan als ondertitels…
+Save as Text…	Opslaan als tekst…
+Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed.	{name} opslaan als hoes van dit nummer, of van {what}? Bestaande hoezen worden vervangen. De muziek zelf verandert niet.
+Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed.	{name} opslaan als hoes van dit nummer? Een bestaande hoes wordt vervangen. De muziek zelf verandert niet.
+Saved {name}	{name} opgeslagen
+Saved {name}, but the tags could not be copied	{name} opgeslagen, maar de tags konden niet worden gekopieerd
+Save…	Opslaan…
+Saving failed	Opslaan mislukt
+Saving {name}…	{name} opslaan…
+Scale shown	Getoonde toonladder
+Seek bar:	Zoekbalk:
+Sends each file's fingerprint and length to AcoustID, one a second, and one recording's ID to MusicBrainz for the genre. Nothing else leaves this computer.	Stuurt de vingerafdruk en lengte van elk bestand naar AcoustID, één per seconde, en het ID van één opname naar MusicBrainz voor het genre. Verder verlaat niets deze computer.
+Sends the fingerprint, its length and the MusicBrainz recording ID to AcoustID, with your user key. It is sent only if AcoustID doesn't know this fingerprint yet.	Stuurt de vingerafdruk, de lengte en het MusicBrainz-opname-ID naar AcoustID, met je gebruikerssleutel. Alleen verstuurd als AcoustID deze vingerafdruk nog niet kent.
+Sends the title and artist to Discogs, and the chosen release's ID for its track list. Nothing else leaves this computer.	Stuurt de titel en artiest naar Discogs, en het ID van de gekozen uitgave voor de tracklijst. Verder verlaat niets deze computer.
+Sends the title and artist to English Wikipedia. Nothing else leaves this computer.	Stuurt de titel en artiest naar de Engelse Wikipedia. Verder verlaat niets deze computer.
+Sends the title, artist and album to MusicBrainz, and the chosen match's ID for its genre. Nothing else leaves this computer.	Stuurt de titel, artiest en album naar MusicBrainz, en het ID van het gekozen resultaat voor het genre. Verder verlaat niets deze computer.
+Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer.	Stuurt de vingerafdruk en lengte van dit bestand naar AcoustID, en het ID van het gekozen resultaat naar MusicBrainz. Verder verlaat niets deze computer.
+Sensitivity	Gevoeligheid
+Settings	Instellingen
+Settings: {model}	Instellingen: {model}
+Settings…	Instellingen…
+Sharps (C#)	Kruizen (C#)
+Shortest note	Kortste noot
+Show Log	Logboek tonen
+Show in Explorer	Tonen in Verkenner
+Show in File Manager	Tonen in bestandsbeheer
+Show or hide the chords along the top	Akkoorden bovenaan tonen of verbergen
+Show or hide the note lines	Notenlijnen tonen of verbergen
+Show the notes of {major} major	De noten van {major} majeur tonen
+Show the notes of {major} major, which {key} shares	De noten van {major} majeur tonen, die {key} deelt
+Show the whole track	Het hele nummer tonen
+Show the whole track and all frequencies	Het hele nummer en alle frequenties tonen
+Shuffle	Willekeurig
+Silence	Stilte
+Silent pieces are left out, so nothing is made up there	Stille stukken worden overgeslagen, dus daar wordt niets verzonnen
+Skip quieter than	Overslaan als zachter dan
+Small: about 6 MB for a 4-minute stem	Klein: ongeveer 6 MB per spoor van 4 minuten
+Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed.	Spatie, ←, →, Page Up, Page Down, L (Selectie herhalen), Esc en Enter liggen vast.
+Space, ←, →, Page Up, Page Down, L, Esc, Enter and Ctrl+C/X/V	Spatie, ←, →, Page Up, Page Down, L, Esc, Enter en Ctrl+C/X/V
+Spectrogram	Spectrogram
+Spectrogram settings	Spectrogram-instellingen
+Spectrogram — {name}	Spectrogram — {name}
+Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around	Spectrogram: klik om vanaf daar af te spelen, sleep om te selecteren, scrol om te zoomen, Ctrl+scrollen zoomt de frequenties, rechts slepen om te verschuiven
+Split into Stems	In sporen splitsen
+Split into Stems takes mono or stereo tracks	In sporen splitsen neemt mono- of stereonummers
+Stereo	Stereo
+Stopped after {i} of {n}	Gestopt na {i} van {n}
+Strength	Sterkte
+Subtitles	Ondertitels
+Swap left and right	Links en rechts verwisselen
+Tags	Tags
+Tags saved	Tags opgeslagen
+Task	Taak
+Tempo	Tempo
+Tenor sax	Tenorsax
+Text	Tekst
+That image can't be read.	Die afbeelding kan niet worden gelezen.
+That image can't be used as a cover.	Die afbeelding kan niet als hoes dienen.
+That is the original file; choose another name. The original is never changed.	Dat is het originele bestand; kies een andere naam. Het origineel wordt nooit gewijzigd.
+That isn't a valid file name.	Dat is geen geldige bestandsnaam.
+The AI runtime isn't installed yet.	De AI-runtime is nog niet geïnstalleerd.
+The GPU couldn't be used, so the CPU is: {e}	De GPU kon niet gebruikt worden, dus de CPU wordt gebruikt: {e}
+The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face.	Het ONNX-bestand is de export van StemSplit (gewichten op halve precisie), op Hugging Face.
+The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face.	Het ONNX-bestand is grazders torchDF-streamingexport, gehost door KimtOS op Hugging Face.
+The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face.	Het ONNX-bestand is musetrics export van JKU's final0-checkpoint, op Hugging Face.
+The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face.	De ONNX-bestanden zijn istupakovs int8-conversie voor onnx-asr, op Hugging Face.
+The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.	De ONNX-bestanden zijn de int8-export van sherpa-onnx (k2-fsa), op Hugging Face.
+The audio changes format partway.	De audio verandert halverwege van formaat.
+The cover couldn't be written ({failed})	De hoes kon niet worden geschreven ({failed})
+The file has no audio.	Het bestand heeft geen audio.
+The file is too short to identify.	Het bestand is te kort om te herkennen.
+The image is larger than 10 MB.	De afbeelding is groter dan 10 MB.
+The key spells its notes	De toonsoort spelt zijn noten
+The lookup stopped.	Het opzoeken is gestopt.
+The original file is never changed.	Het originele bestand wordt nooit gewijzigd.
+The reply couldn't be read ({e})	Het antwoord kon niet worden gelezen ({e})
+The reply wasn't understood.	Het antwoord werd niet begrepen.
+Theme:	Thema:
+This Track	Dit nummer
+This file's tags can't be read.	De tags van dit bestand kunnen niet worden gelezen.
+This match has no MusicBrainz recording to link to.	Dit resultaat heeft geen MusicBrainz-opname om naar te linken.
+This track has edits that aren't saved. The original file is never changed.	Dit nummer heeft niet-opgeslagen bewerkingen. Het originele bestand wordt nooit gewijzigd.
+This track has no cover. Save {name} as the cover of {what}?	Dit nummer heeft geen hoes. {name} opslaan als hoes van {what}?
+Time marks	Tijdmarkeringen
+Time-preserved pitch change	Toonhoogte wijzigen met gelijke duur
+Title	Titel
+Title:	Titel:
+Tonic line width	Breedte grondtoonlijn
+Tonic lines (C for all notes)	Grondtoonlijnen (C voor alle noten)
+Too short or too quiet to measure its loudness	Te kort of te zacht om de luidheid te meten
+Tools for musicians: loops, the spectrogram, tempo, key and chords	Tools voor muzikanten: lussen, spectrogram, tempo, toonsoort en akkoorden
+Track	Nummer
+Track Info	Nummerinfo
+Tracks that already have a cover get this one instead. The music itself isn't changed.	Nummers die al een hoes hebben krijgen in plaats daarvan deze. De muziek zelf verandert niet.
+Transcribe	Transcriberen
+Transcribe Speech	Spraak transcriberen
+Transcript	Transcriptie
+Translate to English	Naar het Engels vertalen
+Trim silence	Stilte inkorten
+Trim silence below	Stilte inkorten onder
+Trim silence: custom…	Stilte inkorten: aangepast…
+Trim silence: {name} ({db} dB)	Stilte inkorten: {name} ({db} dB)
+Trumpet	Trompet
+Tuning A4	Stemtoon A4
+Type a title to search for.	Typ een titel om te zoeken.
+Undo	Ongedaan maken
+Unsaved edits	Niet-opgeslagen bewerkingen
+Up one folder	Map omhoog
+Use Match	Resultaat gebruiken
+Use the GPU	De GPU gebruiken
+Use the estimated key, {key}	De geschatte toonsoort gebruiken, {key}
+Use the estimated tempo	Het geschatte tempo gebruiken
+User key:	Gebruikerssleutel:
+View	Beeld
+Visualiser	Visualisatie
+Volume	Volume
+Volume, {percent} %	Volume, {percent} %
+Volume, {percent} %, metronome on	Volume, {percent} %, metronoom aan
+Waveform	Golfvorm
+Waveform position	Positie in de golfvorm
+Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along	Golfvorm: klik om vanaf daar af te spelen, sleep om te selecteren, scrol om te zoomen, rechts slepen om te verschuiven
+Welcome to soundglass	Welkom bij soundglass
+Whisper large-v3-turbo — 99 languages, best, slow on a CPU	Whisper large-v3-turbo — 99 talen, de beste, traag op een CPU
+Whisper small — 99 languages	Whisper small — 99 talen
+Whole selection	Hele selectie
+Wikipedia can't be reached ({e})	Wikipedia is niet bereikbaar ({e})
+Wikipedia…	Wikipedia…
+Window function	Vensterfunctie
+Window size	Venstergrootte
+Window size:	Venstergrootte:
+Worldwide	Wereldwijd
+Write	Schrijven
+Write tags	Tags schrijven
+Write the tags into {name}? The audio isn't changed.	De tags in {name} schrijven? De audio verandert niet.
+Writes only the tags that are empty in each file	Schrijft alleen de tags die in elk bestand leeg zijn
+Writes the album's tags into every matched file, replacing the tags there	Schrijft de albumtags in elk gevonden bestand en vervangt de tags daar
+Writes the tags into the file; the audio isn't changed	Schrijft de tags in het bestand; de audio verandert niet
+Writing the tags failed	Tags schrijven mislukt
+Writing {i} of {n}	Schrijven {i} van {n}
+Year	Jaar
+Your own themes go in the themes folder. Choosing a theme again reloads its file.	Eigen thema's horen in de themamap. Een thema opnieuw kiezen laadt het bestand opnieuw.
+Zoom in (scroll; right-drag to move along)	Inzoomen (scrollen; rechts slepen om te verschuiven)
+Zoom out	Uitzoomen
+a GPU library was missing from the download	er ontbrak een GPU-bibliotheek in de download
+add an AcoustID key in Settings	voeg een AcoustID-sleutel toe in Instellingen
+after Local AI → Find Beats	na Lokale AI → Tellen vinden
+after loading	na laden
+all {n} tracks in this folder	alle {n} nummers in deze map
+already normal	al normaal
+another AI tool is running	er draait al een andere AI-tool
+as it is	zoals het is
+can't make a folder next to the track ({e})	kan geen map naast het nummer maken ({e})
+can't save a copy next to the original ({e})	kan geen kopie naast het origineel opslaan ({e})
+choose at least one stem to write (AI Models → Settings)	kies minstens één spoor om te schrijven (AI-modellen → Instellingen)
+close the tag editor first	sluit eerst de tag-editor
+hop {hop} for this length	stapgrootte {hop} voor deze lengte
+line {line}: {key}="{v}": invalid value	regel {line}: {key}="{v}": ongeldige waarde
+measuring…	meten…
+mode="{other}": invalid value	mode="{other}": ongeldige waarde
+needs a model: Local AI → AI Models…	heeft een model nodig: Lokale AI → AI-modellen…
+needs the AI runtime: Local AI → Download AI Runtime…	heeft de AI-runtime nodig: Lokale AI → AI-runtime downloaden…
+new image	nieuwe afbeelding
+no audio track	geen audiospoor
+no channels	geen kanalen
+no data folder	geen gegevensmap
+no file name	geen bestandsnaam
+no file open	geen bestand geopend
+no notes were found	geen noten gevonden
+no sample rate	geen samplefrequentie
+no speech was found	geen spraak gevonden
+not a supported audio file ({e})	geen ondersteund audiobestand ({e})
+not a transcription model	geen transcriptiemodel
+not found	niet gevonden
+not found, left alone	niet gevonden, ongemoeid gelaten
+nothing to redo	niets om opnieuw te doen
+nothing to undo	niets om ongedaan te maken
+part of the track could not be read	een deel van het nummer kon niet worden gelezen
+quality	kwaliteit
+removed	verwijderd
+saving tags…	tags opslaan…
+select a part in the Edit panel	selecteer een deel in het Bewerken-paneel
+select at least half a second, or nothing for the whole track	selecteer minstens een halve seconde, of niets voor het hele nummer
+silent	stil
+soundglass is now the default player	soundglass is nu de standaardspeler
+the AI tool failed	de AI-tool is mislukt
+the AI tool stopped	de AI-tool is gestopt
+the channel count changes mid-file	het aantal kanalen verandert halverwege het bestand
+the encoder failed	de encoder is mislukt
+the model gave an unexpected output	het model gaf een onverwachte uitvoer
+the saved file doesn't read back ({e})	het opgeslagen bestand leest niet terug ({e})
+the saved file reads back wrong ({frames} frames, expected {expected})	het opgeslagen bestand leest verkeerd terug ({frames} frames, verwacht {expected})
+the settings aren't for this tool	de instellingen zijn niet voor deze tool
+the sound device failed to open	het geluidsapparaat kon niet worden geopend
+the tag writer failed	het schrijven van tags is mislukt
+the track has no audio	het nummer heeft geen audio
+the track is still loading	het nummer wordt nog geladen
+the track isn't fully loaded	het nummer is niet volledig geladen
+this file can't be decoded	dit bestand kan niet worden gedecodeerd
+this track	dit nummer
+to	tot
+track {n}	nummer {n}
+unknown error	onbekende fout
+with unsaved edits, once loaded	met niet-opgeslagen bewerkingen, na laden
+writing the tags would change the audio, so nothing was written	tags schrijven zou de audio wijzigen, dus er is niets geschreven
+{kbps} kb/s	{kbps} kb/s
+{keys} is already used by {other}	{keys} wordt al gebruikt door {other}
+{key} major	{key} majeur
+{model} (installed)	{model} (geïnstalleerd)
+{name} isn't an audio file soundglass plays	{name} is geen audiobestand dat soundglass afspeelt
+{name} was changed by another program. Reload it?	{name} is gewijzigd door een ander programma. Opnieuw laden?
+{name} will be moved to the Trash.	{name} wordt naar de prullenbak verplaatst.
+{name}: custom…	{name}: aangepast…
+{name}: whole selection	{name}: hele selectie
+{name}: {s} s	{name}: {s} s
+{n} of {total} tracks	{n} van {total} nummers
+{ok} written, {bad} failed	{ok} geschreven, {bad} mislukt
+{path}: bigger than 64 KiB	{path}: groter dan 64 KiB
+{secs} s	{secs} s
+{sign}{n} semitone	{sign}{n} halve toon
+{sign}{n} semitones	{sign}{n} halve tonen
+{task} (selection)	{task} (selectie)
+{what} installed.	{what} geïnstalleerd.
+{what}: the download stopped.	{what}: de download is gestopt.
+→ {n}	→ {n}
+−14 streaming, −23 TV	−14 streaming, −23 tv
+−60 silence, −40 hiss	−60 stilte, −40 ruis

@@ -1,0 +1,551 @@
+ dB at most	 дБ щонайбільше
+ semitones	 півтонів
+0 (Normal)	0 (звичайно)
+0 = max	0 = максимум
+1 (mono)	1 (моно)
+16-bit	16 біт
+1× (Normal)	1× (звичайно)
+2 (stereo)	2 (стерео)
+24-bit	24 біти
+32-bit float	32 біти з рухомою комою
+<{tag}>: invalid value	<{tag}>: неприпустиме значення
+A code such as en, es, fr, de; empty to detect it from the first speech	Код на кшталт en, es, fr, de; порожньо — визначити з першого мовлення
+A file with that name already exists.	Файл із такою назвою вже існує.
+A long track: the hop is raised so the spectrogram fits in memory	Довгий трек: крок збільшено, щоб спектрограма вмістилася в пам'яті
+AI Models	Моделі ШІ
+AI Models…	Моделі ШІ…
+AI runtime (ONNX Runtime)	Середовище ШІ (ONNX Runtime)
+About 50 MB for a 4-minute stem, for further editing	Близько 50 МБ на 4-хвилинну доріжку, для подальшого редагування
+Accept and Continue	Прийняти й продовжити
+Accept and Download	Прийняти й завантажити
+AcoustID Settings	Налаштування AcoustID
+AcoustID can't be reached ({e})	AcoustID недоступний ({e})
+AcoustID: {why}	AcoustID: {why}
+Add AcoustID User Key	Додати ключ користувача AcoustID
+Add Cover	Додати обкладинку
+Add album cover?	Додати обкладинку альбому?
+Add your AcoustID application key and user key in Settings to contribute.	Додайте ключ застосунку та ключ користувача AcoustID у Налаштуваннях, щоб ділитися відбитками.
+Add/Replace Album Cover…	Додати/замінити обкладинку альбому…
+Album	Альбом
+Album cover	Обкладинка альбому
+Album:	Альбом:
+All notes	Усі ноти
+All {n} Tracks	Усі треки ({n})
+Already in AcoustID; nothing was sent.	Уже є в AcoustID; нічого не надіслано.
+Also find notes without a clear start	Знаходити й ноти без чіткого початку
+Analysis	Аналіз
+Any graphics card with Vulkan or Direct3D 12 ({mb} MB). A weak built-in one can be slower than the CPU.	Будь-яка відеокарта з Vulkan або Direct3D 12 ({mb} МБ). Слабка вбудована може бути повільнішою за процесор.
+Application key:	Ключ застосунку:
+Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.	Застосується під час наступного запуску soundglass; вікно, Відомості про трек і панель Редагування лишаються такими, як під час виходу.
+Apply and Rename	Застосувати й перейменувати
+Apply speed and pitch	Застосувати швидкість і висоту
+Apply to All Tracks	Застосувати до всіх треків
+Artist	Виконавець
+Artist:	Виконавець:
+As Apply to All Tracks, then renames each file with the Rename from Tags pattern	Як «Застосувати до всіх треків», потім перейменовує кожен файл за шаблоном «Перейменувати за тегами»
+As TV	Як на ТБ
+As podcasts	Як подкасти
+As streaming	Як стримінг
+As subtitles (.srt)	Як субтитри (.srt)
+Audio	Аудіо
+BPM	BPM
+BPM tag saved ({bpm})	Тег BPM збережено ({bpm})
+Basic Pitch — any instrument, several notes at once	Basic Pitch — будь-який інструмент, кілька нот одночасно
+Basic Pitch's melodia trick	Прийом melodia у Basic Pitch
+Beat This! — beats and downbeats	Beat This! — долі та сильні долі
+Bit depth	Розрядність
+Bitrate	Бітрейт
+Blackman–Harris	Блекмана–Гарріса
+Blue to red	Від синього до червоного
+C D E	C D E
+CUDA: Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050. WebGPU: Find Beats only, about 2× faster (Split into Stems was slower than the CPU). The other tools are faster on the CPU. With both installed, NVIDIA's is used	CUDA: «Розділити на доріжки» і «Знайти долі» у 2,6–3 рази швидше на GTX 1050. WebGPU: лише «Знайти долі», приблизно вдвічі швидше («Розділити на доріжки» було повільніше за процесор). Інші інструменти швидші на процесорі. Якщо встановлено обидва, використовується NVIDIA
+Can't fingerprint this audio ({e})	Не вдається зняти відбиток цього аудіо ({e})
+Can't read this folder: {e}	Не вдається прочитати цю теку: {e}
+Can't write tags to this format ({e})	Не вдається записати теги в цей формат ({e})
+Cancel	Скасувати
+Change	Змінити
+Change Keyboard Shortcuts…	Змінити клавіатурні скорочення…
+Change speed and pitch	Змінити швидкість і висоту
+Channels	Канали
+Channels: mono	Канали: моно
+Channels: stereo	Канали: стерео
+Channels: swap left and right	Канали: поміняти лівий і правий
+Check for updates	Перевірити оновлення
+Chords	Акорди
+Chords: after loading	Акорди: після завантаження
+Chords: measuring…	Акорди: вимірювання…
+Clicks	Клацання
+Clicks on the found beats	Клацання на знайдених долях
+Close	Закрити
+Codec	Кодек
+Colours	Кольори
+Continue	Продовжити
+Contribute	Поділитися
+Contribute to AcoustID?	Поділитися з AcoustID?
+Copied the file	Файл скопійовано
+Copy	Копіювати
+Copy File	Копіювати файл
+Copy Path	Копіювати шлях
+Couldn't bring back {name}: {e}	Не вдалося повернути {name}: {e}
+Couldn't copy the file: {e}	Не вдалося скопіювати файл: {e}
+Couldn't delete the file: {e}	Не вдалося видалити файл: {e}
+Cover	Обкладинка
+Cover added to 1 track	Обкладинку додано до 1 треку
+Cover added to {n} of {total} tracks (not: {failed})	Обкладинку додано до {n} з {total} треків (ні: {failed})
+Cover added to {n} tracks	Обкладинку додано до треків: {n}
+Cover at 256 px	Обкладинка 256 пікс.
+Cover removed from 1 track	Обкладинку вилучено з 1 треку
+Cover removed from {n} of {total} tracks (not: {failed})	Обкладинку вилучено з {n} з {total} треків (ні: {failed})
+Cover removed from {n} tracks	Обкладинку вилучено з треків: {n}
+Crop	Обрізати
+Current cover	Поточна обкладинка
+Custom ({value})…	Власне ({value})…
+Custom loudness…	Власна гучність…
+Custom peak…	Власний пік…
+Custom…	Власне…
+Cut out	Вирізати
+Dark	Темна
+Data from Discogs.	Дані з Discogs.
+Decoding…	Декодування…
+DeepFilterNet3 — speech, 48 kHz	DeepFilterNet3 — мовлення, 48 кГц
+Delete file?	Видалити файл?
+Delete…	Видалити…
+Discard edits	Відкинути зміни
+Discogs can't be reached ({e})	Discogs недоступний ({e})
+Discogs is busy; try again in a minute.	Discogs зайнятий; спробуйте за хвилину.
+Discogs now asks for a token; this lookup can't run.	Discogs тепер вимагає токен; цей пошук неможливий.
+Discogs…	Discogs…
+Do Ré Mi	До Ре Мі
+Do you want to contribute this track's fingerprint to AcoustID? AcoustID will then recognise {title} — {artist} for everyone.	Поділитися відбитком цього треку з AcoustID? Тоді AcoustID розпізнаватиме {title} — {artist} для всіх.
+Double the tempo	Подвоїти темп
+Download	Завантажити
+Download AI Runtime ({mb} MB)	Завантажити середовище ШІ ({mb} МБ)
+Download AI Runtime ({mb} MB)…	Завантажити середовище ШІ ({mb} МБ)…
+Download GPU Support	Завантажити підтримку GPU
+Downloaded from Microsoft (ONNX Runtime's WebGPU plugin, via its official PyPI package).	Завантажено з Microsoft (модуль WebGPU для ONNX Runtime, через його офіційний пакет PyPI).
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	Завантажується з Microsoft (ONNX Runtime) і NVIDIA (бібліотеки CUDA, через їхні офіційні пакети PyPI).
+Drag on the waveform to select	Протягніть по хвилі, щоб виділити
+Each stretch of speech with its start and end, to save as an .srt file	Кожен відрізок мовлення з початком і кінцем, для збереження у файл .srt
+Edit	Редагування
+Effects	Ефекти
+Europe	Європа
+FFT size	Розмір ШПФ
+FLAC (lossless)	FLAC (без втрат)
+Fade in	Наростання
+Fade out	Згасання
+Faint noise	Слабкий шум
+Fetching details…	Отримання відомостей…
+File	Файл
+File changed	Файл змінено
+File size	Розмір файлу
+Fill In All Tracks	Заповнити всі треки
+Fill Metadata From	Заповнити метадані з
+Fill from Discogs	Заповнити з Discogs
+Fill from Discogs…	Заповнити з Discogs…
+Fill from MusicBrainz	Заповнити з MusicBrainz
+Fill from MusicBrainz…	Заповнити з MusicBrainz…
+Fill from Wikipedia	Заповнити з Вікіпедії
+Fill from Wikipedia…	Заповнити з Вікіпедії…
+Fills Track Info's tag editor; Save… there writes the tags	Заповнює редактор тегів у Відомостях про трек; «Зберегти…» там записує теги
+Find Beats	Знайти долі
+Fingerprint sent to AcoustID; lookups find it once it's processed.	Відбиток надіслано в AcoustID; пошук знайде його після обробки.
+Fingerprinting {i} of {n}: {file}	Відбиток {i} з {n}: {file}
+Fit	Умістити
+Fit cover space	Умістити в місце обкладинки
+Flats (Db)	Бемолі (Db)
+Folder	Тека
+Follow system	Як у системі
+Font size:	Розмір шрифту:
+Format	Формат
+Found {n} beats, ≈ {bpm} BPM. Metronome on (volume button).	Знайдено долей: {n}, ≈ {bpm} BPM. Метроном увімкнено (кнопка гучності).
+Found {n} beats. Metronome on (volume button).	Знайдено долей: {n}. Метроном увімкнено (кнопка гучності).
+Full	Повністю
+Full Screen	На весь екран
+Full takes away all the noise it finds; a limit keeps some, for a more natural sound	«Повністю» прибирає весь знайдений шум; межа лишає трохи, для природнішого звуку
+GPU (AMD, Intel and others, experimental)	GPU (AMD, Intel та інші, експериментально)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU support	Підтримка GPU
+GPU support (AMD, Intel and others)	Підтримка GPU (AMD, Intel та інші)
+Gain	Підсилення
+Gain: custom…	Підсилення: власне…
+Gain: {db} dB	Підсилення: {db} дБ
+General	Загальні
+Genre	Жанр
+Get a key	Отримати ключ
+Get your user key	Отримати ключ користувача
+Gray	Сірий
+HTDemucs v4 — drums, bass, other, vocals	HTDemucs v4 — ударні, бас, інше, вокал
+Half the tempo	Половина темпу
+Hamming	Геммінга
+Hann	Ганна
+Held notes	Тривалі ноти
+High contrast	Висока контрастність
+Higher: fewer, surer notes start	Вище: менше початків нот, але певніших
+Higher: notes end sooner, quiet ones are left out	Вище: ноти закінчуються раніше, тихі пропускаються
+Hiss	Шипіння
+Hop	Крок
+Identify Album	Визначити альбом
+Identify Album…	Визначити альбом…
+Identify Track	Визначити трек
+Identify Track needs one; it is free for non-commercial use.	Він потрібен для «Визначити трек»; безкоштовний для некомерційного використання.
+Identify Track…	Визначити трек…
+Image	Зображення
+In order	По черзі
+Instrument range	Діапазон інструмента
+It already has that name.	Уже має таку назву.
+It's all quieter than that; nothing trimmed	Усе тихіше за це; нічого не обрізано
+It's no longer in the Trash.	Його вже немає в смітнику.
+Its unsaved edits will be lost.	Незбережені зміни буде втрачено.
+Keep current	Залишити поточну
+Key	Тональність
+Key ≈ {key}	Тональність ≈ {key}
+Keyboard Shortcuts	Клавіатурні скорочення
+Label size	Розмір підписів
+Language	Мова
+Language:	Мова:
+Length	Тривалість
+Levels	Рівні
+Licence ({n} of {count}) — {title}	Ліцензія ({n} з {count}) — {title}
+Licence — {title}	Ліцензія — {title}
+Light	Світла
+Line	Лінія
+Local AI	Локальний ШІ
+Look up	Знайти
+Looking up…	Пошук…
+Loop selection	Повтор виділення
+Loudness	Гучність (LUFS)
+Lower finds more beats, also where the model is unsure	Нижче — більше долей, зокрема там, де модель не певна
+Lowest frequency	Найнижча частота
+MIDI file is too big	MIDI-файл завеликий
+MIDI file is too long	MIDI-файл задовгий
+MIDI tempo	Темп MIDI
+MP3 can't hold {khz} kHz audio; save as FLAC or WAV instead	MP3 не підтримує аудіо {khz} кГц; збережіть як FLAC або WAV
+MP3 holds mono or stereo only; save as FLAC or WAV instead	MP3 підтримує лише моно або стерео; збережіть як FLAC або WAV
+MP3: LAME failed to start	MP3: не вдалося запустити LAME
+Magma	Магма
+Make soundglass my default player	Зробити soundglass моїм типовим програвачем
+Make soundglass the default player	Зробити soundglass типовим програвачем
+Matches on this album are listed first	Збіги з цим альбомом ідуть першими
+Matches on this album are listed first; it isn't sent	Збіги з цим альбомом ідуть першими; він не надсилається
+Melody to MIDI	Мелодія в MIDI
+Metronome	Метроном
+Mono	Моно
+More overlap between the 7.8 s segments: smoother joins, slower	Більше перекриття між відрізками по 7,8 с: м'якші стики, повільніше
+Moved to the Trash	Переміщено до смітника
+MusicBrainz can't be reached ({e})	MusicBrainz недоступний ({e})
+MusicBrainz…	MusicBrainz…
+Name	Назва
+Next	Наступний
+No album cover	Немає обкладинки альбому
+No album found.	Альбом не знайдено.
+No audio files in {name}	Немає аудіофайлів у {name}
+No audio files or folders here	Тут немає аудіофайлів і тек
+No file open	Файл не відкрито
+No match found.	Збігів не знайдено.
+No silence at the start or end to trim	Немає тиші на початку чи в кінці для обрізання
+None	Немає
+None (whole range)	Немає (весь діапазон)
+None of these tags is set.	Жоден із цих тегів не задано.
+Normalize	Нормалізувати
+Normalize loudness	Нормалізувати гучність
+Normalize peak	Нормалізувати пік
+Normalize: custom loudness…	Нормалізувати: власна гучність…
+Normalize: custom peak…	Нормалізувати: власний пік…
+Normalize: {name} ({db} dBFS)	Нормалізувати: {name} ({db} dBFS)
+Normalize: {name} ({lufs} LUFS)	Нормалізувати: {name} ({lufs} LUFS)
+Not Now	Не зараз
+Note threshold	Поріг ноти
+Notes	Ноти
+Notes from	Ноти від
+Nothing to normalize: it's silent	Нічого нормалізувати: тиша
+OK	OK
+Octave numbers	Номери октав
+Ogg Vorbis (q6)	Ogg Vorbis (q6)
+On the selection	На виділенні
+On the whole track	На всьому треку
+Only fill empty tags	Заповнювати лише порожні теги
+Only how the file's beats are counted; the notes keep their times	Лише те, як рахуються долі файлу; ноти зберігають свій час
+Only needed to contribute fingerprints to AcoustID.	Потрібен лише для надсилання відбитків в AcoustID.
+Onset threshold	Поріг початку
+Open Recent	Недавні файли
+Open models folder	Відкрити теку моделей
+Open project page	Відкрити сторінку проєкту
+Open themes folder	Відкрити теку тем
+Open…	Відкрити…
+Other lines	Інші лінії
+Output	Вихід
+Overlap	Перекриття
+Parakeet TDT 0.6B v3 — 25 European languages, more accurate	Parakeet TDT 0.6B v3 — 25 європейських мов, точніший
+Pause	Пауза
+Peak	Пік
+Peak at max	Пік на максимумі
+Peak near max	Пік біля максимуму
+Piano synth	Синтезатор фортепіано
+Pitch-preserved speed change	Зміна швидкості без зміни висоти
+Play	Відтворити
+Play order, {name}	Порядок відтворення, {name}
+Please read and accept the licence before downloading.	Прочитайте й прийміть ліцензію перед завантаженням.
+Position, seconds	Позиція, секунди
+Practice	Заняття
+Practice mode	Режим занять
+Press keys… (Esc to cancel)	Натисніть клавіші… (Esc — скасувати)
+Previous	Попередній
+Quit	Вийти
+Rectangular	Прямокутне
+Redo	Повторити
+Reload	Перезавантажити
+Remember window size	Запам'ятовувати розмір вікна
+Remove	Видалити
+Remove Album Cover…	Вилучити обкладинку альбому…
+Remove Cover	Вилучити обкладинку
+Remove Noise	Прибрати шум
+Remove album cover	Вилучити обкладинку альбому
+Remove the cover from this track only, or from {what}? The music itself isn't changed.	Вилучити обкладинку лише з цього треку чи з {what}? Сама музика не змінюється.
+Remove the cover from this track? The music itself isn't changed.	Вилучити обкладинку з цього треку? Сама музика не змінюється.
+Rename	Перейменувати
+Rename from Tags	Перейменувати за тегами
+Rename from Tags…	Перейменувати за тегами…
+Renamed to {name}	Перейменовано на {name}
+Rename…	Перейменувати…
+Repeat track	Повтор треку
+Replace…	Замінити…
+Reset	Скинути
+Reset All Shortcuts	Скинути всі скорочення
+Reset to defaults	Скинути до типових
+Restart soundglass to start using the GPU.	Перезапустіть soundglass, щоб почати використовувати GPU.
+Reverse	Обернути
+Run the AI tools on the graphics card ({mb} MB, NVIDIA's CUDA libraries).	Запускати інструменти ШІ на відеокарті ({mb} МБ, бібліотеки CUDA від NVIDIA).
+Running on the CPU…	Працює на процесорі…
+Running on the GPU…	Працює на GPU…
+Same ({rate})	Без змін ({rate})
+Sample rate	Частота дискретизації
+Save As	Зберегти як
+Save As…	Зберегти як…
+Save Copy	Зберегти копію
+Save Cover	Зберегти обкладинку
+Save as Subtitles…	Зберегти як субтитри…
+Save as Text…	Зберегти як текст…
+Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed.	Зберегти {name} як обкладинку цього треку чи {what}? Наявні обкладинки буде замінено. Сама музика не змінюється.
+Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed.	Зберегти {name} як обкладинку цього треку? Наявну обкладинку буде замінено. Сама музика не змінюється.
+Saved {name}	Збережено {name}
+Saved {name}, but the tags could not be copied	{name} збережено, але теги не вдалося скопіювати
+Save…	Зберегти…
+Saving failed	Не вдалося зберегти
+Saving {name}…	Збереження {name}…
+Scale shown	Показаний лад
+Seek bar:	Смуга позиції:
+Sends each file's fingerprint and length to AcoustID, one a second, and one recording's ID to MusicBrainz for the genre. Nothing else leaves this computer.	Надсилає відбиток і тривалість кожного файлу в AcoustID, по одному на секунду, та ID одного запису в MusicBrainz для жанру. Більше ніщо не залишає цей комп'ютер.
+Sends the fingerprint, its length and the MusicBrainz recording ID to AcoustID, with your user key. It is sent only if AcoustID doesn't know this fingerprint yet.	Надсилає відбиток, його тривалість і ID запису MusicBrainz в AcoustID разом із вашим ключем користувача. Надсилається, лише якщо AcoustID ще не знає цього відбитка.
+Sends the title and artist to Discogs, and the chosen release's ID for its track list. Nothing else leaves this computer.	Надсилає назву й виконавця в Discogs, а також ID вибраного видання для списку треків. Більше ніщо не залишає цей комп'ютер.
+Sends the title and artist to English Wikipedia. Nothing else leaves this computer.	Надсилає назву й виконавця в англійську Вікіпедію. Більше ніщо не залишає цей комп'ютер.
+Sends the title, artist and album to MusicBrainz, and the chosen match's ID for its genre. Nothing else leaves this computer.	Надсилає назву, виконавця й альбом у MusicBrainz, а також ID вибраного збігу для жанру. Більше ніщо не залишає цей комп'ютер.
+Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer.	Надсилає відбиток і тривалість цього файлу в AcoustID, а ID вибраного збігу — в MusicBrainz. Більше ніщо не залишає цей комп'ютер.
+Sensitivity	Чутливість
+Settings	Налаштування
+Settings: {model}	Налаштування: {model}
+Settings…	Налаштування…
+Sharps (C#)	Дієзи (C#)
+Shortest note	Найкоротша нота
+Show Log	Показати журнал
+Show in Explorer	Показати в Провіднику
+Show in File Manager	Показати у файловому менеджері
+Show or hide the chords along the top	Показати чи сховати акорди вгорі
+Show or hide the note lines	Показати чи сховати лінії нот
+Show the notes of {major} major	Показати ноти {major} мажору
+Show the notes of {major} major, which {key} shares	Показати ноти {major} мажору, спільні з {key}
+Show the whole track	Показати весь трек
+Show the whole track and all frequencies	Показати весь трек і всі частоти
+Shuffle	Перемішати
+Silence	Тиша
+Silent pieces are left out, so nothing is made up there	Тихі місця пропускаються, тож там нічого не вигадується
+Skip quieter than	Пропускати тихіше
+Small: about 6 MB for a 4-minute stem	Малий: близько 6 МБ на 4-хвилинну доріжку
+Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed.	Пробіл, ←, →, Page Up, Page Down, L (Повтор виділення), Esc і Enter закріплені.
+Space, ←, →, Page Up, Page Down, L, Esc, Enter and Ctrl+C/X/V	Пробіл, ←, →, Page Up, Page Down, L, Esc, Enter і Ctrl+C/X/V
+Spectrogram	Спектрограма
+Spectrogram settings	Налаштування спектрограми
+Spectrogram — {name}	Спектрограма — {name}
+Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around	Спектрограма: клацання — грати звідси, протягування — виділити, прокручування — масштаб, Ctrl+прокручування — масштаб частот, протягування правою кнопкою — переміщення
+Split into Stems	Розділити на доріжки
+Split into Stems takes mono or stereo tracks	«Розділити на доріжки» приймає моно- або стереотреки
+Stereo	Стерео
+Stopped after {i} of {n}	Зупинено після {i} з {n}
+Strength	Сила
+Subtitles	Субтитри
+Swap left and right	Поміняти лівий і правий
+Tags	Теги
+Tags saved	Теги збережено
+Task	Завдання
+Tempo	Темп
+Tenor sax	Тенор-саксофон
+Text	Текст
+That image can't be read.	Не вдається прочитати це зображення.
+That image can't be used as a cover.	Це зображення не можна використати як обкладинку.
+That is the original file; choose another name. The original is never changed.	Це оригінальний файл; виберіть іншу назву. Оригінал ніколи не змінюється.
+That isn't a valid file name.	Це неприпустима назва файлу.
+The AI runtime isn't installed yet.	Середовище ШІ ще не встановлено.
+The GPU couldn't be used, so the CPU is: {e}	Не вдалося використати GPU, тому використовується CPU: {e}
+The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face.	Файл ONNX — експорт StemSplit (ваги в половинній точності), на Hugging Face.
+The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face.	Файл ONNX — потоковий експорт torchDF від grazder, розміщений KimtOS на Hugging Face.
+The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face.	Файл ONNX — експорт контрольної точки final0 від JKU, зроблений musetric, на Hugging Face.
+The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face.	Файли ONNX — конвертація int8 від istupakov для onnx-asr, на Hugging Face.
+The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.	Файли ONNX — експорт int8 від sherpa-onnx (k2-fsa), на Hugging Face.
+The audio changes format partway.	Формат аудіо змінюється посередині.
+The cover couldn't be written ({failed})	Не вдалося записати обкладинку ({failed})
+The file has no audio.	У файлі немає аудіо.
+The file is too short to identify.	Файл закороткий для визначення.
+The image is larger than 10 MB.	Зображення більше за 10 МБ.
+The key spells its notes	Тональність записує свої ноти
+The lookup stopped.	Пошук зупинено.
+The original file is never changed.	Оригінальний файл ніколи не змінюється.
+The reply couldn't be read ({e})	Не вдалося прочитати відповідь ({e})
+The reply wasn't understood.	Відповідь не зрозуміло.
+Theme:	Тема:
+This Track	Цей трек
+This file's tags can't be read.	Не вдається прочитати теги цього файлу.
+This match has no MusicBrainz recording to link to.	Цей збіг не має запису MusicBrainz для прив'язки.
+This track has edits that aren't saved. The original file is never changed.	У цьому треку є незбережені зміни. Оригінальний файл ніколи не змінюється.
+This track has no cover. Save {name} as the cover of {what}?	Цей трек не має обкладинки. Зберегти {name} як обкладинку {what}?
+Time marks	Позначки часу
+Time-preserved pitch change	Зміна висоти без зміни тривалості
+Title	Назва
+Title:	Назва:
+Tonic line width	Товщина лінії тоніки
+Tonic lines (C for all notes)	Лінії тоніки (C для всіх нот)
+Too short or too quiet to measure its loudness	Закоротко або затихо, щоб виміряти гучність
+Tools for musicians: loops, the spectrogram, tempo, key and chords	Інструменти для музикантів: петлі, спектрограма, темп, тональність і акорди
+Track	Трек
+Track Info	Відомості про трек
+Tracks that already have a cover get this one instead. The music itself isn't changed.	Треки, що вже мають обкладинку, отримають натомість цю. Сама музика не змінюється.
+Transcribe	Розшифрувати
+Transcribe Speech	Розшифрувати мовлення
+Transcript	Розшифровка
+Translate to English	Перекласти англійською
+Trim silence	Обрізати тишу
+Trim silence below	Обрізати тишу нижче
+Trim silence: custom…	Обрізати тишу: власне…
+Trim silence: {name} ({db} dB)	Обрізати тишу: {name} ({db} дБ)
+Trumpet	Труба
+Tuning A4	Стрій A4
+Type a title to search for.	Введіть назву для пошуку.
+Undo	Відмінити
+Unsaved edits	Незбережені зміни
+Up one folder	На теку вгору
+Use Match	Використати збіг
+Use the GPU	Використовувати GPU
+Use the estimated key, {key}	Використати знайдену тональність, {key}
+Use the estimated tempo	Використати знайдений темп
+User key:	Ключ користувача:
+View	Перегляд
+Visualiser	Візуалізація
+Volume	Гучність
+Volume, {percent} %	Гучність, {percent} %
+Volume, {percent} %, metronome on	Гучність, {percent} %, метроном увімкнено
+Waveform	Хвиля
+Waveform position	Позиція на хвилі
+Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along	Хвиля: клацання — грати звідси, протягування — виділити, прокручування — масштаб, протягування правою кнопкою — переміщення
+Welcome to soundglass	Ласкаво просимо до soundglass
+Whisper large-v3-turbo — 99 languages, best, slow on a CPU	Whisper large-v3-turbo — 99 мов, найкращий, повільний на процесорі
+Whisper small — 99 languages	Whisper small — 99 мов
+Whole selection	Усе виділення
+Wikipedia can't be reached ({e})	Вікіпедія недоступна ({e})
+Wikipedia…	Вікіпедія…
+Window function	Віконна функція
+Window size	Розмір вікна
+Window size:	Розмір вікна:
+Worldwide	Увесь світ
+Write	Записати
+Write tags	Записати теги
+Write the tags into {name}? The audio isn't changed.	Записати теги в {name}? Аудіо не змінюється.
+Writes only the tags that are empty in each file	Записує лише теги, порожні в кожному файлі
+Writes the album's tags into every matched file, replacing the tags there	Записує теги альбому в кожен відповідний файл, замінюючи наявні
+Writes the tags into the file; the audio isn't changed	Записує теги у файл; аудіо не змінюється
+Writing the tags failed	Не вдалося записати теги
+Writing {i} of {n}	Запис {i} з {n}
+Year	Рік
+Your own themes go in the themes folder. Choosing a theme again reloads its file.	Власні теми кладіть у теку тем. Повторний вибір теми перечитує її файл.
+Zoom in (scroll; right-drag to move along)	Наблизити (прокручування; протягування правою кнопкою — переміщення)
+Zoom out	Віддалити
+a GPU library was missing from the download	у завантаженні бракувало бібліотеки GPU
+add an AcoustID key in Settings	додайте ключ AcoustID у Налаштуваннях
+after Local AI → Find Beats	після Локальний ШІ → Знайти долі
+after loading	після завантаження
+all {n} tracks in this folder	усі треки в цій теці ({n})
+already normal	уже звичайна
+another AI tool is running	працює інший інструмент ШІ
+as it is	як є
+can't make a folder next to the track ({e})	не вдається створити теку поруч із треком ({e})
+can't save a copy next to the original ({e})	не вдається зберегти копію поруч з оригіналом ({e})
+choose at least one stem to write (AI Models → Settings)	виберіть хоча б одну доріжку для запису (Моделі ШІ → Налаштування)
+close the tag editor first	спершу закрийте редактор тегів
+hop {hop} for this length	крок {hop} для такої довжини
+line {line}: {key}="{v}": invalid value	рядок {line}: {key}="{v}": неприпустиме значення
+measuring…	вимірювання…
+mode="{other}": invalid value	mode="{other}": неприпустиме значення
+needs a model: Local AI → AI Models…	потрібна модель: Локальний ШІ → Моделі ШІ…
+needs the AI runtime: Local AI → Download AI Runtime…	потрібне середовище ШІ: Локальний ШІ → Завантажити середовище ШІ…
+new image	нове зображення
+no audio track	немає звукової доріжки
+no channels	немає каналів
+no data folder	немає теки даних
+no file name	немає назви файлу
+no file open	файл не відкрито
+no notes were found	ноти не знайдено
+no sample rate	немає частоти дискретизації
+no speech was found	мовлення не знайдено
+not a supported audio file ({e})	непідтримуваний аудіофайл ({e})
+not a transcription model	це не модель розшифровки
+not found	не знайдено
+not found, left alone	не знайдено, залишено як є
+nothing to redo	нічого повторити
+nothing to undo	нічого скасувати
+part of the track could not be read	частину треку не вдалося прочитати
+quality	якість
+removed	вилучено
+saving tags…	збереження тегів…
+select a part in the Edit panel	виділіть частину на панелі Редагування
+select at least half a second, or nothing for the whole track	виділіть щонайменше пів секунди або нічого — для всього треку
+silent	тиша
+soundglass is now the default player	soundglass тепер типовий програвач
+the AI tool failed	інструмент ШІ дав збій
+the AI tool stopped	інструмент ШІ зупинено
+the channel count changes mid-file	кількість каналів змінюється посеред файлу
+the encoder failed	кодувальник дав збій
+the model gave an unexpected output	модель видала неочікуваний результат
+the saved file doesn't read back ({e})	збережений файл не читається ({e})
+the saved file reads back wrong ({frames} frames, expected {expected})	збережений файл читається неправильно ({frames} кадрів, очікувалося {expected})
+the settings aren't for this tool	налаштування не для цього інструмента
+the sound device failed to open	не вдалося відкрити звуковий пристрій
+the tag writer failed	запис тегів дав збій
+the track has no audio	у треку немає аудіо
+the track is still loading	трек ще завантажується
+the track isn't fully loaded	трек завантажено не повністю
+this file can't be decoded	цей файл не вдається декодувати
+this track	цей трек
+to	до
+track {n}	трек {n}
+unknown error	невідома помилка
+with unsaved edits, once loaded	з незбереженими змінами, після завантаження
+writing the tags would change the audio, so nothing was written	запис тегів змінив би аудіо, тому нічого не записано
+{kbps} kb/s	{kbps} кбіт/с
+{keys} is already used by {other}	{keys} уже зайнято: {other}
+{key} major	{key} мажор
+{model} (installed)	{model} (встановлено)
+{name} isn't an audio file soundglass plays	{name} — не аудіофайл, який відтворює soundglass
+{name} was changed by another program. Reload it?	{name} змінено іншою програмою. Перезавантажити?
+{name} will be moved to the Trash.	{name} буде переміщено в Смітник.
+{name}: custom…	{name}: власне…
+{name}: whole selection	{name}: усе виділення
+{name}: {s} s	{name}: {s} с
+{n} of {total} tracks	{n} з {total} треків
+{ok} written, {bad} failed	записано: {ok}, помилок: {bad}
+{path}: bigger than 64 KiB	{path}: більше за 64 КіБ
+{secs} s	{secs} с
+{sign}{n} semitone	{sign}{n} півтон
+{sign}{n} semitones	{sign}{n} півтонів
+{task} (selection)	{task} (виділення)
+{what} installed.	Встановлено: {what}.
+{what}: the download stopped.	{what}: завантаження зупинено.
+→ {n}	→ {n}
+−14 streaming, −23 TV	−14 стримінг, −23 ТБ
+−60 silence, −40 hiss	−60 тиша, −40 шипіння

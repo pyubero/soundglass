@@ -1,0 +1,551 @@
+ dB at most	 dB 以內
+ semitones	 個半音
+0 (Normal)	0 (正常)
+0 = max	0 = 最大
+1 (mono)	1 (單聲道)
+16-bit	16 位元
+1× (Normal)	1× (正常)
+2 (stereo)	2 (立體聲)
+24-bit	24 位元
+32-bit float	32 位元浮點
+<{tag}>: invalid value	<{tag}>: 無效的值
+A code such as en, es, fr, de; empty to detect it from the first speech	如 en、es、fr、de 這樣的代碼；留空則從第一段語音偵測
+A file with that name already exists.	已有同名檔案。
+A long track: the hop is raised so the spectrogram fits in memory	曲目較長：已加大跳距，讓頻譜圖能放進記憶體
+AI Models	AI 模型
+AI Models…	AI 模型…
+AI runtime (ONNX Runtime)	AI 執行環境 (ONNX Runtime)
+About 50 MB for a 4-minute stem, for further editing	4 分鐘的音軌約 50 MB，便於繼續編輯
+Accept and Continue	接受並繼續
+Accept and Download	接受並下載
+AcoustID Settings	AcoustID 設定
+AcoustID can't be reached ({e})	無法連線到 AcoustID ({e})
+AcoustID: {why}	AcoustID: {why}
+Add AcoustID User Key	新增 AcoustID 使用者金鑰
+Add Cover	新增封面
+Add album cover?	新增專輯封面？
+Add your AcoustID application key and user key in Settings to contribute.	在設定中新增你的 AcoustID 應用程式金鑰和使用者金鑰即可貢獻。
+Add/Replace Album Cover…	新增/取代專輯封面…
+Album	專輯
+Album cover	專輯封面
+Album:	專輯:
+All notes	所有音符
+All {n} Tracks	全部 {n} 首曲目
+Already in AcoustID; nothing was sent.	AcoustID 中已有；未傳送任何內容。
+Also find notes without a clear start	也尋找起音不明顯的音符
+Analysis	分析
+Any graphics card with Vulkan or Direct3D 12 ({mb} MB). A weak built-in one can be slower than the CPU.	任何支援 Vulkan 或 Direct3D 12 的顯示卡 ({mb} MB)。效能弱的內建顯示卡可能比 CPU 還慢。
+Application key:	應用程式金鑰:
+Applies the next time soundglass opens; the window, Track Info and the Edit panel as you quit are kept.	下次開啟 soundglass 時生效；視窗、曲目資訊和編輯面板維持結束時的樣子。
+Apply and Rename	套用並重新命名
+Apply speed and pitch	套用速度和音高
+Apply to All Tracks	套用到所有曲目
+Artist	演出者
+Artist:	演出者:
+As Apply to All Tracks, then renames each file with the Rename from Tags pattern	與「套用到所有曲目」相同，再依「依標籤重新命名」的格式重新命名每個檔案
+As TV	如電視
+As podcasts	如 Podcast
+As streaming	如串流
+As subtitles (.srt)	作為字幕 (.srt)
+Audio	音訊
+BPM	BPM
+BPM tag saved ({bpm})	已儲存 BPM 標籤 ({bpm})
+Basic Pitch — any instrument, several notes at once	Basic Pitch — 任何樂器，可同時多音
+Basic Pitch's melodia trick	Basic Pitch 的 melodia 技巧
+Beat This! — beats and downbeats	Beat This! — 拍點和強拍
+Bit depth	位元深度
+Bitrate	位元率
+Blackman–Harris	布萊克曼–哈里斯
+Blue to red	藍到紅
+C D E	C D E
+CUDA: Split into Stems and Find Beats, 2.6–3× faster on a GTX 1050. WebGPU: Find Beats only, about 2× faster (Split into Stems was slower than the CPU). The other tools are faster on the CPU. With both installed, NVIDIA's is used	CUDA：「分離音軌」和「尋找拍點」在 GTX 1050 上快 2.6–3 倍。WebGPU：僅「尋找拍點」約快 2 倍（「分離音軌」比 CPU 慢）。其他工具在 CPU 上較快。兩者都安裝時使用 NVIDIA 的
+Can't fingerprint this audio ({e})	無法為此音訊產生指紋 ({e})
+Can't read this folder: {e}	無法讀取此資料夾: {e}
+Can't write tags to this format ({e})	無法將標籤寫入此格式 ({e})
+Cancel	取消
+Change	變更
+Change Keyboard Shortcuts…	變更鍵盤快速鍵…
+Change speed and pitch	變更速度和音高
+Channels	聲道
+Channels: mono	聲道：單聲道
+Channels: stereo	聲道：立體聲
+Channels: swap left and right	聲道：左右對調
+Check for updates	檢查更新
+Chords	和弦
+Chords: after loading	和弦：載入後
+Chords: measuring…	和弦：測量中…
+Clicks	滴答聲
+Clicks on the found beats	在找到的拍點上加滴答聲
+Close	關閉
+Codec	編解碼器
+Colours	色彩
+Continue	繼續
+Contribute	貢獻
+Contribute to AcoustID?	貢獻給 AcoustID？
+Copied the file	已複製檔案
+Copy	複製
+Copy File	複製檔案
+Copy Path	複製路徑
+Couldn't bring back {name}: {e}	無法還原 {name}: {e}
+Couldn't copy the file: {e}	無法複製檔案: {e}
+Couldn't delete the file: {e}	無法刪除檔案: {e}
+Cover	封面
+Cover added to 1 track	已為 1 首曲目新增封面
+Cover added to {n} of {total} tracks (not: {failed})	已為 {total} 首中的 {n} 首新增封面（失敗：{failed}）
+Cover added to {n} tracks	已為 {n} 首曲目新增封面
+Cover at 256 px	256 px 封面
+Cover removed from 1 track	已從 1 首曲目移除封面
+Cover removed from {n} of {total} tracks (not: {failed})	已從 {total} 首中的 {n} 首移除封面（失敗：{failed}）
+Cover removed from {n} tracks	已從 {n} 首曲目移除封面
+Crop	裁切
+Current cover	目前的封面
+Custom ({value})…	自訂 ({value})…
+Custom loudness…	自訂響度…
+Custom peak…	自訂峰值…
+Custom…	自訂…
+Cut out	剪掉
+Dark	深色
+Data from Discogs.	資料來自 Discogs。
+Decoding…	解碼中…
+DeepFilterNet3 — speech, 48 kHz	DeepFilterNet3 — 語音，48 kHz
+Delete file?	刪除檔案？
+Delete…	刪除…
+Discard edits	捨棄編輯
+Discogs can't be reached ({e})	無法連線到 Discogs ({e})
+Discogs is busy; try again in a minute.	Discogs 忙碌中；請一分鐘後再試。
+Discogs now asks for a token; this lookup can't run.	Discogs 現在要求權杖；無法進行此查詢。
+Discogs…	Discogs…
+Do Ré Mi	Do Re Mi
+Do you want to contribute this track's fingerprint to AcoustID? AcoustID will then recognise {title} — {artist} for everyone.	要將這首曲目的指紋貢獻給 AcoustID 嗎？之後 AcoustID 將為所有人辨識 {title} — {artist}。
+Double the tempo	速度加倍
+Download	下載
+Download AI Runtime ({mb} MB)	下載 AI 執行環境 ({mb} MB)
+Download AI Runtime ({mb} MB)…	下載 AI 執行環境 ({mb} MB)…
+Download GPU Support	下載 GPU 支援
+Downloaded from Microsoft (ONNX Runtime's WebGPU plugin, via its official PyPI package).	從 Microsoft 下載（ONNX Runtime 的 WebGPU 外掛，透過其官方 PyPI 套件）。
+Downloaded from Microsoft (ONNX Runtime) and NVIDIA (CUDA libraries, via their official PyPI packages).	從 Microsoft (ONNX Runtime) 和 NVIDIA (CUDA 程式庫,透過其官方 PyPI 套件) 下載。
+Drag on the waveform to select	在波形上拖曳以選取
+Each stretch of speech with its start and end, to save as an .srt file	每段語音及其開始和結束時間，儲存為 .srt 檔案
+Edit	編輯
+Effects	效果
+Europe	歐洲
+FFT size	FFT 大小
+FLAC (lossless)	FLAC（無損）
+Fade in	淡入
+Fade out	淡出
+Faint noise	微弱雜訊
+Fetching details…	正在取得詳細資料…
+File	檔案
+File changed	檔案已變更
+File size	檔案大小
+Fill In All Tracks	填入所有曲目
+Fill Metadata From	填入中繼資料來源
+Fill from Discogs	從 Discogs 填入
+Fill from Discogs…	從 Discogs 填入…
+Fill from MusicBrainz	從 MusicBrainz 填入
+Fill from MusicBrainz…	從 MusicBrainz 填入…
+Fill from Wikipedia	從維基百科填入
+Fill from Wikipedia…	從維基百科填入…
+Fills Track Info's tag editor; Save… there writes the tags	填入曲目資訊的標籤編輯器；在那裡「儲存…」即寫入標籤
+Find Beats	尋找拍點
+Fingerprint sent to AcoustID; lookups find it once it's processed.	指紋已傳送到 AcoustID；處理後即可查到。
+Fingerprinting {i} of {n}: {file}	正在產生指紋 {i}/{n}: {file}
+Fit	符合
+Fit cover space	符合封面區域
+Flats (Db)	降記號 (Db)
+Folder	資料夾
+Follow system	跟隨系統
+Font size:	字型大小:
+Format	格式
+Found {n} beats, ≈ {bpm} BPM. Metronome on (volume button).	找到 {n} 個拍點，≈ {bpm} BPM。節拍器已開啟（音量按鈕）。
+Found {n} beats. Metronome on (volume button).	找到 {n} 個拍點。節拍器已開啟（音量按鈕）。
+Full	完全
+Full Screen	全螢幕
+Full takes away all the noise it finds; a limit keeps some, for a more natural sound	「完全」會去除找到的所有雜訊；設定上限會保留一些，聲音更自然
+GPU (AMD, Intel and others, experimental)	GPU (AMD、Intel 等,實驗性)
+GPU (NVIDIA)	GPU (NVIDIA)
+GPU support	GPU 支援
+GPU support (AMD, Intel and others)	GPU 支援（AMD、Intel 等）
+Gain	增益
+Gain: custom…	增益：自訂…
+Gain: {db} dB	增益: {db} dB
+General	一般
+Genre	類型
+Get a key	取得金鑰
+Get your user key	取得你的使用者金鑰
+Gray	灰階
+HTDemucs v4 — drums, bass, other, vocals	HTDemucs v4 — 鼓、貝斯、其他、人聲
+Half the tempo	速度減半
+Hamming	漢明
+Hann	漢寧
+Held notes	延音
+High contrast	高對比
+Higher: fewer, surer notes start	越高：音符起點越少、越可靠
+Higher: notes end sooner, quiet ones are left out	越高：音符結束越早，輕音被略去
+Hiss	嘶聲
+Hop	跳距
+Identify Album	辨識專輯
+Identify Album…	辨識專輯…
+Identify Track	辨識曲目
+Identify Track needs one; it is free for non-commercial use.	「辨識曲目」需要它；非商業使用免費。
+Identify Track…	辨識曲目…
+Image	影像
+In order	依序
+Instrument range	樂器音域
+It already has that name.	已經是這個名稱。
+It's all quieter than that; nothing trimmed	全部都比這更輕；未修剪任何內容
+It's no longer in the Trash.	它已不在垃圾桶中。
+Its unsaved edits will be lost.	未儲存的編輯將會遺失。
+Keep current	保留目前的
+Key	調性
+Key ≈ {key}	調性 ≈ {key}
+Keyboard Shortcuts	鍵盤快速鍵
+Label size	標籤大小
+Language	語言
+Language:	語言:
+Length	長度
+Levels	音量範圍
+Licence ({n} of {count}) — {title}	授權（{n}/{count}）— {title}
+Licence — {title}	授權 — {title}
+Light	淺色
+Line	直線
+Local AI	本機 AI
+Look up	查詢
+Looking up…	正在查詢…
+Loop selection	循環選取範圍
+Loudness	響度
+Lower finds more beats, also where the model is unsure	越低找到的拍點越多，包括模型不確定之處
+Lowest frequency	最低頻率
+MIDI file is too big	MIDI 檔案太大
+MIDI file is too long	MIDI 檔案太長
+MIDI tempo	MIDI 速度
+MP3 can't hold {khz} kHz audio; save as FLAC or WAV instead	MP3 無法容納 {khz} kHz 音訊；請改存為 FLAC 或 WAV
+MP3 holds mono or stereo only; save as FLAC or WAV instead	MP3 只支援單聲道或立體聲；請改存為 FLAC 或 WAV
+MP3: LAME failed to start	MP3：LAME 無法啟動
+Magma	熔岩
+Make soundglass my default player	將 soundglass 設為我的預設播放器
+Make soundglass the default player	將 soundglass 設為預設播放器
+Matches on this album are listed first	此專輯中的相符項目排在前面
+Matches on this album are listed first; it isn't sent	此專輯中的相符項目排在前面；不會傳送它
+Melody to MIDI	旋律轉 MIDI
+Metronome	節拍器
+Mono	單聲道
+More overlap between the 7.8 s segments: smoother joins, slower	7.8 秒片段之間重疊更多：銜接更平順，速度更慢
+Moved to the Trash	已移到垃圾桶
+MusicBrainz can't be reached ({e})	無法連線到 MusicBrainz ({e})
+MusicBrainz…	MusicBrainz…
+Name	名稱
+Next	下一首
+No album cover	無專輯封面
+No album found.	找不到專輯。
+No audio files in {name}	{name} 中沒有音訊檔案
+No audio files or folders here	這裡沒有音訊檔案或資料夾
+No file open	未開啟檔案
+No match found.	找不到相符項目。
+No silence at the start or end to trim	開頭或結尾沒有可修剪的靜音
+None	無
+None (whole range)	無（全部範圍）
+None of these tags is set.	這些標籤都未設定。
+Normalize	正規化
+Normalize loudness	響度正規化
+Normalize peak	峰值正規化
+Normalize: custom loudness…	正規化：自訂響度…
+Normalize: custom peak…	正規化：自訂峰值…
+Normalize: {name} ({db} dBFS)	正規化: {name} ({db} dBFS)
+Normalize: {name} ({lufs} LUFS)	正規化: {name} ({lufs} LUFS)
+Not Now	以後再說
+Note threshold	音符閾值
+Notes	音符
+Notes from	音符從
+Nothing to normalize: it's silent	無需正規化：全是靜音
+OK	確定
+Octave numbers	八度編號
+Ogg Vorbis (q6)	Ogg Vorbis (q6)
+On the selection	作用於選取範圍
+On the whole track	作用於整首曲目
+Only fill empty tags	僅填入空白標籤
+Only how the file's beats are counted; the notes keep their times	僅改變檔案中拍點的計數方式；音符維持原有時間
+Only needed to contribute fingerprints to AcoustID.	僅在向 AcoustID 貢獻指紋時需要。
+Onset threshold	起音閾值
+Open Recent	最近開啟
+Open models folder	開啟模型資料夾
+Open project page	開啟專案頁面
+Open themes folder	開啟佈景主題資料夾
+Open…	開啟…
+Other lines	其他線條
+Output	輸出
+Overlap	重疊
+Parakeet TDT 0.6B v3 — 25 European languages, more accurate	Parakeet TDT 0.6B v3 — 25 種歐洲語言，更準確
+Pause	暫停
+Peak	峰值
+Peak at max	峰值達到最大
+Peak near max	峰值接近最大
+Piano synth	鋼琴合成
+Pitch-preserved speed change	保持音高的變速
+Play	播放
+Play order, {name}	播放順序，{name}
+Please read and accept the licence before downloading.	下載前請閱讀並接受授權。
+Position, seconds	位置，秒
+Practice	練習
+Practice mode	練習模式
+Press keys… (Esc to cancel)	請按鍵… (Esc 取消)
+Previous	上一首
+Quit	結束
+Rectangular	矩形
+Redo	取消復原
+Reload	重新載入
+Remember window size	記住視窗大小
+Remove	移除
+Remove Album Cover…	移除專輯封面…
+Remove Cover	移除封面
+Remove Noise	去除雜訊
+Remove album cover	移除專輯封面
+Remove the cover from this track only, or from {what}? The music itself isn't changed.	只從這首曲目移除封面，還是從{what}移除？音樂本身不會改變。
+Remove the cover from this track? The music itself isn't changed.	從這首曲目移除封面？音樂本身不會改變。
+Rename	重新命名
+Rename from Tags	依標籤重新命名
+Rename from Tags…	依標籤重新命名…
+Renamed to {name}	已重新命名為 {name}
+Rename…	重新命名…
+Repeat track	單曲重複
+Replace…	取代…
+Reset	重設
+Reset All Shortcuts	重設所有快速鍵
+Reset to defaults	還原預設值
+Restart soundglass to start using the GPU.	重新啟動 soundglass 以開始使用 GPU。
+Reverse	倒轉
+Run the AI tools on the graphics card ({mb} MB, NVIDIA's CUDA libraries).	在顯示卡上執行 AI 工具（{mb} MB，NVIDIA 的 CUDA 程式庫）。
+Running on the CPU…	正在 CPU 上執行…
+Running on the GPU…	正在 GPU 上執行…
+Same ({rate})	相同 ({rate})
+Sample rate	取樣率
+Save As	另存新檔
+Save As…	另存新檔…
+Save Copy	儲存副本
+Save Cover	儲存封面
+Save as Subtitles…	另存為字幕…
+Save as Text…	另存為文字…
+Save {name} as the cover of this track, or of {what}? Any cover they have now is replaced. The music itself isn't changed.	將 {name} 儲存為這首曲目的封面，還是{what}的封面？現有封面將被取代。音樂本身不會改變。
+Save {name} as the cover of this track? Any cover it has now is replaced. The music itself isn't changed.	將 {name} 儲存為這首曲目的封面？現有封面將被取代。音樂本身不會改變。
+Saved {name}	已儲存 {name}
+Saved {name}, but the tags could not be copied	已儲存 {name}，但無法複製標籤
+Save…	儲存…
+Saving failed	儲存失敗
+Saving {name}…	正在儲存 {name}…
+Scale shown	顯示的音階
+Seek bar:	進度列:
+Sends each file's fingerprint and length to AcoustID, one a second, and one recording's ID to MusicBrainz for the genre. Nothing else leaves this computer.	將每個檔案的指紋和長度傳送到 AcoustID（每秒一個），並將一筆錄音的 ID 傳送到 MusicBrainz 以取得類型。其他內容都不會離開這台電腦。
+Sends the fingerprint, its length and the MusicBrainz recording ID to AcoustID, with your user key. It is sent only if AcoustID doesn't know this fingerprint yet.	將指紋、其長度和 MusicBrainz 錄音 ID 連同你的使用者金鑰傳送到 AcoustID。僅在 AcoustID 還不認識此指紋時才傳送。
+Sends the title and artist to Discogs, and the chosen release's ID for its track list. Nothing else leaves this computer.	將標題和演出者傳送到 Discogs，並傳送所選發行版本的 ID 以取得曲目清單。其他內容都不會離開這台電腦。
+Sends the title and artist to English Wikipedia. Nothing else leaves this computer.	將標題和演出者傳送到英文維基百科。其他內容都不會離開這台電腦。
+Sends the title, artist and album to MusicBrainz, and the chosen match's ID for its genre. Nothing else leaves this computer.	將標題、演出者和專輯傳送到 MusicBrainz，並傳送所選相符項目的 ID 以取得類型。其他內容都不會離開這台電腦。
+Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer.	將此檔案的指紋和長度傳送到 AcoustID，並將所選相符項目的 ID 傳送到 MusicBrainz。其他內容都不會離開這台電腦。
+Sensitivity	靈敏度
+Settings	設定
+Settings: {model}	設定: {model}
+Settings…	設定…
+Sharps (C#)	升記號 (C#)
+Shortest note	最短音符
+Show Log	顯示記錄檔
+Show in Explorer	在檔案總管中顯示
+Show in File Manager	在檔案管理員中顯示
+Show or hide the chords along the top	顯示或隱藏頂部的和弦
+Show or hide the note lines	顯示或隱藏音符線
+Show the notes of {major} major	顯示 {major} 大調的音符
+Show the notes of {major} major, which {key} shares	顯示 {major} 大調的音符（{key} 與之相同）
+Show the whole track	顯示整首曲目
+Show the whole track and all frequencies	顯示整首曲目和所有頻率
+Shuffle	隨機播放
+Silence	靜音
+Silent pieces are left out, so nothing is made up there	靜音片段會被略過，所以那裡不會憑空產生內容
+Skip quieter than	略過低於此音量的
+Small: about 6 MB for a 4-minute stem	小：4 分鐘的音軌約 6 MB
+Space, ←, →, Page Up, Page Down, L (Loop selection), Esc and Enter are fixed.	空白鍵、←、→、Page Up、Page Down、L（循環選取範圍）、Esc 和 Enter 是固定的。
+Space, ←, →, Page Up, Page Down, L, Esc, Enter and Ctrl+C/X/V	空白鍵、←、→、Page Up、Page Down、L、Esc、Enter 和 Ctrl+C/X/V
+Spectrogram	頻譜圖
+Spectrogram settings	頻譜圖設定
+Spectrogram — {name}	頻譜圖 — {name}
+Spectrogram: click to play from there, drag to select, scroll to zoom, Ctrl+scroll to zoom the frequencies, right-drag to move around	頻譜圖：按一下從該處播放，拖曳選取，捲動縮放，Ctrl+捲動縮放頻率，右鍵拖曳移動
+Split into Stems	分離音軌
+Split into Stems takes mono or stereo tracks	「分離音軌」只接受單聲道或立體聲曲目
+Stereo	立體聲
+Stopped after {i} of {n}	在 {n} 個中的第 {i} 個後停止
+Strength	強度
+Subtitles	字幕
+Swap left and right	左右對調
+Tags	標籤
+Tags saved	標籤已儲存
+Task	工作
+Tempo	速度
+Tenor sax	次中音薩克斯風
+Text	文字
+That image can't be read.	無法讀取該圖片。
+That image can't be used as a cover.	該圖片無法用作封面。
+That is the original file; choose another name. The original is never changed.	這是原始檔案；請另選名稱。原始檔案永遠不會被改動。
+That isn't a valid file name.	這不是有效的檔案名稱。
+The AI runtime isn't installed yet.	AI 執行環境尚未安裝。
+The GPU couldn't be used, so the CPU is: {e}	無法使用 GPU,因此改用 CPU: {e}
+The ONNX file is StemSplit's export (weights stored at half precision), on Hugging Face.	該 ONNX 檔案是 StemSplit 的匯出版本（權重以半精度儲存），位於 Hugging Face。
+The ONNX file is grazder's torchDF streaming export, hosted by KimtOS on Hugging Face.	該 ONNX 檔案是 grazder 的 torchDF 串流匯出版本，由 KimtOS 託管於 Hugging Face。
+The ONNX file is musetric's export of JKU's final0 checkpoint, on Hugging Face.	該 ONNX 檔案是 musetric 匯出的 JKU final0 檢查點，位於 Hugging Face。
+The ONNX files are istupakov's int8 conversion for onnx-asr, on Hugging Face.	這些 ONNX 檔案是 istupakov 為 onnx-asr 做的 int8 轉換，位於 Hugging Face。
+The ONNX files are sherpa-onnx's int8 export (k2-fsa), on Hugging Face.	這些 ONNX 檔案是 sherpa-onnx (k2-fsa) 的 int8 匯出版本，位於 Hugging Face。
+The audio changes format partway.	音訊格式中途改變。
+The cover couldn't be written ({failed})	無法寫入封面 ({failed})
+The file has no audio.	檔案沒有音訊。
+The file is too short to identify.	檔案太短，無法辨識。
+The image is larger than 10 MB.	圖片大於 10 MB。
+The key spells its notes	依調號拼寫音名
+The lookup stopped.	查詢已停止。
+The original file is never changed.	原始檔案永遠不會被改動。
+The reply couldn't be read ({e})	無法讀取回應 ({e})
+The reply wasn't understood.	無法理解回應。
+Theme:	主題:
+This Track	這首曲目
+This file's tags can't be read.	無法讀取此檔案的標籤。
+This match has no MusicBrainz recording to link to.	此相符項目沒有可連結的 MusicBrainz 錄音。
+This track has edits that aren't saved. The original file is never changed.	這首曲目有未儲存的編輯。原始檔案永遠不會被改動。
+This track has no cover. Save {name} as the cover of {what}?	這首曲目沒有封面。將 {name} 儲存為{what}的封面？
+Time marks	時間標記
+Time-preserved pitch change	保持長度的變調
+Title	標題
+Title:	標題:
+Tonic line width	主音線寬度
+Tonic lines (C for all notes)	主音線（所有音符都以 C 為準）
+Too short or too quiet to measure its loudness	太短或太輕，無法測量響度
+Tools for musicians: loops, the spectrogram, tempo, key and chords	音樂人工具：循環、頻譜圖、速度、調性和和弦
+Track	曲目
+Track Info	曲目資訊
+Tracks that already have a cover get this one instead. The music itself isn't changed.	已有封面的曲目將改用此封面。音樂本身不會改變。
+Transcribe	轉錄
+Transcribe Speech	轉錄語音
+Transcript	轉錄文字
+Translate to English	翻譯成英文
+Trim silence	修剪靜音
+Trim silence below	修剪低於此值的靜音
+Trim silence: custom…	修剪靜音：自訂…
+Trim silence: {name} ({db} dB)	修剪靜音: {name} ({db} dB)
+Trumpet	小號
+Tuning A4	標準音 A4
+Type a title to search for.	輸入要搜尋的標題。
+Undo	復原
+Unsaved edits	未儲存的編輯
+Up one folder	上一層資料夾
+Use Match	使用此相符項目
+Use the GPU	使用 GPU
+Use the estimated key, {key}	使用估計的調性，{key}
+Use the estimated tempo	使用估計的速度
+User key:	使用者金鑰:
+View	檢視
+Visualiser	視覺效果
+Volume	音量
+Volume, {percent} %	音量，{percent} %
+Volume, {percent} %, metronome on	音量，{percent} %，節拍器已開啟
+Waveform	波形
+Waveform position	波形位置
+Waveform: click to play from there, drag to select, scroll to zoom, right-drag to move along	波形：按一下從該處播放，拖曳選取，捲動縮放，右鍵拖曳移動
+Welcome to soundglass	歡迎使用 soundglass
+Whisper large-v3-turbo — 99 languages, best, slow on a CPU	Whisper large-v3-turbo — 99 種語言，最好，在 CPU 上很慢
+Whisper small — 99 languages	Whisper small — 99 種語言
+Whole selection	整個選取範圍
+Wikipedia can't be reached ({e})	無法連線到維基百科 ({e})
+Wikipedia…	維基百科…
+Window function	窗函數
+Window size	窗長
+Window size:	視窗大小:
+Worldwide	全球
+Write	寫入
+Write tags	寫入標籤
+Write the tags into {name}? The audio isn't changed.	將標籤寫入 {name}？音訊不會改變。
+Writes only the tags that are empty in each file	只寫入每個檔案中空白的標籤
+Writes the album's tags into every matched file, replacing the tags there	將專輯標籤寫入每個相符的檔案，取代其中的標籤
+Writes the tags into the file; the audio isn't changed	將標籤寫入檔案；音訊不會改變
+Writing the tags failed	寫入標籤失敗
+Writing {i} of {n}	正在寫入 {i}/{n}
+Year	年份
+Your own themes go in the themes folder. Choosing a theme again reloads its file.	你自己的主題放在主題資料夾中。再次選擇某個主題會重新載入其檔案。
+Zoom in (scroll; right-drag to move along)	放大（捲動；右鍵拖曳移動）
+Zoom out	縮小
+a GPU library was missing from the download	下載內容缺少一個 GPU 程式庫
+add an AcoustID key in Settings	請在設定中新增 AcoustID 金鑰
+after Local AI → Find Beats	在「本機 AI → 尋找拍點」之後
+after loading	載入後
+all {n} tracks in this folder	此資料夾中的全部 {n} 首曲目
+already normal	已是正常
+another AI tool is running	另一個 AI 工具正在執行
+as it is	維持不變
+can't make a folder next to the track ({e})	無法在曲目旁建立資料夾 ({e})
+can't save a copy next to the original ({e})	無法在原始檔案旁儲存副本 ({e})
+choose at least one stem to write (AI Models → Settings)	請至少選擇一個要寫入的音軌（AI 模型 → 設定）
+close the tag editor first	請先關閉標籤編輯器
+hop {hop} for this length	此長度的跳距為 {hop}
+line {line}: {key}="{v}": invalid value	第 {line} 行: {key}="{v}": 無效的值
+measuring…	測量中…
+mode="{other}": invalid value	mode="{other}": 無效的值
+needs a model: Local AI → AI Models…	需要模型：本機 AI → AI 模型…
+needs the AI runtime: Local AI → Download AI Runtime…	需要 AI 執行環境：本機 AI → 下載 AI 執行環境…
+new image	新圖片
+no audio track	沒有音軌
+no channels	沒有聲道
+no data folder	沒有資料資料夾
+no file name	沒有檔案名稱
+no file open	未開啟檔案
+no notes were found	找不到音符
+no sample rate	沒有取樣率
+no speech was found	找不到語音
+not a supported audio file ({e})	不是支援的音訊檔案 ({e})
+not a transcription model	不是轉錄模型
+not found	找不到
+not found, left alone	找不到，維持不變
+nothing to redo	沒有可重做的動作
+nothing to undo	沒有可復原的動作
+part of the track could not be read	曲目的一部分無法讀取
+quality	品質
+removed	已移除
+saving tags…	正在儲存標籤…
+select a part in the Edit panel	請在編輯面板中選取一部分
+select at least half a second, or nothing for the whole track	請至少選取半秒，或不選取以作用於整首曲目
+silent	靜音
+soundglass is now the default player	soundglass 現在是預設播放器
+the AI tool failed	AI 工具失敗
+the AI tool stopped	AI 工具已停止
+the channel count changes mid-file	聲道數在檔案中途改變
+the encoder failed	編碼器失敗
+the model gave an unexpected output	模型給出了非預期的輸出
+the saved file doesn't read back ({e})	儲存的檔案無法讀回 ({e})
+the saved file reads back wrong ({frames} frames, expected {expected})	儲存的檔案讀回有誤（{frames} 影格，應為 {expected}）
+the settings aren't for this tool	這些設定不適用於此工具
+the sound device failed to open	無法開啟音效裝置
+the tag writer failed	標籤寫入器失敗
+the track has no audio	曲目沒有音訊
+the track is still loading	曲目仍在載入
+the track isn't fully loaded	曲目未完全載入
+this file can't be decoded	無法解碼此檔案
+this track	這首曲目
+to	到
+track {n}	第 {n} 首
+unknown error	未知的錯誤
+with unsaved edits, once loaded	帶有未儲存的編輯，載入後
+writing the tags would change the audio, so nothing was written	寫入標籤會改變音訊，因此未寫入任何內容
+{kbps} kb/s	{kbps} kb/s
+{keys} is already used by {other}	{keys} 已被 {other} 使用
+{key} major	{key} 大調
+{model} (installed)	{model}（已安裝）
+{name} isn't an audio file soundglass plays	{name} 不是 soundglass 能播放的音訊檔案
+{name} was changed by another program. Reload it?	{name} 被另一個程式修改了。要重新載入嗎？
+{name} will be moved to the Trash.	{name} 將被移到資源回收筒。
+{name}: custom…	{name}：自訂…
+{name}: whole selection	{name}：整個選取範圍
+{name}: {s} s	{name}: {s} 秒
+{n} of {total} tracks	{total} 首中的 {n} 首
+{ok} written, {bad} failed	已寫入 {ok}，失敗 {bad}
+{path}: bigger than 64 KiB	{path}: 大於 64 KiB
+{secs} s	{secs} 秒
+{sign}{n} semitone	{sign}{n} 個半音
+{sign}{n} semitones	{sign}{n} 個半音
+{task} (selection)	{task}（選取範圍）
+{what} installed.	已安裝 {what}。
+{what}: the download stopped.	{what}：下載已停止。
+→ {n}	→ {n}
+−14 streaming, −23 TV	−14 串流，−23 電視
+−60 silence, −40 hiss	−60 靜音，−40 嘶聲
