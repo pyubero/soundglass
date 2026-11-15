@@ -2443,8 +2443,8 @@ impl App {
                 }
                 let can = !busy && al.writing.is_none() && picked.iter().any(Option::is_some);
                 for (what, label, hover) in [
-                    (AlbumWrite::Apply, tr("Apply to All Tracks"), tr("Writes the album's tags into every matched file, replacing the tags there")),
                     (AlbumWrite::Fill, tr("Fill In All Tracks"), tr("Writes only the tags that are empty in each file")),
+                    (AlbumWrite::Apply, tr("Apply to All Tracks"), tr("Writes the album's tags into every matched file, replacing the tags there")),
                     (AlbumWrite::ApplyRename, tr("Apply and Rename"), tr("As Apply to All Tracks, then renames each file with the Rename from Tags pattern")),
                 ] {
                     let b = ui.add_enabled(can && blocked.is_none(), egui::Button::new(label)).on_hover_text(hover);
