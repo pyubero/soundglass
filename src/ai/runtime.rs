@@ -315,6 +315,7 @@ pub(super) fn fetch(url: &str, sha256: &str, dest: &Path, progress: &dyn Fn(f32)
             .timeout_connect(Some(std::time::Duration::from_secs(30)))
             .timeout_per_read(Some(std::time::Duration::from_secs(60)))
             .user_agent(concat!("soundglass/", env!("CARGO_PKG_VERSION")))
+            .middleware(crate::logfile::request)
             .build()
             .into();
         let reply = agent.get(url).call().map_err(|e| format!("the download failed ({e})"))?;

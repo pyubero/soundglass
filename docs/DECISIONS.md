@@ -318,3 +318,5 @@
 - 2026-11-15 — the log takes Info and up from soundglass, Warn and up from dependencies, and panics (also the ones catch_unwind hides); only soundglass's own warnings and errors are echoed to stderr
 - 2026-11-15 — `log` crate as a direct dependency, with our own small file logger and no env_logger (user's choice)
 - 2026-11-15 — Help menu with Show Log to reach the log file (user's choice)
+- 2026-11-15 — the log also records lag and dropouts: UI frames over 50 ms with named phases, a watchdog thread for frames running over 1 s, frames missing while playing and focused, and audio callback trouble counted in atomics (never logged from the callback) and logged by the UI at most once a second (user's choice: thorough enough for lag, freezes and dropouts that can't be reproduced)
+- 2026-11-15 — the log records each command and player action (not the volume sliders' steps) and online requests by host and path only, never the query (it can hold the AcoustID key)

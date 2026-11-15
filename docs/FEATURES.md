@@ -273,9 +273,21 @@ File → Settings… (Ctrl+,) has:
 
 Settings are saved in `~/.local/share/soundglass/app.ron` (Windows: `%APPDATA%\soundglass\data\`).
 
-A log for bug reports is kept next to it in `soundglass.log`: the start, each file opened, error
-messages, panics and warnings from the libraries. It's rotated to `soundglass.log.1` at 512 KB, so
-the two hold the most recent 0.5–1 MB. Help → Show Log opens its folder.
+A log for bug reports is kept next to it in `soundglass.log`, so a problem that can't be
+reproduced still leaves a trace. It's rotated to `soundglass.log.1` at 512 KB, so the two hold the
+most recent 0.5–1 MB. Help → Show Log opens its folder. It records:
+
+- the start: version, system, sound device (rate, channels) and graphics card;
+- each file opened, how long it took to decode and the memory in use after;
+- each menu command and player action (play, pause, seek, edits…), and every notice shown;
+- how long tempo, key and chords, saves, AI tools and online requests took (requests by host and
+  path only, never their query);
+- lag: any UI frame over 50 ms with the parts of the window that took the time; a frame that hasn't
+  ended after 1 s, while it's stuck (at 1, 2, 4… s); frames missing for over half a second while
+  playing in the focused window;
+- sound dropouts, at most once a second: underruns, late or slow audio callbacks, and callbacks that
+  had to play silence because the track wasn't ready;
+- errors, panics and warnings from the libraries.
 
 ## Themes
 

@@ -13,7 +13,7 @@ use rubato::{Adjustable, Async, FixedAsync, Resampler, SincInterpolationParamete
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering::Relaxed};
 use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 pub enum Cmd {
     /// Play this track from the start; drops the queued one.
@@ -82,6 +82,7 @@ pub struct Shared {
     pub playing: AtomicBool,
     /// When `pos` was stored: nanoseconds since `Player::epoch`.
     pub stamp: AtomicU64,
+    pub sound: crate::lag::Sound,
 }
 
 pub struct Player {
@@ -98,16 +99,20 @@ impl Player {
     pub fn open(t0: Instant, timings: bool, bench: bool) -> Result<Player, String> {
         let device = cpal::default_host().default_output_device().ok_or("no sound output device")?;
         let config: cpal::StreamConfig = device.default_output_config().map_err(|e| e.to_string())?.into();
+        let name = device.description().map_or_else(|e| e.to_string(), |d| d.to_string());
+        log::info!("sound output: {name}, {} Hz, {} channels, buffer {:?}", config.sample_rate, config.channels, config.buffer_size);
         let channels = config.channels as usize;
         let (tx, rx) = channel();
         let (retire, retired) = channel();
         let shared = Arc::new(Shared::default());
         let mut engine = Engine::new(config.sample_rate, retire);
         let (s, mut started, epoch) = (shared.clone(), false, Instant::now());
+        let (x, dev_rate, mut last) = (shared.clone(), config.sample_rate as f64, None);
         let stream = device
             .build_output_stream(
                 config,
                 move |out: &mut [f32], _: &cpal::OutputCallbackInfo| {
+                    let start = epoch.elapsed();
                     while let Ok(cmd) = rx.try_recv() {
                         engine.handle(cmd);
                     }
@@ -116,6 +121,13 @@ impl Player {
                     s.stamp.store(epoch.elapsed().as_nanos() as u64, Relaxed);
                     s.advanced.store(engine.advanced, Relaxed);
                     s.playing.store(engine.playing, Relaxed);
+                    // Counted only: logging here would lock and allocate on the audio thread.
+                    if std::mem::take(&mut engine.starved) {
+                        s.sound.starved.fetch_add(1, Relaxed);
+                    }
+                    let buffer = Duration::from_secs_f64((out.len() / channels.max(1)) as f64 / dev_rate);
+                    s.sound.callback(start, last, epoch.elapsed() - start, buffer);
+                    last = engine.playing.then_some(start);
                     if engine.heard && !started {
                         started = true;
                         // Time the first real samples reach the device; its own latency comes on top.
@@ -127,7 +139,10 @@ impl Player {
                         }
                     }
                 },
-                |e| log::error!("sound output: {e}"),
+                move |e: cpal::Error| match e.kind() {
+                    cpal::ErrorKind::Xrun => _ = x.sound.xruns.fetch_add(1, Relaxed),
+                    _ => log::error!("sound output: {e}"),
+                },
                 None,
             )
             .map_err(|e| format!("cannot open the sound device ({e})"))?;
@@ -164,6 +179,8 @@ struct Engine {
     playing: bool,
     /// Whether real samples (not silence) have been played yet.
     heard: bool,
+    /// This callback hit a part of the track not decoded yet, or busy, and played silence there.
+    starved: bool,
     /// The song's gain, applied in `pull` so the clicks keep their own.
     volume: f32,
     click_volume: f32,
@@ -194,7 +211,7 @@ impl Engine {
         let output = vec![0.0; resampler.output_frames_max() * 2];
         let stretched = input.clone();
         Engine {
-            cur: None, next: None, edit: None, clicks: None, region: None, looping: false, pos: 0, advanced: 0, playing: false, heard: false, volume: 1.0, click_volume: 1.0, speed: Speed::NORMAL,
+            cur: None, next: None, edit: None, clicks: None, region: None, looping: false, pos: 0, advanced: 0, playing: false, heard: false, starved: false, volume: 1.0, click_volume: 1.0, speed: Speed::NORMAL,
             wsola: Some(Wsola::new(2, dev_rate)), stretched,
             dev_rate, rate: dev_rate, resampler, input, output, out_pos: 0, out_len: 0, retire,
         }
@@ -382,12 +399,16 @@ impl Engine {
                         }
                     });
                     if k == 0 {
+                        self.starved = true;
                         break;
                     }
                     k
                 }
                 None => {
-                    let Some((chunk, offset)) = track.chunk_at(self.pos) else { break };
+                    let Some((chunk, offset)) = track.chunk_at(self.pos) else {
+                        self.starved = true;
+                        break;
+                    };
                     let n = want.min(chunk.len() / channels - offset);
                     for (k, frame) in chunk[offset * channels..(offset + n) * channels].chunks_exact(channels).enumerate() {
                         (self.input[(i + k) * 2], self.input[(i + k) * 2 + 1]) = stereo(frame);

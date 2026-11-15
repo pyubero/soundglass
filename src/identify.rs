@@ -564,6 +564,7 @@ fn agent() -> &'static ureq::Agent {
             // ureq shares this between the host's addresses: 10 s let two dead IPv6 ones take 8 s.
             .timeout_connect(Some(Duration::from_secs(2)))
             .user_agent(format!("soundglass/{} ( {CONTACT} )", env!("CARGO_PKG_VERSION")))
+            .middleware(crate::logfile::request)
             .build()
             .into()
     })

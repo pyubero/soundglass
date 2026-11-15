@@ -72,6 +72,17 @@ impl log::Log for Logger {
     fn flush(&self) {}
 }
 
+/// ureq middleware: logs each request's host and path (not its query, which can hold a key),
+/// its status and how long the reply took to start.
+pub fn request(req: ureq::http::Request<ureq::SendBody>, next: ureq::middleware::MiddlewareNext) -> Result<ureq::http::Response<ureq::Body>, ureq::Error> {
+    let (method, host, path) = (req.method().clone(), req.uri().host().unwrap_or_default().to_string(), req.uri().path().to_string());
+    let t0 = std::time::Instant::now();
+    let reply = next.handle(req);
+    let status = reply.as_ref().map_or_else(|e| e.to_string(), |r| r.status().to_string());
+    log::info!("{method} {host}{path}: {status} in {} ms", t0.elapsed().as_millis());
+    reply
+}
+
 /// Starts the log and logs panics, including the ones `catch_unwind` turns into messages.
 pub fn init() {
     let Some(writer) = path().and_then(|p| Writer::open(p, LIMIT).ok()) else { return };

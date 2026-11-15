@@ -142,9 +142,12 @@ impl Ai {
         std::thread::spawn(move || {
             crate::track::background();
             let report = |x: f32| p.store(x.to_bits(), Ordering::Relaxed);
+            log::info!("{task:?} with {} started", model.file);
+            let t0 = std::time::Instant::now();
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run_tool(task, model, &tune, &track, &edit, selection, kind, &report, &c))).unwrap_or_else(|_| Err(tr("the AI tool failed").into()));
-            if let Err(e) = &result {
-                log::warn!("{task:?} with {}: {e}", model.file);
+            match &result {
+                Ok(_) => log::info!("{task:?} with {} done in {:.1} s", model.file, t0.elapsed().as_secs_f32()),
+                Err(e) => log::warn!("{task:?} with {} after {:.1} s: {e}", model.file, t0.elapsed().as_secs_f32()),
             }
             let _ = tx.send(result);
             ctx.request_repaint();

@@ -8,6 +8,7 @@ mod folder;
 mod i18n;
 mod identify;
 mod keys;
+mod lag;
 mod logfile;
 mod loudness;
 mod media_keys;
@@ -53,6 +54,7 @@ fn app_icon() -> Arc<egui::IconData> {
 fn main() -> eframe::Result {
     let t0 = Instant::now();
     logfile::init();
+    lag::watch();
     log::info!("soundglass {} on {} {}", env!("CARGO_PKG_VERSION"), std::env::consts::OS, std::env::consts::ARCH);
     let (mut timings, mut bench, mut path) = (false, false, None);
     // `args()` panics on a file name that isn't valid Unicode.
@@ -105,6 +107,12 @@ fn main() -> eframe::Result {
     let (window_size, info_width, edit_height, folder_width) = (remembered, settings.info_width, settings.edit_height, settings.folder_width);
     eframe::run_native("soundglass", options, Box::new(move |cc| {
         let _ = ctx.set(cc.egui_ctx.clone());
+        if let Some(gl) = &cc.gl {
+            use eframe::glow::HasContext;
+            // SAFETY: plain string queries on the context eframe just made current.
+            let (renderer, version) = unsafe { (gl.get_parameter_string(eframe::glow::RENDERER), gl.get_parameter_string(eframe::glow::VERSION)) };
+            log::info!("graphics: {renderer}, OpenGL {version}");
+        }
         let mut recent: Vec<PathBuf> = cc.storage.and_then(|s| s.get_string("recent")).unwrap_or_default().lines().map(PathBuf::from).collect();
         if !track.path.as_os_str().is_empty() {
             push_recent(&mut recent, &track.path);
@@ -439,7 +447,7 @@ impl TagEditor {
 }
 
 /// What the widgets asked for this frame, applied once drawing is done.
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum Action {
     Previous,
     Next,
@@ -619,6 +627,8 @@ impl eframe::App for App {
 
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
+        let focused = ctx.input(|i| i.viewport().focused.unwrap_or(true));
+        lag::frame_start(focused);
         // eframe keeps the window hidden until the first frame is painted, so the window is
         // visible from the second frame on. shortcut: the compositor maps it a few ms after that;
         // winit has no "now on screen" event, so this is the closest signal there is.
@@ -632,6 +642,9 @@ impl eframe::App for App {
             if let Ok(p) = &self.player {
                 p.send(Cmd::Play);
             }
+        }
+        if let Ok(p) = &self.player {
+            p.shared.sound.report();
         }
         self.follow_player();
         self.follow_changes();
@@ -653,12 +666,16 @@ impl eframe::App for App {
             let (pos, ago) = p.position();
             if playing { display_pos(pos, ago, rate, self.speed.source(), self.edit_view.selection, self.looping, len) } else { pos }
         });
-        if playing && (self.show_edit || self.show_spectrum || self.settings.show_waveform || self.settings.visualiser) {
+        let asked = if playing && (self.show_edit || self.show_spectrum || self.settings.show_waveform || self.settings.visualiser) {
             // About 30 fps: smooth enough for the playhead, cheaper than redrawing at the screen's rate (user's choice).
-            ctx.request_repaint_after(Duration::from_millis(WAVE_REPAINT_MS));
-        } else if playing {
-            ctx.request_repaint_after(Duration::from_millis(250));
+            Some(Duration::from_millis(WAVE_REPAINT_MS))
+        } else {
+            playing.then_some(Duration::from_millis(250))
+        };
+        if let Some(after) = asked {
+            ctx.request_repaint_after(after);
         }
+        lag::phase("keys");
 
         let mut actions = Vec::new();
         let keys = keys::shortcuts(&self.settings.shortcuts);
@@ -730,6 +747,7 @@ impl eframe::App for App {
             }
         };
         let no_file = (!self.has_track()).then_some(tr("no file open"));
+        lag::phase("menus");
         // No menu bar in full screen.
         (!fullscreen).then(|| egui::Panel::top("menu").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
@@ -853,8 +871,10 @@ impl eframe::App for App {
             });
         }));
 
+        lag::phase("commands");
         // What the menus and keys asked for, each only while its menu item would be enabled.
         for command in commands {
+            log::info!("command {command:?}");
             match command {
                 Command::Open => open_file = true,
                 Command::Close | Command::Quit => ctx.send_viewport_cmd(egui::ViewportCommand::Close),
@@ -909,10 +929,12 @@ impl eframe::App for App {
             }
         }
 
+        lag::phase("cover");
         let cover = if self.settings.visualiser { Some(self.visual.frame(&ctx, &self.track, &edit, pos, rate, playing)) } else { self.cover_texture(&ctx) };
         let tags = self.track.tags.get().cloned().unwrap_or_default();
         let error = self.track.error.lock().unwrap().clone().or_else(|| self.player.as_ref().err().cloned());
         let has_next = self.neighbour(false).is_some();
+        lag::phase("identify");
         // A match taken into the tag editor shows Track Info, where it is.
         if self.identify_window(&ctx) && !self.show_info {
             toggle_info = true;
@@ -941,6 +963,7 @@ impl eframe::App for App {
                 ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::vec2(size[0], size[1])));
             }
         }
+        lag::phase("edit panel");
         // Before Track Info, so it spans the whole width.
         if self.show_edit {
             let panel = egui::Panel::bottom("edit").resizable(true).size_range(100.0..=400.0).default_size(self.edit_height).show(ui, |ui| {
@@ -951,6 +974,7 @@ impl eframe::App for App {
                 actions.push(Action::Seek(frame));
             }
         }
+        lag::phase("track info");
         if self.show_info {
             let size = std::fs::metadata(&self.track.path).map(|m| m.len()).ok();
             let panel = egui::Panel::left("info").resizable(true).size_range(240.0..=360.0).default_size(self.info_width).show(ui, |ui| {
@@ -971,6 +995,7 @@ impl eframe::App for App {
             }
             self.info_width = panel.response.rect.width();
         }
+        lag::phase("folder panel");
         if self.show_folder {
             let panel = egui::Panel::right("folder").resizable(true).size_range(200.0..=400.0).default_size(self.folder_width).show(ui, |ui| self.folder_panel(ui));
             self.folder_width = panel.response.rect.width();
@@ -981,6 +1006,7 @@ impl eframe::App for App {
                 }
             }
         }
+        lag::phase("player view");
         egui::CentralPanel::default().show(ui, |ui| {
             if !self.has_track() {
                 ui.vertical_centered(|ui| {
@@ -1029,37 +1055,59 @@ impl eframe::App for App {
             });
         });
 
+        lag::phase("settings window");
         self.settings_window(&ctx);
+        lag::phase("speed window");
         if let Some(speed) = self.speed_window(&ctx) {
             actions.push(Action::Speed(speed));
         }
+        lag::phase("fx window");
         if let Some(fx) = self.fx_window(&ctx) {
             actions.push(Action::Fx(fx));
         }
+        lag::phase("save copy");
         if save_copy {
             self.save_copy();
         }
+        lag::phase("follow save");
         self.follow_save(&ctx);
+        lag::phase("unsaved window");
         self.unsaved_window(&ctx);
+        lag::phase("save window");
         self.save_window(&ctx);
+        lag::phase("tags confirm");
         self.tags_confirm(&ctx);
+        lag::phase("cover offer modal");
         self.cover_offer_modal(&ctx);
+        lag::phase("contribute modal");
         self.contribute_modal(&ctx);
+        lag::phase("follow tags");
         self.follow_tags(&ctx);
+        lag::phase("rename window");
         self.rename_window(&ctx);
+        lag::phase("identify album window");
         self.identify_album_window(&ctx);
+        lag::phase("rename file window");
         self.rename_file_window(&ctx);
+        lag::phase("delete window");
         self.delete_window(&ctx);
+        lag::phase("changed window");
         self.changed_window(&ctx, pos);
+        lag::phase("default window");
         self.default_window(&ctx);
+        lag::phase("shortcuts window");
         self.shortcuts_window(&ctx);
+        lag::phase("start AI tool");
         if let Some(task) = ai_tool {
             self.ai.start_tool(task, self.track.clone(), edit.clone(), self.edit_view.selection, &self.settings.ai, &ctx);
         }
+        lag::phase("AI windows");
         if let Some(path) = self.ai.windows(&ctx, &mut self.settings.ai) {
             self.open(path);
         }
+        lag::phase("spectrogram");
         actions.extend(self.spectrum_window(&ctx, &edit, pos, len, rate, playing));
+        lag::phase("opening or file dialog");
         if let Some(path) = open_recent {
             self.open(path);
         }
@@ -1077,7 +1125,12 @@ impl eframe::App for App {
             let texture = self.cover_texture(&ctx);
             self.cover_offer = Some(CoverOffer { image: PathBuf::new(), cover: tags::Cover::Remove, files: folder::list_folder(&self.track.path), texture, manual: true });
         }
+        lag::phase("actions");
         for action in actions {
+            // Not the sliders' every step.
+            if !matches!(action, Action::Volume(_) | Action::ClickVolume(_)) {
+                log::info!("action {action:?}");
+            }
             self.apply(action, pos, len);
         }
         // The Metronome follows the track, its edits and its beats.
@@ -1101,6 +1154,7 @@ impl eframe::App for App {
             p.send(Cmd::Region(region.0, region.1));
             self.sent_region = Some(region);
         }
+        lag::frame_end(asked.filter(|_| focused));
     }
 }
 
@@ -1742,10 +1796,11 @@ impl App {
         self.forget_edits();
     }
 
-    /// Shows a notice under the waveform; errors also go to the log.
+    /// Shows a notice under the waveform, and logs it.
     fn notify(&mut self, notice: Result<String, String>, time: f64) {
-        if let Err(e) = &notice {
-            log::warn!("{e}");
+        match &notice {
+            Ok(m) => log::info!("{m}"),
+            Err(e) => log::warn!("{e}"),
         }
         self.save_notice = Some((notice, time));
     }
@@ -1913,7 +1968,9 @@ impl App {
         let draft = self.tag_editor.as_ref().and_then(|e| e.changes()).cloned();
         std::thread::spawn(move || {
             track::background();
+            let t0 = Instant::now();
             let result = save::save(&track, &written, choice, &path, draft.as_ref());
+            log::info!("save {} in {} ms: {}", path.display(), t0.elapsed().as_millis(), result.as_ref().map_or_else(|e| e.clone(), |_| "done".into()));
             if result.is_err() && reserved {
                 let _ = std::fs::remove_file(&path);
             }

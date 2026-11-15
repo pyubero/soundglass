@@ -117,6 +117,7 @@ impl Track {
         let track = Arc::new(Track::empty(path));
         let t = track.clone();
         std::thread::spawn(move || {
+            let t0 = std::time::Instant::now();
             if ahead {
                 background();
             }
@@ -169,6 +170,7 @@ impl Track {
                 *t.error.lock().unwrap() = Some(e);
             }
             t.done.store(true, Relaxed);
+            log::info!("decoded {}{} in {} ms{}", t.path.display(), if ahead { " (ahead)" } else { "" }, t0.elapsed().as_millis(), crate::lag::memory());
             notify();
             background();
             if let Some(format) = t.format.get() {
@@ -199,10 +201,14 @@ impl Track {
             if Arc::strong_count(&t) == 1 {
                 return;
             }
+            let t0 = std::time::Instant::now();
             let _ = t.tempo.set(crate::tempo::estimate(&mono, format.rate));
+            log::info!("tempo and key in {} ms", t0.elapsed().as_millis());
             notify();
             if Arc::strong_count(&t) > 1 {
+                let t0 = std::time::Instant::now();
                 let _ = t.chords.set(crate::chords::find(&mono, format.rate).into());
+                log::info!("chords in {} ms", t0.elapsed().as_millis());
                 notify();
             }
         });
