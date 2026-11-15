@@ -1,6 +1,6 @@
 # Music app (working name) — Product Brief
 
-*Status: draft, 2026-11-11; split into v1 (player) and v2 (Practice mode) 2026-11-12; v0.1.0 released 2026-11-15; regrouped into v1–v4 2026-11-15.*
+*Status: draft, 2026-11-11; split into v1 (player) and v2 (Practice mode) 2026-11-12; v0.1.0 released 2026-11-15; regrouped into v1–v4 2026-11-15; v1.0.0 (v1 complete) released 2026-11-15.*
 
 ## What it is
 A small, fast music player for Linux and Windows, written in Rust, with a quick editor: lightview for sound. Open a file and hear it at once, move through its folder, do the few small jobs people usually open Audacity for, and save the result to a copy.
@@ -32,7 +32,7 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 ## v1: Player
 
 ### Packaging
-- **.deb and .msi.** Like lightview's `package-deb.sh` and WiX file: they install only the binary, the .desktop file and the icon; every user file (settings, recent files, themes, AI models) lives in the data folder, so the packages and `install.sh` behave the same. Done: `package-deb.sh`, `packaging/windows/soundglass.wxs` and `.github/workflows/build.yml`; 0.1.0 built and installed on Linux and Windows.
+- **.deb and .msi.** Like lightview's `package-deb.sh` and WiX file: they install only the binary, the .desktop file and the icon; every user file (settings, recent files, themes, AI models) lives in the data folder, so the packages and `install.sh` behave the same. Done: `package-deb.sh`, `packaging/windows/soundglass.wxs` and `.github/workflows/build.yml`; 0.1.0 built and installed on Linux and Windows; 1.0.0 is the v1 release.
 
 ### 1. Spike
 - **Play from the command line.** `app song.mp3` opens a window and plays. We measure the time to first sound.

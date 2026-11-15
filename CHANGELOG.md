@@ -6,6 +6,10 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-15
+
+The player (v1) is complete.
+
 ### Added
 
 - MIDI files (`.mid`, `.midi`) play with a built-in piano, and Save As renders them to audio.
@@ -86,5 +90,6 @@ The first release: a small, fast music player and quick editor for Linux and Win
 - A `.deb` for Ubuntu 22.04, Debian 12 or newer (64-bit), and a `.msi` installer for Windows 10
   and 11 (64-bit).
 
-[Unreleased]: https://github.com/pyubero/soundglass/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/pyubero/soundglass/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/pyubero/soundglass/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/pyubero/soundglass/releases/tag/v0.1.0

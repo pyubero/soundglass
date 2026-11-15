@@ -2,7 +2,7 @@
   The Windows installer (WiX Toolset v5): soundglass into Program Files, a Start menu entry, and
   registration as an audio player, so it shows up in Settings → Default apps (Windows doesn't let
   an installer make itself the default). Built by .github/workflows/build.yml:
-    wix build packaging/windows/soundglass.wxs -arch x64 -d Version=0.1.0 -d Dist=dist -o soundglass.msi
+    wix build packaging/windows/soundglass.wxs -arch x64 -d Version=1.0.0 -d Dist=dist -o soundglass.msi
   `Dist` holds soundglass.exe and LICENSES.txt. The extensions are src/folder.rs's EXTENSIONS
   (a test there fails if one is missing here).
 -->

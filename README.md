@@ -18,8 +18,8 @@ no telemetry, no account, and it never goes online on its own.
 
 ## Status
 
-**0.1.0 is the first release** (2026-11-15). The player (v1) is usable on Linux and Windows:
-playing, browsing a folder, quick edits and effects, speed and pitch, tags and the local AI tools.
+**1.0.0** (2026-11-15) completes the player (v1) on Linux and Windows: playing, browsing a folder,
+quick edits and effects, speed and pitch, tags, MIDI files, media keys and the local AI tools.
 Practice mode (v2), the tools for musicians, is in progress. [`CHANGELOG.md`](CHANGELOG.md) lists
 what each release brings, and [`PRODUCT_BRIEF.md`](docs/PRODUCT_BRIEF.md) has the plan.
 
@@ -64,7 +64,7 @@ keeps them.
 ### Ubuntu 22.04, Debian 12 or newer (64-bit Intel/AMD)
 
 1. Download the `.deb` file from the [Releases](../../releases) page.
-2. Install it: `sudo apt install ./soundglass_0.1.0_amd64.deb`, or double-click it.
+2. Install it: `sudo apt install ./soundglass_1.0.0_amd64.deb`, or double-click it.
 3. Open soundglass from your applications menu. The first time, it offers to become your default
    player (File → Settings… → Make soundglass the default player does it later).
 
@@ -72,7 +72,7 @@ To uninstall, run `sudo apt remove soundglass`.
 
 ### Windows 10 or 11 (64-bit)
 
-Download `soundglass-0.1.0-x64.msi` from the [Releases](../../releases) page and run it. The
+Download `soundglass-1.0.0-x64.msi` from the [Releases](../../releases) page and run it. The
 installer isn't signed, so Windows may warn about it first: choose More info → Run anyway. Then
 choose soundglass in Settings → Default apps (Windows doesn't let an installer make itself the
 default).

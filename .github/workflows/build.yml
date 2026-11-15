@@ -1,4 +1,4 @@
-# Builds and tests soundglass for Linux and Windows. Pushing a tag like `v0.1.0` also publishes a
+# Builds and tests soundglass for Linux and Windows. Pushing a tag like `v1.0.0` also publishes a
 # GitHub release with the Linux .deb and the Windows installer (.msi). Can also be run by
 # hand from the Actions tab (it then only keeps the files as workflow artifacts).
 name: build

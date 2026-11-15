@@ -308,3 +308,4 @@
 - 2026-11-15 — every temp file is flushed (save::sync) before it is renamed over its target: tag writes replace originals with no backup (user's choice)
 - 2026-11-15 — the player's resampler ratio goes up to 24× (8 kHz at half speed on a 96 kHz device), up from 10× (user's choice)
 - 2026-11-15 — tag writes resolve symlinks and write the real file, keeping the link (user's choice)
+- 2026-11-15 — the release after 0.1.0 is 1.0.0, since v1 (the player) is complete; Practice mode (v2) keeps growing in 1.x (user's choice)
