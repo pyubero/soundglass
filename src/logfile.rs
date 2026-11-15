@@ -4,11 +4,57 @@
 
 use std::fs::{File, OpenOptions};
 use std::io::Write;
-use std::path::PathBuf;
+use std::collections::VecDeque;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const LIMIT: u64 = 512 * 1024;
+/// How many names `private` remembers; the oldest go first.
+const NAMES: usize = 2000;
+/// Shorter names are left alone: they would blank ordinary words.
+const SHORTEST: usize = 4;
+
+/// File and folder names kept out of the log, with what's written instead.
+static PRIVATE: Mutex<VecDeque<(String, &'static str)>> = Mutex::new(VecDeque::new());
+
+/// Keeps `path` out of the log: its full path, name, stem and folder are written as `<file>` or
+/// `<folder>`, wherever they turn up (our messages, errors, panics, the libraries' warnings).
+pub fn private(path: &Path) {
+    let lossy = |s: &std::ffi::OsStr| s.to_string_lossy().into_owned();
+    let dir = path.parent();
+    let names = [
+        Some((path.to_string_lossy().into_owned(), "<file>")),
+        dir.map(|d| (d.to_string_lossy().into_owned(), "<folder>")),
+        path.file_name().map(|n| (lossy(n), "<file>")),
+        path.file_stem().map(|n| (lossy(n), "<file>")),
+        dir.and_then(|d| d.file_name()).map(|n| (lossy(n), "<folder>")),
+    ];
+    let mut known = PRIVATE.lock().unwrap_or_else(|e| e.into_inner());
+    for (name, tag) in names.into_iter().flatten() {
+        if name.chars().count() >= SHORTEST && !known.iter().any(|(k, _)| *k == name) {
+            known.push_back((name, tag));
+        }
+    }
+    while known.len() > NAMES {
+        known.pop_front();
+    }
+}
+
+/// `line` with the private names blanked, longest first so a full path goes before the names in
+/// it, and the home folder as `~`.
+fn scrub(line: String) -> String {
+    let known = PRIVATE.lock().unwrap_or_else(|e| e.into_inner());
+    let mut names: Vec<&(String, &str)> = known.iter().filter(|(k, _)| line.contains(k.as_str())).collect();
+    names.sort_by_key(|(k, _)| std::cmp::Reverse(k.len()));
+    let mut line = names.into_iter().fold(line, |l, (k, tag)| l.replace(k.as_str(), tag));
+    if let Some(home) = std::env::var_os(if cfg!(windows) { "USERPROFILE" } else { "HOME" }).map(|h| h.to_string_lossy().into_owned())
+        && home.len() > 1
+    {
+        line = line.replace(&home, "~");
+    }
+    line
+}
 
 pub fn path() -> Option<PathBuf> {
     eframe::storage_dir("soundglass").map(|d| d.join("soundglass.log"))
@@ -63,7 +109,7 @@ impl log::Log for Logger {
         if r.level() <= log::Level::Warn && r.target().starts_with("soundglass") {
             eprintln!("soundglass: {}", r.args());
         }
-        let line = format!("{} {} {}: {}\n", timestamp(SystemTime::now()), r.level(), r.target(), r.args());
+        let line = scrub(format!("{} {} {}: {}\n", timestamp(SystemTime::now()), r.level(), r.target(), r.args()));
         if let Ok(mut w) = self.0.lock() {
             w.write(&line);
         }
@@ -125,6 +171,15 @@ mod tests {
         assert_eq!(timestamp(UNIX_EPOCH), "1970-01-01 00:00:00Z");
         // 2024-02-29 12:34:56 UTC, a leap day.
         assert_eq!(timestamp(UNIX_EPOCH + std::time::Duration::from_secs(1_709_210_096)), "2024-02-29 12:34:56Z");
+    }
+
+    #[test]
+    fn private_names_are_blanked() {
+        private(Path::new("/music/Some Album/03 - A Song.flac"));
+        private(Path::new("/x/ab.mp3"));
+        let line = scrub("can't read /music/Some Album/03 - A Song.flac; 03 - A Song.flac in Some Album; 03 - A Song again; ab stays\n".into());
+        assert_eq!(line, "can't read <file>; <file> in <folder>; <file> again; ab stays\n");
+        assert!(!scrub("/music/Some Album/other.mp3".into()).contains("Some Album"));
     }
 
     #[test]

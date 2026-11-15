@@ -100,9 +100,37 @@ pub struct Track {
 }
 
 impl Track {
+    /// What the log says about a file instead of its name: `.mp3, MPEG audio, mp3, 44100 Hz,
+    /// 2 channels, 16 bits, 3:12, 4.5 MB, 12 tags`, leaving out what isn't known.
+    fn properties(&self) -> String {
+        let ext = self.path.extension().map(|e| format!(".{}", e.to_string_lossy().to_lowercase()));
+        let info = self.info.get();
+        let format = self.format.get();
+        let length = format.map(|f| {
+            let s = self.decoded() / f.rate.max(1) as u64;
+            format!("{}:{:02}", s / 60, s % 60)
+        });
+        let size = std::fs::metadata(&self.path).ok().map(|m| format!("{:.1} MB", m.len() as f64 / 1e6));
+        [
+            ext,
+            info.map(|i| i.container.clone()),
+            info.map(|i| i.codec.clone()),
+            format.map(|f| format!("{} Hz", f.rate)),
+            format.map(|f| format!("{} channels", f.channels)),
+            info.and_then(|i| i.bits).map(|b| format!("{b} bits")),
+            length,
+            size,
+            info.map(|i| format!("{} tags", i.raw.len())),
+        ]
+        .into_iter()
+        .flatten()
+        .filter(|s| !s.is_empty())
+        .collect::<Vec<_>>()
+        .join(", ")
+    }
+
     /// Starts decoding `path` on its own thread; `notify` runs whenever more audio is ready.
     pub fn load(path: PathBuf, notify: impl Fn() + Send + Sync + 'static) -> Arc<Track> {
-        log::info!("open {}", path.display());
         Track::start(path, notify, false)
     }
 
@@ -113,8 +141,10 @@ impl Track {
     }
 
     fn start(path: PathBuf, notify: impl Fn() + Send + Sync + 'static, ahead: bool) -> Arc<Track> {
+        crate::logfile::private(&path);
         let notify = Arc::new(notify);
         let track = Arc::new(Track::empty(path));
+        log::info!("open{}: {}", if ahead { " ahead" } else { "" }, track.properties());
         let t = track.clone();
         std::thread::spawn(move || {
             let t0 = std::time::Instant::now();
@@ -166,11 +196,11 @@ impl Track {
             if let Err(e) = result.and_then(|_| t.format.get().map(|_| ()).ok_or_else(|| "the file has no audio".to_string()))
                 && !e.is_empty()
             {
-                log::error!("{}: {e}", t.path.display());
+                log::error!("decoding failed: {e}");
                 *t.error.lock().unwrap() = Some(e);
             }
             t.done.store(true, Relaxed);
-            log::info!("decoded {}{} in {} ms{}", t.path.display(), if ahead { " (ahead)" } else { "" }, t0.elapsed().as_millis(), crate::lag::memory());
+            log::info!("decoded{} in {} ms: {}{}", if ahead { " ahead" } else { "" }, t0.elapsed().as_millis(), t.properties(), crate::lag::memory());
             notify();
             background();
             if let Some(format) = t.format.get() {
@@ -237,6 +267,7 @@ impl Track {
     /// The same decoded audio under `path`, with the tags, info and cover read afresh from it:
     /// after its tags are rewritten or it is renamed. The audio itself must be unchanged.
     pub fn relabel(&self, path: PathBuf, notify: impl Fn() + Send + Sync + 'static) -> Result<Arc<Track>, String> {
+        crate::logfile::private(&path);
         // Its decoder fills only this track: a copy taken now would stay part-decoded forever.
         if !self.done() {
             return Err(tr("the track is still loading").into());

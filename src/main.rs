@@ -1794,11 +1794,11 @@ impl App {
         self.forget_edits();
     }
 
-    /// Shows a notice under the waveform, and logs it.
+    /// Shows a notice under the waveform; errors also go to the log.
     fn notify(&mut self, notice: Result<String, String>, time: f64) {
-        match &notice {
-            Ok(m) => log::info!("{m}"),
-            Err(e) => log::warn!("{e}"),
+        // Not the messages that worked: they name files, and the command or action is logged already.
+        if let Err(e) = &notice {
+            log::warn!("{e}");
         }
         self.save_notice = Some((notice, time));
     }
@@ -1964,11 +1964,12 @@ impl App {
         let (track, edit, notify) = (self.track.clone(), self.edit(), repaint(&self.ctx));
         let (written, path) = (edit.clone(), target.clone());
         let draft = self.tag_editor.as_ref().and_then(|e| e.changes()).cloned();
+        logfile::private(&target);
         std::thread::spawn(move || {
             track::background();
             let t0 = Instant::now();
             let result = save::save(&track, &written, choice, &path, draft.as_ref());
-            log::info!("save {} in {} ms: {}", path.display(), t0.elapsed().as_millis(), result.as_ref().map_or_else(|e| e.clone(), |_| "done".into()));
+            log::info!("save as {choice:?} in {} ms: {}", t0.elapsed().as_millis(), result.as_ref().map_or_else(|e| e.clone(), |_| "done".into()));
             if result.is_err() && reserved {
                 let _ = std::fs::remove_file(&path);
             }
@@ -3148,6 +3149,7 @@ impl App {
 
     /// A file dropped on the window plays (asking first about unsaved edits); a folder plays its first file.
     fn open_dropped(&mut self, path: PathBuf, ctx: &egui::Context) {
+        logfile::private(&path);
         let name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
         let found = if path.is_dir() {
             folder::list_dir(&path).ok().and_then(|(_, files)| files.into_iter().next()).ok_or(trf("No audio files in {name}", &[("name", &name)]))

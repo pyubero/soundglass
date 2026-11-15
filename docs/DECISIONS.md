@@ -322,3 +322,4 @@
 - 2026-11-15 — the log records each command and player action (not the volume sliders' steps) and online requests by host and path only, never the query (it can hold the AcoustID key)
 - 2026-11-15 — File → Show Log, between Settings… and Quit, bindable like every menu item; no Help menu (user's choice)
 - 2026-11-15 — privacy wording: "sends nothing" instead of "collects nothing", since the local log keeps file names and times; every doc that mentions the log says it is never sent (user's choice)
+- 2026-11-15 — the log names no files or folders: files are described by their properties (extension, container, codec, rate, channels, bits, length, size, tag count), the names of every file soundglass opens, saves, renames or is given are blanked to <file>/<folder> in every line (the last 2000, 4 characters or more), the home folder is written ~, and notices that worked aren't logged (user's choice: a bug never depends on a file name, and it's more private)

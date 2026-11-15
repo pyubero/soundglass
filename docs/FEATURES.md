@@ -279,7 +279,9 @@ reproduced still leaves a trace. It stays on your computer and is never sent any
 0.5–1 MB. File → Show Log opens its folder. It records:
 
 - the start: version, system, sound device (rate, channels) and graphics card;
-- each file opened, how long it took to decode and the memory in use after;
+- each file opened, described by its properties, never its name or folder: extension, container,
+  codec, sample rate, channels, bit depth, length, size and number of tags; how long it took to
+  decode and the memory in use after;
 - each menu command and player action (play, pause, seek, edits…), and every notice shown;
 - how long tempo, key and chords, saves, AI tools and online requests took (requests by host and
   path only, never their query);
@@ -289,6 +291,9 @@ reproduced still leaves a trace. It stays on your computer and is never sent any
 - sound dropouts, at most once a second: underruns, late or slow audio callbacks, and callbacks that
   had to play silence because the track wasn't ready;
 - errors, panics and warnings from the libraries.
+
+File and folder names never reach the log: where a message or error would show one, it reads
+`<file>` or `<folder>`, and your home folder reads `~`.
 
 ## Themes
 
@@ -358,9 +363,10 @@ soundglass sends nothing: no telemetry, no account. It goes online only when you
 
 soundglass keeps a log on your computer, `soundglass.log` (File → Show Log), only to help you report
 bugs. It is never sent anywhere: nothing in soundglass uploads or attaches it, and nobody sees it
-unless you share it yourself. It holds the names and folders of the files you opened, what you did
-and when ([what it records](#settings)), so look it over before you attach it to a bug report. You
-can delete it at any time; soundglass starts a new one.
+unless you share it yourself. It records what you did and when, and describes the files you opened
+by their properties (format, length, size…), never by their names or folders
+([what it records](#settings)). It's plain text, so you can read it before you attach it to a bug
+report, and delete it at any time; soundglass starts a new one.
 
 ## Supported formats
 
