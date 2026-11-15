@@ -9,6 +9,7 @@ mod i18n;
 mod identify;
 mod keys;
 mod loudness;
+mod media_keys;
 mod midi;
 mod player;
 mod save;
@@ -130,7 +131,7 @@ fn main() -> eframe::Result {
             p.send(Cmd::Load(track.clone()));
             p.send(Cmd::Volume(volume_gain(volume)));
         }
-        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_found: None, cover_offer: None, cover_asked: Default::default(), rename: None, rename_file: None, delete_prompt: false, deleted: Vec::new(), watched, changes, own_stamp: None, changed_prompt: false, default_check, default_prompt: None, default_result: None, show_shortcuts: false, recording: None, shortcut_error: None, identify: None, identify_album: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), file_clipboard: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_found: None, cover_offer: None, cover_asked: Default::default(), rename: None, rename_file: None, delete_prompt: false, deleted: Vec::new(), watched, changes, own_stamp: None, changed_prompt: false, default_check, default_prompt: None, default_result: None, show_shortcuts: false, recording: None, shortcut_error: None, identify: None, identify_album: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), file_clipboard: None, media_keys: media_keys::start(cc.egui_ctx.clone()), player, t0, timings, shown: false }))
     }))
 }
 
@@ -316,6 +317,8 @@ struct App {
     timings: bool,
     /// Whether the window is on screen; playback starts then.
     shown: bool,
+    /// The media keys while another window is focused.
+    media_keys: media_keys::MediaKeys,
 }
 
 /// Track → Identify Track… while open.
@@ -652,6 +655,18 @@ impl eframe::App for App {
             self.read_shortcuts(&ctx, &keys)
         };
         self.player_keys(&ctx, pos, len, rate, &mut actions);
+        self.media_keys.set_playing(playing);
+        for k in self.media_keys.keys.try_iter() {
+            use media_keys::Key;
+            match k {
+                Key::PlayPause => actions.push(Action::Toggle),
+                Key::Play if !playing => actions.push(Action::Toggle),
+                Key::Pause | Key::Stop if playing => actions.push(Action::Toggle),
+                Key::Next => actions.push(Action::Next),
+                Key::Previous => actions.push(Action::Previous),
+                _ => {}
+            }
+        }
         let loaded = self.has_track() && self.track.done();
         let mut save_copy = false;
         if ctx.input(|i| i.viewport().close_requested()) && self.dirty() {
@@ -1902,14 +1917,14 @@ impl App {
     }
 
     /// The player's keys in the window `ctx` is drawing (the main one or the Spectrogram):
-    /// Space, PageUp/PageDown, ←/→, and Esc and L.
+    /// Space, PageUp/PageDown, ←/→, Esc and L, and the media keys.
     fn player_keys(&mut self, ctx: &egui::Context, pos: u64, len: u64, rate: u64, actions: &mut Vec<Action>) {
         let key = |k| ctx.input(|i| i.key_pressed(k));
         // A focused button already takes Space as its own click; toggling here too would undo it.
-        if key(egui::Key::Space) && ctx.memory(|m| m.focused().is_none()) {
+        if key(egui::Key::Space) && ctx.memory(|m| m.focused().is_none()) || key(egui::Key::MediaPlayPause) {
             actions.push(Action::Toggle);
         }
-        for (k, action) in [(egui::Key::PageUp, Action::Previous), (egui::Key::PageDown, Action::Next)] {
+        for (k, action) in [(egui::Key::PageUp, Action::Previous), (egui::Key::PageDown, Action::Next), (egui::Key::MediaTrackPrevious, Action::Previous), (egui::Key::MediaTrackNext, Action::Next)] {
             if key(k) {
                 actions.push(action);
             }

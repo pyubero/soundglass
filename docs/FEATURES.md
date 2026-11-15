@@ -13,6 +13,10 @@ soundglass is in development: this list grows with each milestone in
 - **An empty window to start.** Without a file it opens with Open… (the menus that need a file are
   greyed out).
 - Space plays and pauses; ← and → go back or forward 5 s.
+- **Media keys.** The keyboard's play/pause, next and previous keys work even while another window
+  is focused: on Linux soundglass is an MPRIS player on D-Bus (Plasma's and GNOME's media controls
+  show it as "soundglass"), on Windows a System Media Transport Controls session. No title or cover
+  is sent, and the desktop can't seek.
 - **Seek bar** as a line or a waveform (File → Settings…).
 - Drag a file or folder onto the window to play it (a folder plays its first audio file). This works
   on X11 and Windows; **it isn't supported on Wayland yet.**

@@ -111,6 +111,8 @@ These are fixed and can't be given to a menu item:
 - **← / →** — back or forward 5 s.
 - **Page Up / Page Down** — previous or next file in the folder (in the shuffled order with
   Shuffle).
+- **Media keys** (play/pause, next, previous) — as Space and Page Down / Page Up, also while
+  another window is focused.
 - **L** — Loop selection (Practice mode).
 - **Esc** — clear the selection; leaves full screen once there's no selection.
 - **Enter** — accepts a dialog.

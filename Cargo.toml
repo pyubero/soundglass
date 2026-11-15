@@ -41,6 +41,12 @@ midly = { version = "0.5.3", default-features = false, features = ["std"] }
 [target.'cfg(windows)'.dependencies]
 # Already in the dependency tree (winit); for SetDllDirectoryW (GPU support) and SetThreadPriority.
 windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_LibraryLoader", "Win32_System_Threading"] }
+# Already in the dependency tree (cpal, accesskit); media keys through System Media Transport Controls.
+windows = { version = "0.62", features = ["Foundation", "Media_Playback", "Win32_System_WinRT"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# Already in the dependency tree (accesskit, same features); media keys through MPRIS on D-Bus.
+zbus = { version = "5.19", default-features = false, features = ["async-io"] }
 
 # Unoptimised decoders are 10–50× slower; keep dependencies fast in debug builds.
 [profile.dev.package."*"]

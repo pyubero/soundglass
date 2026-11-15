@@ -301,3 +301,5 @@
 - 2026-11-15 — every MIDI channel plays the piano, the drum channel included (user's choice)
 - 2026-11-15 — MIDI is rendered in track::decode, mono 44.1 kHz in 4096-frame blocks, so playback, waveform, loudness and Save As need no changes; limits for hostile files: 4 MB, 1 hour, 64 voices (oldest stolen)
 - 2026-11-15 — microphone recording (voice memos, tuner) is out of scope (user's choice)
+- 2026-11-15 — media keys work unfocused: an MPRIS player on Linux (zbus 5.19, already in the tree through accesskit, same features) and System Media Transport Controls on Windows (windows 0.62, already in the tree through cpal, plus its Media_Playback features) (user's choice)
+- 2026-11-15 — no track metadata, cover or seeking over MPRIS/SMTC for now — only play/pause/next/previous were asked for
