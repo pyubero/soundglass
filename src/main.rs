@@ -123,7 +123,7 @@ fn main() -> eframe::Result {
             p.send(Cmd::Load(track.clone()));
             p.send(Cmd::Volume(volume_gain(volume)));
         }
-        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_found: None, cover_offer: None, cover_asked: Default::default(), rename: None, rename_file: None, delete_prompt: false, deleted: Vec::new(), watched, changes, own_stamp: None, changed_prompt: false, default_check, default_prompt: None, default_result: None, show_shortcuts: false, recording: None, shortcut_error: None, identify: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), file_clipboard: None, player, t0, timings, shown: false }))
+        Ok(Box::new(App { track, next: None, files, index, shuffle: (random_seed(), index), advanced: 0, ctx, cover: None, visual: visual::Visual::new(), settings, volume, speed: wsola::Speed::NORMAL, titled: None, recent, custom_speed: None, custom_fx: None, show_settings: false, show_info, show_edit, edit_height, edit_view: EditView::default(), show_spectrum: false, show_spectrum_settings: false, spectrum_view: EditView::default(), spectrum: spectrum::Spectrogram::new(), history: None, looping: false, sent_region: None, metronome: false, click_volume: 0.7, sent_clicks: None, beats_seen: 0, strip_cache: WaveCache::default(), panel_cache: WaveCache::default(), pending: None, show_save: false, save_job: None, save_notice: None, save_choice: save::Choice::default(), tag_editor: None, tag_job: None, cover_checked: 0, cover_found: None, cover_offer: None, cover_asked: Default::default(), rename: None, rename_file: None, delete_prompt: false, deleted: Vec::new(), watched, changes, own_stamp: None, changed_prompt: false, default_check, default_prompt: None, default_result: None, show_shortcuts: false, recording: None, shortcut_error: None, identify: None, identify_album: None, controls_height: 260.0, info_width, show_folder, folder_width, browse: None, window_size, theme_error, ai: ai::Ai::default(), file_clipboard: None, player, t0, timings, shown: false }))
     }))
 }
 
@@ -291,6 +291,7 @@ struct App {
     recording: Option<Command>,
     shortcut_error: Option<String>,
     identify: Option<Identify>,
+    identify_album: Option<IdentifyAlbum>,
     /// Local AI: the AI Models window, licence prompts and downloads.
     ai: ai::Ai,
     /// Height of everything below the cover, as measured last frame.
@@ -340,6 +341,34 @@ struct Identify {
 enum IdentifyJob {
     Found(Result<Vec<identify::Match>, String>),
     Genre(Result<Option<String>, String>),
+}
+
+/// File → Identify Album…: every file of the folder looked up, then one release's tags written to all.
+struct IdentifyAlbum {
+    files: Vec<PathBuf>,
+    /// Each file's matches, or why it has none, in `files`' order as the lookup goes.
+    per_file: Vec<Result<Vec<identify::Match>, String>>,
+    albums: Vec<identify::Album>,
+    pick: usize,
+    /// The running lookup or write; set to stop the lookup between files.
+    job: Option<(std::sync::mpsc::Receiver<AlbumJob>, Arc<std::sync::atomic::AtomicBool>)>,
+    /// While writing, each file done: its old path and its new one, or why it failed.
+    written: Vec<(PathBuf, Result<PathBuf, String>)>,
+    /// How many files the write covers; `None` before writing.
+    writing: Option<usize>,
+}
+
+enum AlbumJob {
+    Found(Result<Vec<identify::Match>, String>),
+    Written(PathBuf, Result<PathBuf, String>),
+}
+
+/// The three ways Identify Album writes.
+#[derive(Clone, Copy, PartialEq)]
+enum AlbumWrite {
+    Apply,
+    Fill,
+    ApplyRename,
 }
 
 /// An image offered as the cover (or `Cover::Remove`), with its 256 px preview and the folder's tracks.
@@ -633,7 +662,7 @@ impl eframe::App for App {
         if let Some(path) = ctx.input(|i| i.raw.dropped_files.first().map(|f| f.path().to_path_buf())) {
             self.open_dropped(path, &ctx);
         }
-        let why_not_rename = if !self.has_track() { Some(tr("no file open")) } else if !self.track.done() { Some(tr("after loading")) } else if self.tag_job.is_some() { Some(tr("saving tags…")) } else { None };
+        let why_not_rename = if !self.has_track() { Some(tr("no file open")) } else if !self.track.done() { Some(tr("after loading")) } else if self.tag_job.is_some() || self.album_writing() { Some(tr("saving tags…")) } else { None };
         let why_not_identify = if !identify::ready(&self.settings.acoustid_key) { Some(tr("add an AcoustID key in Settings")) } else { why_not_rename.filter(|&w| w != "saving tags…") };
         // The write closes the tag editor, which would drop its unsaved edits.
         let why_not_cover = if !self.has_track() { Some(tr("no file open")) } else if self.tag_job.is_some() { Some(tr("saving tags…")) } else if self.tag_editor.is_some() { Some(tr("close the tag editor first")) } else { None };
@@ -678,6 +707,7 @@ impl eframe::App for App {
                     item(ui, &mut commands, tr("Delete…"), Command::Delete, no_file);
                     item(ui, &mut commands, tr("Rename from Tags…"), Command::RenameFromTags, why_not_rename);
                     item(ui, &mut commands, tr("Identify Track…"), Command::Identify, why_not_identify);
+                    item(ui, &mut commands, tr("Identify Album…"), Command::IdentifyAlbum, why_not_identify);
                     ui.separator();
                     item(ui, &mut commands, tr("Settings…"), Command::Settings, None);
                     item(ui, &mut commands, tr("Quit"), Command::Quit, None);
@@ -770,6 +800,10 @@ impl eframe::App for App {
                 Command::Delete if self.has_track() => self.delete_prompt = true,
                 Command::RenameFromTags if why_not_rename.is_none() => self.rename = Some((self.settings.rename_pattern.clone(), tags::read(&self.track.path))),
                 Command::Identify if why_not_identify.is_none() => self.identify = Some(Identify { path: self.track.path.clone(), found: None, pick: 0, only_empty: true, job: None }),
+                Command::IdentifyAlbum if why_not_identify.is_none() && self.identify_album.is_none() => {
+                    let files = folder::list_folder(&self.track.path);
+                    self.identify_album = Some(IdentifyAlbum { files, per_file: Vec::new(), albums: Vec::new(), pick: 0, job: None, written: Vec::new(), writing: None });
+                }
                 Command::Settings => self.show_settings = true,
                 Command::Undo => actions.push(Action::Undo),
                 Command::Redo => actions.push(Action::Redo),
@@ -847,7 +881,7 @@ impl eframe::App for App {
         if self.show_info {
             let size = std::fs::metadata(&self.track.path).map(|m| m.len()).ok();
             let panel = egui::Panel::left("info").resizable(true).size_range(240.0..=360.0).default_size(self.info_width).show(ui, |ui| {
-                let can_edit = if !self.has_track() { Err(tr("no file open")) } else if !self.track.done() { Err(tr("after loading")) } else if self.tag_job.is_some() { Err(tr("saving tags…")) } else { Ok(()) };
+                let can_edit = if !self.has_track() { Err(tr("no file open")) } else if !self.track.done() { Err(tr("after loading")) } else if self.tag_job.is_some() || self.album_writing() { Err(tr("saving tags…")) } else { Ok(()) };
                 info_panel(ui, &self.track, size, &mut self.tag_editor, can_edit, self.settings.practice)
             });
             match panel.inner {
@@ -939,6 +973,7 @@ impl eframe::App for App {
         self.cover_offer_modal(&ctx);
         self.follow_tags(&ctx);
         self.rename_window(&ctx);
+        self.identify_album_window(&ctx);
         self.rename_file_window(&ctx);
         self.delete_window(&ctx);
         self.changed_window(&ctx, pos);
@@ -2308,6 +2343,207 @@ impl App {
         }
     }
 
+    fn album_writing(&self) -> bool {
+        self.identify_album.as_ref().is_some_and(|a| a.writing.is_some() && a.job.is_some())
+    }
+
+    fn identify_album_window(&mut self, ctx: &egui::Context) {
+        let Some(al) = &mut self.identify_album else { return };
+        let mut finished = false;
+        if let Some((rx, _)) = &al.job {
+            loop {
+                match rx.try_recv() {
+                    Ok(AlbumJob::Found(found)) => al.per_file.push(found),
+                    Ok(AlbumJob::Written(old, new)) => al.written.push((old, new)),
+                    Err(std::sync::mpsc::TryRecvError::Empty) => break,
+                    Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                        finished = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if finished {
+            al.job = None;
+            if al.writing.is_none() {
+                let found: Vec<Vec<identify::Match>> = al.per_file.iter().map(|r| r.clone().unwrap_or_default()).collect();
+                (al.albums, al.pick) = (identify::albums(&found), 0);
+            }
+        }
+        let busy = al.job.is_some();
+        let total = al.files.len();
+        let blocked = if self.tag_job.is_some() { Some(tr("saving tags…")) } else if self.tag_editor.is_some() { Some(tr("close the tag editor first")) } else { None };
+        let name = |p: &PathBuf| p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+        let found: Vec<Vec<identify::Match>> = al.per_file.iter().map(|r| r.clone().unwrap_or_default()).collect();
+        let picked = al.albums.get(al.pick).map(|a| identify::pick(&found, &a.release)).unwrap_or_default();
+        let (mut look, mut go, mut close) = (false, None, false);
+        egui::Window::new(tr("Identify Album")).collapsible(false).resizable(false).show(ctx, |ui| {
+            ui.set_max_width(440.0);
+            ui.label(tr("Sends each file's fingerprint and length to AcoustID, one a second, and one recording's ID to MusicBrainz for the genre. Nothing else leaves this computer."));
+            ui.add_space(6.0);
+            if let Some(n) = al.writing {
+                ui.add(egui::ProgressBar::new(al.written.len() as f32 / n.max(1) as f32).text(trf("Writing {i} of {n}", &[("i", &al.written.len().min(n)), ("n", &n)])));
+                let failed: Vec<String> = al.written.iter().filter_map(|(p, r)| r.as_ref().err().map(|e| format!("{}: {e}", name(p)))).collect();
+                if !busy {
+                    ui.label(trf("{ok} written, {bad} failed", &[("ok", &(al.written.len() - failed.len())), ("bad", &failed.len())]));
+                }
+                for f in failed {
+                    ui.colored_label(ui.visuals().error_fg_color, f);
+                }
+            } else if busy || al.per_file.len() < total && !al.per_file.is_empty() {
+                let done = al.per_file.len();
+                let text = match al.files.get(done) {
+                    Some(p) if busy => trf("Fingerprinting {i} of {n}: {file}", &[("i", &(done + 1)), ("n", &total), ("file", &name(p))]),
+                    _ => trf("Stopped after {i} of {n}", &[("i", &done), ("n", &total)]),
+                };
+                ui.add(egui::ProgressBar::new(done as f32 / total.max(1) as f32).text(text));
+                egui::ScrollArea::vertical().max_height(220.0).stick_to_bottom(true).show(ui, |ui| {
+                    for (p, r) in al.files.iter().zip(&al.per_file) {
+                        let result = match r {
+                            Ok(m) if m.is_empty() => tr("not found").to_string(),
+                            Ok(m) => m[0].title.clone(),
+                            Err(e) => e.clone(),
+                        };
+                        ui.weak(format!("{}  —  {result}", name(p)));
+                    }
+                });
+            }
+            if !busy && al.writing.is_none() && al.per_file.len() == total && total > 0 {
+                if al.albums.is_empty() {
+                    ui.label(tr("No album found."));
+                }
+                for (i, a) in al.albums.iter().enumerate() {
+                    let year = if a.year.is_empty() { String::new() } else { format!(" ({})", a.year) };
+                    let artist = if a.artist.is_empty() { "?" } else { &a.artist };
+                    ui.radio_value(&mut al.pick, i, format!("{artist} — {}{year}  ·  {}", a.album, trf("{n} of {total} tracks", &[("n", &a.files), ("total", &total)])));
+                }
+                if !picked.is_empty() {
+                    ui.add_space(4.0);
+                    egui::ScrollArea::vertical().max_height(220.0).show(ui, |ui| {
+                        for (p, m) in al.files.iter().zip(&picked) {
+                            let to = match m {
+                                Some(m) => format!("{} · {}", if m.track.is_empty() { "?" } else { &m.track }, m.title),
+                                None => tr("not found, left alone").to_string(),
+                            };
+                            ui.weak(format!("{}  —  {to}", name(p)));
+                        }
+                    });
+                }
+            }
+            ui.add_space(4.0);
+            ui.horizontal(|ui| {
+                if busy && al.writing.is_none() {
+                    if ui.button(tr("Cancel")).clicked()
+                        && let Some((_, stop)) = &al.job
+                    {
+                        stop.store(true, Relaxed);
+                    }
+                } else if !busy {
+                    look = ui.button(tr("Look up")).clicked();
+                }
+                let can = !busy && al.writing.is_none() && picked.iter().any(Option::is_some);
+                for (what, label, hover) in [
+                    (AlbumWrite::Apply, tr("Apply to All Tracks"), tr("Writes the album's tags into every matched file, replacing the tags there")),
+                    (AlbumWrite::Fill, tr("Fill In All Tracks"), tr("Writes only the tags that are empty in each file")),
+                    (AlbumWrite::ApplyRename, tr("Apply and Rename"), tr("As Apply to All Tracks, then renames each file with the Rename from Tags pattern")),
+                ] {
+                    let b = ui.add_enabled(can && blocked.is_none(), egui::Button::new(label)).on_hover_text(hover);
+                    if b.on_disabled_hover_text(blocked.unwrap_or_default()).clicked() {
+                        go = Some(what);
+                    }
+                }
+                close = ui.add_enabled(!busy, egui::Button::new(tr("Close"))).clicked() || (!busy && ui.input(|i| i.key_pressed(egui::Key::Escape)));
+            });
+        });
+        if look {
+            let (tx, rx) = std::sync::mpsc::channel();
+            let stop = Arc::new(std::sync::atomic::AtomicBool::new(false));
+            let (files, ctx, key, halt) = (al.files.clone(), ctx.clone(), self.settings.acoustid_key.clone(), stop.clone());
+            std::thread::spawn(move || {
+                track::background();
+                for path in files {
+                    if halt.load(Relaxed) {
+                        break;
+                    }
+                    let found = identify::fingerprint_file(&path).and_then(|(fp, secs)| identify::lookup_all(&key, &fp, secs));
+                    if tx.send(AlbumJob::Found(found)).is_err() {
+                        break;
+                    }
+                    ctx.request_repaint();
+                }
+                ctx.request_repaint();
+            });
+            (al.per_file, al.albums, al.job) = (Vec::new(), Vec::new(), Some((rx, stop)));
+        }
+        if let Some(what) = go {
+            let todo: Vec<(PathBuf, identify::Match)> = al.files.iter().cloned().zip(picked).filter_map(|(p, m)| Some((p, m?))).collect();
+            let (tx, rx) = std::sync::mpsc::channel();
+            let (ctx, pattern) = (ctx.clone(), self.settings.rename_pattern.clone());
+            // The genre of the best-matched track, for the whole album.
+            let top = todo.iter().max_by(|a, b| a.1.score.total_cmp(&b.1.score)).map(|(_, m)| m.recording.clone()).unwrap_or_default();
+            al.writing = Some(todo.len());
+            al.written.clear();
+            std::thread::spawn(move || {
+                track::background();
+                let genre = identify::genre(&top).ok().flatten();
+                for (path, m) in todo {
+                    let result = tags::read(&path).and_then(|read| {
+                        let edit = identify::fill(&read, &m, genre.as_deref(), what == AlbumWrite::Fill);
+                        if edit != read {
+                            tags::write_in_place(&path, &edit)?;
+                        }
+                        if what != AlbumWrite::ApplyRename {
+                            return Ok(path.clone());
+                        }
+                        let ext = path.extension().map(|e| e.to_string_lossy().into_owned()).unwrap_or_default();
+                        let name = tags::file_name(&pattern, &edit, &ext);
+                        if path.file_name().is_some_and(|n| n.to_string_lossy() == name) { Ok(path.clone()) } else { tags::rename(&path, &name) }
+                    });
+                    let _ = tx.send(AlbumJob::Written(path, result));
+                    ctx.request_repaint();
+                }
+            });
+            al.job = Some((rx, Arc::new(std::sync::atomic::AtomicBool::new(false))));
+        }
+        if finished && al.writing.is_some() {
+            let written = al.written.clone();
+            self.follow_album(&written, ctx);
+        }
+        if close {
+            self.identify_album = None;
+        }
+    }
+
+    /// After Identify Album wrote: the playing track reads its new tags (and name), and the
+    /// folder, Open Recent and the Folder panel follow the renames.
+    fn follow_album(&mut self, written: &[(PathBuf, Result<PathBuf, String>)], ctx: &egui::Context) {
+        let mut renamed = false;
+        for (old, new) in written {
+            let Ok(new) = new else { continue };
+            renamed |= old != new;
+            if *old == self.track.path {
+                self.own_stamp = folder::stamp(new);
+                if let Err(e) = self.relabel(new.clone()) {
+                    self.save_notice = Some((Err(e), ctx.input(|i| i.time)));
+                }
+            }
+            for p in &mut self.recent {
+                if p == old {
+                    p.clone_from(new);
+                }
+            }
+        }
+        // A track decoded ahead would show its old tags.
+        self.next = None;
+        if renamed && self.has_track() {
+            self.files = folder::list_folder(&self.track.path);
+            self.index = self.files.iter().position(|p| *p == self.track.path).unwrap_or(0);
+            if let Some(b) = &mut self.browse {
+                *b = Browse::new(b.dir.clone());
+            }
+        }
+    }
+
     fn rename_window(&mut self, ctx: &egui::Context) {
         let Some((pattern, read)) = &mut self.rename else { return };
         let path = self.track.path.clone();
@@ -2585,7 +2821,7 @@ impl App {
             }
         }
         while let Ok((path, stamp)) = self.changes.try_recv() {
-            if path == self.track.path && self.tag_job.is_none() && self.own_stamp != Some(stamp) {
+            if path == self.track.path && self.tag_job.is_none() && !self.album_writing() && self.own_stamp != Some(stamp) {
                 self.changed_prompt = true;
             }
         }
