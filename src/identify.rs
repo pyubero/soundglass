@@ -40,6 +40,8 @@ pub struct Match {
     pub release: String,
     /// How many tracks the release has, if AcoustID says.
     pub release_tracks: Option<u64>,
+    /// Tells editions apart: the release's country and format, as "US, CD" or "Europe, 2×CD".
+    pub edition: String,
     pub title: String,
     pub artist: String,
     pub album: String,
@@ -109,6 +111,7 @@ pub struct Album {
     /// How many of the files have a match on it.
     pub files: usize,
     pub tracks: Option<u64>,
+    pub edition: String,
 }
 
 /// The releases the files' matches point to, the one covering the most files first, then the one
@@ -126,7 +129,7 @@ pub fn albums(per_file: &[Vec<Match>]) -> Vec<Album> {
             counted.push(&m.release);
             match out.iter_mut().find(|(a, _)| a.release == m.release) {
                 Some((a, score)) => (a.files, *score) = (a.files + 1, *score + m.score),
-                None => out.push((Album { release: m.release.clone(), album: m.album.clone(), artist: m.artist.clone(), year: m.year.clone(), files: 1, tracks: m.release_tracks }, m.score)),
+                None => out.push((Album { release: m.release.clone(), album: m.album.clone(), artist: m.artist.clone(), year: m.year.clone(), files: 1, tracks: m.release_tracks, edition: m.edition.clone() }, m.score)),
             }
         }
     }
@@ -241,7 +244,7 @@ fn matches(reply: &Value) -> Result<Vec<Match>, String> {
                 let year = rel["date"]["year"].as_u64().map(|y| y.to_string()).unwrap_or_default();
                 // The track's position on its medium, from the first medium that has the recording.
                 let track = rel["mediums"].as_array().into_iter().flatten().flat_map(|m| m["tracks"].as_array().into_iter().flatten()).find_map(|t| t["position"].as_u64());
-                out.push(Match { release: text(&rel["id"]), release_tracks: rel["track_count"].as_u64(), album: text(&rel["title"]), year, track: track.map(|n| n.to_string()).unwrap_or_default(), ..base.clone() });
+                out.push(Match { release: text(&rel["id"]), release_tracks: rel["track_count"].as_u64(), edition: edition(rel), album: text(&rel["title"]), year, track: track.map(|n| n.to_string()).unwrap_or_default(), ..base.clone() });
             }
         }
     }
@@ -273,6 +276,24 @@ fn shown(mut all: Vec<Match>) -> Vec<Match> {
     all
 }
 
+/// A release's country and format: MusicBrainz's codes for Europe and Worldwide spelled out, and
+/// "2×" before the format of a release on several media alike.
+fn edition(rel: &Value) -> String {
+    let country = match rel["country"].as_str().unwrap_or_default().trim() {
+        "XE" => tr("Europe"),
+        "XW" => tr("Worldwide"),
+        c => c,
+    };
+    let formats: Vec<&str> = rel["mediums"].as_array().into_iter().flatten().filter_map(|m| m["format"].as_str()).map(str::trim).filter(|f| !f.is_empty()).collect();
+    let count = rel["medium_count"].as_u64().unwrap_or(1);
+    let format = match formats.first() {
+        Some(f) if count > 1 && formats.iter().all(|g| g == f) => format!("{count}×{f}"),
+        Some(_) => formats.join(" + "),
+        None => String::new(),
+    };
+    [country.to_string(), format].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>().join(", ")
+}
+
 /// An artist credit as written: names with their join phrases ("A feat. B").
 fn artists(credit: &Value) -> String {
     let parts = credit.as_array().into_iter().flatten();
@@ -301,7 +322,7 @@ mod tests {
             {"score": 0.97, "recordings": [{"id": "a", "title": "St. Louis Blues",
                 "artists": [{"name": "Louis Armstrong", "joinphrase": " and "}, {"name": "His All-Stars"}],
                 "releases": [
-                    {"id": "r1", "track_count": 16, "title": "Plays W.C. Handy", "date": {"year": 1954}, "mediums": [{"tracks": [{"position": 1}]}]},
+                    {"id": "r1", "track_count": 16, "country": "US", "medium_count": 1, "title": "Plays W.C. Handy", "date": {"year": 1954}, "mediums": [{"format": "CD", "tracks": [{"position": 1}]}]},
                     {"id": "r2", "title": "Plays W.C. Handy", "date": {"year": 1954}, "mediums": [{"tracks": [{"position": 1}]}]},
                     {"title": 7, "date": "soon", "mediums": "none"}
                 ]}]},
@@ -312,7 +333,7 @@ mod tests {
         assert_eq!(all.iter().filter(|m| m.album == "Plays W.C. Handy").count(), 2);
         let m = shown(all);
         assert_eq!(m.len(), 3, "{m:?}");
-        assert_eq!(m[0], Match { score: 0.97, recording: "a".into(), release: "r1".into(), release_tracks: Some(16), title: "St. Louis Blues".into(), artist: "Louis Armstrong and His All-Stars".into(), album: "Plays W.C. Handy".into(), year: "1954".into(), track: "1".into() });
+        assert_eq!(m[0], Match { score: 0.97, recording: "a".into(), release: "r1".into(), release_tracks: Some(16), edition: "US, CD".into(), title: "St. Louis Blues".into(), artist: "Louis Armstrong and His All-Stars".into(), album: "Plays W.C. Handy".into(), year: "1954".into(), track: "1".into() });
         // Odd types drop the value, not the match.
         assert_eq!((m[1].album.as_str(), m[1].year.as_str(), m[1].track.as_str()), ("", "", ""));
         assert_eq!((m[2].title.as_str(), m[2].album.as_str()), ("Long Gone", ""));
@@ -352,6 +373,15 @@ mod tests {
         let junk = crate::track::tests::temp_file("identify-junk.mp3", b"not audio at all");
         assert!(fingerprint_file(&junk).is_err());
         let _ = (std::fs::remove_file(path), std::fs::remove_file(junk));
+    }
+
+    #[test]
+    fn names_editions() {
+        assert_eq!(edition(&json!({"country": "XE", "medium_count": 2, "mediums": [{"format": "CD"}, {"format": "CD"}]})), "Europe, 2×CD");
+        assert_eq!(edition(&json!({"country": "GB", "medium_count": 2, "mediums": [{"format": "12\" Vinyl"}]})), "GB, 2×12\" Vinyl");
+        assert_eq!(edition(&json!({"country": "US", "mediums": [{"format": "CD"}, {"format": "DVD"}]})), "US, CD + DVD");
+        assert_eq!(edition(&json!({"mediums": [{"format": "SACD"}]})), "SACD");
+        assert_eq!(edition(&json!({"country": 3, "mediums": "none"})), "");
     }
 
     #[test]
@@ -416,6 +446,6 @@ fn album_lookup_on_the_test_folder() {
         per_file.push(m);
     }
     for a in albums(&per_file) {
-        println!("{} files, {:?} tracks: {} {} {} ({})", a.files, a.tracks, a.artist, a.album, a.year, a.release);
+        println!("{} files, {:?} tracks, {}: {} {} {} ({})", a.files, a.tracks, a.edition, a.artist, a.album, a.year, a.release);
     }
 }

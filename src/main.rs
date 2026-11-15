@@ -2413,7 +2413,8 @@ impl App {
                     ui.label(tr("No album found."));
                 }
                 for (i, a) in al.albums.iter().enumerate() {
-                    let year = if a.year.is_empty() { String::new() } else { format!(" ({})", a.year) };
+                    let about: Vec<&str> = [a.year.as_str(), a.edition.as_str()].into_iter().filter(|s| !s.is_empty()).collect();
+                    let year = if about.is_empty() { String::new() } else { format!(" ({})", about.join(", ")) };
                     let artist = if a.artist.is_empty() { "?" } else { &a.artist };
                     ui.radio_value(&mut al.pick, i, format!("{artist} — {}{year}  ·  {}", a.album, trf("{n} of {total} tracks", &[("n", &a.files), ("total", &total)])));
                 }
