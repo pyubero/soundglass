@@ -318,13 +318,21 @@ struct Browse {
     listing: Result<(Vec<PathBuf>, Vec<PathBuf>), String>,
     /// The track last scrolled into view, so it scrolls once per change.
     scrolled: Option<PathBuf>,
+    /// The folder's modified time when read: it changes when another program adds, renames or deletes a file.
+    modified: Option<std::time::SystemTime>,
 }
 
 impl Browse {
     fn new(dir: PathBuf) -> Browse {
+        // Before the read, so a change made during it still shows as one next time.
+        let modified = dir_modified(&dir);
         let listing = folder::list_dir(&dir).map_err(|e| trf("Can't read this folder: {e}", &[("e", &e)]));
-        Browse { dir, listing, scrolled: None }
+        Browse { dir, listing, scrolled: None, modified }
     }
+}
+
+fn dir_modified(dir: &std::path::Path) -> Option<std::time::SystemTime> {
+    std::fs::metadata(dir).and_then(|m| m.modified()).ok()
 }
 
 struct Identify {
@@ -1342,6 +1350,11 @@ impl App {
         let home = || std::env::var_os(if cfg!(windows) { "USERPROFILE" } else { "HOME" }).map(PathBuf::from).unwrap_or_default();
         let here = self.track.path.parent().map(PathBuf::from).unwrap_or_else(home);
         let b = self.browse.get_or_insert_with(|| Browse::new(here));
+        if dir_modified(&b.dir) != b.modified {
+            *b = Browse { scrolled: b.scrolled.take(), ..Browse::new(b.dir.clone()) };
+        }
+        // Checked again each second while the panel is open, also when nothing else redraws.
+        ui.ctx().request_repaint_after(Duration::from_secs(1));
         let name = |p: &std::path::Path| p.file_name().map_or_else(|| p.display().to_string(), |n| n.to_string_lossy().into_owned());
         ui.strong(name(&b.dir)).on_hover_text(b.dir.display().to_string());
         ui.separator();

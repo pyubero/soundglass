@@ -35,7 +35,7 @@ soundglass is in development: this list grows with each milestone in
   Page Up / Page Down follow the shuffled order.
 - **Folder panel** (Ctrl+B, on the right) lists `..`, the subfolders and the audio files by name
   (🗀 folders, ♪ tracks): click a folder to look inside it (playback carries on), click a file to
-  play it.
+  play it. It refreshes within a second when another program adds, renames or deletes a file there.
 - **Track Info** (Ctrl+I, on the left) shows the tags, the audio details and the cover.
 - Each panel widens the window instead of squeezing the player.
 - Open Recent (File menu) lists the files opened before.
