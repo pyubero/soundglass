@@ -2697,12 +2697,18 @@ impl App {
         })
     }
 
-    /// Change Keyboard Shortcuts…'s Change: the next key press, with its modifiers, becomes
+    /// Change Keyboard Shortcuts…'s Change: the next non-modifier key press, with its modifiers, becomes
     /// `recording`'s shortcut unless it's taken; Esc cancels. Nothing else sees the key. From lightview.
     fn record_shortcut(&mut self, ctx: &egui::Context) {
         let Some(command) = self.recording else { return };
         let pressed = ctx.input_mut(|i| {
             let pressed = i.events.iter().find_map(|e| match e {
+                // egui 0.37 sends Ctrl, Shift, Alt and Super as keys too: wait for the key they modify.
+                egui::Event::Key { key, pressed: true, .. }
+                    if matches!(key, egui::Key::ShiftLeft | egui::Key::ShiftRight | egui::Key::ControlLeft | egui::Key::ControlRight | egui::Key::AltLeft | egui::Key::AltRight | egui::Key::SuperLeft | egui::Key::SuperRight) =>
+                {
+                    None
+                }
                 egui::Event::Key { key, pressed: true, modifiers, .. } => Some(egui::KeyboardShortcut::new(*modifiers, *key)),
                 _ => None,
             });
