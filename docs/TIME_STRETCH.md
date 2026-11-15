@@ -6,7 +6,7 @@ Speed and pitch changes (milestone 5) and the slow-down practice loop (milestone
 
 ## 1. The problem
 
-Today, Playback → Change speed resamples: the audio is read faster or slower, like a tape. Every frequency is scaled by the same factor, so 1.25× is also 1.25× higher in pitch (almost 4 semitones). That is correct for varispeed, but not what a musician practising a solo wants.
+Before this study, Playback (now Track) → Change speed resamples: the audio is read faster or slower, like a tape. Every frequency is scaled by the same factor, so 1.25× is also 1.25× higher in pitch (almost 4 semitones). That is correct for varispeed, but not what a musician practising a solo wants.
 
 Time-stretching keeps each sound's frequencies while changing how long it lasts. Pitch-shifting is the reverse, and is usually built from the same machine: stretch by a factor, then resample by its inverse, and the length comes back while the pitch has moved.
 

@@ -27,12 +27,24 @@ Each item: **name** (default key) — when it's enabled — what it does.
 - **Delete…** — a file is open — asks first, then moves the file to the Trash. Ctrl+Z restores it.
 - **Rename from Tags…** — as Rename… — renames from a pattern such as
   `{track} - {artist} - {title}`, with a preview.
+- **Settings…** (Ctrl+,) — always — see [`FEATURES.md`](FEATURES.md#settings).
+- **Quit** (Ctrl+Q) — always — closes the window (asks first about unsaved edits).
+
+## Track
+
+The speed and pitch submenus have presets and Custom…; the one in use is marked.
+
+- **Change speed and pitch ▸** — 0.5×, 0.75×, 1×, 1.25×, 1.5×, 2×, Custom….
+- **Pitch-preserved speed change ▸** — the same values.
+- **Time-preserved pitch change ▸** — −2 to +2 semitones, Custom… (up to ±12).
+- **Reset** — the speed or pitch isn't normal — puts all three back to normal.
 - **Identify Track…** — an AcoustID key is set in Settings and the track is loaded — looks the
   track up online (only when you click Look up) and fills the tag editor.
 - **Identify Album…** — as Identify Track… — looks up every file in the folder, then Apply to All
   Tracks, Fill In All Tracks or Apply and Rename.
-- **Settings…** (Ctrl+,) — always — see [`FEATURES.md`](FEATURES.md#settings).
-- **Quit** (Ctrl+Q) — always — closes the window (asks first about unsaved edits).
+- **Add/Replace Album Cover…** — a file is open, no tags are being saved and Track Info's tag editor
+  is closed — picks an image and saves it as the cover of this track or of all the folder's tracks.
+- **Remove Album Cover…** — as Add/Replace — removes the cover from this track or all of them.
 
 ## Edit
 
@@ -42,9 +54,6 @@ Each item: **name** (default key) — when it's enabled — what it does.
 - **Cut out** (Delete) — a part is selected in the Edit panel — removes it.
 - **Crop** (Ctrl+T) — a part is selected — keeps only the selection.
 - **Silence** (Ctrl+L) — a part is selected — replaces it with silence.
-- **Add/Replace Album Cover…** — a file is open, no tags are being saved and Track Info's tag editor
-  is closed — picks an image and saves it as the cover of this track or of all the folder's tracks.
-- **Remove Album Cover…** — as Add/Replace — removes the cover from this track or all of them.
 
 ## Effects
 
@@ -60,23 +69,6 @@ Enabled when a file is open. The first line says whether the effects work **on t
 - **Channels ▸** — always the whole track — Mono, Stereo, Swap left and right.
 
 Custom… opens a dialog with the value; it's enabled once the track is loaded.
-
-## View
-
-- **Track Info** (Ctrl+I) — always — shows or hides the panel on the left.
-- **Folder** (Ctrl+B) — always — shows or hides the Folder panel on the right.
-- **Edit** (Ctrl+E) — always — shows or hides the Edit panel at the bottom.
-- **Full Screen** (F11) — always — hides the menu bar; Esc leaves it once there's no selection.
-- **Practice mode** — always — adds the Practice menu and the tempo, key and chord estimates.
-
-## Playback
-
-Each submenu has its presets and Custom…; the one in use is marked.
-
-- **Change speed and pitch ▸** — 0.5×, 0.75×, 1×, 1.25×, 1.5×, 2×, Custom….
-- **Pitch-preserved speed change ▸** — the same values.
-- **Time-preserved pitch change ▸** — −2 to +2 semitones, Custom… (up to ±12).
-- **Reset** — the speed or pitch isn't normal — puts all three back to normal.
 
 ## Local AI
 
@@ -94,6 +86,14 @@ work on it.
   downloads ONNX Runtime.
 
 What each tool does: [`FEATURES.md`](FEATURES.md#ai-tools).
+
+## View
+
+- **Track Info** (Ctrl+I) — always — shows or hides the panel on the left.
+- **Folder** (Ctrl+B) — always — shows or hides the Folder panel on the right.
+- **Edit** (Ctrl+E) — always — shows or hides the Edit panel at the bottom.
+- **Full Screen** (F11) — always — hides the menu bar; Esc leaves it once there's no selection.
+- **Practice mode** — always — adds the Practice menu and the tempo, key and chord estimates.
 
 ## Practice (only in Practice mode)
 

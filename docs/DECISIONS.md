@@ -36,7 +36,7 @@
 - 2026-11-11 — UI fonts copied from lightview (Roboto and Droid Sans Mono, Apache-2.0; emoji-icon-font, MIT) with their licence files in fonts/ — eframe without default features has no fonts, and egui's default set is not clearly GPL-compatible; no CJK font yet (user's choice)
 - 2026-11-11 — default window 380 × 680 points, 100 shorter than first planned (user's choice)
 - 2026-11-11 — volume is a small speaker button left of Previous that pops up a slider (user's choice); gain is the slider position cubed, not saved between runs
-- 2026-11-11 — speed lives in Playback → Change speed ▸ with presets and Custom… in steps of 0.05 (user's choice)
+- 2026-11-11 — speed lives in Playback → Change speed ▸ with presets and Custom… in steps of 0.05 (user's choice) — changed 2026-11-15: now in the Track menu
 - 2026-11-11 — waveform comes back as a View → Waveform toggle in place of the seek bar line, off by default and remembered in settings.txt (user's choice) — changed 2026-11-13: the toggle moves to Settings (see below)
 - 2026-11-11 — loudness is measured on the decode thread after decoding, from the in-memory chunks; peak is the sample peak taken from the waveform peaks (no true-peak oversampling)
 - 2026-11-11 — K-weighting coefficients come from the BS.1770 analogue prototypes for any rate (as libebur128 does); tests check the standard's −3.01 LUFS reference at 44.1 and 48 kHz
@@ -158,9 +158,9 @@
 - 2026-11-12 — our fingerprint differs from ffmpeg's chromaprint by 1.1 % of bits on an album MP3 (the decoders differ), well inside what AcoustID's matching tolerates (accepted)
 - 2026-11-12 — the app is split in two: v1 the player (playing, folder, tags, quick edits and fixes, cleaning-up AI) and v2 Practice mode (tools for musicians and musicology) (user's choice)
 - 2026-11-12 — Practice mode is a runtime switch, View → Practice mode, off by default and kept in settings.txt; the v2 code stays compiled in, not behind a cargo feature or reverted (user's choice)
-- 2026-11-12 — Practice mode adds a Practice menu after Playback with Loop selection (L) and Spectrogram; Spectrogram leaves View and Loop selection leaves Playback; with the mode off, L does nothing (user's choice)
+- 2026-11-12 — Practice mode adds a Practice menu after Playback with Loop selection (L) and Spectrogram; Spectrogram leaves View and Loop selection leaves Playback; with the mode off, L does nothing (user's choice) — changed 2026-11-15: now in the Track menu
 - 2026-11-12 — turning Practice mode off stops the loop and closes the Spectrogram window
-- 2026-11-12 — all three speed and pitch items stay in v1's Playback menu (user's choice)
+- 2026-11-12 — all three speed and pitch items stay in v1's Playback menu (user's choice) — changed 2026-11-15: now in the Track menu
 - 2026-11-12 — tempo, key and chords are worked out only in Practice mode, by Track::analyse on a thread of its own once decoding is done (started from the UI when the mode is on, so turning it on mid-track works); with it off Track Info hides Tempo and Key and the tag editor hides the ≈ buttons (user's choice)
 - 2026-11-12 — v1 gets a folder browser panel, no library database (user's choice); not designed yet
 - 2026-11-12 — Local AI split: noise removal and speech transcription in v1, stems and melody to MIDI in v2 (user's choice) — changed 2026-11-13: the brief keeps this grouping, but every AI tool is in the Local AI menu whatever the mode (see below)
@@ -236,9 +236,9 @@
 - 2026-11-13 — the folder-cover offer asks each folder once per run, not saved in settings — so Next through coverless tracks after Not Now doesn't ask again
 - 2026-11-13 — the folder cover is written with the tag editor's in-place write (copy, audio check, rename), changing only the picture, and runs as the tag job so tag editing waits for it
 - 2026-11-13 — accepted: covers replaced by the folder image aren't recoverable (no backup copy), as with tags
-- 2026-11-13 — Edit → Add/Replace Album Cover… picks an image and asks This Track or All N Tracks; it shares the folder-cover prompt and write, and is off while the tag editor is open (the write closes it, which would drop unsaved edits) (user's choice)
+- 2026-11-13 — Edit → Add/Replace Album Cover… picks an image and asks This Track or All N Tracks; it shares the folder-cover prompt and write, and is off while the tag editor is open (the write closes it, which would drop unsaved edits) (user's choice) — changed 2026-11-15: now in the Track menu
 - 2026-11-13 — a tag write into a file with no primary tag (an MP3 with only ID3v1) starts the new tag from the existing one's fields — a cover-only write had made an empty ID3v2 that hid the ID3v1 title, artist and album from lofty readers
-- 2026-11-13 — Edit → Remove Album Cover… asks This Track or All N Tracks like Add/Replace, showing the current cover, and removes every embedded picture (user's choice)
+- 2026-11-13 — Edit → Remove Album Cover… asks This Track or All N Tracks like Add/Replace, showing the current cover, and removes every embedded picture (user's choice) — changed 2026-11-15: now in the Track menu
 - 2026-11-13 — the main view's cover shows at most 256 px by default, or fills its space, switched by a corner button and saved as cover_fit (user's choice); the space keeps its size either way so the controls don't move, and the icon is drawn from shapes rather than an SVG (no SVG loader in the tree, resvg would be a new dependency)
 - 2026-11-13 — the Metronome clicks every found beat alike — Beat This!'s downbeats were too often wrong to hear (user's choice); they still show as the Spectrogram's taller ticks
 - 2026-11-13 — finishing Find Beats turns the Metronome on, and writes the beats' tempo (median gap, whole BPM) as the file's BPM tag when it has none, without asking, through the same verified in-place write as Write Tags (user's choice); skipped while the tag editor is open or another tag write runs
@@ -281,3 +281,4 @@
 - 2026-11-15 — identify.rs uses one shared ureq agent (connection kept between requests) with a 2 s connect budget: ureq splits that budget across the host's addresses, and with 10 s two unreachable IPv6 addresses cost 8 s per request on this machine
 - 2026-11-15 — Identify Album shows each edition's country and format from AcoustID's release (country, mediums' format; XE/XW spelled Europe/Worldwide, "2×CD" for several alike media) next to the year (user's choice)
 2026-11-15 — README is a front page in lightview's structure; the detail lives in docs/FEATURES.md and docs/MENUS.md, with docs/TRANSLATING.md and the brief moved to docs/PRODUCT_BRIEF.md; release steps stay in README.md — one place per kind of fact (user's choice)
+- 2026-11-15 — the menu bar is File, Track, Edit, Effects, Local AI, View (+ Practice in Practice mode); Track takes the speed and pitch items (the Playback menu is gone), Identify Track/Album and the album cover items; Rename, Rename from Tags and Delete stay in File (user's choice)

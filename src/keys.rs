@@ -109,21 +109,21 @@ pub fn bindable_menus() -> Vec<(&'static str, Vec<(Command, String)>)> {
     effects.extend(TRIMS.map(|(db, n)| (Fx(crate::Fx::Trim(db)), trf("Trim silence: {name} ({db} dB)", &[("name", &tr(n)), ("db", &crate::signed(db))]))));
     effects.push((CustomFx(crate::Fx::Trim(0.0)), tr("Trim silence: custom…").into()));
     effects.extend(named(&[(Fx(crate::Fx::Reverse), tr("Reverse")), (Fx(crate::Fx::Mono), tr("Channels: mono")), (Fx(crate::Fx::Stereo), tr("Channels: stereo")), (Fx(crate::Fx::Swap), tr("Channels: swap left and right"))]));
-    let mut playback = Vec::new();
+    let mut track = Vec::new();
     for knob in Knob::ALL {
-        playback.extend(knob.presets().iter().map(|&v| (Speed(knob, v), format!("{}: {}", knob.title(), knob.label(v)))));
-        playback.push((CustomSpeed(knob), trf("{name}: custom…", &[("name", &knob.title())])));
+        track.extend(knob.presets().iter().map(|&v| (Speed(knob, v), format!("{}: {}", knob.title(), knob.label(v)))));
+        track.push((CustomSpeed(knob), trf("{name}: custom…", &[("name", &knob.title())])));
     }
-    playback.push((ResetSpeed, tr("Reset").into()));
+    track.extend(named(&[(ResetSpeed, tr("Reset")), (Identify, tr("Identify Track…")), (IdentifyAlbum, tr("Identify Album…")), (AddCover, tr("Add/Replace Album Cover…")), (RemoveCover, tr("Remove Album Cover…"))]));
     let mut ai: Vec<(Command, String)> = Task::ALL.iter().map(|&t| (Ai(t), t.title().to_string())).collect();
     ai.push((AiModels, tr("AI Models…").into()));
     vec![
-        (tr_key("File"), named(&[(Open, tr("Open…")), (Close, tr("Close")), (ShowInFolder, if cfg!(windows) { tr("Show in Explorer") } else { tr("Show in File Manager") }), (CopyPath, tr("Copy Path")), (CopyFile, tr("Copy File")), (SaveCopy, tr("Save Copy")), (SaveAs, tr("Save As…")), (Rename, tr("Rename…")), (Delete, tr("Delete…")), (RenameFromTags, tr("Rename from Tags…")), (Identify, tr("Identify Track…")), (IdentifyAlbum, tr("Identify Album…")), (Settings, tr("Settings…")), (Quit, tr("Quit"))])),
-        (tr_key("Edit"), named(&[(Undo, tr("Undo")), (Redo, tr("Redo")), (Cut, tr("Cut out")), (Crop, tr("Crop")), (Silence, tr("Silence")), (AddCover, tr("Add/Replace Album Cover…")), (RemoveCover, tr("Remove Album Cover…"))])),
+        (tr_key("File"), named(&[(Open, tr("Open…")), (Close, tr("Close")), (ShowInFolder, if cfg!(windows) { tr("Show in Explorer") } else { tr("Show in File Manager") }), (CopyPath, tr("Copy Path")), (CopyFile, tr("Copy File")), (SaveCopy, tr("Save Copy")), (SaveAs, tr("Save As…")), (Rename, tr("Rename…")), (Delete, tr("Delete…")), (RenameFromTags, tr("Rename from Tags…")), (Settings, tr("Settings…")), (Quit, tr("Quit"))])),
+        (tr_key("Track"), track),
+        (tr_key("Edit"), named(&[(Undo, tr("Undo")), (Redo, tr("Redo")), (Cut, tr("Cut out")), (Crop, tr("Crop")), (Silence, tr("Silence"))])),
         (tr_key("Effects"), effects),
-        (tr_key("View"), named(&[(TrackInfo, tr("Track Info")), (Folder, tr("Folder")), (EditPanel, tr("Edit")), (FullScreen, tr("Full Screen")), (Practice, tr("Practice mode"))])),
-        (tr_key("Playback"), playback),
         (tr_key("Local AI"), ai),
+        (tr_key("View"), named(&[(TrackInfo, tr("Track Info")), (Folder, tr("Folder")), (EditPanel, tr("Edit")), (FullScreen, tr("Full Screen")), (Practice, tr("Practice mode"))])),
         (tr_key("Practice"), named(&[(Metronome, tr("Metronome")), (Spectrogram, tr("Spectrogram"))])),
     ]
 }

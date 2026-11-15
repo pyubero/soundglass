@@ -75,7 +75,7 @@ has presets and a Custom… value, and every effect can be undone:
 
 ## Speed and pitch
 
-The Playback menu changes how it plays, live, and the settings combine:
+The Track menu's speed and pitch items change how it plays, live, and the settings combine:
 
 - **Change speed and pitch:** faster is also higher, like tape (0.5× to 2×).
 - **Pitch-preserved speed change:** slower or faster at the same pitch (0.5× to 2×).
@@ -98,17 +98,17 @@ stuttery on dense mixes ([`TIME_STRETCH.md`](TIME_STRETCH.md)). Save As can appl
   image (JPEG, PNG, TIFF, WebP, BMP or GIF) asks whether to use that image as the cover of all the
   folder's tracks (replacing their covers); Add Cover (the dialog shows the image) writes it into
   each file the same checked way. Each folder is asked once per run.
-- **Edit → Add/Replace Album Cover…** picks an image (the same formats; all but JPEG and PNG are
+- **Track → Add/Replace Album Cover…** picks an image (the same formats; all but JPEG and PNG are
   saved as JPEG, at most 1000 px), shows it, and saves it as the cover of this track or of all the
   folder's tracks (Track Info's tag editor must be closed); **Remove Album Cover…** removes it from
   this track or all of them the same way.
-- **File → Identify Track…** (online, only when you click Look up) sends the file's Chromaprint
+- **Track → Identify Track…** (online, only when you click Look up) sends the file's Chromaprint
   fingerprint and length to AcoustID and lists the matches with their score; Use Match fetches the
   genre from MusicBrainz (sending only the recording's ID) and fills Track Info's tag editor, only
   the empty fields unless you untick that. Nothing is written until Save… there. It is greyed out
   until you paste a free AcoustID application key (from acoustid.org/new-application) into Settings
   → AcoustID Settings.
-- **File → Identify Album…** looks up every file in the playing track's folder (one AcoustID request
+- **Track → Identify Album…** looks up every file in the playing track's folder (one AcoustID request
   a second, with a progress bar and Cancel), suggests the releases most of them are on, and previews
   each file's new track number and title. Apply to All Tracks writes the album's tags into every
   matched file, Fill In All Tracks only fills empty tags, and Apply and Rename also renames each file

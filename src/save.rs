@@ -66,7 +66,7 @@ pub struct Choice {
     pub vorbis_quality: u8,
     /// The sample rate to save at; `None` keeps the track's.
     pub rate: Option<u32>,
-    /// Playback's speed and pitch, applied to the audio; `None` leaves them out.
+    /// Track's speed and pitch, applied to the audio; `None` leaves them out.
     pub speed: Option<Speed>,
 }
 

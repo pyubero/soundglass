@@ -311,7 +311,7 @@ struct App {
     shown: bool,
 }
 
-/// File → Identify Track… while open.
+/// Track → Identify Track… while open.
 /// The Folder panel's folder and its subfolders and audio files.
 struct Browse {
     dir: PathBuf,
@@ -343,7 +343,7 @@ enum IdentifyJob {
     Genre(Result<Option<String>, String>),
 }
 
-/// File → Identify Album…: every file of the folder looked up, then one release's tags written to all.
+/// Track → Identify Album…: every file of the folder looked up, then one release's tags written to all.
 struct IdentifyAlbum {
     files: Vec<PathBuf>,
     /// Each file's matches, or why it has none, in `files`' order as the lookup goes.
@@ -491,11 +491,11 @@ enum Pending {
 /// Ok(whether the tags were copied), or why the save failed.
 type SaveResult = std::sync::mpsc::Receiver<Result<bool, String>>;
 
-/// The speeds Playback's two speed submenus offer directly.
+/// The speeds Track's two speed submenus offer directly.
 const SPEEDS: [f64; 6] = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 /// Custom speeds move in this step.
 const SPEED_STEP: f64 = 0.05;
-/// The pitch changes, in semitones, Playback → Time-preserved pitch change offers directly.
+/// The pitch changes, in semitones, Track → Time-preserved pitch change offers directly.
 const PITCHES: [f64; 5] = [-2.0, -1.0, 0.0, 1.0, 2.0];
 /// Custom pitch changes move in this step, up to an octave either way.
 const PITCH_STEP: f64 = 0.1;
@@ -505,7 +505,7 @@ fn snap_speed(x: f64) -> f64 {
     ((x / SPEED_STEP).round() * SPEED_STEP).clamp(0.5, 2.0)
 }
 
-/// One of Playback's three speed and pitch settings.
+/// One of Track's three speed and pitch settings.
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Knob {
     Tape,
@@ -706,43 +706,11 @@ impl eframe::App for App {
                     item(ui, &mut commands, tr("Rename…"), Command::Rename, why_not_rename);
                     item(ui, &mut commands, tr("Delete…"), Command::Delete, no_file);
                     item(ui, &mut commands, tr("Rename from Tags…"), Command::RenameFromTags, why_not_rename);
-                    item(ui, &mut commands, tr("Identify Track…"), Command::Identify, why_not_identify);
-                    item(ui, &mut commands, tr("Identify Album…"), Command::IdentifyAlbum, why_not_identify);
                     ui.separator();
                     item(ui, &mut commands, tr("Settings…"), Command::Settings, None);
                     item(ui, &mut commands, tr("Quit"), Command::Quit, None);
                 });
-                ui.menu_button(tr("Edit"), |ui| {
-                    let (history, selected) = (self.history.as_ref(), self.edit_view.selection.is_some() && self.track.done());
-                    let nothing = |on: bool, why| (!on).then_some(why);
-                    item(ui, &mut commands, tr("Undo"), Command::Undo, nothing(history.is_some_and(|h| h.can_undo()) || !self.deleted.is_empty(), tr("nothing to undo")));
-                    item(ui, &mut commands, tr("Redo"), Command::Redo, nothing(history.is_some_and(|h| h.can_redo()), tr("nothing to redo")));
-                    ui.separator();
-                    for (label, command) in [(tr("Cut out"), Command::Cut), (tr("Crop"), Command::Crop), (tr("Silence"), Command::Silence)] {
-                        item(ui, &mut commands, label, command, nothing(selected, tr("select a part in the Edit panel")));
-                    }
-                    ui.separator();
-                    item(ui, &mut commands, tr("Add/Replace Album Cover…"), Command::AddCover, why_not_cover);
-                    item(ui, &mut commands, tr("Remove Album Cover…"), Command::RemoveCover, why_not_cover);
-                });
-                ui.add_enabled_ui(self.has_track(), |ui| ui.menu_button(tr("Effects"), |ui| self.effects_menu(ui, &mut commands, &key_text)));
-                ui.menu_button(tr("View"), |ui| {
-                    for (on, label, command) in [(self.show_info, tr("Track Info"), Command::TrackInfo), (self.show_folder, tr("Folder"), Command::Folder), (self.show_edit, tr("Edit"), Command::EditPanel)] {
-                        let mut on = on;
-                        if ui.add(egui::Checkbox::new(&mut on, label)).on_hover_text(key_text(command)).clicked() {
-                            commands.push(command);
-                            ui.close();
-                        }
-                    }
-                    item(ui, &mut commands, tr("Full Screen"), Command::FullScreen, None);
-                    ui.separator();
-                    let mut on = self.settings.practice;
-                    if ui.checkbox(&mut on, tr("Practice mode")).on_hover_text(tr("Tools for musicians: loops, the spectrogram, tempo, key and chords")).clicked() {
-                        commands.push(Command::Practice);
-                        ui.close();
-                    }
-                });
-                ui.menu_button(tr("Playback"), |ui| {
+                ui.menu_button(tr("Track"), |ui| {
                     for knob in Knob::ALL {
                         ui.menu_button(knob.title(), |ui| {
                             let now = knob.get(self.speed);
@@ -762,11 +730,44 @@ impl eframe::App for App {
                     }
                     ui.separator();
                     item(ui, &mut commands, tr("Reset"), Command::ResetSpeed, (self.speed == wsola::Speed::NORMAL).then_some(tr("already normal")));
+                    ui.separator();
+                    item(ui, &mut commands, tr("Identify Track…"), Command::Identify, why_not_identify);
+                    item(ui, &mut commands, tr("Identify Album…"), Command::IdentifyAlbum, why_not_identify);
+                    ui.separator();
+                    item(ui, &mut commands, tr("Add/Replace Album Cover…"), Command::AddCover, why_not_cover);
+                    item(ui, &mut commands, tr("Remove Album Cover…"), Command::RemoveCover, why_not_cover);
                 });
+                ui.menu_button(tr("Edit"), |ui| {
+                    let (history, selected) = (self.history.as_ref(), self.edit_view.selection.is_some() && self.track.done());
+                    let nothing = |on: bool, why| (!on).then_some(why);
+                    item(ui, &mut commands, tr("Undo"), Command::Undo, nothing(history.is_some_and(|h| h.can_undo()) || !self.deleted.is_empty(), tr("nothing to undo")));
+                    item(ui, &mut commands, tr("Redo"), Command::Redo, nothing(history.is_some_and(|h| h.can_redo()), tr("nothing to redo")));
+                    ui.separator();
+                    for (label, command) in [(tr("Cut out"), Command::Cut), (tr("Crop"), Command::Crop), (tr("Silence"), Command::Silence)] {
+                        item(ui, &mut commands, label, command, nothing(selected, tr("select a part in the Edit panel")));
+                    }
+                });
+                ui.add_enabled_ui(self.has_track(), |ui| ui.menu_button(tr("Effects"), |ui| self.effects_menu(ui, &mut commands, &key_text)));
                 ui.menu_button(tr("Local AI"), |ui| {
                     let key = |task: Option<Task>| key_text(task.map_or(Command::AiModels, Command::Ai));
                     if let Some(task) = self.ai.menu_items(ui, &self.settings.ai, loaded, self.edit_view.selection.is_some(), &key) {
                         commands.push(Command::Ai(task));
+                    }
+                });
+                ui.menu_button(tr("View"), |ui| {
+                    for (on, label, command) in [(self.show_info, tr("Track Info"), Command::TrackInfo), (self.show_folder, tr("Folder"), Command::Folder), (self.show_edit, tr("Edit"), Command::EditPanel)] {
+                        let mut on = on;
+                        if ui.add(egui::Checkbox::new(&mut on, label)).on_hover_text(key_text(command)).clicked() {
+                            commands.push(command);
+                            ui.close();
+                        }
+                    }
+                    item(ui, &mut commands, tr("Full Screen"), Command::FullScreen, None);
+                    ui.separator();
+                    let mut on = self.settings.practice;
+                    if ui.checkbox(&mut on, tr("Practice mode")).on_hover_text(tr("Tools for musicians: loops, the spectrogram, tempo, key and chords")).clicked() {
+                        commands.push(Command::Practice);
+                        ui.close();
                     }
                 });
                 if self.settings.practice {
@@ -2234,7 +2235,7 @@ impl App {
     }
 
     /// File → Rename from Tags…: the pattern, a preview of the name, Rename and Cancel.
-    /// File → Identify Track…: Look up, pick a match, and Use Match fills the tag editor
+    /// Track → Identify Track…: Look up, pick a match, and Use Match fills the tag editor
     /// (nothing is written here). True when the tag editor was filled.
     fn identify_window(&mut self, ctx: &egui::Context) -> bool {
         let Some(id) = &mut self.identify else { return false };

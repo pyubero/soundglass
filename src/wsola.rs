@@ -12,7 +12,7 @@ const MAX_RATE: f64 = 192_000.0;
 /// The stretch ratio is held within 1/MAX_TEMPO to MAX_TEMPO.
 const MAX_TEMPO: f64 = 4.0;
 
-/// The three Playback settings: tape speed (pitch moves with it), pitch-preserved speed, and
+/// The three Track speed and pitch settings: tape speed (pitch moves with it), pitch-preserved speed, and
 /// time-preserved pitch in semitones. They combine.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Speed {
