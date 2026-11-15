@@ -6,6 +6,10 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- MIDI files (`.mid`, `.midi`) play with a built-in piano, and Save As renders them to audio.
+
 ### Fixed
 
 - The Spectrogram window shows the soundglass icon (it showed a generic one on Wayland).

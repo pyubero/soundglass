@@ -20,7 +20,7 @@ SIBLING = {"alloc-stdlib": "alloc-no-stdlib", "clipboard-win": "error-code", "pu
 # C libraries built into the binary, whose licences sit below the crate's top level.
 EXTRA = {"aotuv_lancer_vorbis_sys": ["vorbis_vendor/COPYING"], "ogg_next_sys": ["ogg_vendor/COPYING"], "mp3lame-sys": ["lame-4.0/COPYING"],
          # Published without their licence texts: kept under licenses/crates/ (an absolute path replaces crate_dir).
-         "rusty-chromaprint": [ROOT / "licenses/crates/rusty-chromaprint.txt"], "vorbis_rs": [ROOT / "licenses/crates/vorbis_rs.txt"]}
+         "midly": [ROOT / "licenses/crates/midly.txt"], "rusty-chromaprint": [ROOT / "licenses/crates/rusty-chromaprint.txt"], "vorbis_rs": [ROOT / "licenses/crates/vorbis_rs.txt"]}
 
 
 def license_files(crate_dir):

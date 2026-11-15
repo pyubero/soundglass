@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 use crate::i18n::tr;
 
 /// What symphonia 0.6 decodes with the `all` feature. It has no Opus decoder, so no .opus.
-pub const EXTENSIONS: [&str; 14] = ["mp3", "mp2", "mp1", "flac", "wav", "ogg", "oga", "m4a", "m4b", "aac", "aif", "aiff", "caf", "mka"];
+pub const EXTENSIONS: [&str; 16] = ["mp3", "mp2", "mp1", "flac", "wav", "ogg", "oga", "m4a", "m4b", "aac", "aif", "aiff", "caf", "mka", "mid", "midi"];
 
 pub fn is_audio(path: &Path) -> bool {
     path.extension().and_then(|e| e.to_str()).is_some_and(|e| EXTENSIONS.contains(&e.to_ascii_lowercase().as_str()))

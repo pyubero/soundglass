@@ -344,6 +344,9 @@ pub fn decode(
     on_meta: impl FnOnce(Tags, Info, Option<Box<[u8]>>),
     mut sink: impl FnMut(&[f32], usize, u32, Option<u64>) -> Result<(), String>,
 ) -> Result<(), String> {
+    if path.extension().and_then(|e| e.to_str()).is_some_and(|e| e.eq_ignore_ascii_case("mid") || e.eq_ignore_ascii_case("midi")) {
+        return crate::midi::decode(path, on_meta, sink);
+    }
     let file = std::fs::File::open(path).map_err(|e| e.to_string())?;
     let mss = MediaSourceStream::new(Box::new(file), Default::default());
     let mut hint = Hint::new();

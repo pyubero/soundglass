@@ -296,3 +296,8 @@
 - 2026-11-15 — roadmap regrouped: v1 the everyday player and tools, v2 every Practice-mode tool for musicians, v3 our own models and engines (chords, beat tracking, notes to MIDI, Griffin–Lim), v4 a very tentative music library (user's choice)
 - 2026-11-15 — v1 gets MIDI files: play .mid/.midi with a basic piano sound and render them to audio in Save As; no MIDI editing (user's choice)
 - 2026-11-15 — Clean up a music folder, Group duplicate songs and Use a local database move from v3 to the tentative v4 library, with a library, m3u playlists and recommendations (user's choice)
+- 2026-11-15 — MIDI files play through our own additive piano (8 decaying, slightly inharmonic harmonics a note, phasors, tanh soft limit), no SoundFont — rejected: embedding FreePats' Upright Piano KW (CC0, 10 MB SF2) or downloading it, and rustysynth with it (user's choice)
+- 2026-11-15 — .mid files are read with midly 0.5 (Unlicense), default features off so rayon isn't pulled in; its licence text is kept in licenses/crates/midly.txt since the crate ships none (user's choice)
+- 2026-11-15 — every MIDI channel plays the piano, the drum channel included (user's choice)
+- 2026-11-15 — MIDI is rendered in track::decode, mono 44.1 kHz in 4096-frame blocks, so playback, waveform, loudness and Save As need no changes; limits for hostile files: 4 MB, 1 hour, 64 voices (oldest stolen)
+- 2026-11-15 — microphone recording (voice memos, tuner) is out of scope (user's choice)

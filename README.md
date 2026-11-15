@@ -87,7 +87,7 @@ libasound2-dev` on Debian/Ubuntu). From a checkout of this repository:
 
 This builds soundglass, copies it to `~/.local/bin`, adds `soundglass.desktop` to
 `~/.local/share/applications`, and **makes it the default** for MP3, FLAC, WAV, Ogg Vorbis,
-M4A/AAC, AIFF, CAF and Matroska audio. Opus is not supported yet.
+M4A/AAC, AIFF, CAF, Matroska audio and MIDI. Opus is not supported yet.
 
 To undo it, delete `~/.local/bin/soundglass`, `~/.local/share/applications/soundglass.desktop` and
 `~/.local/share/icons/hicolor/scalable/apps/soundglass.svg`, then pick another default app in System

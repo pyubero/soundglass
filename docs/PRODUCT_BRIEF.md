@@ -20,7 +20,7 @@ It comes in four parts:
 ## Not doing
 - Multitrack mixing, effect chains, VST/LV2 plugins, MIDI editing
 - Streaming services; a library database and playlists only as the very tentative v4 (browsing the folders on disk is in)
-- Recording studio features (simple recording is an open question)
+- Recording studio features, and recording from the microphone (voice memos, tuner)
 - Identifying a clip recorded from the microphone, Shazam-style: there is no open database of commercial music to match against
 
 ## Carried over from lightview
@@ -32,7 +32,7 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 ## v1: Player
 
 ### Packaging
-- **.deb and .msi.** Like lightview's `package-deb.sh` and WiX file: they install only the binary, the .desktop file and the icon; every user file (settings, recent files, themes, AI models) lives in the data folder, so the packages and `install.sh` behave the same. Done: `package-deb.sh`, `packaging/windows/soundglass.wxs` and `.github/workflows/build.yml` (awaiting the first run on GitHub).
+- **.deb and .msi.** Like lightview's `package-deb.sh` and WiX file: they install only the binary, the .desktop file and the icon; every user file (settings, recent files, themes, AI models) lives in the data folder, so the packages and `install.sh` behave the same. Done: `package-deb.sh`, `packaging/windows/soundglass.wxs` and `.github/workflows/build.yml`; 0.1.0 built and installed on Linux and Windows.
 
 ### 1. Spike
 - **Play from the command line.** `app song.mp3` opens a window and plays. We measure the time to first sound.
@@ -85,7 +85,7 @@ symphonia (decoding), cpal (sound output), rubato (resampling), lofty (tags), ho
 - **Folder panel.** A side panel listing the folder's subfolders and audio files by name (natural order, hidden ones left out), with `..` to go up, to click through. No database. Done: View → Folder (Ctrl+B) on the right, with Track Info moved to the left and the player in the middle; clicking a folder only browses, clicking a file plays it (and its folder becomes the one Page Up/Down moves through).
 
 ### 8. Tidy up
-- **Identify track.** Make a Chromaprint fingerprint of the file (pure Rust, rusty-chromaprint), look it up online in AcoustID, then fill in the missing tags from MusicBrainz. Show the match and its score, and on request write the tags and rename the file. Only the fingerprint and the length are sent, and only when you run it. Free for non-commercial use, with one application key; at most 3 lookups per second (AcoustID) and 1 per second (MusicBrainz). Works on whole files, not clips. Done (awaiting a check online): the AcoustID key goes in Settings → AcoustID Settings; Track → Identify Track… lists AcoustID's matches; Use Match adds the MusicBrainz genre and fills Track Info's tag editor, so Save… and Rename from Tags… do the writing. Track → Identify Album… does a whole folder: it suggests the release most files are on, then Apply to All Tracks, Fill In All Tracks or Apply and Rename writes every file.
+- **Identify track.** Make a Chromaprint fingerprint of the file (pure Rust, rusty-chromaprint), look it up online in AcoustID, then fill in the missing tags from MusicBrainz. Show the match and its score, and on request write the tags and rename the file. Only the fingerprint and the length are sent, and only when you run it. Free for non-commercial use, with one application key; at most 3 lookups per second (AcoustID) and 1 per second (MusicBrainz). Works on whole files, not clips. Done (checked online): the AcoustID key goes in Settings → AcoustID Settings; Track → Identify Track… lists AcoustID's matches; Use Match adds the MusicBrainz genre and fills Track Info's tag editor, so Save… and Rename from Tags… do the writing. Track → Identify Album… does a whole folder: it suggests the release most files are on, then Apply to All Tracks, Fill In All Tracks or Apply and Rename writes every file.
 
 ### 9. Local AI (optional download)
 The runtime and model manager, as in lightview: Local AI → Download AI Runtime… and AI Models… (CPU, and NVIDIA's CUDA as a second download). Done. The tools, each a milestone: Remove noise (DeepFilterNet3), Transcribe speech (Whisper small, Parakeet TDT 0.6B v3 or Whisper large-v3-turbo, chosen in AI Models…), and for Practice mode Split into stems (HTDemucs), Melody to MIDI (Basic Pitch) and Find beats (Beat This!, which brings back the Metronome).
@@ -95,6 +95,7 @@ The runtime and model manager, as in lightview: Local AI → Download AI Runtime
 ### 10. MIDI files
 - **Play MIDI.** Open and play .mid and .midi files like audio files (Open, the Folder panel, Page Up/Down, default app) with a built-in basic piano sound. No MIDI editing.
 - **Save MIDI as audio.** Save As renders a MIDI file to WAV, FLAC, MP3 or Ogg Vorbis.
+- Done with our own small piano (a few decaying harmonics a note, no SoundFont) and midly to read the files: every channel plays piano, drums included; it renders mono 44.1 kHz, about 200× faster than real time.
 
 ## v2: Practice mode
 Everything here is behind View → Practice mode, which adds a Practice menu (Loop selection, Spectrogram) and turns on the tempo, key and chord analysis.
@@ -131,6 +132,4 @@ Not committed: only if the player and Practice mode are done and it still fits "
 - **Use a local database (later, for power users).** Point Identify Track at your own AcoustID and MusicBrainz server built from their public data exports, so nothing goes online. Too big to ship with the app.
 
 ## Open questions
-- Is simple microphone recording in scope (voice memos, tuner)?
-- MIDI's piano sound: our own small synthesizer, or a SoundFont player crate with a bundled piano (a new dependency, to approve).
 - Track identification: is rusty-chromaprint's output identical to the original Chromaprint, and what match score to accept automatically.

@@ -39,6 +39,8 @@
           <RegistryValue Root="HKLM" Key="Software\Classes\.aiff\OpenWithProgids" Name="soundglass.Audio" Value="" Type="string" />
           <RegistryValue Root="HKLM" Key="Software\Classes\.caf\OpenWithProgids" Name="soundglass.Audio" Value="" Type="string" />
           <RegistryValue Root="HKLM" Key="Software\Classes\.mka\OpenWithProgids" Name="soundglass.Audio" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.mid\OpenWithProgids" Name="soundglass.Audio" Value="" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.midi\OpenWithProgids" Name="soundglass.Audio" Value="" Type="string" />
 
           <!-- …and as an app in Settings → Default apps. -->
           <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities" Name="ApplicationName" Value="soundglass" Type="string" />
@@ -57,6 +59,8 @@
           <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities\FileAssociations" Name=".aiff" Value="soundglass.Audio" Type="string" />
           <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities\FileAssociations" Name=".caf" Value="soundglass.Audio" Type="string" />
           <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities\FileAssociations" Name=".mka" Value="soundglass.Audio" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities\FileAssociations" Name=".mid" Value="soundglass.Audio" Type="string" />
+          <RegistryValue Root="HKLM" Key="Software\soundglass\Capabilities\FileAssociations" Name=".midi" Value="soundglass.Audio" Type="string" />
           <RegistryValue Root="HKLM" Key="Software\RegisteredApplications" Name="soundglass" Value="Software\soundglass\Capabilities" Type="string" />
         </Component>
       </Directory>

@@ -330,6 +330,8 @@ soundglass collects nothing: no telemetry, no account. It goes online only when 
 
 - **Plays:** MP3 (and MP2, MP1), FLAC, WAV, Ogg Vorbis, M4A/AAC (including `.m4b`), AIFF, CAF and
   Matroska audio (`.mka`). Opus is not supported yet (the decoder, symphonia, has none).
+- **MIDI files** (`.mid`, `.midi`): played with a built-in piano, our own small synthesizer (every
+  channel, drums included, plays piano); they behave like audio files and Save As renders them.
 - **Saves (Save As):** WAV (16, 24 or 32-bit float), FLAC (16 or 24-bit), MP3 (constant 128–320
   kb/s), Ogg Vorbis (quality 0–10), at the track's sample rate or another one.
 - **Covers:** JPEG, PNG, TIFF, WebP, BMP and GIF; all but JPEG and PNG are saved as JPEG.

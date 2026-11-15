@@ -9,6 +9,7 @@ mod i18n;
 mod identify;
 mod keys;
 mod loudness;
+mod midi;
 mod player;
 mod save;
 mod settings;
