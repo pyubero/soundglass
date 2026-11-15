@@ -38,6 +38,8 @@ pub struct Match {
     pub recording: String,
     /// The MusicBrainz release ID; empty for a recording on no release.
     pub release: String,
+    /// How many tracks the release has, if AcoustID says.
+    pub release_tracks: Option<u64>,
     pub title: String,
     pub artist: String,
     pub album: String,
@@ -76,9 +78,7 @@ pub fn fingerprint(track: &Track) -> Result<(String, u32), String> {
 
 /// Looks the fingerprint up in AcoustID: the best matches, best first.
 pub fn lookup(key: &str, fingerprint: &str, secs: u32) -> Result<Vec<Match>, String> {
-    let mut out = lookup_all(key, fingerprint, secs)?;
-    out.truncate(MAX_MATCHES);
-    Ok(out)
+    lookup_all(key, fingerprint, secs).map(shown)
 }
 
 /// Every match AcoustID has for the fingerprint, best first; a rate-limit reply is retried once.
@@ -108,10 +108,12 @@ pub struct Album {
     pub year: String,
     /// How many of the files have a match on it.
     pub files: usize,
+    pub tracks: Option<u64>,
 }
 
-/// The releases the files' matches point to, the one covering the most files first (then the
-/// highest summed score), at most `MAX_MATCHES`.
+/// The releases the files' matches point to, the one covering the most files first, then the one
+/// whose track count is nearest the folder's (an album before an anthology holding it), then the
+/// highest summed score; at most `MAX_MATCHES`.
 pub fn albums(per_file: &[Vec<Match>]) -> Vec<Album> {
     let mut out: Vec<(Album, f32)> = Vec::new();
     for matches in per_file {
@@ -124,11 +126,12 @@ pub fn albums(per_file: &[Vec<Match>]) -> Vec<Album> {
             counted.push(&m.release);
             match out.iter_mut().find(|(a, _)| a.release == m.release) {
                 Some((a, score)) => (a.files, *score) = (a.files + 1, *score + m.score),
-                None => out.push((Album { release: m.release.clone(), album: m.album.clone(), artist: m.artist.clone(), year: m.year.clone(), files: 1 }, m.score)),
+                None => out.push((Album { release: m.release.clone(), album: m.album.clone(), artist: m.artist.clone(), year: m.year.clone(), files: 1, tracks: m.release_tracks }, m.score)),
             }
         }
     }
-    out.sort_by(|(a, x), (b, y)| b.files.cmp(&a.files).then(y.total_cmp(x)));
+    let off = |a: &Album| a.tracks.map_or(u64::MAX, |t| t.abs_diff(per_file.len() as u64));
+    out.sort_by(|(a, x), (b, y)| b.files.cmp(&a.files).then(off(a).cmp(&off(b))).then(y.total_cmp(x)));
     out.into_iter().take(MAX_MATCHES).map(|(a, _)| a).collect()
 }
 
@@ -188,12 +191,18 @@ pub fn fill(read: &TagEdit, m: &Match, genre: Option<&str>, only_empty: bool) ->
     t
 }
 
-fn agent() -> ureq::Agent {
-    ureq::Agent::config_builder()
-        .timeout_global(Some(Duration::from_secs(10)))
-        .user_agent(format!("soundglass/{} ( {CONTACT} )", env!("CARGO_PKG_VERSION")))
-        .build()
-        .into()
+/// One agent for every request, so the connection is kept between them.
+fn agent() -> &'static ureq::Agent {
+    static AGENT: std::sync::OnceLock<ureq::Agent> = std::sync::OnceLock::new();
+    AGENT.get_or_init(|| {
+        ureq::Agent::config_builder()
+            .timeout_global(Some(Duration::from_secs(10)))
+            // ureq shares this between the host's addresses: 10 s let two dead IPv6 ones take 8 s.
+            .timeout_connect(Some(Duration::from_secs(2)))
+            .user_agent(format!("soundglass/{} ( {CONTACT} )", env!("CARGO_PKG_VERSION")))
+            .build()
+            .into()
+    })
 }
 
 /// The reply as JSON, at most `REPLY_LIMIT` bytes.
@@ -232,22 +241,36 @@ fn matches(reply: &Value) -> Result<Vec<Match>, String> {
                 let year = rel["date"]["year"].as_u64().map(|y| y.to_string()).unwrap_or_default();
                 // The track's position on its medium, from the first medium that has the recording.
                 let track = rel["mediums"].as_array().into_iter().flatten().flat_map(|m| m["tracks"].as_array().into_iter().flatten()).find_map(|t| t["position"].as_u64());
-                out.push(Match { release: text(&rel["id"]), album: text(&rel["title"]), year, track: track.map(|n| n.to_string()).unwrap_or_default(), ..base.clone() });
+                out.push(Match { release: text(&rel["id"]), release_tracks: rel["track_count"].as_u64(), album: text(&rel["title"]), year, track: track.map(|n| n.to_string()).unwrap_or_default(), ..base.clone() });
             }
         }
     }
     out.retain(|m| !m.title.is_empty());
     out.sort_by(|a, b| b.score.total_cmp(&a.score));
+    // Every release kept: Identify Album votes with all of them.
     let mut seen = Vec::new();
     out.retain(|m| {
+        let key = (m.recording.clone(), m.release.clone());
+        !seen.contains(&key) && {
+            seen.push(key);
+            true
+        }
+    });
+    Ok(out)
+}
+
+/// The best `MAX_MATCHES` matches as Identify Track lists them: editions alike in every shown field once.
+fn shown(mut all: Vec<Match>) -> Vec<Match> {
+    let mut seen = Vec::new();
+    all.retain(|m| {
         let key = (m.title.clone(), m.artist.clone(), m.album.clone(), m.year.clone(), m.track.clone());
         !seen.contains(&key) && {
             seen.push(key);
             true
         }
     });
-    out.truncate(MAX_MATCHES);
-    Ok(out)
+    all.truncate(MAX_MATCHES);
+    all
 }
 
 /// An artist credit as written: names with their join phrases ("A feat. B").
@@ -278,15 +301,18 @@ mod tests {
             {"score": 0.97, "recordings": [{"id": "a", "title": "St. Louis Blues",
                 "artists": [{"name": "Louis Armstrong", "joinphrase": " and "}, {"name": "His All-Stars"}],
                 "releases": [
-                    {"id": "r1", "title": "Plays W.C. Handy", "date": {"year": 1954}, "mediums": [{"tracks": [{"position": 1}]}]},
+                    {"id": "r1", "track_count": 16, "title": "Plays W.C. Handy", "date": {"year": 1954}, "mediums": [{"tracks": [{"position": 1}]}]},
                     {"id": "r2", "title": "Plays W.C. Handy", "date": {"year": 1954}, "mediums": [{"tracks": [{"position": 1}]}]},
                     {"title": 7, "date": "soon", "mediums": "none"}
                 ]}]},
             {"score": "high", "recordings": [{"title": 3}]}
         ]});
-        let m = matches(&reply).unwrap();
+        let all = matches(&reply).unwrap();
+        // Both editions kept for the album vote; shown once in Identify Track.
+        assert_eq!(all.iter().filter(|m| m.album == "Plays W.C. Handy").count(), 2);
+        let m = shown(all);
         assert_eq!(m.len(), 3, "{m:?}");
-        assert_eq!(m[0], Match { score: 0.97, recording: "a".into(), release: "r1".into(), title: "St. Louis Blues".into(), artist: "Louis Armstrong and His All-Stars".into(), album: "Plays W.C. Handy".into(), year: "1954".into(), track: "1".into() });
+        assert_eq!(m[0], Match { score: 0.97, recording: "a".into(), release: "r1".into(), release_tracks: Some(16), title: "St. Louis Blues".into(), artist: "Louis Armstrong and His All-Stars".into(), album: "Plays W.C. Handy".into(), year: "1954".into(), track: "1".into() });
         // Odd types drop the value, not the match.
         assert_eq!((m[1].album.as_str(), m[1].year.as_str(), m[1].track.as_str()), ("", "", ""));
         assert_eq!((m[2].title.as_str(), m[2].album.as_str()), ("Long Gone", ""));
@@ -310,6 +336,11 @@ mod tests {
         assert_eq!(picked[0].as_ref().map(|m| m.track.as_str()), Some("1"));
         assert!(picked[15].is_none());
         assert!(albums(&[]).is_empty());
+        // Both cover every file: the 16-track album before the 300-track anthology, whatever the scores.
+        let mut both: Vec<Vec<Match>> = (1..=16).map(|n| vec![Match { release_tracks: Some(300), ..on("anthology", &n.to_string(), 0.99) }, Match { release_tracks: Some(16), ..on("lp", &n.to_string(), 0.9) }]).collect();
+        assert_eq!(albums(&both)[0].release, "lp");
+        both.iter_mut().for_each(|ms| ms.iter_mut().for_each(|m| m.release_tracks = None));
+        assert_eq!(albums(&both)[0].release, "anthology");
     }
 
     #[test]
@@ -361,5 +392,30 @@ mod tests {
         assert_eq!(fingerprint(&Track::from_samples(44100, 2, tone(440.0))).unwrap().0, a);
         assert_ne!(fingerprint(&Track::from_samples(44100, 2, tone(660.0))).unwrap().0, a);
         assert!(fingerprint(&Track::from_samples(44100, 2, vec![0.0; 200])).is_err());
+    }
+}
+
+/// Online, by hand: `SG_ACOUSTID_KEY=… cargo test --release -- --ignored --nocapture album_lookup_on_the_test_folder`.
+#[cfg(test)]
+#[test]
+#[ignore]
+fn album_lookup_on_the_test_folder() {
+    let key = std::env::var("SG_ACOUSTID_KEY").expect("SG_ACOUSTID_KEY");
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("1954-Louis Armstrong Plays W.C.Handy");
+    let first = std::fs::read_dir(&dir).unwrap().flatten().map(|e| e.path()).find(|p| crate::folder::is_audio(p)).unwrap();
+    let files = crate::folder::list_folder(&first);
+    let mut per_file = Vec::new();
+    for f in &files {
+        let t = std::time::Instant::now();
+        let (fp, secs) = fingerprint_file(f).unwrap();
+        let t_fp = t.elapsed();
+        let m = lookup_all(&key, &fp, secs).unwrap();
+        println!("  fingerprint {t_fp:.1?}, lookup {:.1?}", t.elapsed() - t_fp);
+        let releases: std::collections::BTreeSet<_> = m.iter().map(|m| format!("{} {} {}", m.release, m.year, m.album)).collect();
+        println!("{} — {} matches, {} releases, recordings {:?}", f.file_name().unwrap().to_string_lossy(), m.len(), releases.len(), m.iter().map(|m| &m.recording[..8]).collect::<std::collections::BTreeSet<_>>());
+        per_file.push(m);
+    }
+    for a in albums(&per_file) {
+        println!("{} files, {:?} tracks: {} {} {} ({})", a.files, a.tracks, a.artist, a.album, a.year, a.release);
     }
 }
