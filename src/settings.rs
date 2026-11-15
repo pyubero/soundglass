@@ -188,6 +188,8 @@ impl Settings {
         self.note_c_width = if positive(self.note_c_width) { self.note_c_width.min(6.0) } else { d.note_c_width };
         self.note_label_size = if positive(self.note_label_size) { self.note_label_size.clamp(6.0, 24.0) } else { d.note_label_size };
         self.note_scale = self.note_scale.filter(|&k| k < 12);
+        // NaN would get through volume_gain's clamp into the sound.
+        self.volume = if self.volume.is_finite() { self.volume.clamp(0.0, 1.0) } else { d.volume };
         if self.theme.is_empty() {
             self.theme = d.theme.clone();
         }
@@ -263,5 +265,6 @@ mod tests {
         assert_eq!((bad.rename_pattern.as_str(), bad.theme.as_str()), (crate::tags::DEFAULT_PATTERN, crate::theme::SYSTEM));
         assert_eq!((bad.font_size, bad.default_size), (DEFAULT_FONT_SIZE, DEFAULT_SIZE));
         assert_eq!(bad.spectrum, crate::spectrum::Params { fft: 3000, window: 99999, ..Default::default() }.checked());
+        assert_eq!((parse(&app_ron("(volume: NaN)")).volume, parse(&app_ron("(volume: 5)")).volume, parse(&app_ron("(volume: -1)")).volume), (1.0, 1.0, 0.0));
     }
 }

@@ -698,11 +698,11 @@ impl eframe::App for App {
         if let Some(path) = ctx.input(|i| i.raw.dropped_files.first().map(|f| f.path().to_path_buf())) {
             self.open_dropped(path, &ctx);
         }
-        let why_not_rename = if !self.has_track() { Some(tr("no file open")) } else if !self.track.done() { Some(tr("after loading")) } else if self.tag_job.is_some() || self.album_writing() { Some(tr("saving tags…")) } else { None };
-        let why_not_fill = why_not_rename.filter(|&w| w != "saving tags…");
-        let why_not_identify = if !identify::ready(&self.settings.acoustid_key) { Some(tr("add an AcoustID key in Settings")) } else { why_not_rename.filter(|&w| w != "saving tags…") };
+        let why_not_rename = self.why_not_write_tags();
+        let why_not_fill = self.why_not_tags_now();
+        let why_not_identify = if !identify::ready(&self.settings.acoustid_key) { Some(tr("add an AcoustID key in Settings")) } else { why_not_fill };
         // The write closes the tag editor, which would drop its unsaved edits.
-        let why_not_cover = if !self.has_track() { Some(tr("no file open")) } else if self.tag_job.is_some() { Some(tr("saving tags…")) } else if self.tag_editor.is_some() { Some(tr("close the tag editor first")) } else { None };
+        let why_not_cover = why_not_rename.or_else(|| self.tag_editor.is_some().then(|| tr("close the tag editor first")));
         let beats_found = self.track.beats.lock().unwrap_or_else(|e| e.into_inner()).is_some();
 
         let mut ai_tool = None;
@@ -930,7 +930,7 @@ impl eframe::App for App {
         if self.show_info {
             let size = std::fs::metadata(&self.track.path).map(|m| m.len()).ok();
             let panel = egui::Panel::left("info").resizable(true).size_range(240.0..=360.0).default_size(self.info_width).show(ui, |ui| {
-                let can_edit = if !self.has_track() { Err(tr("no file open")) } else if !self.track.done() { Err(tr("after loading")) } else if self.tag_job.is_some() || self.album_writing() { Err(tr("saving tags…")) } else { Ok(()) };
+                let can_edit = self.why_not_write_tags().map_or(Ok(()), Err);
                 info_panel(ui, &self.track, size, &mut self.tag_editor, can_edit, self.settings.practice)
             });
             match panel.inner {
@@ -2128,7 +2128,8 @@ impl App {
     /// tracks are written on a thread, as the tag job.
     fn cover_offer_modal(&mut self, ctx: &egui::Context) {
         let key = Arc::as_ptr(&self.track) as usize;
-        if key != self.cover_checked && self.has_track() && self.tag_editor.is_none() && self.tag_job.is_none() {
+        // Once decoded: writing the cover relabels the track, which needs all its audio.
+        if key != self.cover_checked && self.has_track() && self.track.done() && self.tag_editor.is_none() && self.tag_job.is_none() {
             self.cover_checked = key;
             let dir = self.track.path.parent().map(|d| d.to_path_buf()).unwrap_or_default();
             self.cover_found = None;
@@ -2425,6 +2426,23 @@ impl App {
 
     fn album_writing(&self) -> bool {
         self.identify_album.as_ref().is_some_and(|a| a.writing.is_some() && a.job.is_some())
+    }
+
+    /// Why the track's tags can't be read for editing or lookups now, if they can't: a file
+    /// still decoding would be relabelled with only part of its audio.
+    fn why_not_tags_now(&self) -> Option<&'static str> {
+        if !self.has_track() {
+            Some(tr("no file open"))
+        } else if !self.track.done() {
+            Some(tr("after loading"))
+        } else {
+            None
+        }
+    }
+
+    /// Why tags (or a cover) can't be written to the track now, if they can't.
+    fn why_not_write_tags(&self) -> Option<&'static str> {
+        self.why_not_tags_now().or_else(|| (self.tag_job.is_some() || self.album_writing()).then(|| tr("saving tags…")))
     }
 
     fn identify_album_window(&mut self, ctx: &egui::Context) {

@@ -14,6 +14,13 @@ versions follow [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - The Spectrogram window shows the soundglass icon (it showed a generic one on Wayland).
+- Adding or removing a cover while a track was still loading left it stuck part-way; covers are
+  now offered and written once the track has loaded.
+- Normalize and Trim Silence could measure only part of the selection while playing.
+- Saves and tag writes are flushed to disk before they replace a file, so a power cut can't leave
+  it empty.
+- Writing tags to a symlinked file writes the real file and keeps the link.
+- Very low sample rates (8 kHz) at half speed played too fast.
 
 ## [0.1.0] - 2026-11-15
 

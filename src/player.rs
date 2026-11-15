@@ -148,8 +148,9 @@ impl Player {
 
 /// Output frames the resampler makes per call.
 const BLOCK: usize = 512;
-/// The resampler's ratio may range from 1/MAX_RATIO to MAX_RATIO: 192 kHz files at 2× still fit.
-const MAX_RATIO: f64 = 10.0;
+/// The resampler's ratio may range from 1/MAX_RATIO to MAX_RATIO: 192 kHz files at 2× still fit,
+/// and an 8 kHz recording at half speed on a 96 kHz device (24×).
+const MAX_RATIO: f64 = 24.0;
 
 struct Engine {
     cur: Option<Arc<Track>>,
@@ -561,6 +562,19 @@ mod tests {
         let ratio = e.pos as f64 / normal as f64;
         assert!((ratio - 2.0).abs() < 0.02, "ratio {ratio}");
         assert!(out.iter().any(|&s| s != 0.0));
+    }
+
+    #[test]
+    fn low_rate_at_half_speed_isnt_capped() {
+        let mut e = engine();
+        e.handle(Cmd::Load(Track::from_samples(8000, 1, vec![0.1; 20_000])));
+        e.handle(Cmd::Speed(Speed { tape: 0.5, ..Speed::NORMAL }));
+        e.handle(Cmd::Play);
+        let mut out = vec![0.0; 2 * 48000];
+        e.render(&mut out, 2);
+        // A second at 48 kHz from 8 kHz at half speed takes 4000 frames (a cap at 10× took 4800);
+        // the resampler reads a little ahead.
+        assert!((4000..4300).contains(&e.pos), "pos {}", e.pos);
     }
 
     /// Frames of input one second of output takes, with these settings.

@@ -334,10 +334,13 @@ fn read_with(track: &Track, edit: &Edit, a: u64, b: u64, mut sink: impl FnMut(&[
     true
 }
 
+// The measures below wait for the chunk list (read_all): a missed try_lock while playing would
+// measure part of the selection, and normalize or trim from that.
+
 /// The largest sample of edited frames `a..b`, as a factor (1.0 is full scale).
 pub fn peak(track: &Track, edit: &Edit, a: u64, b: u64) -> f32 {
     let mut peak = 0f32;
-    read(track, edit, a, b, |s| peak = s.iter().fold(peak, |p, x| p.max(x.abs())));
+    read_all(track, edit, a, b, |s| peak = s.iter().fold(peak, |p, x| p.max(x.abs())));
     peak
 }
 
@@ -345,7 +348,7 @@ pub fn peak(track: &Track, edit: &Edit, a: u64, b: u64) -> f32 {
 pub fn loudness(track: &Track, edit: &Edit, a: u64, b: u64) -> f64 {
     let Some(format) = track.format.get() else { return f64::NEG_INFINITY };
     let mut meter = crate::loudness::Meter::new(format.rate, edit.channels(format.channels));
-    read(track, edit, a, b, |s| meter.push(s));
+    read_all(track, edit, a, b, |s| meter.push(s));
     meter.integrated()
 }
 
@@ -353,7 +356,7 @@ pub fn loudness(track: &Track, edit: &Edit, a: u64, b: u64) -> f64 {
 pub fn audible(track: &Track, edit: &Edit, a: u64, b: u64, db: f32) -> Option<(u64, u64)> {
     let channels = edit.channels(track.format.get().map_or(1, |f| f.channels));
     let (level, mut frame, mut found) = (10f32.powf(db / 20.0), a, None::<(u64, u64)>);
-    read(track, edit, a, b, |s| {
+    read_all(track, edit, a, b, |s| {
         for f in s.chunks_exact(channels) {
             if f.iter().any(|x| x.abs() > level) {
                 found = Some((found.map_or(frame, |(first, _)| first), frame + 1));

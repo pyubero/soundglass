@@ -137,6 +137,7 @@ pub fn save(track: &Track, edit: &Edit, choice: Choice, target: &Path, draft: Op
         encode(audio, edit, choice, &temp)?;
         let tags = std::panic::catch_unwind(|| copy_tags(&track.path, &temp, choice.kind, draft)).unwrap_or(false);
         verify(&temp, audio, edit, matches!(choice.kind, Kind::Wav | Kind::Flac))?;
+        sync(&temp)?;
         std::fs::rename(&temp, target).map_err(|e| e.to_string())?;
         Ok(tags)
     }))
@@ -190,6 +191,13 @@ pub fn resample(track: &Track, edit: &Edit, rate: u32, speed: Option<Speed>) -> 
     let out = resampler.process_all(&input, frames, None).map_err(|e| err(&e))?.take_data();
     let len = (out.len() / channels) as u64;
     Ok((Track::from_samples(rate, channels, out), Edit::whole(len)))
+}
+
+/// Flushes the file at `path` to the disk, for before it's renamed over another: without it a
+/// power cut can leave the renamed file empty on some filesystems. Opened for writing, as
+/// Windows' FlushFileBuffers needs.
+pub(crate) fn sync(path: &Path) -> Result<(), String> {
+    std::fs::OpenOptions::new().write(true).open(path).and_then(|f| f.sync_all()).map_err(|e| e.to_string())
 }
 
 /// Whether `a` (which may not exist yet) is the file at `b`.

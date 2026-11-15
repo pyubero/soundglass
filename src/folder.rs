@@ -217,8 +217,7 @@ pub fn make_default() -> Result<(), String> {
 
 /// Opens a web page in the default browser.
 pub fn open_url(url: &str) {
-    let program = if cfg!(windows) { "explorer" } else { "xdg-open" };
-    drop(std::process::Command::new(program).arg(url).spawn());
+    crate::ai::open(url);
 }
 
 /// Opens the file manager with `path` highlighted, or just its folder if the desktop can't do that.
@@ -229,7 +228,7 @@ pub fn show_in_folder(path: &Path) {
         let call = ["--session", "--print-reply", "--dest=org.freedesktop.FileManager1", "/org/freedesktop/FileManager1", "org.freedesktop.FileManager1.ShowItems"];
         let shown = std::process::Command::new("dbus-send").args(call).arg(format!("array:string:{uri}")).arg("string:").output();
         if !shown.is_ok_and(|o| o.status.success()) {
-            drop(std::process::Command::new("xdg-open").arg(dir).spawn());
+            crate::ai::open(dir);
         }
     });
 }

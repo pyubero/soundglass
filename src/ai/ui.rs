@@ -500,9 +500,9 @@ pub(super) fn run_tool(task: Task, model: &Known, tune: &Tune, track: &crate::tr
                 }
                 // Written beside it, then renamed over the reserved name.
                 let part = target.with_extension("mid.part");
-                std::fs::write(&part, midi::smf(&notes, t.tempo)).and_then(|()| std::fs::rename(&part, &target)).map_err(|e| {
+                let written = std::fs::write(&part, midi::smf(&notes, t.tempo)).map_err(|e| e.to_string());
+                written.and_then(|()| crate::save::sync(&part)).and_then(|()| std::fs::rename(&part, &target).map_err(|e| e.to_string())).inspect_err(|_| {
                     let _ = std::fs::remove_file(&part);
-                    e.to_string()
                 })
             })();
             if result.is_err() {
@@ -574,7 +574,8 @@ fn reserve_dir(source: &Path, what: &str) -> Result<PathBuf, String> {
 fn save_text(path: &Path, text: &str) -> Result<PathBuf, String> {
     let name = path.file_name().ok_or(tr("no file name"))?.to_string_lossy();
     let temp = path.with_file_name(format!(".{name}.soundglass-part"));
-    let result = std::fs::write(&temp, text.as_bytes()).and_then(|()| std::fs::rename(&temp, path)).map_err(|e| e.to_string());
+    let written = std::fs::write(&temp, text.as_bytes()).map_err(|e| e.to_string());
+    let result = written.and_then(|()| crate::save::sync(&temp)).and_then(|()| std::fs::rename(&temp, path).map_err(|e| e.to_string()));
     if result.is_err() {
         let _ = std::fs::remove_file(&temp);
     }

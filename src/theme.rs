@@ -45,8 +45,7 @@ pub fn dir() -> Option<PathBuf> {
 pub fn open_folder() {
     if let Some(dir) = dir() {
         seed(&dir);
-        let program = if cfg!(windows) { "explorer" } else { "xdg-open" };
-        drop(std::process::Command::new(program).arg(dir).spawn());
+        crate::ai::open(dir);
     }
 }
 

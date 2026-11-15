@@ -110,8 +110,7 @@ pub fn apply(edit: &TagEdit, tag: &mut Tag) {
     tag.remove_key(ItemKey::Bpm);
     // shortcut: RIFF INFO and AIFF text have no BPM or key field, so those are dropped there.
     if let Ok(bpm) = edit.bpm.trim().parse::<u32>() {
-        // ID3 and MP4 have a whole-number BPM field; Vorbis comments and APE only the text one.
-        let _ = tag.insert_text(ItemKey::IntegerBpm, bpm.to_string()) || tag.insert_text(ItemKey::Bpm, bpm.to_string());
+        set_bpm(tag, bpm);
     }
     if edit.key.trim().is_empty() {
         tag.remove_key(ItemKey::InitialKey);
@@ -119,6 +118,11 @@ pub fn apply(edit: &TagEdit, tag: &mut Tag) {
         tag.insert_text(ItemKey::InitialKey, edit.key.trim().to_string());
     }
     set_cover(tag, &edit.cover);
+}
+
+/// ID3 and MP4 have a whole-number BPM field; Vorbis comments and APE only the text one.
+fn set_bpm(tag: &mut Tag, bpm: u32) {
+    let _ = tag.insert_text(ItemKey::IntegerBpm, bpm.to_string()) || tag.insert_text(ItemKey::Bpm, bpm.to_string());
 }
 
 fn set_cover(tag: &mut Tag, cover: &Cover) {
@@ -152,9 +156,7 @@ pub fn write_cover(path: &Path, cover: &Cover) -> Result<(), String> {
 
 /// Puts `bpm` into the file at `path`, the other tags untouched; written as `write_in_place` does.
 pub fn write_bpm(path: &Path, bpm: u32) -> Result<(), String> {
-    write_with(path, |tag| {
-        let _ = tag.insert_text(ItemKey::IntegerBpm, bpm.to_string()) || tag.insert_text(ItemKey::Bpm, bpm.to_string());
-    })
+    write_with(path, |tag| set_bpm(tag, bpm))
 }
 
 /// Whether the file embeds a picture. Err when lofty can't read (so can't write) the format.
@@ -167,6 +169,8 @@ pub fn has_cover(path: &Path) -> Result<bool, String> {
 }
 
 fn write_with(path: &Path, change: impl FnOnce(&mut Tag)) -> Result<(), String> {
+    // Through a symlink to the real file: renaming over the link would replace it with a copy.
+    let path = &std::fs::canonicalize(path).map_err(|e| e.to_string())?;
     let name = path.file_name().ok_or(tr("no file name"))?.to_string_lossy();
     let ext = path.extension().map(|e| e.to_string_lossy()).unwrap_or_default();
     let temp = path.with_file_name(format!(".{name}.soundglass-part.{ext}"));
@@ -182,6 +186,7 @@ fn write_with(path: &Path, change: impl FnOnce(&mut Tag)) -> Result<(), String> 
         if audio(path)? != audio(&temp)? {
             return Err(tr("writing the tags would change the audio, so nothing was written").into());
         }
+        crate::save::sync(&temp)?;
         std::fs::rename(&temp, path).map_err(|e| e.to_string())
     }))
     .unwrap_or_else(|_| Err(tr("the tag writer failed").into()));
@@ -394,6 +399,18 @@ mod tests {
         write_cover(&path, &Cover::Remove).unwrap();
         assert_eq!((has_cover(&path), read(&path).unwrap().title.as_str()), (Ok(false), "Kept"));
         assert!(has_cover(&dir.join("missing.mp3")).is_err());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn writes_through_a_symlink() {
+        let dir = scratch("symlink");
+        let real = flac(&dir);
+        let link = dir.join("link.flac");
+        std::os::unix::fs::symlink(&real, &link).unwrap();
+        write_in_place(&link, &TagEdit { title: "Linked".into(), ..TagEdit::default() }).unwrap();
+        assert!(std::fs::symlink_metadata(&link).unwrap().file_type().is_symlink(), "still a link");
+        assert_eq!(read(&real).unwrap().title, "Linked");
     }
 
     #[test]

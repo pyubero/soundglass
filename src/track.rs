@@ -230,6 +230,10 @@ impl Track {
     /// The same decoded audio under `path`, with the tags, info and cover read afresh from it:
     /// after its tags are rewritten or it is renamed. The audio itself must be unchanged.
     pub fn relabel(&self, path: PathBuf, notify: impl Fn() + Send + Sync + 'static) -> Result<Arc<Track>, String> {
+        // Its decoder fills only this track: a copy taken now would stay part-decoded forever.
+        if !self.done() {
+            return Err(tr("the track is still loading").into());
+        }
         let t = Arc::new(Track::empty(path));
         if let Some(&f) = self.format.get() {
             let _ = t.format.set(f);

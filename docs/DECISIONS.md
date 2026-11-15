@@ -303,3 +303,8 @@
 - 2026-11-15 — microphone recording (voice memos, tuner) is out of scope (user's choice)
 - 2026-11-15 — media keys work unfocused: an MPRIS player on Linux (zbus 5.19, already in the tree through accesskit, same features) and System Media Transport Controls on Windows (windows 0.62, already in the tree through cpal, plus its Media_Playback features) (user's choice)
 - 2026-11-15 — no track metadata, cover or seeking over MPRIS/SMTC for now — only play/pause/next/previous were asked for
+- 2026-11-15 — tags and covers are written only once the track has loaded, behind one shared check in main.rs (why_not_write_tags); Track::relabel refuses a track still decoding — a copy taken then stayed part-decoded forever (user's choice)
+- 2026-11-15 — Normalize, Loudness and Trim measure with edit::read_all, like the other readers off the audio thread; edit::read is left to the player's callback, the waveform, the Spectrogram and the visualiser (user's choice)
+- 2026-11-15 — every temp file is flushed (save::sync) before it is renamed over its target: tag writes replace originals with no backup (user's choice)
+- 2026-11-15 — the player's resampler ratio goes up to 24× (8 kHz at half speed on a 96 kHz device), up from 10× (user's choice)
+- 2026-11-15 — tag writes resolve symlinks and write the real file, keeping the link (user's choice)
