@@ -634,7 +634,7 @@ impl eframe::App for App {
             self.open_dropped(path, &ctx);
         }
         let why_not_rename = if !self.has_track() { Some(tr("no file open")) } else if !self.track.done() { Some(tr("after loading")) } else if self.tag_job.is_some() { Some(tr("saving tags…")) } else { None };
-        let why_not_identify = if !identify::ready() { Some(tr("not set up")) } else { why_not_rename.filter(|&w| w != "saving tags…") };
+        let why_not_identify = if !identify::ready(&self.settings.acoustid_key) { Some(tr("add an AcoustID key in Settings")) } else { why_not_rename.filter(|&w| w != "saving tags…") };
         // The write closes the tag editor, which would drop its unsaved edits.
         let why_not_cover = if !self.has_track() { Some(tr("no file open")) } else if self.tag_job.is_some() { Some(tr("saving tags…")) } else if self.tag_editor.is_some() { Some(tr("close the tag editor first")) } else { None };
         let beats_found = self.track.beats.lock().unwrap_or_else(|e| e.into_inner()).is_some();
@@ -1534,6 +1534,18 @@ impl App {
             if ui.button(tr("Change Keyboard Shortcuts…")).clicked() {
                 self.show_shortcuts = true;
             }
+            ui.separator();
+            ui.strong(tr("AcoustID Settings"));
+            ui.horizontal(|ui| {
+                ui.label(tr("Application key:"));
+                ui.text_edit_singleline(&mut self.settings.acoustid_key);
+            });
+            ui.horizontal(|ui| {
+                ui.weak(tr("Identify Track needs one; it is free for non-commercial use."));
+                if ui.link(tr("Get a key")).clicked() {
+                    folder::open_url(identify::KEY_PAGE);
+                }
+            });
             if folder::desktop_installed() {
                 ui.separator();
                 if ui.button(tr("Make soundglass the default player")).clicked() {
@@ -2248,10 +2260,10 @@ impl App {
         });
         if look {
             let (tx, rx) = std::sync::mpsc::channel();
-            let (track, ctx) = (self.track.clone(), ctx.clone());
+            let (track, ctx, key) = (self.track.clone(), ctx.clone(), self.settings.acoustid_key.clone());
             std::thread::spawn(move || {
                 track::background();
-                let found = identify::fingerprint(&track).and_then(|(fp, secs)| identify::lookup(&fp, secs));
+                let found = identify::fingerprint(&track).and_then(|(fp, secs)| identify::lookup(&key, &fp, secs));
                 let _ = tx.send(IdentifyJob::Found(found));
                 ctx.request_repaint();
             });

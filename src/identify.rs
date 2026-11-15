@@ -13,10 +13,10 @@ use crate::tags::TagEdit;
 use crate::track::Track;
 use crate::i18n::{tr, trf};
 
-/// soundglass's AcoustID application key (acoustid.org/new-application); empty until registered.
-pub const ACOUSTID_KEY: &str = "";
-/// A URL for soundglass, sent in the User-Agent as MusicBrainz asks; empty until there is one.
-pub const CONTACT: &str = "";
+/// A URL for soundglass, sent in the User-Agent as MusicBrainz asks.
+const CONTACT: &str = "https://github.com/pyubero/soundglass";
+/// Where a user registers the AcoustID application key that Settings asks for.
+pub const KEY_PAGE: &str = "https://acoustid.org/new-application";
 
 /// Seconds of audio fingerprinted, as fpcalc does.
 const SECONDS: usize = 120;
@@ -24,9 +24,9 @@ const SECONDS: usize = 120;
 const MAX_MATCHES: usize = 10;
 const REPLY_LIMIT: u64 = 2_000_000;
 
-/// Whether the key and contact are set, so lookups may run.
-pub fn ready() -> bool {
-    !ACOUSTID_KEY.is_empty() && !CONTACT.is_empty()
+/// Whether Settings has an AcoustID key, so lookups may run.
+pub fn ready(key: &str) -> bool {
+    !key.trim().is_empty()
 }
 
 /// One way the file could be tagged: a recording on one release.
@@ -73,9 +73,9 @@ pub fn fingerprint(track: &Track) -> Result<(String, u32), String> {
 }
 
 /// Looks the fingerprint up in AcoustID: the matches, best first.
-pub fn lookup(fingerprint: &str, secs: u32) -> Result<Vec<Match>, String> {
+pub fn lookup(key: &str, fingerprint: &str, secs: u32) -> Result<Vec<Match>, String> {
     wait_turn();
-    let form = [("client", ACOUSTID_KEY), ("duration", &secs.to_string()), ("fingerprint", fingerprint), ("meta", "recordings releases tracks")];
+    let form = [("client", key.trim()), ("duration", &secs.to_string()), ("fingerprint", fingerprint), ("meta", "recordings releases tracks")];
     let reply = agent().post("https://api.acoustid.org/v2/lookup").send_form(form).map_err(|e| format!("AcoustID can't be reached ({e})"))?;
     matches(&read(reply)?)
 }

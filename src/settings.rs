@@ -83,6 +83,8 @@ pub struct Settings {
     pub language: Option<crate::i18n::Language>,
     /// Keyboard shortcuts changed from their defaults, by `keys::id`; `None` removes one.
     pub shortcuts: Vec<(String, Option<eframe::egui::KeyboardShortcut>)>,
+    /// The user's AcoustID application key, for Identify Track; empty turns it off.
+    pub acoustid_key: String,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -142,6 +144,7 @@ impl Default for Settings {
             default_asked: false,
             language: None,
             shortcuts: Vec::new(),
+            acoustid_key: String::new(),
         }
     }
 }
@@ -244,6 +247,7 @@ mod tests {
             default_asked: true,
             language: Some(crate::i18n::Language::English),
             shortcuts: vec![("Quit".into(), None), ("Open".into(), Some(eframe::egui::KeyboardShortcut::new(eframe::egui::Modifiers::ALT, eframe::egui::Key::O)))],
+            acoustid_key: "abc123".into(),
         };
         let app_ron = |v: &str| ron::to_string(&HashMap::from([(KEY.to_string(), v.to_string())])).unwrap();
         assert_eq!(parse(&app_ron(&ron::to_string(&s).unwrap())), s);
