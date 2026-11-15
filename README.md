@@ -33,7 +33,8 @@ has the plan.
 - **Speed and pitch.** Slower or faster at the same pitch, or higher or lower at the same speed,
   live while it plays.
 - **Tags and names.** Edit tags and covers, give a whole folder its cover, rename files from their
-  tags, and look a track or a whole album up on AcoustID and MusicBrainz (only when you ask).
+  tags, and look a track or a whole album up on AcoustID and MusicBrainz, or a track by name on Wikipedia,
+  Discogs or MusicBrainz (only when you ask).
 - **Practice mode.** A spectrogram with note lines and chords, loops, tempo and key estimates, and
   a metronome on the beats.
 - **Local AI tools.** Remove noise, split a song into stems, turn a melody into MIDI, find the beats

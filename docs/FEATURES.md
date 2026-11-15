@@ -114,6 +114,14 @@ stuttery on dense mixes ([`TIME_STRETCH.md`](TIME_STRETCH.md)). Save As can appl
   matched file, Fill In All Tracks only fills empty tags, and Apply and Rename also renames each file
   with the Rename from Tags pattern. The genre comes from MusicBrainz, once for the album. Files not
   on the chosen album are left alone; there is no undo.
+- **Track → Fill Metadata From → Wikipedia… / Discogs… / MusicBrainz…** (online, only when you click
+  Look up) searches by name instead of fingerprint, with no key needed. The Title and Artist boxes start
+  with the track's tags (the tag editor's unsaved ones if it is open), or the file name without its
+  leading track number when there is no title tag; you can change them. The window then works like
+  Identify Track. MusicBrainz lists recordings with their score and fetches the genre for the pick.
+  Discogs lists releases (country and format), and Use Match reads the chosen release's track list
+  for the track's title and number. English Wikipedia lists song articles and reads their infobox
+  (artist, album, year, genre, track number).
 - **File → Rename…** (F2) renames the current file to a name you type (the extension starts
   unselected); it never replaces another file, and playback and edits carry on.
 - **File → Rename from Tags…** renames the current file from a pattern such as
@@ -308,6 +316,8 @@ Unknown elements and attributes are ignored.
 soundglass collects nothing: no telemetry, no account. It goes online only when you ask:
 
 - Identify Track… and Identify Album… (AcoustID and MusicBrainz), after you click Look up;
+- Fill Metadata From (Wikipedia, Discogs or MusicBrainz), which sends only the title and artist
+  you searched for (and the chosen match's ID), after you click Look up;
 - the AI runtime, GPU libraries and models, each after you accept its licence;
 - Check for updates, which only opens the Releases page in your browser.
 

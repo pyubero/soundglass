@@ -282,3 +282,7 @@
 - 2026-11-15 — Identify Album shows each edition's country and format from AcoustID's release (country, mediums' format; XE/XW spelled Europe/Worldwide, "2×CD" for several alike media) next to the year (user's choice)
 2026-11-15 — README is a front page in lightview's structure; the detail lives in docs/FEATURES.md and docs/MENUS.md, with docs/TRANSLATING.md and the brief moved to docs/PRODUCT_BRIEF.md; release steps stay in README.md — one place per kind of fact (user's choice)
 - 2026-11-15 — the menu bar is File, Track, Edit, Effects, Local AI, View (+ Practice in Practice mode); Track takes the speed and pitch items (the Playback menu is gone), Identify Track/Album and the album cover items; Rename, Rename from Tags and Delete stay in File (user's choice)
+- 2026-11-15 — Track → Fill Metadata From (Wikipedia, Discogs, MusicBrainz) searches by title and artist and reuses Identify Track's window, pick and tag-editor fill; nothing is written directly
+- 2026-11-15 — Discogs is searched without a token (user's choice); accepted risk: Discogs documents its search as needing auth (it answers without one today, 25 requests a minute), so it may start refusing, shown as "Discogs now asks for a token"
+- 2026-11-15 — Wikipedia is read from the song article's infobox wikitext, not Wikidata (user's choice); English Wikipedia only (the infobox field names are English)
+- 2026-11-15 — the name search starts from the title and artist tags, else the file name less a leading track number, in editable boxes (user's choice)

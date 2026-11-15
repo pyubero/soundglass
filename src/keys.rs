@@ -21,6 +21,8 @@ pub enum Command {
     RenameFromTags,
     Identify,
     IdentifyAlbum,
+    /// Track → Fill Metadata From: a name search in one source.
+    Fill(crate::identify::Source),
     Settings,
     Quit,
     Undo,
@@ -114,7 +116,7 @@ pub fn bindable_menus() -> Vec<(&'static str, Vec<(Command, String)>)> {
         track.extend(knob.presets().iter().map(|&v| (Speed(knob, v), format!("{}: {}", knob.title(), knob.label(v)))));
         track.push((CustomSpeed(knob), trf("{name}: custom…", &[("name", &knob.title())])));
     }
-    track.extend(named(&[(ResetSpeed, tr("Reset")), (Identify, tr("Identify Track…")), (IdentifyAlbum, tr("Identify Album…")), (AddCover, tr("Add/Replace Album Cover…")), (RemoveCover, tr("Remove Album Cover…"))]));
+    track.extend(named(&[(ResetSpeed, tr("Reset")), (Identify, tr("Identify Track…")), (IdentifyAlbum, tr("Identify Album…")), (Fill(crate::identify::Source::Wikipedia), tr("Fill from Wikipedia…")), (Fill(crate::identify::Source::Discogs), tr("Fill from Discogs…")), (Fill(crate::identify::Source::MusicBrainz), tr("Fill from MusicBrainz…")), (AddCover, tr("Add/Replace Album Cover…")), (RemoveCover, tr("Remove Album Cover…"))]));
     let mut ai: Vec<(Command, String)> = Task::ALL.iter().map(|&t| (Ai(t), t.title().to_string())).collect();
     ai.push((AiModels, tr("AI Models…").into()));
     vec![

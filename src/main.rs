@@ -336,19 +336,23 @@ fn dir_modified(dir: &std::path::Path) -> Option<std::time::SystemTime> {
 }
 
 struct Identify {
+    source: identify::Source,
     /// The file it's for: it closes when another one plays.
     path: PathBuf,
+    /// What a name search looks for.
+    title: String,
+    artist: String,
     /// The matches, or why there are none; `None` before Look up.
     found: Option<Result<Vec<identify::Match>, String>>,
     pick: usize,
     only_empty: bool,
-    /// The running lookup, or the genre fetch for the picked match.
+    /// The running lookup, or `identify::complete` on the picked match.
     job: Option<std::sync::mpsc::Receiver<IdentifyJob>>,
 }
 
 enum IdentifyJob {
     Found(Result<Vec<identify::Match>, String>),
-    Genre(Result<Option<String>, String>),
+    Picked(Box<identify::Match>),
 }
 
 /// Track → Identify Album…: every file of the folder looked up, then one release's tags written to all.
@@ -671,6 +675,7 @@ impl eframe::App for App {
             self.open_dropped(path, &ctx);
         }
         let why_not_rename = if !self.has_track() { Some(tr("no file open")) } else if !self.track.done() { Some(tr("after loading")) } else if self.tag_job.is_some() || self.album_writing() { Some(tr("saving tags…")) } else { None };
+        let why_not_fill = why_not_rename.filter(|&w| w != "saving tags…");
         let why_not_identify = if !identify::ready(&self.settings.acoustid_key) { Some(tr("add an AcoustID key in Settings")) } else { why_not_rename.filter(|&w| w != "saving tags…") };
         // The write closes the tag editor, which would drop its unsaved edits.
         let why_not_cover = if !self.has_track() { Some(tr("no file open")) } else if self.tag_job.is_some() { Some(tr("saving tags…")) } else if self.tag_editor.is_some() { Some(tr("close the tag editor first")) } else { None };
@@ -741,6 +746,11 @@ impl eframe::App for App {
                     ui.separator();
                     item(ui, &mut commands, tr("Identify Track…"), Command::Identify, why_not_identify);
                     item(ui, &mut commands, tr("Identify Album…"), Command::IdentifyAlbum, why_not_identify);
+                    ui.menu_button(tr("Fill Metadata From"), |ui| {
+                        for (name, source) in [(tr("Wikipedia…"), identify::Source::Wikipedia), (tr("Discogs…"), identify::Source::Discogs), (tr("MusicBrainz…"), identify::Source::MusicBrainz)] {
+                            item(ui, &mut commands, name, Command::Fill(source), why_not_fill);
+                        }
+                    });
                     ui.separator();
                     item(ui, &mut commands, tr("Add/Replace Album Cover…"), Command::AddCover, why_not_cover);
                     item(ui, &mut commands, tr("Remove Album Cover…"), Command::RemoveCover, why_not_cover);
@@ -808,7 +818,13 @@ impl eframe::App for App {
                 Command::Rename if why_not_rename.is_none() => self.start_rename(),
                 Command::Delete if self.has_track() => self.delete_prompt = true,
                 Command::RenameFromTags if why_not_rename.is_none() => self.rename = Some((self.settings.rename_pattern.clone(), tags::read(&self.track.path))),
-                Command::Identify if why_not_identify.is_none() => self.identify = Some(Identify { path: self.track.path.clone(), found: None, pick: 0, only_empty: true, job: None }),
+                Command::Identify if why_not_identify.is_none() => self.identify = Some(Identify { source: identify::Source::AcoustId, path: self.track.path.clone(), title: String::new(), artist: String::new(), found: None, pick: 0, only_empty: true, job: None }),
+                Command::Fill(source) if why_not_fill.is_none() => {
+                    // The tag editor's unsaved title and artist count as the tags.
+                    let tags = self.tag_editor.as_ref().map(|e| e.draft.clone()).or_else(|| tags::read(&self.track.path).ok());
+                    let (title, artist) = identify::query(tags.as_ref(), &self.track.path);
+                    self.identify = Some(Identify { source, path: self.track.path.clone(), title, artist, found: None, pick: 0, only_empty: true, job: None });
+                }
                 Command::IdentifyAlbum if why_not_identify.is_none() && self.identify_album.is_none() => {
                     let files = folder::list_folder(&self.track.path);
                     self.identify_album = Some(IdentifyAlbum { files, per_file: Vec::new(), albums: Vec::new(), pick: 0, job: None, written: Vec::new(), writing: None });
@@ -2248,19 +2264,19 @@ impl App {
     }
 
     /// File → Rename from Tags…: the pattern, a preview of the name, Rename and Cancel.
-    /// Track → Identify Track…: Look up, pick a match, and Use Match fills the tag editor
-    /// (nothing is written here). True when the tag editor was filled.
+    /// Track → Identify Track… and Fill Metadata From: Look up, pick a match, and Use Match fills
+    /// the tag editor (nothing is written here). True when the tag editor was filled.
     fn identify_window(&mut self, ctx: &egui::Context) -> bool {
         let Some(id) = &mut self.identify else { return false };
         if id.path != self.track.path {
             self.identify = None;
             return false;
         }
-        let mut genre = None;
+        let mut completed = None;
         if let Some(rx) = &id.job {
             match rx.try_recv() {
                 Ok(IdentifyJob::Found(found)) => (id.found, id.pick, id.job) = (Some(found), 0, None),
-                Ok(IdentifyJob::Genre(g)) => (genre, id.job) = (Some(g), None),
+                Ok(IdentifyJob::Picked(m)) => (completed, id.job) = (Some(*m), None),
                 Err(std::sync::mpsc::TryRecvError::Empty) => {}
                 Err(std::sync::mpsc::TryRecvError::Disconnected) => (id.found, id.job) = (Some(Err(tr("The lookup stopped.").into())), None),
             }
@@ -2268,10 +2284,22 @@ impl App {
         let busy = id.job.is_some();
         let saving = self.tag_job.is_some();
         let (mut look, mut take, mut close) = (false, false, false);
-        egui::Window::new(tr("Identify Track")).collapsible(false).resizable(false).show(ctx, |ui| {
+        let source = id.source;
+        egui::Window::new(source.title()).collapsible(false).resizable(false).show(ctx, |ui| {
             ui.set_max_width(380.0);
-            ui.label(tr("Sends this file's fingerprint and length to AcoustID, and the chosen match's ID to MusicBrainz. Nothing else leaves this computer."));
+            ui.label(source.privacy());
             ui.add_space(6.0);
+            if source != identify::Source::AcoustId {
+                egui::Grid::new("fill query").num_columns(2).show(ui, |ui| {
+                    ui.label(tr("Title:"));
+                    ui.add_enabled(!busy, egui::TextEdit::singleline(&mut id.title));
+                    ui.end_row();
+                    ui.label(tr("Artist:"));
+                    ui.add_enabled(!busy, egui::TextEdit::singleline(&mut id.artist));
+                    ui.end_row();
+                });
+                ui.add_space(6.0);
+            }
             let mut found = 0;
             match &id.found {
                 None => {}
@@ -2284,8 +2312,9 @@ impl App {
                 Some(Ok(matches)) => {
                     found = matches.len();
                     for (i, m) in matches.iter().enumerate() {
-                        ui.radio_value(&mut id.pick, i, format!("{:.0} %  {} — {}", m.score * 100.0, m.title, if m.artist.is_empty() { "?" } else { &m.artist }));
-                        let release = [m.album.clone(), m.year.clone(), if m.track.is_empty() { String::new() } else { trf("track {n}", &[("n", &m.track)]) }];
+                        let score = if source.scored() { format!("{:.0} %  ", m.score * 100.0) } else { String::new() };
+                        ui.radio_value(&mut id.pick, i, format!("{score}{} — {}", m.title, if m.artist.is_empty() { "?" } else { &m.artist }));
+                        let release = [m.album.clone(), m.year.clone(), if m.track.is_empty() { String::new() } else { trf("track {n}", &[("n", &m.track)]) }, m.edition.clone()];
                         let release: Vec<String> = release.into_iter().filter(|s| !s.is_empty()).collect();
                         if !release.is_empty() {
                             ui.indent(i, |ui| ui.weak(release.join(", ")));
@@ -2296,8 +2325,12 @@ impl App {
             if busy {
                 ui.horizontal(|ui| {
                     ui.spinner();
-                    ui.label(if id.found.is_some() { tr("Fetching the genre…") } else { tr("Looking up…") });
+                    ui.label(if id.found.is_some() { tr("Fetching details…") } else { tr("Looking up…") });
                 });
+            }
+            if source == identify::Source::Discogs {
+                // Discogs's API terms ask for the credit.
+                ui.weak(tr("Data from Discogs."));
             }
             ui.checkbox(&mut id.only_empty, tr("Only fill empty tags"));
             ui.horizontal(|ui| {
@@ -2310,9 +2343,13 @@ impl App {
         if look {
             let (tx, rx) = std::sync::mpsc::channel();
             let (track, ctx, key) = (self.track.clone(), ctx.clone(), self.settings.acoustid_key.clone());
+            let (title, artist) = (id.title.clone(), id.artist.clone());
             std::thread::spawn(move || {
                 track::background();
-                let found = identify::fingerprint(&track).and_then(|(fp, secs)| identify::lookup(&key, &fp, secs));
+                let found = match source {
+                    identify::Source::AcoustId => identify::fingerprint(&track).and_then(|(fp, secs)| identify::lookup(&key, &fp, secs)),
+                    _ => identify::search(source, &title, &artist),
+                };
                 let _ = tx.send(IdentifyJob::Found(found));
                 ctx.request_repaint();
             });
@@ -2326,7 +2363,7 @@ impl App {
             let (tx, rx) = std::sync::mpsc::channel();
             let ctx = ctx.clone();
             std::thread::spawn(move || {
-                let _ = tx.send(IdentifyJob::Genre(identify::genre(&m.recording)));
+                let _ = tx.send(IdentifyJob::Picked(Box::new(identify::complete(source, m))));
                 ctx.request_repaint();
             });
             id.job = Some(rx);
@@ -2335,7 +2372,7 @@ impl App {
             self.identify = None;
             return false;
         }
-        let (Some(genre), Some(m)) = (genre, picked()) else { return false };
+        let Some(m) = completed else { return false };
         let only_empty = id.only_empty;
         // Over the tag editor's own unsaved edits, if it's open: they aren't dropped.
         let base = match &self.tag_editor {
@@ -2344,8 +2381,8 @@ impl App {
         };
         match base {
             Ok((read, base)) => {
-                // Without a genre (MusicBrainz unreachable, or none voted) the rest is still filled.
-                let draft = identify::fill(&base, &m, genre.ok().flatten().as_deref(), only_empty);
+                // Without a genre (unreachable, or none voted) the rest is still filled.
+                let draft = identify::fill(&base, &m, None, only_empty);
                 self.tag_editor = Some(TagEditor { read, draft, confirm: false, error: None });
                 self.identify = None;
                 true
